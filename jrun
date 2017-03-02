@@ -136,6 +136,8 @@ case "$endpoint" in
 		echo
 		echo "If version is omitted, then RELEASE is used."
 		echo "If mainClass is omitted, it is auto-detected."
+		echo "You can also write part of a class beginning with an @ sign,"
+		echo "and it will be auto-completed."
 		exit 1
 		;;
 esac
@@ -181,26 +183,31 @@ then
 	exit 2
 fi
 
-# Infer and/or autocomplete the main class if necessary.
-
-jarPathPrefix="$tmpDir/$a"
-test -n "$c" && jarPathPrefix="$jarPathPrefix-$c"
+# Massage the main class as needed.
 
 if [ -z "$mainClass" ]
 then
-	# Check the JAR manifest.
+	# Infer the main class from the JAR manifest.
+	jarPathPrefix="$tmpDir/$a"
+	test -n "$c" && jarPathPrefix="$jarPathPrefix-$c"
 	mainClass=$(tar xfO "$jarPathPrefix"-[0-9]*.jar META-INF/MANIFEST.MF 2>/dev/null |
 		grep Main-Class | head -n1 | sed 's/^Main-Class: *\([a-zA-Z0-9_\.]*\).*/\1/')
 	echo "Inferred main class: $mainClass"
 fi
 test -n "$mainClass" || die "No main class given, and none found."
 
-mainPath="${mainClass//\./\/}"
-completedClass="$(for jar in "$tmpDir/"*.jar; do tar tf "$jar"; done |
-	grep "$mainPath.*\.class$" | head -n1 | sed 's/\.class$//')"
-completedClass="${completedClass//\//.}"
-if [ -n "$completedClass" -a "$completedClass" != "$mainClass" ]
+if [ "z${mainClass:0:1}" = 'z@' ]
 then
+	# Autocomplete the main class by scanning the JARs.
+	mainPath=$(echo "${mainClass:1}" | sed 's/\//./g')
+	allClasses="$(for jar in "$tmpDir/"*.jar; do tar tf "$jar"; done |
+		grep '\.class$' | sed 's/\//./g')"
+	completedClass="$(echo "$allClasses" |
+		grep "$mainPath\.class$" | head -n1 | sed 's/\.class$//')"
+	test -n "$completedClass" || completedClass="$(echo "$allClasses" |
+		grep "$mainPath.*\.class$" | head -n1 | sed 's/\.class$//')"
+	test -n "$completedClass" ||
+		die "No autocompletions found for '$mainClass'"
 	mainClass="${completedClass}"
 	echo "Autocompleted main class: $mainClass"
 fi

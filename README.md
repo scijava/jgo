@@ -32,7 +32,8 @@ and <endpoint> has one of the following formats:
 
 If version is omitted, then RELEASE is used.
 If mainClass is omitted, it is auto-detected.
-You can also write a partial mainClass and it will be auto-completed.
+You can also write part of a class beginning with an @ sign,
+and it will be auto-completed.
 ```
 
 ### Examples
