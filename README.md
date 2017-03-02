@@ -1,9 +1,9 @@
 ## Summary
 
-I got really, really fed up with the fact that there is no easy package manager
-for Java. We have Maven, which is amazing, but no easy way to actually __launch
-code__ from the beautifully managed dependencies stored so lovingly into
-`~/.m2/repository`.
+I got really fed up with the fact that there is no easy package manager
+for Java. We have Maven, which is amazing, but no easy way to actually
+__launch code__ from the beautifully managed dependencies stored so
+lovingly into `~/.m2/repository`.
 
 So now I have jrun. A lovely tool, just for me! And maybe you too.
 
@@ -81,6 +81,6 @@ There is [JPM4J](http://jpm4j.org/), but it did not work too well for me:
       2. Target specifies Class-Path in JAR but the indicated file .../repo/eventbus-1.4.jar is not found
     ```
 
-* The source is, oddly, in part of [bnd](https://github.com/bndtools/bnd)
+* The source is, oddly, part of [bnd](https://github.com/bndtools/bnd)
   rather than in the [jpm4j organization](https://github.com/jpm4j) anywhere,
   which is not a good sign, modularity-wise.
