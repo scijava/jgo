@@ -37,6 +37,29 @@ jrun org.scijava:scijava-common:org.scijava.script.ScriptREPL
 But note that there are no `scripting-<foo>` language plugins on the
 classpath in this case; see "Configuration" below for a solution.
 
+### Configuration
+
+In the file `$HOME/.jrunrc`, you can define shortcuts and repositories; e.g.:
+```ini
+[shortcuts]
+repl = imagej:org.scijava.script.ScriptREPL
+imagej = net.imagej:imagej
+
+[repositories]
+imagej.public = https://maven.imagej.net/content/groups/public
+```
+
+Shortcuts are substituted verbatim from the beginning of the endpoint,
+single-pass in the order they are defined. So e.g. now you can run:
+```
+jrun repl
+```
+Note that in the example above, the main class
+(`org.scijava.script.ScriptREPL`) comes from a _different_ artifact than the
+toplevel artifact (`net.imagej:imagej`). This is intentional, so that the
+various SciJava `scripting-<foo>` artifacts are included in the classpath of
+the REPL.
+
 ## Alternatives
 
 There is [JPM4J](http://jpm4j.org/), but it did not work too well for me:
