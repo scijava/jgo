@@ -7,11 +7,35 @@ code__ from the beautifully managed dependencies stored so lovingly into
 
 So now I have jrun. A lovely tool, just for me! And maybe you too.
 
-## Usage example
+## Usage
 
+```
+Usage: jrun <jvm-args> <endpoint> <main-args>
+
+Where <jvm-args> is any list of arguments to the JVM,
+and <main-args> is any list of arguments to the main class,
+and <endpoint> has one of the following formats:
+
+- groupId:artifactId:mainClass
+- groupId:artifactId:version:mainClass
+- groupId:artifactId:version:classifier:mainClass
+
+If version is omitted, then RELEASE is used.
+```
+
+### Examples
+
+#### The Jython REPL
+```
+jrun org.python:jython-standalone:2.7.0:org.python.util.jython
+```
+
+#### The SciJava REPL
 ```
 jrun org.scijava:scijava-common:org.scijava.script.ScriptREPL
 ```
+But note that there are no `scripting-<foo>` language plugins on the
+classpath in this case; see "Configuration" below for a solution.
 
 ## Alternatives
 
