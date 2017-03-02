@@ -15,6 +15,40 @@
 
 die() { echo "$@" 1>&2; exit 1; }
 
+trim() {
+    local var="$*"
+    var="${var#"${var%%[![:space:]]*}"}"
+    var="${var%"${var##*[![:space:]]}"}"
+    echo "$var"
+}
+
+# Parse configuration file.
+
+configFile="$HOME/.jrunrc"
+l=1
+shortcuts=()
+
+test -f "$configFile" &&
+while read line
+do
+	let "l++"
+	case "$line" in
+		\[*\])
+			ltrim="${line:1}"
+			section="${ltrim%?}"
+			;;
+		*=*)
+			case "$section" in
+				shortcuts)
+					shortcuts+=("$line")
+					;;
+				*)
+					;;
+			esac
+			;;
+	esac
+done <"$configFile"
+
 # Parse arguments.
 
 jvm_args=()
@@ -33,6 +67,17 @@ do
 done
 
 # Parse the endpoint.
+
+for shortcut in "${shortcuts[@]}"
+do
+	key=$(trim "${shortcut%=*}")
+	val=$(trim "${shortcut#*=}")
+	case "$endpoint" in
+		$key*)
+			endpoint="$val${endpoint#$key}"
+			;;
+	esac
+done
 
 case "$endpoint" in
 	*:*:*:*:*:*) # G:A:V:C:mainClass
