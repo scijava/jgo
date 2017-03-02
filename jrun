@@ -103,11 +103,23 @@ case "$endpoint" in
 		v="${remain%%:*}"
 		mainClass="${remain#*:}"
 		;;
-	*:*:*) # G:A:mainClass
+	*:*:*) # G:A:mainClass or G:A:V
 		g="${endpoint%%:*}"; remain="${endpoint#*:}"
-		a="${remain%%:*}"
+		a="${remain%%:*}"; remain="${remain#*:}"
+		case "$remain" in
+			[0-9]*|RELEASE|LATEST)
+				v="$remain"
+				;;
+			*)
+				v="RELEASE"
+				mainClass="$remain"
+				;;
+		esac
+		;;
+	*:*) # G:A
+		g="${endpoint%%:*}"
+		a="${endpoint#*:}"
 		v="RELEASE"
-		mainClass="${remain#*:}"
 		;;
 	*)
 		echo "Usage: jrun <jvm-args> <endpoint> <main-args>"
@@ -116,11 +128,14 @@ case "$endpoint" in
 		echo "and <main-args> is any list of arguments to the main class,"
 		echo "and <endpoint> has one of the following formats:"
 		echo
+		echo "- groupId:artifactId"
+		echo "- groupId:artifactId:version"
 		echo "- groupId:artifactId:mainClass"
 		echo "- groupId:artifactId:version:mainClass"
 		echo "- groupId:artifactId:version:classifier:mainClass"
 		echo
 		echo "If version is omitted, then RELEASE is used."
+		echo "If mainClass is omitted, it is auto-detected."
 		exit 1
 		;;
 esac
@@ -164,6 +179,30 @@ then
 	echo "Failed to bootstrap the artifact. Here is the log:" >&2
 	cat "$tmpLog" >&2
 	exit 2
+fi
+
+# Infer and/or autocomplete the main class if necessary.
+
+jarPathPrefix="$tmpDir/$a"
+test -n "$c" && jarPathPrefix="$jarPathPrefix-$c"
+
+if [ -z "$mainClass" ]
+then
+	# Check the JAR manifest.
+	mainClass=$(tar xfO "$jarPathPrefix"-[0-9]*.jar META-INF/MANIFEST.MF 2>/dev/null |
+		grep Main-Class | head -n1 | sed 's/^Main-Class: *\([a-zA-Z0-9_\.]*\).*/\1/')
+	echo "Inferred main class: $mainClass"
+fi
+test -n "$mainClass" || die "No main class given, and none found."
+
+mainPath="${mainClass//\./\/}"
+completedClass="$(for jar in "$tmpDir/"*.jar; do tar tf "$jar"; done |
+	grep "$mainPath.*\.class$" | head -n1 | sed 's/\.class$//')"
+completedClass="${completedClass//\//.}"
+if [ -n "$completedClass" -a "$completedClass" != "$mainClass" ]
+then
+	mainClass="${completedClass}"
+	echo "Autocompleted main class: $mainClass"
 fi
 
 # Launch it!
