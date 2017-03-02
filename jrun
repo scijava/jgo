@@ -32,26 +32,6 @@ do
 	shift
 done
 
-# Validate endpoint.
-
-case "$endpoint" in
-	*:*:*)
-		;;
-	*)
-		echo "Usage: jrun <jvm-args> <endpoint> <main-args>"
-		echo
-		echo "Where <jvm-args> is any list of arguments to the JVM,"
-		echo "and <main-args> is any list of arguments to the main class,"
-		echo "and <endpoint> has one of the following formats:"
-		echo
-		echo "- groupId:artifactId:mainClass"
-		echo "- groupId:artifactId:version:mainClass"
-		echo "- groupId:artifactId:version:classifier:mainClass"
-		echo
-		echo "If version is omitted, then RELEASE is used."
-		exit 1
-esac
-
 # Parse the endpoint.
 
 case "$endpoint" in
@@ -78,7 +58,18 @@ case "$endpoint" in
 		mainClass="${remain#*:}"
 		;;
 	*)
-		die "Too few elements in endpoint '$endpoint'"
+		echo "Usage: jrun <jvm-args> <endpoint> <main-args>"
+		echo
+		echo "Where <jvm-args> is any list of arguments to the JVM,"
+		echo "and <main-args> is any list of arguments to the main class,"
+		echo "and <endpoint> has one of the following formats:"
+		echo
+		echo "- groupId:artifactId:mainClass"
+		echo "- groupId:artifactId:version:mainClass"
+		echo "- groupId:artifactId:version:classifier:mainClass"
+		echo
+		echo "If version is omitted, then RELEASE is used."
+		exit 1
 		;;
 esac
 
