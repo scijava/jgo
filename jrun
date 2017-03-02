@@ -1,0 +1,121 @@
+#!/bin/sh
+
+# A script to execute a main class of a Maven artifact
+# which is available locally or from Maven Central.
+#
+# Works using the maven-dependency-plugin to stash the artifact
+# and its deps to a temporary location, then invokes java.
+#
+# It would be more awesome to enhance the exec-maven-plugin to support
+# running something with a classpath built from the local Maven repository
+# cache. Then you would get all the features of exec-maven-plugin.
+# But this script works in a pinch for simple cases.
+
+# Useful functions.
+
+die() { echo "$@" 1>&2; exit 1; }
+
+# Parse arguments.
+
+jvm_args=()
+app_args=()
+while test $# -gt 0
+do
+	case "$1" in
+	-*)
+		test -z "$endpoint" && jvm_args+=("$1") || app_args+=("$1")
+		;;
+	*)
+		test -z "$endpoint" && endpoint="$1" || app_args+=("$1")
+		;;
+	esac
+	shift
+done
+
+# Validate endpoint.
+
+case "$endpoint" in
+	*:*:*)
+		;;
+	*)
+		echo "Usage: jrun <jvm-args> <endpoint> <main-args>"
+		echo
+		echo "Where <jvm-args> is any list of arguments to the JVM,"
+		echo "and <main-args> is any list of arguments to the main class,"
+		echo "and <endpoint> has one of the following formats:"
+		echo
+		echo "- groupId:artifactId:mainClass"
+		echo "- groupId:artifactId:version:mainClass"
+		echo "- groupId:artifactId:version:classifier:mainClass"
+		echo
+		echo "If version is omitted, then RELEASE is used."
+		exit 1
+esac
+
+# Parse the endpoint.
+
+case "$endpoint" in
+	*:*:*:*:*:*) # G:A:V:C:mainClass
+		die "Too many elements in endpoint '$endpoint'"
+		;;
+	*:*:*:*:*) # G:A:V:C:mainClass
+		g="${endpoint%%:*}"; remain="${endpoint#*:}"
+		a="${remain%%:*}"; remain="${remain#*:}"
+		v="${remain%%:*}"; remain="${remain#*:}"
+		c="${remain%%:*}"
+		mainClass="${remain#*:}"
+		;;
+	*:*:*:*) # G:A:V:mainClass
+		g="${endpoint%%:*}"; remain="${endpoint#*:}"
+		a="${remain%%:*}"; remain="${remain#*:}"
+		v="${remain%%:*}"
+		mainClass="${remain#*:}"
+		;;
+	*:*:*) # G:A:mainClass
+		g="${endpoint%%:*}"; remain="${endpoint#*:}"
+		a="${remain%%:*}"
+		v="RELEASE"
+		mainClass="${remain#*:}"
+		;;
+	*)
+		die "Too few elements in endpoint '$endpoint'"
+		;;
+esac
+
+dep="<groupId>$g</groupId><artifactId>$a</artifactId><version>$v</version>"
+test -n "$c" && dep="$dep<classifier>$c</classifier>"
+
+# Synthesize a dummy Maven project.
+
+tmpDir=$(mktemp -d -t jrun)
+
+tmpPOM="$tmpDir/pom.xml"
+cat >"$tmpPOM" <<EOL
+<project>
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>$g-BOOTSTRAPPER</groupId>
+	<artifactId>$a-BOOTSTRAPPER</artifactId>
+	<version>0</version>
+	<dependencies>
+		<dependency>$dep</dependency>
+	</dependencies>
+</project>
+EOL
+
+tmpLog="$tmpDir/build.log"
+mvn -f "$tmpPOM" -DoutputDirectory="$tmpDir" dependency:copy-dependencies \
+	>"$tmpLog" 2>&1
+if [ $? -ne 0 ]
+then
+	echo "Failed to bootstrap the artifact. Here is the log:" >&2
+	cat "$tmpLog" >&2
+	exit 2
+fi
+
+# Launch it!
+
+java -cp "$tmpDir/*" "${jvm_args[@]}" "$mainClass" "${app_args[@]}"
+
+# Clean up.
+
+rm -rf "$tmpDir"
