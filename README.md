@@ -7,6 +7,12 @@ lovingly into `~/.m2/repository`.
 
 So now I have jrun. A lovely tool, just for me! And maybe you too.
 
+## Installation
+
+Just clone this repo, and symlink `jrun` into your `bin` directory.
+
+You need a POSIX shell environment, as well as `mvn` installed.
+
 ## Usage
 
 ```
