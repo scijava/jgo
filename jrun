@@ -26,6 +26,7 @@ trim() {
 
 configFile="$HOME/.jrunrc"
 l=1
+repositories=()
 shortcuts=()
 
 test -f "$configFile" &&
@@ -42,6 +43,9 @@ do
 			;;
 		*=*)
 			case "$section" in
+				repositories)
+					repositories+=("$line")
+					;;
 				shortcuts)
 					shortcuts+=("$line")
 					;;
@@ -128,6 +132,16 @@ test -n "$c" && dep="$dep<classifier>$c</classifier>"
 
 tmpDir=$(mktemp -d -t jrun)
 
+for repository in "${repositories[@]}"
+do
+	key=$(trim "${repository%=*}")
+	val=$(trim "${repository#*=}")
+	test -z "$repoBlock" && repoBlock="<repositories>"
+	repoBlock="$repoBlock<repository><id>$key</id><url>$val</url></repository>"
+done
+test -n "$repoBlock" && repoBlock="$repoBlock</repositories>"
+
+
 tmpPOM="$tmpDir/pom.xml"
 cat >"$tmpPOM" <<EOL
 <project>
@@ -138,6 +152,7 @@ cat >"$tmpPOM" <<EOL
 	<dependencies>
 		<dependency>$dep</dependency>
 	</dependencies>
+	$repoBlock
 </project>
 EOL
 
