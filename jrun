@@ -189,14 +189,14 @@ test -n "$c" && jarPathPrefix="$jarPathPrefix-$c"
 if [ -z "$mainClass" ]
 then
 	# Check the JAR manifest.
-	mainClass=$(tar xfO "$jarPathPrefix"-[0-9]*.jar META-INF/MANIFEST.MF 2>/dev/null |
+	mainClass=$(unzip -p "$jarPathPrefix"-[0-9]*.jar META-INF/MANIFEST.MF 2>/dev/null |
 		grep Main-Class | head -n1 | sed 's/^Main-Class: *\([a-zA-Z0-9_\.]*\).*/\1/')
 	echo "Inferred main class: $mainClass"
 fi
 test -n "$mainClass" || die "No main class given, and none found."
 
 mainPath="${mainClass//\./\/}"
-completedClass="$(for jar in "$tmpDir/"*.jar; do tar tf "$jar"; done |
+completedClass="$(for jar in "$tmpDir/"*.jar; do jar tf "$jar"; done |
 	grep "$mainPath.*\.class$" | head -n1 | sed 's/\.class$//')"
 completedClass="${completedClass//\//.}"
 if [ -n "$completedClass" -a "$completedClass" != "$mainClass" ]
