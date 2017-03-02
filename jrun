@@ -145,7 +145,7 @@ test -n "$c" && dep="$dep<classifier>$c</classifier>"
 
 # Synthesize a dummy Maven project.
 
-tmpDir=$(mktemp -d -t jrun)
+tmpDir=$(mktemp -d -t jrunXXX)
 
 for repository in "${repositories[@]}"
 do
