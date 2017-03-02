@@ -1,3 +1,5 @@
+# jrun: painless Java component execution
+
 ## Summary
 
 I got really fed up with the fact that there is no easy package manager
@@ -9,7 +11,7 @@ So now I have jrun. A lovely tool, just for me! And maybe you too.
 
 ## Installation
 
-Just clone this repo, and symlink `jrun` into your `bin` directory.
+Just clone this repo, and symlink `jrun` into your favorite `bin` directory.
 
 You need a POSIX shell environment, as well as `mvn` installed.
 
