@@ -33,6 +33,9 @@ while read line
 do
 	let "l++"
 	case "$line" in
+		'#'*)
+			# skip comment
+			;;
 		\[*\])
 			ltrim="${line:1}"
 			section="${ltrim%?}"
