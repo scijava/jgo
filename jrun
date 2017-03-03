@@ -125,9 +125,11 @@ case "$endpoint" in
 	*)
 		echo "Usage: jrun <jvm-args> <endpoint> <main-args>"
 		echo
-		echo "Where <jvm-args> is any list of arguments to the JVM,"
-		echo "and <main-args> is any list of arguments to the main class,"
-		echo "and <endpoint> has one of the following formats:"
+		echo "  <jvm-args>  : any list of arguments to the JVM"
+		echo "  <endpoint>  : the artifact and main class to execute"
+		echo "  <main-args> : any list of arguments to the main class"
+		echo
+		echo "The endpoint should have one of the following formats:"
 		echo
 		echo "- groupId:artifactId"
 		echo "- groupId:artifactId:version"

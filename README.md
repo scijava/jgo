@@ -21,9 +21,11 @@ You need a POSIX shell environment, as well as
 ```
 Usage: jrun <jvm-args> <endpoint> <main-args>
 
-Where <jvm-args> is any list of arguments to the JVM,
-and <main-args> is any list of arguments to the main class,
-and <endpoint> has one of the following formats:
+  <jvm-args>  : any list of arguments to the JVM
+  <endpoint>  : the artifact and main class to execute
+  <main-args> : any list of arguments to the main class
+
+The endpoint should have one of the following formats:
 
 - groupId:artifactId
 - groupId:artifactId:version
