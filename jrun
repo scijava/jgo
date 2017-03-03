@@ -159,7 +159,6 @@ do
 done
 test -n "$repoBlock" && repoBlock="$repoBlock</repositories>"
 
-
 tmpPOM="$tmpDir/pom.xml"
 cat >"$tmpPOM" <<EOL
 <project>
