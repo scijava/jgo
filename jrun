@@ -191,7 +191,7 @@ then
 	# Infer the main class from the JAR manifest.
 	jarPathPrefix="$tmpDir/$a"
 	test -n "$c" && jarPathPrefix="$jarPathPrefix-$c"
-	mainClass=$(tar xfO "$jarPathPrefix"-[0-9]*.jar META-INF/MANIFEST.MF 2>/dev/null |
+	mainClass=$(unzip -p "$jarPathPrefix"-[0-9]*.jar META-INF/MANIFEST.MF 2>/dev/null |
 		grep Main-Class | head -n1 | sed 's/^Main-Class: *\([a-zA-Z0-9_\.]*\).*/\1/')
 	echo "Inferred main class: $mainClass"
 fi
