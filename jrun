@@ -13,6 +13,7 @@
 
 # Useful functions.
 
+info() { test $verbose && echo "[INFO] $@"; }
 err() { echo "$@" 1>&2; }
 die() { err "$@"; exit 1; }
 
@@ -64,6 +65,9 @@ app_args=()
 while test $# -gt 0
 do
 	case "$1" in
+	-v)
+		test -z "$endpoint" && verbose=1 || app_args+=("$1")
+		;;
 	-*)
 		test -z "$endpoint" && jvm_args+=("$1") || app_args+=("$1")
 		;;
@@ -123,8 +127,9 @@ case "$endpoint" in
 		v="RELEASE"
 		;;
 	*)
-		echo "Usage: jrun <jvm-args> <endpoint> <main-args>"
+		echo "Usage: jrun [-v] <jvm-args> <endpoint> <main-args>"
 		echo
+		echo "  -v          : verbose mode flag"
 		echo "  <jvm-args>  : any list of arguments to the JVM"
 		echo "  <endpoint>  : the artifact and main class to execute"
 		echo "  <main-args> : any list of arguments to the main class"
@@ -144,6 +149,11 @@ case "$endpoint" in
 		exit 1
 		;;
 esac
+info "Artifact:"
+info "- groupId    = $g"
+info "- artifactId = $a"
+info "- version    = $v"
+test -n "$c" && info "- classifier = $c" || info "- classifier = <none>"
 
 dep="<groupId>$g</groupId><artifactId>$a</artifactId><version>$v</version>"
 test -n "$c" && dep="$dep<classifier>$c</classifier>"
@@ -152,6 +162,7 @@ test -n "$c" && dep="$dep<classifier>$c</classifier>"
 
 tmpDir=$(mktemp -d -t jrunXXX)
 test -d "$tmpDir" || die "Could not create temporary directory."
+info "Workspace = $tmpDir"
 
 for repository in "${repositories[@]}"
 do
@@ -177,8 +188,11 @@ cat >"$tmpPOM" <<EOL
 EOL
 
 tmpLog="$tmpDir/build.log"
+(
+test $verbose && set -x
 mvn -f "$tmpPOM" -DoutputDirectory="$tmpDir" dependency:copy-dependencies \
 	>"$tmpLog" 2>&1
+)
 if [ $? -ne 0 ]
 then
 	err "Failed to bootstrap the artifact. Here is the log:"
@@ -193,9 +207,10 @@ then
 	# Infer the main class from the JAR manifest.
 	jarPathPrefix="$tmpDir/$a"
 	test -n "$c" && jarPathPrefix="$jarPathPrefix-$c"
-	mainClass=$(unzip -p "$jarPathPrefix"-[0-9]*.jar META-INF/MANIFEST.MF 2>/dev/null |
+	mainClass=$((test $verbose && set -x;
+		unzip -p "$jarPathPrefix"-[0-9]*.jar META-INF/MANIFEST.MF 2>/dev/null) |
 		grep Main-Class | head -n1 | sed 's/^Main-Class: *\([a-zA-Z0-9_\.]*\).*/\1/')
-	echo "Inferred main class: $mainClass"
+	info "Inferred main class: $mainClass"
 fi
 test -n "$mainClass" || die "No main class given, and none found."
 
@@ -203,7 +218,8 @@ if [ "z${mainClass:0:1}" = 'z@' ]
 then
 	# Autocomplete the main class by scanning the JARs.
 	mainPath=$(echo "${mainClass:1}" | sed 's/\//./g')
-	allClasses="$(for jar in "$tmpDir/"*.jar; do jar tf "$jar"; done |
+	allClasses="$((test $verbose && set -x;
+		for jar in "$tmpDir/"*.jar; do jar tf "$jar"; done) |
 		grep '\.class$' | sed 's/\//./g')"
 	completedClass="$(echo "$allClasses" |
 		grep "$mainPath\.class$" | head -n1 | sed 's/\.class$//')"
@@ -212,13 +228,19 @@ then
 	test -n "$completedClass" ||
 		die "No autocompletions found for '$mainClass'"
 	mainClass="${completedClass}"
-	echo "Autocompleted main class: $mainClass"
+	info "Autocompleted main class: $mainClass"
 fi
 
 # Launch it!
 
-java -cp "$tmpDir/*" "${jvm_args[@]}" "$mainClass" "${app_args[@]}"
+(
+	test $verbose && set -x
+	java -cp "$tmpDir/*" "${jvm_args[@]}" "$mainClass" "${app_args[@]}"
+)
 
 # Clean up.
 
-rm -rf "$tmpDir"
+(
+	test $verbose && set -x
+	rm -rf "$tmpDir"
+)

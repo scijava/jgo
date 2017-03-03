@@ -19,8 +19,9 @@ You need a POSIX shell environment, as well as
 ## Usage
 
 ```
-Usage: jrun <jvm-args> <endpoint> <main-args>
+Usage: jrun [-v] <jvm-args> <endpoint> <main-args>
 
+  -v          : verbose mode flag
   <jvm-args>  : any list of arguments to the JVM
   <endpoint>  : the artifact and main class to execute
   <main-args> : any list of arguments to the main class
