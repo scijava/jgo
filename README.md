@@ -13,7 +13,8 @@ So now I have jrun. A lovely tool, just for me! And maybe you too.
 
 Just clone this repo, and symlink `jrun` into your favorite `bin` directory.
 
-You need a POSIX shell environment, as well as `mvn` installed.
+You need a POSIX shell environment, as well as
+`mvn`, `java` and `jar` available on the path.
 
 ## Usage
 
@@ -38,17 +39,14 @@ and it will be auto-completed.
 
 ### Examples
 
-#### The Jython REPL
-```
-jrun org.python:jython-standalone
-```
+| Tool         | Command                                                                |
+|:------------:|:----------------------------------------------------------------------:|
+| Jython REPL  | `jrun org.python:jython-standalone`                                    |
+| JRuby eval   | `echo "puts 'Hello Ruby'" | jrun org.jruby:jruby-complete:@jruby.Main` |
+| SciJava REPL | `jrun org.scijava:scijava-common:@ScriptREPL`                          |
 
-#### The SciJava REPL
-```
-jrun org.scijava:scijava-common:org.scijava.script.ScriptREPL
-```
-But note that there are no `scripting-<foo>` language plugins on the
-classpath in this case; see "Configuration" below for a solution.
+Note that for the SciJava REPL, there are no `scripting-<foo>` language plugins
+on the classpath in this case; see "Configuration" below for a solution.
 
 ### Configuration
 
