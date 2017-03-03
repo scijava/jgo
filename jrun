@@ -17,6 +17,14 @@ info() { test $verbose && echo "[INFO] $@"; }
 err() { echo "$@" 1>&2; }
 die() { err "$@"; exit 1; }
 
+check() {
+	for tool in $@
+	do
+		which "$tool" >/dev/null ||
+			die "The '$tool' utility is required but not found"
+	done
+}
+
 trim() {
     local var="$*"
     var="${var#"${var%%[![:space:]]*}"}"
@@ -160,6 +168,7 @@ test -n "$c" && dep="$dep<classifier>$c</classifier>"
 
 # Synthesize a dummy Maven project.
 
+check mktemp
 tmpDir=$(mktemp -d -t jrunXXX)
 test -d "$tmpDir" || die "Could not create temporary directory."
 info "Workspace = $tmpDir"
@@ -173,6 +182,7 @@ do
 done
 test -n "$repoBlock" && repoBlock="$repoBlock</repositories>"
 
+check cat
 tmpPOM="$tmpDir/pom.xml"
 cat >"$tmpPOM" <<EOL
 <project>
@@ -205,6 +215,7 @@ fi
 if [ -z "$mainClass" ]
 then
 	# Infer the main class from the JAR manifest.
+	check unzip grep head sed
 	jarPathPrefix="$tmpDir/$a"
 	test -n "$c" && jarPathPrefix="$jarPathPrefix-$c"
 	mainClass=$((test $verbose && set -x;
@@ -217,6 +228,7 @@ test -n "$mainClass" || die "No main class given, and none found."
 if [ "z${mainClass:0:1}" = 'z@' ]
 then
 	# Autocomplete the main class by scanning the JARs.
+	check jar grep sed
 	mainPath=$(echo "${mainClass:1}" | sed 's/\//./g')
 	allClasses="$((test $verbose && set -x;
 		for jar in "$tmpDir/"*.jar; do jar tf "$jar"; done) |
@@ -233,6 +245,7 @@ fi
 
 # Launch it!
 
+check java
 (
 	test $verbose && set -x
 	java -cp "$tmpDir/*" "${jvm_args[@]}" "$mainClass" "${app_args[@]}"
@@ -240,6 +253,7 @@ fi
 
 # Clean up.
 
+check rm
 (
 	test $verbose && set -x
 	rm -rf "$tmpDir"

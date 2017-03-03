@@ -13,8 +13,8 @@ So now I have jrun. A lovely tool, just for me! And maybe you too.
 
 Just clone this repo, and symlink `jrun` into your favorite `bin` directory.
 
-You need a POSIX shell environment, as well as
-`mvn`, `java` and `jar` available on the path.
+The script uses some common utilities (e.g., `cat`) as well as `mvn` and `java`
+for the heavy lifting. If you are missing anything, the script will tell you.
 
 ## Usage
 
