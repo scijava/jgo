@@ -13,7 +13,8 @@
 
 # Useful functions.
 
-die() { echo "$@" 1>&2; exit 1; }
+err() { echo "$@" 1>&2; }
+die() { err "$@"; exit 1; }
 
 trim() {
     local var="$*"
@@ -178,7 +179,7 @@ mvn -f "$tmpPOM" -DoutputDirectory="$tmpDir" dependency:copy-dependencies \
 	>"$tmpLog" 2>&1
 if [ $? -ne 0 ]
 then
-	echo "Failed to bootstrap the artifact. Here is the log:" >&2
+	err "Failed to bootstrap the artifact. Here is the log:"
 	cat "$tmpLog" >&2
 	exit 2
 fi
