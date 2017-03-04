@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # A script to execute a main class of a Maven artifact
 # which is available locally or from Maven Central.
