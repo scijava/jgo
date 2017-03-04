@@ -173,12 +173,26 @@ info "- artifactId = $a"
 info "- version    = $v"
 test -n "$c" && info "- classifier = $c" || info "- classifier = <none>"
 
-# Synthesize a dummy Maven project.
+# Create a workspace in the jrun cache directory
 
-check mktemp
-workspace=$(mktemp -d -t jrunXXX)
-test -d "$workspace" || die "Could not create temporary directory."
+check sed mkdir
+workspace="$cacheDir/$(echo $endpoint | sed 's/[^0-9a-zA-Z\.-]/_/g')"
+mkdir -p "$workspace"
 info "Workspace = $workspace"
+
+if [ -f "$workspace/mainClass" ]
+then
+	# Workspace is already populated; just use it
+	check cat java
+	mainClass=$(cat "$workspace/mainClass")
+	(
+		test $verbose && set -x
+		java -cp "$workspace/*" "${jvm_args[@]}" "$mainClass" "${app_args[@]}"
+	)
+	exit 0
+fi
+
+# Synthesize a dummy Maven project.
 
 dep="<groupId>$g</groupId><artifactId>$a</artifactId><version>$v</version>"
 test -n "$c" && dep="$dep<classifier>$c</classifier>"
@@ -207,18 +221,46 @@ cat >"$tmpPOM" <<EOL
 </project>
 EOL
 
-tmpLog="$workspace/build.log"
-(
-test $verbose && set -x
-mvn -f "$tmpPOM" -DoutputDirectory="$workspace" dependency:copy-dependencies \
-	>"$tmpLog" 2>&1
-)
+check mvn
+buildLog=$(test $verbose && set -x; mvn -f "$tmpPOM" dependency:resolve 2>&1)
 if [ $? -ne 0 ]
 then
 	err "Failed to bootstrap the artifact. Here is the log:"
-	cat "$tmpLog" >&2
+	err "$buildLog"
 	exit 2
 fi
+
+# Build a workspace of symlinked artifacts.
+
+check grep sed ln
+echo "$buildLog" | grep ':\(compile\|runtime\)' | sed 's/\[INFO\] *//' |
+while read gav
+do
+	case "$gav" in
+		*:*:*:*:*:*) # G:A:P:C:V:S
+			g="${gav%%:*}"; remain="${gav#*:}"
+			a="${remain%%:*}"; remain="${remain#*:}"
+			p="${remain%%:*}"; remain="${remain#*:}"
+			c="${remain%%:*}"; remain="${remain#*:}"
+			v="${remain%%:*}"
+			s="${remain#*:}"
+			;;
+		*:*:*:*:*) # G:A:P:V:S
+			g="${gav%%:*}"; remain="${gav#*:}"
+			a="${remain%%:*}"; remain="${remain#*:}"
+			p="${remain%%:*}"; remain="${remain#*:}"
+			c=""
+			v="${remain%%:*}"
+			s="${remain#*:}"
+			;;
+	esac
+	g=$(echo "$g" | sed 's/\./\//g')
+	test -n "$c" && artName="$a-$v-$c" || artName="$a-$v"
+	(
+		test $verbose && set -x
+		ln -s "$m2Repo/$g/$a/$v/$artName.$p" "$workspace"
+	)
+done
 
 # Massage the main class as needed.
 
@@ -252,6 +294,7 @@ then
 	mainClass="${completedClass}"
 	info "Autocompleted main class: $mainClass"
 fi
+echo "$mainClass" >"$workspace/mainClass"
 
 # Launch it!
 
@@ -259,12 +302,4 @@ check java
 (
 	test $verbose && set -x
 	java -cp "$workspace/*" "${jvm_args[@]}" "$mainClass" "${app_args[@]}"
-)
-
-# Clean up.
-
-check rm
-(
-	test $verbose && set -x
-	rm -rf "$workspace"
 )

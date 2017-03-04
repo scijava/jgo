@@ -98,15 +98,3 @@ There is [JPM4J](http://jpm4j.org/), but it did not work too well for me:
 * The source is, oddly, part of [bnd](https://github.com/bndtools/bnd)
   rather than in the [jpm4j organization](https://github.com/jpm4j) anywhere,
   which is not a good sign, modularity-wise.
-
-## FAQ
-
-__Q:__
-Why is startup so slow?
-
-__A:__
-The Maven bootstrapper needs to download JARs from the Internet into
-`~/.m2/repository`. Then the script copies the JARs into a temporary directory.
-Then the main class inference and autocompletion logic scans them.
-In the future, we could cache this work so that subsequent invocations with the
-same endpoint are speedy.
