@@ -35,6 +35,8 @@ trim() {
 # Parse configuration file.
 
 configFile="$HOME/.jrunrc"
+cacheDir="$HOME/.jrun"
+m2Repo="$HOME/.m2/repository"
 repositories=()
 shortcuts=()
 l=1
@@ -55,6 +57,14 @@ do
 			case "$section" in
 				repositories)
 					repositories+=("$line")
+					;;
+				settings)
+					key=$(trim "${line%=*}")
+					val=$(trim "${line#*=}")
+					case "$key" in
+						cacheDir) cacheDir="$val";;
+						m2Repo) m2Repo="$val";;
+					esac
 					;;
 				shortcuts)
 					shortcuts+=("$line")
