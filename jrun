@@ -35,9 +35,9 @@ trim() {
 # Parse configuration file.
 
 configFile="$HOME/.jrunrc"
-l=1
 repositories=()
 shortcuts=()
+l=1
 
 test -f "$configFile" &&
 while read line
