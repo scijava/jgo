@@ -166,9 +166,9 @@ test -n "$c" && info "- classifier = $c" || info "- classifier = <none>"
 # Synthesize a dummy Maven project.
 
 check mktemp
-tmpDir=$(mktemp -d -t jrunXXX)
-test -d "$tmpDir" || die "Could not create temporary directory."
-info "Workspace = $tmpDir"
+workspace=$(mktemp -d -t jrunXXX)
+test -d "$workspace" || die "Could not create temporary directory."
+info "Workspace = $workspace"
 
 dep="<groupId>$g</groupId><artifactId>$a</artifactId><version>$v</version>"
 test -n "$c" && dep="$dep<classifier>$c</classifier>"
@@ -183,7 +183,7 @@ done
 test -n "$repoBlock" && repoBlock="$repoBlock</repositories>"
 
 check cat
-tmpPOM="$tmpDir/pom.xml"
+tmpPOM="$workspace/pom.xml"
 cat >"$tmpPOM" <<EOL
 <project>
 	<modelVersion>4.0.0</modelVersion>
@@ -197,10 +197,10 @@ cat >"$tmpPOM" <<EOL
 </project>
 EOL
 
-tmpLog="$tmpDir/build.log"
+tmpLog="$workspace/build.log"
 (
 test $verbose && set -x
-mvn -f "$tmpPOM" -DoutputDirectory="$tmpDir" dependency:copy-dependencies \
+mvn -f "$tmpPOM" -DoutputDirectory="$workspace" dependency:copy-dependencies \
 	>"$tmpLog" 2>&1
 )
 if [ $? -ne 0 ]
@@ -216,7 +216,7 @@ if [ -z "$mainClass" ]
 then
 	# Infer the main class from the JAR manifest.
 	check unzip grep head sed
-	jarPathPrefix="$tmpDir/$a"
+	jarPathPrefix="$workspace/$a"
 	test -n "$c" && jarPathPrefix="$jarPathPrefix-$c"
 	mainClass=$((test $verbose && set -x;
 		unzip -p "$jarPathPrefix"-[0-9]*.jar META-INF/MANIFEST.MF 2>/dev/null) |
@@ -231,7 +231,7 @@ then
 	check jar grep sed
 	mainPath=$(echo "${mainClass:1}" | sed 's/\//./g')
 	allClasses="$((test $verbose && set -x;
-		for jar in "$tmpDir/"*.jar; do jar tf "$jar"; done) |
+		for jar in "$workspace/"*.jar; do jar tf "$jar"; done) |
 		grep '\.class$' | sed 's/\//./g')"
 	completedClass="$(echo "$allClasses" |
 		grep "$mainPath\.class$" | head -n1 | sed 's/\.class$//')"
@@ -248,7 +248,7 @@ fi
 check java
 (
 	test $verbose && set -x
-	java -cp "$tmpDir/*" "${jvm_args[@]}" "$mainClass" "${app_args[@]}"
+	java -cp "$workspace/*" "${jvm_args[@]}" "$mainClass" "${app_args[@]}"
 )
 
 # Clean up.
@@ -256,5 +256,5 @@ check java
 check rm
 (
 	test $verbose && set -x
-	rm -rf "$tmpDir"
+	rm -rf "$workspace"
 )
