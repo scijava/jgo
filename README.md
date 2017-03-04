@@ -58,6 +58,8 @@ In the file `$HOME/.jrunrc`, you can define shortcuts and repositories; e.g.:
 [shortcuts]
 repl = imagej:org.scijava.script.ScriptREPL
 imagej = net.imagej:imagej
+fiji = sc.fiji:fiji:LATEST
+scifio = io.scif:scifio-cli
 
 [repositories]
 imagej.public = https://maven.imagej.net/content/groups/public
