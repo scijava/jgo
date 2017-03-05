@@ -29,6 +29,21 @@ trim() {
 	echo "$*" | sed 's/^ *//' | sed 's/ *$//'
 }
 
+expand() {
+	local expanded="$@"
+	for shortcut in "${shortcuts[@]}"
+	do
+		key=$(trim "${shortcut%=*}")
+		val=$(trim "${shortcut#*=}")
+		case "$expanded" in
+			$key*)
+				expanded="$val${expanded#$key}"
+				;;
+		esac
+	done
+	echo "$expanded"
+}
+
 # Parse configuration file.
 
 configFile="$HOME/.jrunrc"
@@ -93,16 +108,7 @@ done
 
 # Parse the endpoint.
 
-for shortcut in "${shortcuts[@]}"
-do
-	key=$(trim "${shortcut%=*}")
-	val=$(trim "${shortcut#*=}")
-	case "$endpoint" in
-		$key*)
-			endpoint="$val${endpoint#$key}"
-			;;
-	esac
-done
+endpoint=$(expand "$endpoint")
 
 case "$endpoint" in
 	*:*:*:*:*:*) # G:A:V:C:mainClass
