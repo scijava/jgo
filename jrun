@@ -177,7 +177,7 @@ test "$c" && info "- classifier = $c" || info "- classifier = <none>"
 # Create a workspace in the jrun cache directory
 
 check sed mkdir
-workspace="$cacheDir/$(echo $endpoint | sed 's/:/\//g' | sed 's/[^0-9a-zA-Z/\.-]/_/g')"
+workspace="$cacheDir/$(echo "$endpoint" | sed 's/[:,]/\//g' | sed 's/[^0-9a-zA-Z/\.-]/_/g')"
 mkdir -p "$workspace"
 info "Workspace = $workspace"
 
