@@ -26,10 +26,7 @@ check() {
 }
 
 trim() {
-    local var="$*"
-    var="${var#"${var%%[![:space:]]*}"}"
-    var="${var%"${var##*[![:space:]]}"}"
-    echo "$var"
+	echo "$*" | sed 's/^ *//' | sed 's/ *$//'
 }
 
 # Parse configuration file.
