@@ -36,12 +36,10 @@ cacheDir="$HOME/.jrun"
 m2Repo="$HOME/.m2/repository"
 repositories=()
 shortcuts=()
-l=1
 
 test -f "$configFile" &&
 while read line
 do
-	let "l++"
 	case "$line" in
 		'#'*)
 			# skip comment
