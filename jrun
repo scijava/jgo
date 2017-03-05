@@ -198,10 +198,8 @@ for repository in "${repositories[@]}"
 do
 	key=$(trim "${repository%=*}")
 	val=$(trim "${repository#*=}")
-	test -z "$repoBlock" && repoBlock="<repositories>"
-	repoBlock="$repoBlock<repository><id>$key</id><url>$val</url></repository>"
+	repos="$repos<repository><id>$key</id><url>$val</url></repository>"
 done
-test -n "$repoBlock" && repoBlock="$repoBlock</repositories>"
 
 check cat
 tmpPOM="$workspace/pom.xml"
@@ -214,7 +212,7 @@ cat >"$tmpPOM" <<EOL
 	<dependencies>
 		<dependency>$dep</dependency>
 	</dependencies>
-	$repoBlock
+	<repositories>$repos</repositories>
 </project>
 EOL
 
