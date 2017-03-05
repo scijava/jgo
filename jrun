@@ -166,7 +166,7 @@ info "Artifact:"
 info "- groupId    = $g"
 info "- artifactId = $a"
 info "- version    = $v"
-test -n "$c" && info "- classifier = $c" || info "- classifier = <none>"
+test "$c" && info "- classifier = $c" || info "- classifier = <none>"
 
 # Create a workspace in the jrun cache directory
 
@@ -190,7 +190,7 @@ fi
 # Synthesize a dummy Maven project.
 
 dep="<groupId>$g</groupId><artifactId>$a</artifactId><version>$v</version>"
-test -n "$c" && dep="$dep<classifier>$c</classifier>"
+test "$c" && dep="$dep<classifier>$c</classifier>"
 
 for repository in "${repositories[@]}"
 do
@@ -248,7 +248,7 @@ do
 			;;
 	esac
 	g=$(echo "$g" | sed 's/\./\//g')
-	test -n "$c" && artName="$a-$v-$c" || artName="$a-$v"
+	test "$c" && artName="$a-$v-$c" || artName="$a-$v"
 	(
 		test $verbose && set -x
 		ln -s "$m2Repo/$g/$a/$v/$artName.$p" "$workspace"
@@ -262,13 +262,13 @@ then
 	# Infer the main class from the JAR manifest.
 	check unzip grep head sed
 	jarPathPrefix="$workspace/$a"
-	test -n "$c" && jarPathPrefix="$jarPathPrefix-$c"
+	test "$c" && jarPathPrefix="$jarPathPrefix-$c"
 	mainClass=$((test $verbose && set -x;
 		unzip -p "$jarPathPrefix"-[0-9]*.jar META-INF/MANIFEST.MF 2>/dev/null) |
 		grep Main-Class | head -n1 | sed 's/^Main-Class: *\([a-zA-Z0-9_\.]*\).*/\1/')
 	info "Inferred main class: $mainClass"
 fi
-test -n "$mainClass" || die "No main class given, and none found."
+test "$mainClass" || die "No main class given, and none found."
 
 if [ "z${mainClass:0:1}" = 'z@' ]
 then
@@ -280,9 +280,9 @@ then
 		grep '\.class$' | sed 's/\//./g')"
 	completedClass="$(echo "$allClasses" |
 		grep "$mainPath\.class$" | head -n1 | sed 's/\.class$//')"
-	test -n "$completedClass" || completedClass="$(echo "$allClasses" |
+	test "$completedClass" || completedClass="$(echo "$allClasses" |
 		grep "$mainPath.*\.class$" | head -n1 | sed 's/\.class$//')"
-	test -n "$completedClass" ||
+	test "$completedClass" ||
 		die "No autocompletions found for '$mainClass'"
 	mainClass="${completedClass}"
 	info "Autocompleted main class: $mainClass"
