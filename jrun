@@ -109,8 +109,20 @@ done
 # Parse the endpoint.
 
 endpoint=$(expand "$endpoint")
+test "$endpoint" || endpoint=usage
 
-	artifact="$endpoint"
+eRemain="$endpoint"
+while test "$eRemain"
+do
+	# Process the artifact string before the plus.
+	artifact="${eRemain%%+*}"
+	let flen="${#artifact}+1"
+	eRemain="${eRemain:$flen}"
+
+	artifact=$(expand "$artifact")
+
+	c=""
+	m=""
 	case "$artifact" in
 		*:*:*:*:*:*) # G:A:V:C:mainClass
 			die "Too many elements in artifact '$artifact'"
@@ -151,7 +163,7 @@ endpoint=$(expand "$endpoint")
 			echo
 			echo "  -v          : verbose mode flag"
 			echo "  <jvm-args>  : any list of arguments to the JVM"
-			echo "  <endpoint>  : the artifact and main class to execute"
+			echo "  <endpoint>  : the artifact(s) + main class to execute"
 			echo "  <main-args> : any list of arguments to the main class"
 			echo
 			echo "The endpoint should have one of the following formats:"
@@ -166,6 +178,10 @@ endpoint=$(expand "$endpoint")
 			echo "If mainClass is omitted, it is auto-detected."
 			echo "You can also write part of a class beginning with an @ sign,"
 			echo "and it will be auto-completed."
+			echo
+			echo "Multiple artifacts can be concatenated with pluses,"
+			echo "and all of them will be included on the classpath."
+			echo "However, you should not specify multiple main classes."
 			exit 1
 			;;
 	esac
@@ -176,10 +192,15 @@ endpoint=$(expand "$endpoint")
 	test "$c" && info "- classifier = $c" || info "- classifier = <none>"
 	test "$m" && mainClass="$m"
 
+	deps="$deps<dependency><groupId>$g</groupId><artifactId>$a</artifactId><version>$v</version>"
+	test "$c" && deps="$deps<classifier>$c</classifier>"
+	deps="$deps</dependency>"
+done
+
 # Create a workspace in the jrun cache directory
 
 check sed mkdir
-workspace="$cacheDir/$(echo "$endpoint" | sed 's/[:,]/\//g' | sed 's/[^0-9a-zA-Z/\.-]/_/g')"
+workspace="$cacheDir/$(echo "$endpoint" | sed 's/[:+]/\//g' | sed 's/[^0-9a-zA-Z/\.-]/_/g')"
 mkdir -p "$workspace"
 info "Workspace = $workspace"
 
@@ -197,9 +218,6 @@ fi
 
 # Synthesize a dummy Maven project.
 
-dep="<groupId>$g</groupId><artifactId>$a</artifactId><version>$v</version>"
-test "$c" && dep="$dep<classifier>$c</classifier>"
-
 for repository in "${repositories[@]}"
 do
 	key=$(trim "${repository%=*}")
@@ -215,9 +233,7 @@ cat >"$tmpPOM" <<EOL
 	<groupId>$g-BOOTSTRAPPER</groupId>
 	<artifactId>$a-BOOTSTRAPPER</artifactId>
 	<version>0</version>
-	<dependencies>
-		<dependency>$dep</dependency>
-	</dependencies>
+	<dependencies>$deps</dependencies>
 	<repositories>$repos</repositories>
 </project>
 EOL
