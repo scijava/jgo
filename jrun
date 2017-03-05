@@ -110,71 +110,71 @@ done
 
 endpoint=$(expand "$endpoint")
 
-artifact="$endpoint"
-case "$artifact" in
-	*:*:*:*:*:*) # G:A:V:C:mainClass
-		die "Too many elements in artifact '$artifact'"
-		;;
-	*:*:*:*:*) # G:A:V:C:mainClass
-		g="${artifact%%:*}"; remain="${artifact#*:}"
-		a="${remain%%:*}"; remain="${remain#*:}"
-		v="${remain%%:*}"; remain="${remain#*:}"
-		c="${remain%%:*}"
-		m="${remain#*:}"
-		;;
-	*:*:*:*) # G:A:V:mainClass
-		g="${artifact%%:*}"; remain="${artifact#*:}"
-		a="${remain%%:*}"; remain="${remain#*:}"
-		v="${remain%%:*}"
-		m="${remain#*:}"
-		;;
-	*:*:*) # G:A:mainClass or G:A:V
-		g="${artifact%%:*}"; remain="${artifact#*:}"
-		a="${remain%%:*}"; remain="${remain#*:}"
-		case "$remain" in
-			[0-9]*|RELEASE|LATEST)
-				v="$remain"
-				;;
-			*)
-				v="RELEASE"
-				m="$remain"
-				;;
-		esac
-		;;
-	*:*) # G:A
-		g="${artifact%%:*}"
-		a="${artifact#*:}"
-		v="RELEASE"
-		;;
-	*)
-		echo "Usage: jrun [-v] <jvm-args> <endpoint> <main-args>"
-		echo
-		echo "  -v          : verbose mode flag"
-		echo "  <jvm-args>  : any list of arguments to the JVM"
-		echo "  <endpoint>  : the artifact and main class to execute"
-		echo "  <main-args> : any list of arguments to the main class"
-		echo
-		echo "The endpoint should have one of the following formats:"
-		echo
-		echo "- groupId:artifactId"
-		echo "- groupId:artifactId:version"
-		echo "- groupId:artifactId:mainClass"
-		echo "- groupId:artifactId:version:mainClass"
-		echo "- groupId:artifactId:version:classifier:mainClass"
-		echo
-		echo "If version is omitted, then RELEASE is used."
-		echo "If mainClass is omitted, it is auto-detected."
-		echo "You can also write part of a class beginning with an @ sign,"
-		echo "and it will be auto-completed."
-		exit 1
-		;;
-esac
-info "Artifact:"
-info "- groupId    = $g"
-info "- artifactId = $a"
-info "- version    = $v"
-test "$c" && info "- classifier = $c" || info "- classifier = <none>"
-test "$m" && mainClass="$m"
+	artifact="$endpoint"
+	case "$artifact" in
+		*:*:*:*:*:*) # G:A:V:C:mainClass
+			die "Too many elements in artifact '$artifact'"
+			;;
+		*:*:*:*:*) # G:A:V:C:mainClass
+			g="${artifact%%:*}"; remain="${artifact#*:}"
+			a="${remain%%:*}"; remain="${remain#*:}"
+			v="${remain%%:*}"; remain="${remain#*:}"
+			c="${remain%%:*}"
+			m="${remain#*:}"
+			;;
+		*:*:*:*) # G:A:V:mainClass
+			g="${artifact%%:*}"; remain="${artifact#*:}"
+			a="${remain%%:*}"; remain="${remain#*:}"
+			v="${remain%%:*}"
+			m="${remain#*:}"
+			;;
+		*:*:*) # G:A:mainClass or G:A:V
+			g="${artifact%%:*}"; remain="${artifact#*:}"
+			a="${remain%%:*}"; remain="${remain#*:}"
+			case "$remain" in
+				[0-9]*|RELEASE|LATEST)
+					v="$remain"
+					;;
+				*)
+					v="RELEASE"
+					m="$remain"
+					;;
+			esac
+			;;
+		*:*) # G:A
+			g="${artifact%%:*}"
+			a="${artifact#*:}"
+			v="RELEASE"
+			;;
+		*)
+			echo "Usage: jrun [-v] <jvm-args> <endpoint> <main-args>"
+			echo
+			echo "  -v          : verbose mode flag"
+			echo "  <jvm-args>  : any list of arguments to the JVM"
+			echo "  <endpoint>  : the artifact and main class to execute"
+			echo "  <main-args> : any list of arguments to the main class"
+			echo
+			echo "The endpoint should have one of the following formats:"
+			echo
+			echo "- groupId:artifactId"
+			echo "- groupId:artifactId:version"
+			echo "- groupId:artifactId:mainClass"
+			echo "- groupId:artifactId:version:mainClass"
+			echo "- groupId:artifactId:version:classifier:mainClass"
+			echo
+			echo "If version is omitted, then RELEASE is used."
+			echo "If mainClass is omitted, it is auto-detected."
+			echo "You can also write part of a class beginning with an @ sign,"
+			echo "and it will be auto-completed."
+			exit 1
+			;;
+	esac
+	info "Artifact:"
+	info "- groupId    = $g"
+	info "- artifactId = $a"
+	info "- version    = $v"
+	test "$c" && info "- classifier = $c" || info "- classifier = <none>"
+	test "$m" && mainClass="$m"
 
 # Create a workspace in the jrun cache directory
 
