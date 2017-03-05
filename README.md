@@ -2,12 +2,19 @@
 
 ## Summary
 
-I got really fed up with the fact that there is no easy package manager
-for Java. We have Maven, which is amazing, but no easy way to actually
-__launch code__ from the beautifully managed dependencies stored so
-lovingly into `~/.m2/repository`.
+[Maven](https://maven.apache.org/) is amazing. It manages dependencies so that
+Java projects become reusable "building blocks" in a much more robust way than
+many other languages offer. And the
+[Maven Central repository](https://search.maven.org/) contains a tremendous
+wealth of code, ripe for reuse in your own projects.
 
-So now I have jrun. A lovely tool, just for me! And maybe you too.
+But shockingly, Maven provides no easy way to actually __launch code__ from the
+beautifully managed dependencies stored so lovingly into `~/.m2/repository`.
+
+This project fills that gap: `jrun` launches Java code. You do not need to
+download or install any JARs; you just specify an "endpoint" consisting of a
+[Maven artifact](http://stackoverflow.com/a/2487511/1207769) identifier, plus
+a main class if needed/desired, and `jrun` uses Maven to obtain and run it.
 
 ## Installation
 
