@@ -110,25 +110,26 @@ done
 
 endpoint=$(expand "$endpoint")
 
-case "$endpoint" in
+artifact="$endpoint"
+case "$artifact" in
 	*:*:*:*:*:*) # G:A:V:C:mainClass
-		die "Too many elements in endpoint '$endpoint'"
+		die "Too many elements in artifact '$artifact'"
 		;;
 	*:*:*:*:*) # G:A:V:C:mainClass
-		g="${endpoint%%:*}"; remain="${endpoint#*:}"
+		g="${artifact%%:*}"; remain="${artifact#*:}"
 		a="${remain%%:*}"; remain="${remain#*:}"
 		v="${remain%%:*}"; remain="${remain#*:}"
 		c="${remain%%:*}"
 		mainClass="${remain#*:}"
 		;;
 	*:*:*:*) # G:A:V:mainClass
-		g="${endpoint%%:*}"; remain="${endpoint#*:}"
+		g="${artifact%%:*}"; remain="${artifact#*:}"
 		a="${remain%%:*}"; remain="${remain#*:}"
 		v="${remain%%:*}"
 		mainClass="${remain#*:}"
 		;;
 	*:*:*) # G:A:mainClass or G:A:V
-		g="${endpoint%%:*}"; remain="${endpoint#*:}"
+		g="${artifact%%:*}"; remain="${artifact#*:}"
 		a="${remain%%:*}"; remain="${remain#*:}"
 		case "$remain" in
 			[0-9]*|RELEASE|LATEST)
@@ -141,8 +142,8 @@ case "$endpoint" in
 		esac
 		;;
 	*:*) # G:A
-		g="${endpoint%%:*}"
-		a="${endpoint#*:}"
+		g="${artifact%%:*}"
+		a="${artifact#*:}"
 		v="RELEASE"
 		;;
 	*)
