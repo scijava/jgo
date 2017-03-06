@@ -53,14 +53,19 @@ However, you should not specify multiple main classes.
 
 ### Examples
 
-| Tool         | Command                                                                |
-|:------------:|:----------------------------------------------------------------------:|
-| Jython REPL  | `jrun org.python:jython-standalone`                                    |
-| JRuby eval   | `echo "puts 'Hello Ruby'" | jrun org.jruby:jruby-complete:@jruby.Main` |
-| SciJava REPL | `jrun org.scijava:scijava-common:@ScriptREPL`                          |
+| Program                      | Command                                                                              |
+|:----------------------------:|:------------------------------------------------------------------------------------:|
+| Jython REPL                  | `jrun org.python:jython-standalone`                                                  |
+| JRuby eval                   | `echo "puts 'Hello Ruby'" | jrun org.jruby:jruby-complete:@jruby.Main`               |
+| Groovy REPL                  | `jrun org.codehaus.groovy:groovy-groovysh:@shell.Main+commons-cli:commons-cli:1.3.1` |
+| SciJava REPL with JRuby      | `jrun org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-jruby`            |
+| SciJava REPL with Jython     | `jrun org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-jython`           |
+| SciJava REPL with Groovy     | `jrun org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-groovy`           |
+| SciJava REPL with Clojure    | `jrun org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-clojure`          |
+| SciJava REPL with JavaScript | `jrun org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-javascript`       |
 
-Note that for the SciJava REPL, there are no `scripting-<foo>` language plugins
-on the classpath in this case; see "Configuration" below for a solution.
+Note that for the SciJava REPL, desired language plugins
+are added to the classpath via the `+` syntax.
 
 ### Configuration
 
@@ -81,11 +86,11 @@ single-pass in the order they are defined. So e.g. now you can run:
 ```
 jrun repl
 ```
-Note that in the example above, the main class
-(`org.scijava.script.ScriptREPL`) comes from a _different_ artifact than the
-toplevel artifact (`net.imagej:imagej`). This is intentional, so that the
-various SciJava `scripting-<foo>` artifacts are included in the classpath of
-the REPL.
+Note that with the `repl` shortcut above, the main class
+(`org.scijava.script.ScriptREPL`) comes from a _different_ artifact than
+the toplevel artifact (`net.imagej:imagej`). This is intentional, so that
+all of [ImageJ](https://imagej.net/), including all of the various SciJava
+`scripting-<foo>` plugins, is included in the classpath of the REPL.
 
 ## Alternatives
 
