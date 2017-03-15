@@ -102,6 +102,13 @@ do
 			-v)
 				verbose=1
 				;;
+			-u)
+				updateCache=1
+				;;
+			-U)
+				updateMaven=1
+				updateCache=1
+				;;
 			-*)
 				jvm_args+=("$1")
 				;;
@@ -166,9 +173,11 @@ do
 			v="RELEASE"
 			;;
 		*)
-			echo "Usage: jrun [-v] <jvm-args> <endpoint> <main-args>"
+			echo "Usage: jrun [-v] [-u] [-U] <jvm-args> <endpoint> <main-args>"
 			echo
 			echo "  -v          : verbose mode flag"
+			echo "  -u          : update/regenerate cached environment"
+			echo "  -U          : force update from remote Maven repositories"
 			echo "  <jvm-args>  : any list of arguments to the JVM"
 			echo "  <endpoint>  : the artifact(s) + main class to execute"
 			echo "  <main-args> : any list of arguments to the main class"
@@ -206,8 +215,10 @@ done
 
 # Create a workspace in the jrun cache directory
 
-check sed mkdir
+check sed rm mkdir
 workspace="$cacheDir/$(echo "$endpoint" | sed 's/[:+]/\//g' | sed 's/[^0-9a-zA-Z/\.-]/_/g')"
+
+test $updateCache && rm -rf "$workspace"
 mkdir -p "$workspace"
 info "Workspace = $workspace"
 
@@ -246,7 +257,8 @@ cat >"$tmpPOM" <<EOL
 EOL
 
 check mvn
-buildLog=$(test $verbose && set -x; mvn -f "$tmpPOM" dependency:resolve 2>&1)
+test $updateMaven && mvnArgs=-U
+buildLog=$(test $verbose && set -x; mvn $mvnArgs -f "$tmpPOM" dependency:resolve 2>&1)
 if [ $? -ne 0 ]
 then
 	err "Failed to bootstrap the artifact. Here is the log:"
