@@ -92,17 +92,24 @@ jvm_args=()
 app_args=()
 while test $# -gt 0
 do
-	case "$1" in
-	-v)
-		test -z "$endpoint" && verbose=1 || app_args+=("$1")
-		;;
-	-*)
-		test -z "$endpoint" && jvm_args+=("$1") || app_args+=("$1")
-		;;
-	*)
-		test -z "$endpoint" && endpoint="$1" || app_args+=("$1")
-		;;
-	esac
+	if [ "$endpoint" ]
+	then
+		# Argument to the main class.
+		app_args+=("$1")
+	else
+		# Argument to the JVM, or jrun itself.
+		case "$1" in
+			-v)
+				verbose=1
+				;;
+			-*)
+				jvm_args+=("$1")
+				;;
+			*)
+				endpoint="$1"
+				;;
+		esac
+	fi
 	shift
 done
 
