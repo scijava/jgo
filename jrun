@@ -61,8 +61,8 @@ do
 			# skip comment
 			;;
 		\[*\])
-			ltrim="${line:1}"
-			section="${ltrim%?}"
+			ltrim=${line:1}
+			section=${ltrim%?}
 			;;
 		*=*)
 			case "$section" in
@@ -126,13 +126,13 @@ done
 endpoint=$(expand "$endpoint")
 test "$endpoint" || endpoint=usage
 
-eRemain="$endpoint"
+eRemain=$endpoint
 while test "$eRemain"
 do
 	# Process the artifact string before the plus.
-	artifact="${eRemain%%+*}"
-	let flen="${#artifact}+1"
-	eRemain="${eRemain:$flen}"
+	artifact=${eRemain%%+*}
+	let flen=${#artifact}+1
+	eRemain=${eRemain:$flen}
 
 	artifact=$(expand "$artifact")
 
@@ -143,21 +143,21 @@ do
 			die "Too many elements in artifact '$artifact'"
 			;;
 		*:*:*:*:*) # G:A:V:C:mainClass
-			g="${artifact%%:*}"; remain="${artifact#*:}"
-			a="${remain%%:*}"; remain="${remain#*:}"
-			v="${remain%%:*}"; remain="${remain#*:}"
-			c="${remain%%:*}"
-			m="${remain#*:}"
+			g=${artifact%%:*}; remain=${artifact#*:}
+			a=${remain%%:*}; remain=${remain#*:}
+			v=${remain%%:*}; remain=${remain#*:}
+			c=${remain%%:*}
+			m=${remain#*:}
 			;;
 		*:*:*:*) # G:A:V:mainClass
-			g="${artifact%%:*}"; remain="${artifact#*:}"
-			a="${remain%%:*}"; remain="${remain#*:}"
-			v="${remain%%:*}"
-			m="${remain#*:}"
+			g=${artifact%%:*}; remain=${artifact#*:}
+			a=${remain%%:*}; remain=${remain#*:}
+			v=${remain%%:*}
+			m=${remain#*:}
 			;;
 		*:*:*) # G:A:mainClass or G:A:V
-			g="${artifact%%:*}"; remain="${artifact#*:}"
-			a="${remain%%:*}"; remain="${remain#*:}"
+			g=${artifact%%:*}; remain=${artifact#*:}
+			a=${remain%%:*}; remain=${remain#*:}
 			case "$remain" in
 				[0-9]*|RELEASE|LATEST)
 					v="$remain"
@@ -169,8 +169,8 @@ do
 			esac
 			;;
 		*:*) # G:A
-			g="${artifact%%:*}"
-			a="${artifact#*:}"
+			g=${artifact%%:*}
+			a=${artifact#*:}
 			v="RELEASE"
 			;;
 		*)
@@ -275,20 +275,20 @@ while read gav
 do
 	case "$gav" in
 		*:*:*:*:*:*) # G:A:P:C:V:S
-			g="${gav%%:*}"; remain="${gav#*:}"
-			a="${remain%%:*}"; remain="${remain#*:}"
-			p="${remain%%:*}"; remain="${remain#*:}"
-			c="${remain%%:*}"; remain="${remain#*:}"
-			v="${remain%%:*}"
-			s="${remain#*:}"
+			g=${gav%%:*}; remain=${gav#*:}
+			a=${remain%%:*}; remain=${remain#*:}
+			p=${remain%%:*}; remain=${remain#*:}
+			c=${remain%%:*}; remain=${remain#*:}
+			v=${remain%%:*}
+			s=${remain#*:}
 			;;
 		*:*:*:*:*) # G:A:P:V:S
-			g="${gav%%:*}"; remain="${gav#*:}"
-			a="${remain%%:*}"; remain="${remain#*:}"
-			p="${remain%%:*}"; remain="${remain#*:}"
+			g=${gav%%:*}; remain=${gav#*:}
+			a=${remain%%:*}; remain=${remain#*:}
+			p=${remain%%:*}; remain=${remain#*:}
 			c=""
-			v="${remain%%:*}"
-			s="${remain#*:}"
+			v=${remain%%:*}
+			s=${remain#*:}
 			;;
 	esac
 	g=$(echo "$g" | sed 's/\./\//g')
@@ -319,16 +319,16 @@ then
 	# Autocomplete the main class by scanning the JARs.
 	check jar grep sed
 	mainPath=$(echo "${mainClass:1}" | sed 's/\//./g')
-	allClasses="$((test $verbose && set -x;
+	allClasses=$((test $verbose && set -x;
 		for jar in "$workspace/"*.jar; do jar tf "$jar"; done) |
-		grep '\.class$' | sed 's/\//./g')"
-	completedClass="$(echo "$allClasses" |
-		grep "$mainPath\.class$" | head -n1 | sed 's/\.class$//')"
-	test "$completedClass" || completedClass="$(echo "$allClasses" |
-		grep "$mainPath.*\.class$" | head -n1 | sed 's/\.class$//')"
+		grep '\.class$' | sed 's/\//./g')
+	completedClass=$(echo "$allClasses" |
+		grep "$mainPath\.class$" | head -n1 | sed 's/\.class$//')
+	test "$completedClass" || completedClass=$(echo "$allClasses" |
+		grep "$mainPath.*\.class$" | head -n1 | sed 's/\.class$//')
 	test "$completedClass" ||
 		die "No autocompletions found for '$mainClass'"
-	mainClass="${completedClass}"
+	mainClass=$completedClass
 	info "Autocompleted main class: $mainClass"
 fi
 echo "$mainClass" >"$workspace/mainClass"
