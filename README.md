@@ -56,7 +56,7 @@ However, you should not specify multiple main classes.
 | Program                      | Command                                                                              |
 |:----------------------------:|:------------------------------------------------------------------------------------:|
 | Jython REPL                  | `jrun org.python:jython-standalone`                                                  |
-| JRuby eval                   | `echo "puts 'Hello Ruby'" | jrun org.jruby:jruby-complete:@jruby.Main`               |
+| JRuby eval                   | `echo "puts 'Hello Ruby'" \| jrun org.jruby:jruby-complete:@jruby.Main`              |
 | Groovy REPL                  | `jrun org.codehaus.groovy:groovy-groovysh:@shell.Main+commons-cli:commons-cli:1.3.1` |
 | SciJava REPL with JRuby      | `jrun org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-jruby`            |
 | SciJava REPL with Jython     | `jrun org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-jython`           |
