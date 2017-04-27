@@ -26,11 +26,13 @@ for the heavy lifting. If you are missing anything, the script will tell you.
 ## Usage
 
 ```
-Usage: jrun [-v] <jvm-args> <endpoint> <main-args>
+Usage: jrun [-v] [-u] [-U] <jvm-args> <endpoint> <main-args>
 
   -v          : verbose mode flag
+  -u          : update/regenerate cached environment
+  -U          : force update from remote Maven repositories
   <jvm-args>  : any list of arguments to the JVM
-  <endpoint>  : the artifact and main class to execute
+  <endpoint>  : the artifact(s) + main class to execute
   <main-args> : any list of arguments to the main class
 
 The endpoint should have one of the following formats:
