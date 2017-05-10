@@ -66,8 +66,7 @@ However, you should not specify multiple main classes.
 | SciJava REPL with Clojure    | `jrun org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-clojure`          |
 | SciJava REPL with JavaScript | `jrun org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-javascript`       |
 
-Note that for the SciJava REPL, desired language plugins
-are added to the classpath via the `+` syntax.
+Note the usage of the `+` syntax as needed to append elements to the classpath.
 
 ### FAQ
 
