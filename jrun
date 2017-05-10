@@ -103,6 +103,9 @@ do
 			-v)
 				verbose=1
 				;;
+			-vv)
+				verbose=2
+				;;
 			-u)
 				updateCache=1
 				;;
@@ -259,6 +262,7 @@ EOL
 
 check mvn
 test $updateMaven && mvnArgs=-U
+test "$verbose" -gt 1 && mvnArgs=-X
 buildLog=$(test $verbose && set -x; mvn $mvnArgs -f "$tmpPOM" dependency:resolve 2>&1)
 if [ $? -ne 0 ]
 then
