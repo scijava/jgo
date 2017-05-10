@@ -357,7 +357,7 @@ do
 	test "$c" && artName="$a-$v-$c" || artName="$a-$v"
 	(
 		test $verbose && set -x
-		ln -s "$m2Repo/$g/$a/$v/$artName.$p" "$workspace"
+		ln "$m2Repo/$g/$a/$v/$artName.$p" "$workspace"
 	)
 done
 
