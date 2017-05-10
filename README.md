@@ -75,9 +75,9 @@ are added to the classpath via the `+` syntax.
   Endpoints are synthesized in a local cache under `~/.jrun`.
   So invoking the same endpoint a second time is really quick.
 * __What does "no installation" mean?__
-  Classpath elements are symlinked into `~/.jrun` from `~/.m2/repository`
-  rather than copied, so the `~/.jrun` folder has a tiny footprint
-  even if you execute lots of different endpoints.
+  Classpath elements are [hard-linked](https://en.wikipedia.org/wiki/Hard_link)
+  into `~/.jrun` from `~/.m2/repository` rather than copied, so the `~/.jrun`
+  folder has a tiny footprint even if you execute lots of different endpoints.
 * __What if an endpoint has a new version?__
   Pass the `-U` flag to `jrun` to rebuild the endpoint.
   Note that unlike `mvn`, though, `jrun` does not check for updates otherwise.
