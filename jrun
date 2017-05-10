@@ -25,6 +25,41 @@ check() {
 	done
 }
 
+isWindows() {
+	case "$(uname)" in
+		CYGWIN*)
+			echo "cygwin"
+			;;
+		MINGW*)
+			echo "mingw"
+			;;
+		*)
+			;;
+	esac
+}
+
+goodPath() {
+	# NB: Non-Cygwin Windows programs, including mvn and java,
+	# do not understand the Cygwin-specific '/' prefix. They need
+	# absolute paths to begin with a drive letter (e.g., 'C:').
+	if [ "$(isWindows)" ]
+	then
+		# NB: Advice online is to use the cygpath command for
+		# converting from *nix to Windows paths. However, I
+		# want to ensure this also works in other *nix-like
+		# environments, particularly MinGW / MSYS / Git Bash.
+		(
+			cd "$(dirname "$1")" &&
+			dir=$(cmd /c cd)
+			# HACK: Windows commands emit a trailing \r\n.
+			dir=${dir%?}
+			echo "$dir\\$(basename "$1")"
+		)
+	else
+		echo "$1"
+	fi
+}
+
 m2Path() {
 	test "$M2_REPO" && echo "$M2_REPO" || echo "$HOME/.m2"
 }
@@ -52,8 +87,9 @@ expand() {
 launchJava() {
 	check java
 	(
+		goodCP=$(goodPath "$workspace/*")
 		test $verbose && set -x
-		java -cp "$workspace/*" "${jvm_args[@]}" "$mainClass" "${app_args[@]}"
+		java -cp "$goodCP" "${jvm_args[@]}" "$mainClass" "${app_args[@]}"
 	)
 }
 
@@ -272,7 +308,8 @@ EOL
 check mvn
 test $updateMaven && mvnArgs=-U
 test "$verbose" = "2" && mvnArgs=-X
-buildLog=$(test $verbose && set -x; mvn $mvnArgs -f "$tmpPOM" dependency:resolve 2>&1)
+goodPOM=$(goodPath "$tmpPOM")
+buildLog=$(test $verbose && set -x; mvn $mvnArgs -f "$goodPOM" dependency:resolve 2>&1)
 if [ $? -ne 0 ]
 then
 	err "Failed to bootstrap the artifact."
