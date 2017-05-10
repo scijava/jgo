@@ -25,6 +25,10 @@ check() {
 	done
 }
 
+m2Path() {
+	test "$M2_REPO" && echo "$M2_REPO" || echo "$HOME/.m2"
+}
+
 trim() {
 	check sed
 	echo "$*" | sed 's/^ *//' | sed 's/ *$//'
@@ -49,7 +53,7 @@ expand() {
 
 configFile="$HOME/.jrunrc"
 cacheDir="$HOME/.jrun"
-m2Repo="$HOME/.m2/repository"
+m2Repo="$(m2Path)/repository"
 repositories=()
 shortcuts=()
 
