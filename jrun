@@ -49,6 +49,14 @@ expand() {
 	echo "$expanded"
 }
 
+launchJava() {
+	check java
+	(
+		test $verbose && set -x
+		java -cp "$workspace/*" "${jvm_args[@]}" "$mainClass" "${app_args[@]}"
+	)
+}
+
 # Parse configuration file.
 
 configFile="$HOME/.jrunrc"
@@ -233,12 +241,9 @@ info "Workspace = $workspace"
 if [ -f "$workspace/mainClass" ]
 then
 	# Workspace is already populated; just use it
-	check cat java
+	check cat
 	mainClass=$(cat "$workspace/mainClass")
-	(
-		test $verbose && set -x
-		java -cp "$workspace/*" "${jvm_args[@]}" "$mainClass" "${app_args[@]}"
-	)
+	launchJava
 	exit 0
 fi
 
@@ -355,8 +360,4 @@ echo "$mainClass" >"$workspace/mainClass"
 
 # Launch it!
 
-check java
-(
-	test $verbose && set -x
-	java -cp "$workspace/*" "${jvm_args[@]}" "$mainClass" "${app_args[@]}"
-)
+launchJava
