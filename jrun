@@ -262,7 +262,7 @@ EOL
 
 check mvn
 test $updateMaven && mvnArgs=-U
-test "$verbose" -gt 1 && mvnArgs=-X
+test "$verbose" = "2" && mvnArgs=-X
 buildLog=$(test $verbose && set -x; mvn $mvnArgs -f "$tmpPOM" dependency:resolve 2>&1)
 if [ $? -ne 0 ]
 then
