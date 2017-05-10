@@ -262,8 +262,20 @@ test $updateMaven && mvnArgs=-U
 buildLog=$(test $verbose && set -x; mvn $mvnArgs -f "$tmpPOM" dependency:resolve 2>&1)
 if [ $? -ne 0 ]
 then
-	err "Failed to bootstrap the artifact. Here is the log:"
-	err "$buildLog"
+	err "Failed to bootstrap the artifact."
+	err
+	err "Possible solutions:"
+	err "* Double check the endpoint for correctness (https://search.maven.org/)."
+	err "* Add needed repositories to ~/.jrunrc [repositories] block (see README)."
+	err "* Try with an explicit version number (release metadata might be wrong)."
+	err
+	if [ "$verbose" ]
+	then
+		err "Here is the Maven log:"
+		err "$buildLog"
+	else
+		err "Rerun with the -v flag to see the Maven log."
+	fi
 	exit 2
 fi
 
