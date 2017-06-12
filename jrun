@@ -236,7 +236,7 @@ do
 			echo
 			echo "  -v          : verbose mode flag"
 			echo "  -u          : update/regenerate cached environment"
-			echo "  -U          : force update from remote Maven repositories"
+			echo "  -U          : force update from remote Maven repositories (implies -u)"
 			echo "  <jvm-args>  : any list of arguments to the JVM"
 			echo "  <endpoint>  : the artifact(s) + main class to execute"
 			echo "  <main-args> : any list of arguments to the main class"

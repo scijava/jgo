@@ -30,7 +30,7 @@ Usage: jrun [-v] [-u] [-U] <jvm-args> <endpoint> <main-args>
 
   -v          : verbose mode flag
   -u          : update/regenerate cached environment
-  -U          : force update from remote Maven repositories
+  -U          : force update from remote Maven repositories (implies -u)
   <jvm-args>  : any list of arguments to the JVM
   <endpoint>  : the artifact(s) + main class to execute
   <main-args> : any list of arguments to the main class
