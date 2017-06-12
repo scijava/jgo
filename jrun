@@ -26,10 +26,28 @@ check() {
 }
 
 doLink() {
-	check ln cp
-	(test $verbose && set -x; ln "$1" "$2") ||
-	(test $verbose && set -x; cp "$1" "$2") ||
-		die "Cannot copy '$1' into jrun workspace '$2'"
+	case "$links" in
+		soft)
+			# Use symlinks.
+			check ln cp
+			(test $verbose && set -x; ln -s "$1" "$2") ||
+			(test $verbose && set -x; cp "$1" "$2") ||
+				die "Cannot copy '$1' into jrun workspace '$2'"
+			;;
+		none)
+			# Do not use links.
+			check cp
+			(test $verbose && set -x; cp "$1" "$2") ||
+				die "Cannot copy '$1' into jrun workspace '$2'"
+			;;
+		*)
+			# Use hard links (the default).
+			check ln cp
+			(test $verbose && set -x; ln "$1" "$2") ||
+			(test $verbose && set -x; cp "$1" "$2") ||
+				die "Cannot copy '$1' into jrun workspace '$2'"
+			;;
+	esac
 }
 
 isWindows() {
@@ -130,6 +148,7 @@ do
 					case "$key" in
 						cacheDir) cacheDir="$val";;
 						m2Repo) m2Repo="$val";;
+						links) links="$val";;
 					esac
 					;;
 				shortcuts)

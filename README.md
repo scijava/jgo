@@ -138,6 +138,7 @@ There are a few configurable settings:
 [settings]
 m2Repo = /path/to/.m2Repo (default ~/.m2/repository)
 cacheDir = /path/to/.jrun (default ~/.jrun)
+links = soft (options: hard, soft, none; default hard)
 ```
 
 ## Alternatives
