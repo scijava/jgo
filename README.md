@@ -90,16 +90,33 @@ Note the usage of the `+` syntax as needed to append elements to the classpath.
 
 ### Configuration
 
-In the file `$HOME/.jrunrc`, you can define shortcuts and repositories; e.g.:
+You can configure the behavior of `jrun` using the `$HOME/.jrunrc` file.
+
+#### Repositories
+
+You can define additional remote Maven repositories,
+from which artifacts will be retrieved. E.g.:
+
+```ini
+[repositories]
+imagej.public = https://maven.imagej.net/content/groups/public
+```
+
+If you need more control over where artifacts come from—for example, if you
+want to use your own remote Maven repository as a mirror of Maven Central—you
+can do it using Maven's usual `~/.m2/settings.xml`; see [Using Mirrors for
+Repositories](https://maven.apache.org/guides/mini/guide-mirror-settings.html).
+
+#### Shortcuts
+
+You can define shortcuts for launching commonly used programs:
+
 ```ini
 [shortcuts]
 repl = imagej:org.scijava.script.ScriptREPL
 imagej = net.imagej:imagej
 fiji = sc.fiji:fiji:LATEST
 scifio = io.scif:scifio-cli
-
-[repositories]
-imagej.public = https://maven.imagej.net/content/groups/public
 ```
 
 Shortcuts are substituted verbatim from the beginning of the endpoint,
@@ -112,6 +129,16 @@ Note that with the `repl` shortcut above, the main class
 the toplevel artifact (`net.imagej:imagej`). This is intentional, so that
 all of [ImageJ](https://imagej.net/), including all of the various SciJava
 `scripting-<foo>` plugins, is included in the classpath of the REPL.
+
+#### Settings
+
+There are a few configurable settings:
+
+```ini
+[settings]
+m2Repo = /path/to/.m2Repo (default ~/.m2/repository)
+cacheDir = /path/to/.jrun (default ~/.jrun)
+```
 
 ## Alternatives
 
