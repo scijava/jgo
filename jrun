@@ -11,7 +11,7 @@
 # cache. Then you would get all the features of exec-maven-plugin.
 # But this script works in a pinch for simple cases.
 
-# Useful functions.
+# Define some useful functions.
 
 info() { test $verbose && echo "[INFO] $@"; }
 err() { echo "$@" 1>&2; }
@@ -51,7 +51,7 @@ goodPath() {
 		(
 			cd "$(dirname "$1")" &&
 			dir=$(cmd /c cd)
-			# HACK: Windows commands emit a trailing \r\n.
+			# HACK: Windows commands emit a trailing \r.
 			dir=${dir%?}
 			echo "$dir\\$(basename "$1")"
 		)
