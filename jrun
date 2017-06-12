@@ -25,6 +25,13 @@ check() {
 	done
 }
 
+doLink() {
+	check ln cp
+	(test $verbose && set -x; ln "$1" "$2") ||
+	(test $verbose && set -x; cp "$1" "$2") ||
+		die "Cannot copy '$1' into jrun workspace '$2'"
+}
+
 isWindows() {
 	case "$(uname)" in
 		CYGWIN*)
@@ -331,7 +338,7 @@ fi
 
 # Build a workspace of symlinked artifacts.
 
-check grep sed ln
+check grep sed
 echo "$buildLog" | grep ':\(compile\|runtime\)' | sed 's/\[INFO\] *//' |
 while read gav
 do
@@ -355,10 +362,7 @@ do
 	esac
 	g=$(echo "$g" | sed 's/\./\//g')
 	test "$c" && artName="$a-$v-$c" || artName="$a-$v"
-	(
-		test $verbose && set -x
-		ln "$m2Repo/$g/$a/$v/$artName.$p" "$workspace"
-	)
+	doLink "$m2Repo/$g/$a/$v/$artName.$p" "$workspace"
 done
 
 # Massage the main class as needed.
