@@ -69,17 +69,7 @@ goodPath() {
 	# absolute paths to begin with a drive letter (e.g., 'C:').
 	if [ "$(isWindows)" ]
 	then
-		# NB: Advice online is to use the cygpath command for
-		# converting from *nix to Windows paths. However, I
-		# want to ensure this also works in other *nix-like
-		# environments, particularly MinGW / MSYS / Git Bash.
-		(
-			cd "$(dirname "$1")" &&
-			dir=$(cmd /c cd)
-			# HACK: Windows commands emit a trailing \r.
-			dir=${dir%?}
-			echo "$dir\\$(basename "$1")"
-		)
+		echo "$(cygpath -aw "$(dirname "$1")")\\$(basename "$1")"
 	else
 		echo "$1"
 	fi
