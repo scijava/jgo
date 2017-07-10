@@ -64,8 +64,8 @@ isWindows() {
 }
 
 goodPath() {
-	# NB: Non-Cygwin Windows programs, including mvn and java,
-	# do not understand the Cygwin-specific '/' prefix. They need
+	# NB: Non-POSIX Windows programs, including mvn and java,
+	# do not understand the POSIX-compliant '/' prefix. They need
 	# absolute paths to begin with a drive letter (e.g., 'C:').
 	if [ "$(isWindows)" ]
 	then
