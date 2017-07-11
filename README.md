@@ -164,7 +164,7 @@ project should more precisely match those of each endpoint itself—although in
 the case of multiple endpoints concatenated via the `+` operator with
 conflicting dependency management, the earlier endpoints will win because they
 will be declared earlier in the POM. See also
-[issue #9](https://github.com/ctrueden/jrun/issue/9) in the jrun issue tracker.
+[issue #9](https://github.com/ctrueden/jrun/issues/9) in the jrun issue tracker.
 
 ## Alternatives
 
