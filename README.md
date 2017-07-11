@@ -31,6 +31,7 @@ Usage: jrun [-v] [-u] [-U] <jvm-args> <endpoint> <main-args>
   -v          : verbose mode flag
   -u          : update/regenerate cached environment
   -U          : force update from remote Maven repositories (implies -u)
+  -m          : use endpoints for dependency management (see "Details" below)
   <jvm-args>  : any list of arguments to the JVM
   <endpoint>  : the artifact(s) + main class to execute
   <main-args> : any list of arguments to the main class
@@ -140,6 +141,27 @@ m2Repo = /path/to/.m2Repo (default ~/.m2/repository)
 cacheDir = /path/to/.jrun (default ~/.jrun)
 links = soft (options: hard, soft, none; default hard)
 ```
+
+### Details
+
+#### Dependency management
+
+Maven has a feature whereby a project can override the versions of transitive
+(a.k.a. inherited) dependencies, via a `<dependencyManagement>` configuration.
+The problem is: a library may then believe it depends on components at
+particular versions as defined by its `<dependencyManagement>`, but downstream
+projects which depend on that library will resolve to different versions.
+See [this SO thread](https://stackoverflow.com/q/45041888/1207769) and
+[this gist](https://gist.github.com/ctrueden/d058330c8a3687317806ce8cc18332c3)
+for full details. To work around this issue, you can pass `-m` to jrun, which
+causes it to add all endpoints to the synthesized POM's
+`<dependencyManagement>` section using
+[import scope](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Importing_Dependencies).
+By doing this, the versions of transitive dependencies used in the synthesized
+project should more precisely match those of each endpoint itself—although in
+the case of multiple endpoints concatenated via the `+` operator with
+conflicting dependency management, the earlier endpoints will win because they
+will be declared earlier in the POM. See also issue #9 in the jrun repository.
 
 ## Alternatives
 

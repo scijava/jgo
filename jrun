@@ -164,6 +164,9 @@ do
 	else
 		# Argument to the JVM, or jrun itself.
 		case "$1" in
+			-m)
+				manageDeps=1
+				;;
 			-v)
 				verbose=1
 				;;
@@ -246,6 +249,7 @@ do
 			echo "  -v          : verbose mode flag"
 			echo "  -u          : update/regenerate cached environment"
 			echo "  -U          : force update from remote Maven repositories (implies -u)"
+			echo "  -m          : use endpoints for dependency management (see README)"
 			echo "  <jvm-args>  : any list of arguments to the JVM"
 			echo "  <endpoint>  : the artifact(s) + main class to execute"
 			echo "  <main-args> : any list of arguments to the main class"
@@ -279,6 +283,13 @@ do
 	deps="$deps<dependency><groupId>$g</groupId><artifactId>$a</artifactId><version>$v</version>"
 	test "$c" && deps="$deps<classifier>$c</classifier>"
 	deps="$deps</dependency>"
+
+	if [ "$manageDeps" ]
+	then
+		depMgmt="$depMgmt<dependency><groupId>$g</groupId><artifactId>$a</artifactId><version>$v</version>"
+		test "$c" && depMgmt="$depMgmt<classifier>$c</classifier>"
+		depMgmt="$depMgmt<type>pom</type><scope>import</scope></dependency>"
+	fi
 done
 
 # Create a workspace in the jrun cache directory
@@ -316,6 +327,9 @@ cat >"$tmpPOM" <<EOL
 	<groupId>$g-BOOTSTRAPPER</groupId>
 	<artifactId>$a-BOOTSTRAPPER</artifactId>
 	<version>0</version>
+	<dependencyManagement>
+		<dependencies>$depMgmt</dependencies>
+	</dependencyManagement>
 	<dependencies>$deps</dependencies>
 	<repositories>$repos</repositories>
 </project>
