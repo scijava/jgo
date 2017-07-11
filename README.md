@@ -26,7 +26,7 @@ for the heavy lifting. If you are missing anything, the script will tell you.
 ## Usage
 
 ```
-Usage: jrun [-v] [-u] [-U] <jvm-args> <endpoint> <main-args>
+Usage: jrun [-v] [-u] [-U] [-m] <jvm-args> <endpoint> <main-args>
 
   -v          : verbose mode flag
   -u          : update/regenerate cached environment
