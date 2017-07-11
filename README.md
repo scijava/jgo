@@ -82,12 +82,12 @@ Note the usage of the `+` syntax as needed to append elements to the classpath.
   Pass the `-U` flag to `jrun` to rebuild the endpoint.
   Note that unlike `mvn`, though, `jrun` does not check for updates otherwise.
 * __Does it work on Windows?__
-  It works with [Cygwin](https://www.cygwin.com/). It is not yet tested with
-  [MinGW](http://www.mingw.org/) (included with
-  [Git for Windows](https://git-for-windows.github.io/)) or Microsoft's
-  [Windows Subsystem for Linux](https://msdn.microsoft.com/en-us/commandline/wsl/install_guide).
-  Reports of success or failure here are welcome; see
-  [issue #7](https://github.com/ctrueden/jrun/issues/7).
+  It works with [Cygwin](https://www.cygwin.com/) and
+  [MinGW](http://www.mingw.org/) (the latter tested via the [Git for
+  Windows](https://git-for-windows.github.io/) project). It is not yet tested
+  with Microsoft's [Windows Subsystem for
+  Linux](https://msdn.microsoft.com/en-us/commandline/wsl/install_guide);
+  reports of success or failure there are welcome.
 
 ### Configuration
 
