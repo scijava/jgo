@@ -1,5 +1,7 @@
 # jrun: painless Java component execution
 
+![](jrun.png)
+
 ## Summary
 
 [Maven](https://maven.apache.org/) is amazing. It manages dependencies so that
