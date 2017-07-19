@@ -190,3 +190,5 @@ There is [JPM4J](http://jpm4j.org/), but it did not work too well for me:
 * The source is, oddly, part of [bnd](https://github.com/bndtools/bnd)
   rather than in the [jpm4j organization](https://github.com/jpm4j) anywhere,
   which is not a good sign, modularity-wise.
+
+* Since April 2017, the web site is offline.
