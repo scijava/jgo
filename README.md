@@ -192,3 +192,5 @@ There is [JPM4J](http://jpm4j.org/), but it did not work too well for me:
   which is not a good sign, modularity-wise.
 
 * Since April 2017, the web site is offline.
+
+There is also [Mop](https://github.com/chirino/mop), a more general tool with similar features, but it has not been developed since 2010, and its website is also offline.
