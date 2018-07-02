@@ -230,17 +230,19 @@ def run(parser):
     args, unknown = parser.parse_known_args(argv[:endpoint_index])
     jvm_args      = ' '.join(unknown) if unknown else ''
 
+    if args.force_update:
+        args.update_cache = True
+
     config_file  = pathlib.Path(os.getenv('HOME')) / '.jrunrc'
     cache_dir    = pathlib.Path(os.getenv('HOME')) / '.jrun'
     m2_repo      = pathlib.Path (m2_path()) / 'repository'
     repositories = {repository.split('=')[0] : repository.split('=')[1] for repository in args.repository}
 
-    deps        = "<dependency>{}</dependency>".format(endpoint.dependency_string())
-    repo_str    = ''.join('<repository><id>{rid}</id><url>{url}</url></repository>'.format(rid=k, url=v) for (k, v) in repositories.items())
-    coordinates = endpoint.get_coordinates()
-    workspace   = os.path.join(cache_dir, *(coordinates[0].split('.') + coordinates[1:]))
+    deps            = "<dependency>{}</dependency>".format(endpoint.dependency_string())
+    repo_str        = ''.join('<repository><id>{rid}</id><url>{url}</url></repository>'.format(rid=k, url=v) for (k, v) in repositories.items())
+    coordinates     = endpoint.get_coordinates()
+    workspace       = os.path.join(cache_dir, *(coordinates[0].split('.') + coordinates[1:]))
     main_class_file = os.path.join(workspace, endpoint.main_class, 'mainClass') if endpoint.main_class else os.path.join(workspace, 'mainClass')
-    jar_dir     = None
     os.makedirs(workspace, exist_ok=True)
 
     try:
