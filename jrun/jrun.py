@@ -282,7 +282,9 @@ def run(parser):
     else:
         main_class = endpoint.main_class
 
-        # echo main_class > main_class_file
+    os.makedirs(os.path.dirname(main_class_file), exist_ok=True)
+    with open(main_class_file, 'w') as f:
+        f.write(main_class)
 
 
     launch_java(workspace, '', main_class, *[])
