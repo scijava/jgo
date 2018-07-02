@@ -243,6 +243,10 @@ def run(parser):
     coordinates     = endpoint.get_coordinates()
     workspace       = os.path.join(cache_dir, *(coordinates[0].split('.') + coordinates[1:]))
     main_class_file = os.path.join(workspace, endpoint.main_class, 'mainClass') if endpoint.main_class else os.path.join(workspace, 'mainClass')
+
+    if args.update_cache:
+        shutil.rmtree(workspace, True)
+
     os.makedirs(workspace, exist_ok=True)
 
     try:
@@ -272,7 +276,7 @@ def run(parser):
     pom_path = os.path.join(workspace, 'pom.xml')
     with open(pom_path, 'w') as f:
         f.write(maven_project)
-    mvn_args = [] + ['-f', pom_path, 'dependency:resolve']
+    mvn_args = [] + ['-f', pom_path, 'dependency:resolve'] + (['-U'] if args.force_update else [])
 
     mvn     = executable_path_or_raise('mvn')
     mvn_out = run_and_combine_outputs(mvn, *mvn_args)
