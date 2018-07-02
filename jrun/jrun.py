@@ -219,8 +219,7 @@ def run(parser):
     # # G:A:V:C:mainClass
     endpoint      = Endpoint.parse_endpoint(argv[endpoint_index])
     args, unknown = parser.parse_known_args(argv[:endpoint_index])
-    print(args)
-    print(unknown)
+    jvm_args      = ' '.join(unknown) if unknown else ''
 
     config_file  = pathlib.Path(os.getenv('HOME')) / '.jrunrc'
     cache_dir    = pathlib.Path(os.getenv('HOME')) / '.jrun'
@@ -241,7 +240,7 @@ def run(parser):
     try:
         with open(main_class_file, 'r') as f:
             main_class = f.readline()
-        launch_java(workspace, '', main_class, *[])
+        launch_java(workspace, jvm_args, main_class, *[])
         return
     except FileNotFoundError as e:
         pass
@@ -319,7 +318,7 @@ def run(parser):
         f.write(main_class)
 
 
-    launch_java(workspace, '', main_class, *[])
+    launch_java(workspace, jvm_args, main_class, *[])
     
     
     
