@@ -257,6 +257,18 @@ def run(parser):
     except FileNotFoundError as e:
         pass
 
+    if args.manage_dependencies:
+        dependency_management = '<dependency><groupId>{g}</groupId><artifactId>{a}</artifactId><version>{v}</version>'.format(
+            g=endpoint.groupId,
+            a=endpoint.artifactId,
+            v=endpoint.version)
+        if endpoint.classifier:
+            dependency_management += '<classifier>{c}</classifier>'.format(c=endpoint.classifier)
+        dependency_management += '<type>pom</type><scope>import</scope></dependency>'
+
+    else:
+        dependency_management = ''
+
     
 
     maven_project ='''
@@ -265,12 +277,16 @@ def run(parser):
 	<groupId>{groupId}-BOOTSTRAPPER</groupId>
 	<artifactId>{artifactId}-BOOTSTRAPPER</artifactId>
 	<version>0</version>
-    <dependencies>{deps}</dependencies>
-    <repositories>{repos}</repositories>
+	<dependencyManagement>
+		<dependencies>{depMgmt}</dependencies>
+	</dependencyManagement>
+	<dependencies>{deps}</dependencies>
+	<repositories>{repos}</repositories>
 </project>
 '''.format(
     groupId=endpoint.groupId,
     artifactId=endpoint.artifactId,
+    depMgmt=dependency_management,
     deps=deps,
     repos=repo_str)
     pom_path = os.path.join(workspace, 'pom.xml')
