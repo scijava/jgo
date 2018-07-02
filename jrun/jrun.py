@@ -187,7 +187,7 @@ However, you should not specify multiple main classes.
         epilog          = epilog,
         formatter_class = argparse.RawTextHelpFormatter
     )
-    parser.add_argument('-v', '--verbose', action='count', help='verbose mode flag')
+    parser.add_argument('-v', '--verbose', action='count', help='verbose mode flag', default=0)
     parser.add_argument('-u', '--update-cache', action='store_true', help='update/regenerate cached environment')
     parser.add_argument('-U', '--force-update', action='store_true', help='force update from remote Maven repositories (implies -u)')
     parser.add_argument('-m', '--manage-dependencies', action='store_true', help='use endpoints for dependency management (see "Details" below)')
