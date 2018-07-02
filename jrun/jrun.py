@@ -174,6 +174,7 @@ def jrun_main():
     except NoMainClassInManifest as e:
         print(e)
         print("No main class given, and none found.")
+        parser.print_help()
         sys.exit(1)
 
 def run(parser):
