@@ -152,7 +152,7 @@ def find_endpoint(argv):
             return index
     return -1
 
-def run_and_handle_exceptions():
+def jrun_main():
 
     parser = argparse.ArgumentParser()
 
@@ -291,7 +291,7 @@ def run(parser):
     
 
 if __name__ == "__main__":
-    run_and_handle_exceptions()
+    jrun_main()
 
 
 
