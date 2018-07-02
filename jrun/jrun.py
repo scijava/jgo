@@ -292,9 +292,3 @@ def run(parser):
     
     
 
-if __name__ == "__main__":
-    jrun_main()
-
-
-
-
