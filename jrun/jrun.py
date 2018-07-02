@@ -187,7 +187,7 @@ However, you should not specify multiple main classes.
         epilog          = epilog,
         formatter_class = argparse.RawTextHelpFormatter
     )
-    parser.add_argument('-v', '--verbose', action='store_true', help='verbose mode flag')
+    parser.add_argument('-v', '--verbose', action='count', help='verbose mode flag')
     parser.add_argument('-u', '--update-cache', action='store_true', help='update/regenerate cached environment')
     parser.add_argument('-U', '--force-update', action='store_true', help='force update from remote Maven repositories (implies -u)')
     parser.add_argument('-m', '--manage-dependencies', action='store_true', help='use endpoints for dependency management (see "Details" below)')
@@ -276,12 +276,26 @@ def run(parser):
     pom_path = os.path.join(workspace, 'pom.xml')
     with open(pom_path, 'w') as f:
         f.write(maven_project)
-    mvn_args = [] + ['-f', pom_path, 'dependency:resolve'] + (['-U'] if args.force_update else [])
+    mvn_args = ['-B'] \
+               + ['-f', pom_path, 'dependency:resolve'] \
+               + (['-U'] if args.force_update else []) \
+               + (['-X'] if args.verbose > 1 else [])
 
-    mvn     = executable_path_or_raise('mvn')
-    mvn_out = run_and_combine_outputs(mvn, *mvn_args)
+    try:
+        mvn     = executable_path_or_raise('mvn')
+        mvn_out = run_and_combine_outputs(mvn, *mvn_args)
+    except subprocess.CalledProcessError as e:
+        print( "Failed to bootstrap the artifact.", file=sys.stderr)
+        print( "", file=sys.stderr)
+        print( "Possible solutions:", file=sys.stderr)
+        print("* Double check the endpoint for correctness (https://search.maven.org/).", file=sys.stderr)
+        print("* Add needed repositories to ~/.jrunrc [repositories] block (see README).", file=sys.stderr)
+        print("* Try with an explicit version number (release metadata might be wrong).", file=sys.stderr)
+        print('', file=sys.stderr)
+        raise e
 
-    info_regex = re.compile('^.*\\[INFO\\] *')
+
+    info_regex = re.compile('^.*\\[[A-Z]+\\] *')
     dependency_coordinates = []
     for l in str(mvn_out).split('\\n'):
         if re.match('.*:(compile|runtime)', l):
