@@ -154,7 +154,36 @@ def find_endpoint(argv):
 
 def jrun_main():
 
-    parser = argparse.ArgumentParser()
+    epilog='''
+The endpoint should have one of the following formats:
+
+- groupId:artifactId
+- groupId:artifactId:version
+- groupId:artifactId:mainClass
+- groupId:artifactId:version:mainClass
+- groupId:artifactId:version:classifier:mainClass
+
+If version is omitted, then RELEASE is used.
+If mainClass is omitted, it is auto-detected.
+You can also write part of a class beginning with an @ sign,
+and it will be auto-completed.
+
+Multiple artifacts can be concatenated with pluses,
+and all of them will be included on the classpath.
+However, you should not specify multiple main classes.
+'''
+
+    parser = argparse.ArgumentParser(
+        description     = 'Run Java main class from maven coordinates.',
+        usage           = '%(prog)s [-v] [-u] [-U] [-m] [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]',
+        epilog          = epilog,
+        formatter_class = argparse.RawTextHelpFormatter
+    )
+    parser.add_argument('-v', '--verbose', action='store_true', help='verbose mode flag')
+    parser.add_argument('-u', '--update-cache', action='store_true', help='update/regenerate cached environment')
+    parser.add_argument('-U', '--force-update', action='store_true', help='force update from remote Maven repositories (implies -u)')
+    parser.add_argument('-m', '--manage-dependencies', action='store_true', help='use endpoints for dependency management (see "Details" below)')
+
 
     try:
         run(parser)
@@ -188,8 +217,10 @@ def run(parser):
 
     # expand endpoint here -- need to understand what @ctrueden does in his bash script
     # # G:A:V:C:mainClass
-    endpoint         = Endpoint.parse_endpoint(argv[endpoint_index])
-    jrun_and_jvm_ags = parser.parse_args(argv[:endpoint_index])
+    endpoint      = Endpoint.parse_endpoint(argv[endpoint_index])
+    args, unknown = parser.parse_known_args(argv[:endpoint_index])
+    print(args)
+    print(unknown)
 
     config_file  = pathlib.Path(os.getenv('HOME')) / '.jrunrc'
     cache_dir    = pathlib.Path(os.getenv('HOME')) / '.jrun'
