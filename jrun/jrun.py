@@ -202,7 +202,7 @@ def run(parser):
     repo_str    = ''.join('<repository><id>{rid}</id><url>{url}</url></repository>'.format(rid=k, url=v) for (k, v) in repositories.items())
     coordinates = endpoint.get_coordinates()
     workspace   = os.path.join(cache_dir, *(coordinates[0].split('.') + coordinates[1:]))
-    main_class_file = os.path.join(workspace, endpoint.main_class, 'mainClass') if endpoint.main_class else os.join(workspace, 'mainClass')
+    main_class_file = os.path.join(workspace, endpoint.main_class, 'mainClass') if endpoint.main_class else os.path.join(workspace, 'mainClass')
     jar_dir     = None
     os.makedirs(workspace, exist_ok=True)
 
