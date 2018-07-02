@@ -74,7 +74,15 @@ class Endpoint():
 
     def get_coordinates(self):
         return [self.groupId, self.artifactId, self.version] + ([self.classifier] if self.classifier else [])
-        
+
+
+    def is_endpoint(string):
+        endpoint_elements = string.split(':')
+
+        if len(endpoint_elements) < 2 or len(endpoint_elements) > 5:
+            return False
+
+        return True
 
     def parse_endpoint(endpoint):
         # G:A:V:C:mainClass
@@ -137,7 +145,6 @@ def launch_java(
     if not java:
         raise ExecutableNotFound('java', os.getenv('PATH'))
     cp = os.path.join(jar_dir, '*')
-    print(java, cp, main_class)
     jvm_args = (jvm_args,) if jvm_args else tuple()
     return subprocess.run((java, '-cp', cp) + jvm_args + (main_class,) + app_args)
 
@@ -147,8 +154,9 @@ def run_and_combine_outputs(command, *args):
 
 def find_endpoint(argv):
     # endpoint is first positional argument
+    pattern = re.compile('.*https?://.*')
     for index, arg in enumerate(argv):
-        if len(arg) > 0 and arg[0] != '-':
+        if len(arg) > 0 and arg[0] != '-' and Endpoint.is_endpoint(arg) and not pattern.match(arg):
             return index
     return -1
 
@@ -183,6 +191,7 @@ However, you should not specify multiple main classes.
     parser.add_argument('-u', '--update-cache', action='store_true', help='update/regenerate cached environment')
     parser.add_argument('-U', '--force-update', action='store_true', help='force update from remote Maven repositories (implies -u)')
     parser.add_argument('-m', '--manage-dependencies', action='store_true', help='use endpoints for dependency management (see "Details" below)')
+    parser.add_argument('-r', '--repository', nargs='+', help='Add additional maven repository (key=url format)', default=[], required=False)
 
 
     try:
@@ -224,10 +233,7 @@ def run(parser):
     config_file  = pathlib.Path(os.getenv('HOME')) / '.jrunrc'
     cache_dir    = pathlib.Path(os.getenv('HOME')) / '.jrun'
     m2_repo      = pathlib.Path (m2_path()) / 'repository'
-    repositories = {
-        'imagej'      : 'https://maven.imagej.net/content/groups/public',
-        'saalfeldlab' : 'https://saalfeldlab.github.io/maven'
-        }
+    repositories = {repository.split('=')[0] : repository.split('=')[1] for repository in args.repository}
 
     deps        = "<dependency>{}</dependency>".format(endpoint.dependency_string())
     repo_str    = ''.join('<repository><id>{rid}</id><url>{url}</url></repository>'.format(rid=k, url=v) for (k, v) in repositories.items())
