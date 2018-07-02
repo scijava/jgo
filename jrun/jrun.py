@@ -153,11 +153,11 @@ def run_and_combine_outputs(command, *args):
     return subprocess.check_output((command,) + args, stderr=subprocess.STDOUT)
 
 
-def find_endpoint(argv):
+def find_endpoint(argv, shortcuts={}):
     # endpoint is first positional argument
     pattern = re.compile('.*https?://.*')
     for index, arg in enumerate(argv):
-        if len(arg) > 0 and arg[0] != '-' and Endpoint.is_endpoint(arg) and not pattern.match(arg):
+        if arg in shortcuts or (Endpoint.is_endpoint(arg) and not pattern.match(arg)):
             return index
     return -1
 
@@ -233,23 +233,23 @@ def default_config():
 
     return config
 
+def expand_coordinate(coordinate, shortcuts={}):
+    if coordinate in shortcuts:
+        coordinate = shortcuts[coordinate]
+        was_changed = True
+
+    split = coordinate.split(':')
+    print(len(split))
+    for i, s in enumerate(split):
+        if s in shortcuts:
+        # print(s, 'in shortcuts', shortcuts[s], split)
+            split[i] = shortcuts[s]
+    coordinate = ':'.join(split)
+    return coordinate
 
 def run(parser):
 
     argv = sys.argv[1:]
-
-    endpoint_index = find_endpoint(argv)
-    if endpoint_index == -1:
-        return
-
-    # expand endpoint here -- need to understand what @ctrueden does in his bash script
-    # # G:A:V:C:mainClass
-    endpoint      = Endpoint.parse_endpoint(argv[endpoint_index])
-    args, unknown = parser.parse_known_args(argv[:endpoint_index])
-    jvm_args      = ' '.join(unknown) if unknown else ''
-
-    if args.force_update:
-        args.update_cache = True
 
     config_file = pathlib.Path(os.getenv('HOME')) / '.jrunrc'
     config      = default_config()
@@ -259,11 +259,22 @@ def run(parser):
     repositories = config['repositories']
     shortcuts    = config['shortcuts']
 
+    endpoint_index = find_endpoint(argv, shortcuts)
+    if endpoint_index == -1:
+        return
+
+    args, unknown = parser.parse_known_args(argv[:endpoint_index])
+    jvm_args      = ' '.join(unknown) if unknown else ''
+
     cache_dir    = settings.get('cacheDir')
     m2_repo      = settings.get('m2Repo')
     for repository in args.repository:
         repositories[repository.split('=')[0]] = repository.split('=')[1]
 
+    if args.force_update:
+        args.update_cache = True
+
+    endpoint        = Endpoint.parse_endpoint(expand_coordinate(argv[endpoint_index], shortcuts=shortcuts))
     deps            = "<dependency>{}</dependency>".format(endpoint.dependency_string())
     repo_str        = ''.join('<repository><id>{rid}</id><url>{url}</url></repository>'.format(rid=k, url=v) for (k, v) in repositories.items())
     coordinates     = endpoint.get_coordinates()
