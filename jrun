@@ -338,9 +338,8 @@ EOL
 check mvn
 test $updateMaven && mvnArgs=-U
 test "$verbose" = "2" && mvnArgs=-X
-mvnArgs="${mvnArgs} -B"
 goodPOM=$(goodPath "$tmpPOM")
-buildLog=$(test $verbose && set -x; mvn $mvnArgs -f "$goodPOM" dependency:resolve 2>&1)
+buildLog=$(test $verbose && set -x; mvn -B $mvnArgs -f "$goodPOM" dependency:resolve 2>&1)
 if [ $? -ne 0 ]
 then
 	err "Failed to bootstrap the artifact."
