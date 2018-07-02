@@ -1,4 +1,5 @@
 import argparse
+import configparser
 import glob
 import os
 import pathlib
@@ -215,11 +216,28 @@ However, you should not specify multiple main classes.
         parser.print_help()
         sys.exit(1)
 
+def default_config():
+    config = configparser.ConfigParser()
+
+    # settings
+    config.add_section('settings')
+    config.set('settings', 'm2Repo', os.path.join(os.getenv('HOME'), '.m2', 'repository'))
+    config.set('settings', 'cacheDir', os.path.join(os.getenv('HOME'), '.jrun'))
+    config.set('settings', 'links', 'hard')
+
+    # repositories
+    config.add_section('repositories')
+
+    # shortcuts
+    config.add_section('shortcuts')
+
+    return config
+
+
 def run(parser):
 
     argv = sys.argv[1:]
 
-    
     endpoint_index = find_endpoint(argv)
     if endpoint_index == -1:
         return
@@ -233,10 +251,18 @@ def run(parser):
     if args.force_update:
         args.update_cache = True
 
-    config_file  = pathlib.Path(os.getenv('HOME')) / '.jrunrc'
-    cache_dir    = pathlib.Path(os.getenv('HOME')) / '.jrun'
-    m2_repo      = pathlib.Path (m2_path()) / 'repository'
-    repositories = {repository.split('=')[0] : repository.split('=')[1] for repository in args.repository}
+    config_file = pathlib.Path(os.getenv('HOME')) / '.jrunrc'
+    config      = default_config()
+    config.read(config_file)
+
+    settings     = config['settings']
+    repositories = config['repositories']
+    shortcuts    = config['shortcuts']
+
+    cache_dir    = settings.get('cacheDir')
+    m2_repo      = settings.get('m2Repo')
+    for repository in args.repository:
+        repositories[repository.split('=')[0]] = repository.split('=')[1]
 
     deps            = "<dependency>{}</dependency>".format(endpoint.dependency_string())
     repo_str        = ''.join('<repository><id>{rid}</id><url>{url}</url></repository>'.format(rid=k, url=v) for (k, v) in repositories.items())
