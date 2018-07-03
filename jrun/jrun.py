@@ -22,10 +22,6 @@ import zipfile
 
 # Define some useful functions.
 
-# info() { test $verbose && echo "[INFO] $@"; }
-# err() { echo "$@" 1>&2; }
-# die() { err "$@"; exit 1; }
-
 class NoMainClassInManifest(Exception):
     def __init__(self, jar):
         super(NoMainClassInManifest, self).__init__('{} manifest does not specify Main-Class'.format(jar))
