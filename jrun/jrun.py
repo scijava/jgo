@@ -41,6 +41,11 @@ class InvalidEndpoint(Exception):
         self.endpoint = endpoint
         self.reason   = reason
 
+class UnableToAutoComplete(Exception):
+    def __init__(self, clazz):
+        super(UnableToAutoComplete, self).__init__('Unable to auto-complete {}'.format(clazz))
+        self.clazz = clazz
+
 class Endpoint():
 
     VERSION_RELEASE = "RELEASE"
@@ -239,13 +244,31 @@ def expand_coordinate(coordinate, shortcuts={}):
         was_changed = True
 
     split = coordinate.split(':')
-    print(len(split))
     for i, s in enumerate(split):
         if s in shortcuts:
-        # print(s, 'in shortcuts', shortcuts[s], split)
             split[i] = shortcuts[s]
     coordinate = ':'.join(split)
     return coordinate
+
+def autocomplete_main_class(main_class, artifactId, workspace):
+    main_class = main_class.replace('/', '.')
+    jar_cmd    = executable_path_or_raise('jar')
+    args       = ('tf',)
+
+    if main_class[0] == '@':
+        format_str    = '.*{}\\.class'.format(main_class[1:])
+        pattern       = re.compile(format_str)
+        relevant_jars = [jar for jar in glob.glob(os.path.join(workspace, '*.jar')) if artifactId in os.path.basename(jar)]
+        for jar in relevant_jars:
+            out = subprocess.check_output((jar_cmd,) + args + (jar,))
+            for line in out.decode('utf-8').split('\n'):
+                line = line.strip()
+                if pattern.match(line):
+                    return line[:-6].replace('/','.')
+        raise UnableToAutoComplete(main_class)
+
+    return main_class
+
 
 def run(parser):
 
@@ -391,6 +414,8 @@ def run(parser):
             raise NoMainClassInManifest(jar_path)
     else:
         main_class = endpoint.main_class
+
+    main_class = autocomplete_main_class(main_class, endpoint.artifactId, workspace)
 
     os.makedirs(os.path.dirname(main_class_file), exist_ok=True)
     with open(main_class_file, 'w') as f:
