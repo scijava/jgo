@@ -46,6 +46,16 @@ class UnableToAutoComplete(Exception):
         super(UnableToAutoComplete, self).__init__('Unable to auto-complete {}'.format(clazz))
         self.clazz = clazz
 
+class HelpRequested(Exception):
+    def __init__(self, argv):
+        super(HelpRequested, self).__init__('Help requested {}'.format(argv))
+        self.argv = argv
+
+class NoEndpointProvided(Exception):
+    def __init__(self, argv):
+        super(NoEndpointProvided, self).__init__('No endpoint found in provided arguments: {}'.format(argv))
+        self.argv = argv
+
 class Endpoint():
 
     VERSION_RELEASE = "RELEASE"
