@@ -302,6 +302,7 @@ def run(parser):
 
     args, unknown = parser.parse_known_args(argv[:endpoint_index])
     jvm_args      = ' '.join(unknown) if unknown else ''
+    program_args  = [] if endpoint_index == -1 else argv[endpoint_index+1:]
 
     cache_dir    = settings.get('cacheDir')
     m2_repo      = settings.get('m2Repo')
@@ -326,7 +327,7 @@ def run(parser):
     try:
         with open(main_class_file, 'r') as f:
             main_class = f.readline()
-        launch_java(workspace, jvm_args, main_class, *[])
+        launch_java(workspace, jvm_args, main_class, *program_args)
         return
     except FileNotFoundError as e:
         pass
@@ -436,7 +437,7 @@ def run(parser):
         f.write(main_class)
 
 
-    launch_java(workspace, jvm_args, main_class, *[])
+    launch_java(workspace, jvm_args, main_class, *program_args)
     
     
     
