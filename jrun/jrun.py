@@ -213,22 +213,30 @@ However, you should not specify multiple main classes.
     try:
         run(parser)
     except subprocess.CalledProcessError as e:
-        print("Error in {}: {}".format(e.cmd, e))
-        print("Std out:")
+        print("Error in {}: {}".format(e.cmd, e), file=sys.stderr)
+        print("Std out:", file=sys.stderr)
         if e.stdout:
             for l in str(e.stdout).split('\\n'):
-                print(l)
+                print(l, file=sys.stderr)
         if e.stderr:
-            print("Std err:")
+            print("Std err:", file=sys.stderr)
             for l in str(e.stderr).split('\\n'):
-                print(l)
-        parser.print_help()
+                print(l, file=sys.stderr)
+        parser.print_help(file=sys.stderr)
         sys.exit(e.returncode)
 
     except NoMainClassInManifest as e:
-        print(e)
-        print("No main class given, and none found.")
-        parser.print_help()
+        print(e, file=sys.stderr)
+        print("No main class given, and none found.", file=sys.stderr)
+        parser.print_help(file=sys.stderr)
+        sys.exit(1)
+
+    except HelpRequested as e:
+        parser.parse_known_args(e.argv)
+
+    except Exception as e:
+        print(e, file=sys.stderr)
+        parser.print_help(file=sys.stderr)
         sys.exit(1)
 
 def default_config():
@@ -294,7 +302,7 @@ def run(parser):
 
     endpoint_index = find_endpoint(argv, shortcuts)
     if endpoint_index == -1:
-        return
+        raise HelpRequested(argv) if '-h' in argv or '--help' in argv else NoEndpointProvided(argv)
 
     args, unknown = parser.parse_known_args(argv[:endpoint_index])
     jvm_args      = ' '.join(unknown) if unknown else ''
