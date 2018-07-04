@@ -172,7 +172,7 @@ def find_endpoint(argv, shortcuts={}):
             return index
     return -1
 
-def jrun_main():
+def jrun_main(argv=sys.argv[1:]):
 
     epilog='''
 The endpoint should have one of the following formats:
@@ -207,7 +207,7 @@ However, you should not specify multiple main classes.
 
 
     try:
-        run(parser)
+        run(parser, argv=argv)
     except subprocess.CalledProcessError as e:
         print("Error in {}: {}".format(e.cmd, e), file=sys.stderr)
         print("Std out:", file=sys.stderr)
@@ -284,9 +284,7 @@ def autocomplete_main_class(main_class, artifactId, workspace):
     return main_class
 
 
-def run(parser):
-
-    argv = sys.argv[1:]
+def run(parser, argv=sys.argv[1:]):
 
     config_file = pathlib.Path(os.getenv('HOME')) / '.jrunrc'
     config      = default_config()
