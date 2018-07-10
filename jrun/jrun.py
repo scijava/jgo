@@ -157,7 +157,7 @@ def launch_java(
     if not java:
         raise ExecutableNotFound('java', os.getenv('PATH'))
     cp = os.path.join(jar_dir, '*')
-    jvm_args = (jvm_args,) if jvm_args else tuple()
+    jvm_args = tuple(arg for arg in jvm_args) if jvm_args else tuple()
     return subprocess.run((java, '-cp', cp) + jvm_args + (main_class,) + app_args)
 
 def run_and_combine_outputs(command, *args):
@@ -403,7 +403,7 @@ def run(parser, argv=sys.argv[1:]):
         raise HelpRequested(argv) if '-h' in argv or '--help' in argv else NoEndpointProvided(argv)
 
     args, unknown = parser.parse_known_args(argv[:endpoint_index])
-    jvm_args      = ' '.join(unknown) if unknown else ''
+    jvm_args      = unknown if unknown else []
     program_args  = [] if endpoint_index == -1 else argv[endpoint_index+1:]
 
     cache_dir    = settings.get('cacheDir')
