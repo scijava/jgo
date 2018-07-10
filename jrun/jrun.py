@@ -333,6 +333,7 @@ def resolve_dependencies(
     deps=deps,
     repos=repo_str)
     pom_path = os.path.join(workspace, 'pom.xml')
+    os.makedirs(workspace, exist_ok=True)
     with open(pom_path, 'w') as f:
         f.write(maven_project)
     mvn_args = ['-B'] \
