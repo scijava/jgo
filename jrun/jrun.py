@@ -283,6 +283,109 @@ def autocomplete_main_class(main_class, artifactId, workspace):
 
     return main_class
 
+def resolve_dependencies(
+        endpoint,
+        cache_dir,
+        m2_repo,
+        update_cache=False,
+        force_update=False,
+        manage_dependencies=False,
+        repositories={},
+        shortcuts={},
+        verbose=0):
+
+    update_cache = True if force_update else update_cache
+
+    endpoint    = endpoint if isinstance(endpoint, Endpoint) else Endpoint.parse_endpoint(expand_coordinate(endpoint, shortcuts=shortcuts))
+    deps        = "<dependency>{}</dependency>".format(endpoint.dependency_string())
+    repo_str    = ''.join('<repository><id>{rid}</id><url>{url}</url></repository>'.format(rid=k, url=v) for (k, v) in repositories.items())
+    coordinates = endpoint.get_coordinates()
+    workspace   = os.path.join(cache_dir, *(coordinates[0].split('.') + coordinates[1:]))
+
+    if manage_dependencies:
+        dependency_management = '<dependency><groupId>{g}</groupId><artifactId>{a}</artifactId><version>{v}</version>'.format(
+            g=endpoint.groupId,
+            a=endpoint.artifactId,
+            v=endpoint.version)
+        if endpoint.classifier:
+            dependency_management += '<classifier>{c}</classifier>'.format(c=endpoint.classifier)
+        dependency_management += '<type>pom</type><scope>import</scope></dependency>'
+
+    else:
+        dependency_management = ''
+
+    maven_project ='''
+<project>
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>{groupId}-BOOTSTRAPPER</groupId>
+	<artifactId>{artifactId}-BOOTSTRAPPER</artifactId>
+	<version>0</version>
+	<dependencyManagement>
+		<dependencies>{depMgmt}</dependencies>
+	</dependencyManagement>
+	<dependencies>{deps}</dependencies>
+	<repositories>{repos}</repositories>
+</project>
+'''.format(
+    groupId=endpoint.groupId,
+    artifactId=endpoint.artifactId,
+    depMgmt=dependency_management,
+    deps=deps,
+    repos=repo_str)
+    pom_path = os.path.join(workspace, 'pom.xml')
+    with open(pom_path, 'w') as f:
+        f.write(maven_project)
+    mvn_args = ['-B'] \
+               + ['-f', pom_path, 'dependency:resolve'] \
+               + (['-U'] if force_update else []) \
+               + (['-X'] if verbose > 1 else [])
+
+    try:
+        mvn     = executable_path_or_raise('mvn')
+        mvn_out = run_and_combine_outputs(mvn, *mvn_args)
+    except subprocess.CalledProcessError as e:
+        print( "Failed to bootstrap the artifact.", file=sys.stderr)
+        print( "", file=sys.stderr)
+        print( "Possible solutions:", file=sys.stderr)
+        print("* Double check the endpoint for correctness (https://search.maven.org/).", file=sys.stderr)
+        print("* Add needed repositories to ~/.jrunrc [repositories] block (see README).", file=sys.stderr)
+        print("* Try with an explicit version number (release metadata might be wrong).", file=sys.stderr)
+        print('', file=sys.stderr)
+        raise e
+
+
+    info_regex = re.compile('^.*\\[[A-Z]+\\] *')
+    relevant_jars = []
+    for l in str(mvn_out).split('\\n'):
+        if re.match('.*:(compile|runtime)', l):
+            split_line     = info_regex.sub('', l).split(':')
+            split_line_len = len(split_line)
+            
+            if split_line_len < 5 and split_line_len > 6:
+                continue
+            
+            if split_line_len == 6:
+                # G:A:P:C:V:S
+                (g, a, extension, c, version, scope) = split_line
+            elif split_line_len == 5:
+                # G:A:P:V:S
+                (g, a, extension, version, scope) = split_line
+                c = None
+                
+
+            artifact_name         = '-'.join((a, version, c) if c else (a, version))
+            jar_file              = '{}.{}'.format(artifact_name, extension)
+            jar_file_in_workspace = os.path.join(workspace, jar_file)
+
+            relevant_jars.append(jar_file_in_workspace)
+
+            try:
+                link(os.path.join(m2_repo, *g.split('.'), a, version, jar_file), jar_file_in_workspace)
+            except FileExistsError as e:
+                # Do not throw exceptionif target file exists.
+                pass
+    return relevant_jars
+
 
 def run(parser, argv=sys.argv[1:]):
 
@@ -330,87 +433,19 @@ def run(parser, argv=sys.argv[1:]):
     except FileNotFoundError as e:
         pass
 
-    if args.manage_dependencies:
-        dependency_management = '<dependency><groupId>{g}</groupId><artifactId>{a}</artifactId><version>{v}</version>'.format(
-            g=endpoint.groupId,
-            a=endpoint.artifactId,
-            v=endpoint.version)
-        if endpoint.classifier:
-            dependency_management += '<classifier>{c}</classifier>'.format(c=endpoint.classifier)
-        dependency_management += '<type>pom</type><scope>import</scope></dependency>'
+    relevant_jars = resolve_dependencies(
+        endpoint,
+        cache_dir           = cache_dir,
+        m2_repo             = m2_repo,
+        update_cache        = args.update_cache,
+        force_update        = args.force_update,
+        manage_dependencies = args.manage_dependencies,
+        repositories        = repositories,
+        shortcuts           = shortcuts,
+        verbose             = args.verbose)
 
-    else:
-        dependency_management = ''
-
-    
-
-    maven_project ='''
-<project>
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>{groupId}-BOOTSTRAPPER</groupId>
-	<artifactId>{artifactId}-BOOTSTRAPPER</artifactId>
-	<version>0</version>
-	<dependencyManagement>
-		<dependencies>{depMgmt}</dependencies>
-	</dependencyManagement>
-	<dependencies>{deps}</dependencies>
-	<repositories>{repos}</repositories>
-</project>
-'''.format(
-    groupId=endpoint.groupId,
-    artifactId=endpoint.artifactId,
-    depMgmt=dependency_management,
-    deps=deps,
-    repos=repo_str)
-    pom_path = os.path.join(workspace, 'pom.xml')
-    with open(pom_path, 'w') as f:
-        f.write(maven_project)
-    mvn_args = ['-B'] \
-               + ['-f', pom_path, 'dependency:resolve'] \
-               + (['-U'] if args.force_update else []) \
-               + (['-X'] if args.verbose > 1 else [])
-
-    try:
-        mvn     = executable_path_or_raise('mvn')
-        mvn_out = run_and_combine_outputs(mvn, *mvn_args)
-    except subprocess.CalledProcessError as e:
-        print( "Failed to bootstrap the artifact.", file=sys.stderr)
-        print( "", file=sys.stderr)
-        print( "Possible solutions:", file=sys.stderr)
-        print("* Double check the endpoint for correctness (https://search.maven.org/).", file=sys.stderr)
-        print("* Add needed repositories to ~/.jrunrc [repositories] block (see README).", file=sys.stderr)
-        print("* Try with an explicit version number (release metadata might be wrong).", file=sys.stderr)
-        print('', file=sys.stderr)
-        raise e
-
-
-    info_regex = re.compile('^.*\\[[A-Z]+\\] *')
-    dependency_coordinates = []
-    for l in str(mvn_out).split('\\n'):
-        if re.match('.*:(compile|runtime)', l):
-            split_line     = info_regex.sub('', l).split(':')
-            split_line_len = len(split_line)
-            
-            if split_line_len < 5 and split_line_len > 6:
-                continue
-            
-            if split_line_len == 6:
-                # G:A:P:C:V:S
-                (g, a, extension, c, version, scope) = split_line
-            elif split_line_len == 5:
-                # G:A:P:V:S
-                (g, a, extension, version, scope) = split_line
-                c = None
-                
-
-            artifact_name = '-'.join((a, version, c) if c else (a, version))
-            jar_file      = '{}.{}'.format(artifact_name, extension)
-
-            try:
-                link(os.path.join(m2_repo, *g.split('.'), a, version, jar_file), os.path.join(workspace, jar_file))
-            except FileExistsError as e:
-                # Do not throw exceptionif target file exists.
-                pass
+    if args.verbose > 0:
+        print("Relevant jars", relevant_jars)
 
     if not endpoint.main_class:
         jar_path = glob.glob(os.path.join(workspace, endpoint.jar_name()).replace(Endpoint.VERSION_RELEASE, '*').replace(Endpoint.VERSION_LATEST, '*'))[0]
