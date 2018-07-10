@@ -91,7 +91,7 @@ class Endpoint():
     def is_endpoint(string):
         endpoint_elements = string.split(':')
 
-        if len(endpoint_elements) < 2 or len(endpoint_elements) > 5:
+        if len(endpoint_elements) < 2 or len(endpoint_elements) > 5 or endpoint_elements[0].startswith('-'):
             return False
 
         return True
