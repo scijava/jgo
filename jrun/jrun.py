@@ -138,7 +138,7 @@ def link(source, link_name, link_type="hard"):
         shutil.copyfile(source, link_name)
 
 def m2_path():
-    return os.getenv("M2_REPO", (pathlib.Path(os.getenv('HOME')) / '.m2').absolute())
+    return os.getenv("M2_REPO", (pathlib.Path.home() / '.m2').absolute())
 
 def expand(string, **shortcuts):
 
@@ -238,8 +238,8 @@ def default_config():
 
     # settings
     config.add_section('settings')
-    config.set('settings', 'm2Repo', os.path.join(os.getenv('HOME'), '.m2', 'repository'))
-    config.set('settings', 'cacheDir', os.path.join(os.getenv('HOME'), '.jrun'))
+    config.set('settings', 'm2Repo', os.path.join(str(pathlib.Path.home()), '.m2', 'repository'))
+    config.set('settings', 'cacheDir', os.path.join(str(pathlib.Path.home()), '.jrun'))
     config.set('settings', 'links', 'hard')
 
     # repositories
@@ -388,7 +388,7 @@ def resolve_dependencies(
 
 def run(parser, argv=sys.argv[1:]):
 
-    config_file = pathlib.Path(os.getenv('HOME')) / '.jrunrc'
+    config_file = pathlib.Path.home() / '.jrunrc'
     config      = default_config()
     config.read(config_file)
 
