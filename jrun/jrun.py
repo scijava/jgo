@@ -188,10 +188,6 @@ If version is omitted, then RELEASE is used.
 If mainClass is omitted, it is auto-detected.
 You can also write part of a class beginning with an @ sign,
 and it will be auto-completed.
-
-Multiple artifacts can be concatenated with pluses,
-and all of them will be included on the classpath.
-However, you should not specify multiple main classes.
 '''
 
     parser = argparse.ArgumentParser(
