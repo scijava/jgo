@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import sys
+import traceback
 import zipfile
 
 # A script to execute a main class of a Maven artifact
@@ -232,6 +233,7 @@ However, you should not specify multiple main classes.
 
     except Exception as e:
         print(e, file=sys.stderr)
+        traceback.print_tb(e.__traceback__)
         parser.print_help(file=sys.stderr)
         sys.exit(1)
 
