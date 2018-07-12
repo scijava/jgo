@@ -23,6 +23,11 @@ import zipfile
 
 # Define some useful functions.
 
+_classpath_separator = ';' if os.name == 'nt' else ':'
+
+def classpath_separator():
+    return _classpath_separator
+
 class NoMainClassInManifest(Exception):
     def __init__(self, jar):
         super(NoMainClassInManifest, self).__init__('{} manifest does not specify Main-Class'.format(jar))
@@ -90,7 +95,7 @@ class Endpoint():
 
 
     def is_endpoint(string):
-        endpoint_elements = string.split(':')
+        endpoint_elements = string.split('+')[0].split(':') if '+' in string  else string.split(':')
 
         if len(endpoint_elements) < 2 or len(endpoint_elements) > 5 or endpoint_elements[0].startswith('-'):
             return False
@@ -118,6 +123,10 @@ class Endpoint():
                 return Endpoint(*endpoint_elements[:2], main_class=endpoint_elements[2])
 
         return Endpoint(*endpoint_elements)
+
+    def remove_main_class(self):
+        self.main_class=None
+        return self
         
 
 def executable_path_or_raise(tool):
@@ -152,12 +161,13 @@ def launch_java(
         jar_dir,
         jvm_args,
         main_class,
-        *app_args
+        *app_args,
+        additional_jar_dirs=[]
         ):
     java = executable_path('java')
     if not java:
         raise ExecutableNotFound('java', os.getenv('PATH'))
-    cp = os.path.join(jar_dir, '*')
+    cp = classpath_separator().join([os.path.join(d, '*') for d in additional_jar_dirs] + [os.path.join(jar_dir, '*')])
     jvm_args = tuple(arg for arg in jvm_args) if jvm_args else tuple()
     return subprocess.run((java, '-cp', cp) + jvm_args + (main_class,) + app_args)
 
@@ -412,25 +422,36 @@ def run(parser, argv=sys.argv[1:]):
     if args.force_update:
         args.update_cache = True
 
-    endpoint        = Endpoint.parse_endpoint(expand_coordinate(argv[endpoint_index], shortcuts=shortcuts))
-    deps            = "<dependency>{}</dependency>".format(endpoint.dependency_string())
-    repo_str        = ''.join('<repository><id>{rid}</id><url>{url}</url></repository>'.format(rid=k, url=v) for (k, v) in repositories.items())
-    coordinates     = endpoint.get_coordinates()
-    workspace       = os.path.join(cache_dir, *(coordinates[0].split('.') + coordinates[1:]))
-    main_class_file = os.path.join(workspace, endpoint.main_class, 'mainClass') if endpoint.main_class else os.path.join(workspace, 'mainClass')
+    endpoints             = argv[endpoint_index].split('+')
+    endpoint              = Endpoint.parse_endpoint(expand_coordinate(endpoints[0], shortcuts=shortcuts))
+    deps                  = "<dependency>{}</dependency>".format(endpoint.dependency_string())
+    repo_str              = ''.join('<repository><id>{rid}</id><url>{url}</url></repository>'.format(rid=k, url=v) for (k, v) in repositories.items())
+    coordinates           = endpoint.get_coordinates()
+    workspace             = os.path.join(cache_dir, *(coordinates[0].split('.') + coordinates[1:]))
+    secondary_endpoints   = [Endpoint.parse_endpoint(expand_coordinate(ep, shortcuts=shortcuts)).remove_main_class() for ep in endpoints[1:]]
+    secondary_coordinates = [ep.get_coordinates() for ep in secondary_endpoints]
+    secondary_workspaces  = [os.path.join(cache_dir, *(c[0].split('.') + c[1:])) for c in secondary_coordinates]
+    main_class_dir        = os.path.join(workspace, '+'.join(endpoints[1:]))
+    main_class_file       = os.path.join(main_class_dir, endpoint.main_class, 'mainClass') if endpoint.main_class else os.path.join(main_class_dir, 'mainClass')
+
+    if args.verbose >= 1:
+        print("Got secondary endpoints: ", secondary_endpoints)
+        print("Got secondary workspaces:", secondary_workspaces)
+
 
     if args.update_cache:
         shutil.rmtree(workspace, True)
 
     os.makedirs(workspace, exist_ok=True)
 
-    try:
-        with open(main_class_file, 'r') as f:
-            main_class = f.readline()
-        launch_java(workspace, jvm_args, main_class, *program_args)
-        return
-    except FileNotFoundError as e:
-        pass
+    if len([d for d in secondary_workspaces if not os.path.isdir(d)]) == 0:
+        try:
+            with open(main_class_file, 'r') as f:
+                main_class = f.readline()
+            launch_java(workspace, jvm_args, main_class, *program_args, additional_jar_dirs=secondary_workspaces)
+            return
+        except FileNotFoundError as e:
+            pass
 
     relevant_jars = resolve_dependencies(
         endpoint,
@@ -443,8 +464,27 @@ def run(parser, argv=sys.argv[1:]):
         shortcuts           = shortcuts,
         verbose             = args.verbose)
 
-    if args.verbose > 0:
-        print("Relevant jars", relevant_jars)
+    if args.verbose >= 1:
+        print('Secondary endpoint coordinates', endpoints[1:])
+
+    secondary_jars      = [
+        resolve_dependencies(
+            ep,
+            cache_dir           = cache_dir,
+            m2_repo             = m2_repo,
+            update_cache        = args.update_cache,
+            force_update        = args.force_update,
+            manage_dependencies = args.manage_dependencies,
+            repositories        = repositories,
+            shortcuts           = shortcuts,
+            verbose             = args.verbose)
+        for ep in secondary_endpoints
+    ]
+
+    if args.verbose >= 1:
+        print("Relevant jars ", relevant_jars)
+    if args.verbose >= 1:
+        print("Secondary jars", secondary_jars)
 
     if not endpoint.main_class:
         jar_path = glob.glob(os.path.join(workspace, endpoint.jar_name()).replace(Endpoint.VERSION_RELEASE, '*').replace(Endpoint.VERSION_LATEST, '*'))[0]
@@ -469,7 +509,7 @@ def run(parser, argv=sys.argv[1:]):
         f.write(main_class)
 
 
-    launch_java(workspace, jvm_args, main_class, *program_args)
+    launch_java(workspace, jvm_args, main_class, *program_args, additional_jar_dirs=secondary_workspaces)
     
     
     
