@@ -1,6 +1,7 @@
 import argparse
 import configparser
 import glob
+import logging
 import os
 import pathlib
 import re
@@ -24,6 +25,13 @@ import zipfile
 # Define some useful functions.
 
 _classpath_separator = ';' if os.name == 'nt' else ':'
+
+LOG_FORMAT = '%(levelname)s %(asctime)s: %(message)s'
+logging.basicConfig(
+    level   = logging.INFO,
+    # datefmt = '%Y-%m-%d -  %H:%M:%S',
+    format  = LOG_FORMAT)
+_logger = logging.getLogger(os.getenv('JRUN_LOGGER_NAME', 'jrun'))
 
 def classpath_separator():
     return _classpath_separator
@@ -216,21 +224,22 @@ and it will be auto-completed.
     try:
         run(parser, argv=argv)
     except subprocess.CalledProcessError as e:
-        print("Error in {}: {}".format(e.cmd, e), file=sys.stderr)
-        print("Std out:", file=sys.stderr)
+        _logger.error("Error in %s: %s", e.cmd, e)
+        _logger.debug("Debug Trace:", exc_info=True)
         if e.stdout:
+            _logger.debug("\tMaven std out:")
             for l in str(e.stdout).split('\\n'):
-                print(l, file=sys.stderr)
+                _logger.debug('\t\t%s', l)
         if e.stderr:
-            print("Std err:", file=sys.stderr)
+            _logger.debug("Maven std err:")
             for l in str(e.stderr).split('\\n'):
-                print(l, file=sys.stderr)
+                _logger.debug('\t\t%s', l)
         parser.print_help(file=sys.stderr)
         sys.exit(e.returncode)
 
     except NoMainClassInManifest as e:
-        print(e, file=sys.stderr)
-        print("No main class given, and none found.", file=sys.stderr)
+        _logger.error(e)
+        _logger.error("No main class given, and none found.")
         parser.print_help(file=sys.stderr)
         sys.exit(1)
 
@@ -238,7 +247,7 @@ and it will be auto-completed.
         parser.parse_known_args(e.argv)
 
     except Exception as e:
-        print(e, file=sys.stderr)
+        _logger.error(e)
         traceback.print_tb(e.__traceback__)
         parser.print_help(file=sys.stderr)
         sys.exit(1)
@@ -353,13 +362,13 @@ def resolve_dependencies(
         mvn     = executable_path_or_raise('mvn')
         mvn_out = run_and_combine_outputs(mvn, *mvn_args)
     except subprocess.CalledProcessError as e:
-        print( "Failed to bootstrap the artifact.", file=sys.stderr)
-        print( "", file=sys.stderr)
-        print( "Possible solutions:", file=sys.stderr)
-        print("* Double check the endpoint for correctness (https://search.maven.org/).", file=sys.stderr)
-        print("* Add needed repositories to ~/.jrunrc [repositories] block (see README).", file=sys.stderr)
-        print("* Try with an explicit version number (release metadata might be wrong).", file=sys.stderr)
-        print('', file=sys.stderr)
+        _logger.info("Failed to bootstrap the artifact.")
+        _logger.info("")
+        _logger.info("Possible solutions:")
+        _logger.info("* Double check the endpoint for correctness (https://search.maven.org/).")
+        _logger.info("* Add needed repositories to ~/.jrunrc [repositories] block (see README).")
+        _logger.info("* Try with an explicit version number (release metadata might be wrong).")
+        print()
         raise e
 
 
@@ -414,6 +423,9 @@ def run(parser, argv=sys.argv[1:]):
     jvm_args      = unknown if unknown else []
     program_args  = [] if endpoint_index == -1 else argv[endpoint_index+1:]
 
+    if args.verbose > 0:
+        _logger.setLevel(logging.DEBUG)
+
     cache_dir    = settings.get('cacheDir')
     m2_repo      = settings.get('m2Repo')
     for repository in args.repository:
@@ -434,9 +446,8 @@ def run(parser, argv=sys.argv[1:]):
     main_class_dir        = os.path.join(workspace, '+'.join(endpoints[1:]))
     main_class_file       = os.path.join(main_class_dir, endpoint.main_class, 'mainClass') if endpoint.main_class else os.path.join(main_class_dir, 'mainClass')
 
-    if args.verbose >= 1:
-        print("Got secondary endpoints: ", secondary_endpoints)
-        print("Got secondary workspaces:", secondary_workspaces)
+    _logger.debug("Got secondary endpoints: %s", secondary_endpoints)
+    _logger.debug("Got secondary workspaces: %s", secondary_workspaces)
 
 
     if args.update_cache:
@@ -464,8 +475,7 @@ def run(parser, argv=sys.argv[1:]):
         shortcuts           = shortcuts,
         verbose             = args.verbose)
 
-    if args.verbose >= 1:
-        print('Secondary endpoint coordinates', endpoints[1:])
+    _logger.debug('Secondary endpoint coordinates %s', endpoints[1:])
 
     secondary_jars      = [
         resolve_dependencies(
@@ -481,10 +491,8 @@ def run(parser, argv=sys.argv[1:]):
         for ep in secondary_endpoints
     ]
 
-    if args.verbose >= 1:
-        print("Relevant jars ", relevant_jars)
-    if args.verbose >= 1:
-        print("Secondary jars", secondary_jars)
+    _logger.debug("Relevant jars  %s", relevant_jars)
+    _logger.debug("Secondary jars %s", secondary_jars)
 
     if not endpoint.main_class:
         jar_path = glob.glob(os.path.join(workspace, endpoint.jar_name()).replace(Endpoint.VERSION_RELEASE, '*').replace(Endpoint.VERSION_LATEST, '*'))[0]
