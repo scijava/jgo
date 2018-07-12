@@ -375,7 +375,10 @@ def resolve_dependencies(
     info_regex = re.compile('^.*\\[[A-Z]+\\] *')
     relevant_jars = []
     for l in str(mvn_out).split('\\n'):
-        if re.match('.*:(compile|runtime)', l):
+        if re.match('.*:(compile|runtime)', l) and not re.match('.*\\[DEBUG\\]', l):
+
+            _logger.debug("Relevant maven output: %s", l)
+
             split_line     = info_regex.sub('', l).split(':')
             split_line_len = len(split_line)
             
