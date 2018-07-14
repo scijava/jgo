@@ -210,7 +210,7 @@ and it will be auto-completed.
 
     parser = argparse.ArgumentParser(
         description     = 'Run Java main class from maven coordinates.',
-        usage           = '%(prog)s [-v] [-u] [-U] [-m] [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]',
+        usage           = '%(prog)s [-v] [-u] [-U] [-m] [--ignore-jrunrc] [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]',
         epilog          = epilog,
         formatter_class = argparse.RawTextHelpFormatter
     )
@@ -219,6 +219,7 @@ and it will be auto-completed.
     parser.add_argument('-U', '--force-update', action='store_true', help='force update from remote Maven repositories (implies -u)')
     parser.add_argument('-m', '--manage-dependencies', action='store_true', help='use endpoints for dependency management (see "Details" below)')
     parser.add_argument('-r', '--repository', nargs='+', help='Add additional maven repository (key=url format)', default=[], required=False)
+    parser.add_argument('--ignore-jrunrc', action='store_true', help='Ignore ~/.jrunrc')
 
 
     try:
@@ -410,9 +411,10 @@ def resolve_dependencies(
 
 def run(parser, argv=sys.argv[1:]):
 
-    config_file = pathlib.Path.home() / '.jrunrc'
-    config      = default_config()
-    config.read(config_file)
+    config = default_config()
+    if not '--ignore-jrunrc' in argv:
+        config_file = pathlib.Path.home() / '.jrunrc'
+        config.read(config_file)
 
     settings     = config['settings']
     repositories = config['repositories']
