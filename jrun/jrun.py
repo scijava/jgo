@@ -188,10 +188,11 @@ def run_and_combine_outputs(command, *args):
 def find_endpoint(argv, shortcuts={}):
     # endpoint is first positional argument
     pattern = re.compile('.*https?://.*')
+    indices = []
     for index, arg in enumerate(argv):
         if arg in shortcuts or (Endpoint.is_endpoint(arg) and not pattern.match(arg)):
-            return index
-    return -1
+            indices.append(index)
+    return -1 if len(indices) == 0 else indices[-1]
 
 def jrun_main(argv=sys.argv[1:]):
 
@@ -212,7 +213,7 @@ and it will be auto-completed.
 
     parser = argparse.ArgumentParser(
         description     = 'Run Java main class from maven coordinates.',
-        usage           = '%(prog)s [-v] [-u] [-U] [-m] [--ignore-jrunrc] [--additional-jars] [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]',
+        usage           = '%(prog)s [-v] [-u] [-U] [-m] [--ignore-jrunrc] [--additional-jars jar [jar ...]] [--additional-endpoints endpoint [endpoint ...]] [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]',
         epilog          = epilog,
         formatter_class = argparse.RawTextHelpFormatter
     )
@@ -222,6 +223,7 @@ and it will be auto-completed.
     parser.add_argument('-m', '--manage-dependencies', action='store_true', help='use endpoints for dependency management (see "Details" below)')
     parser.add_argument('-r', '--repository', nargs='+', help='Add additional maven repository (key=url format)', default=[], required=False)
     parser.add_argument('-a', '--additional-jars', nargs='+', help='Add additional jars to classpath', default=[], required=False)
+    parser.add_argument( '--additional-endpoints', nargs='+', help='Add additional endpoints', default=[], required=False)
     parser.add_argument('--ignore-jrunrc', action='store_true', help='Ignore ~/.jrunrc')
 
 
@@ -475,15 +477,15 @@ def run(parser, argv=sys.argv[1:]):
     if args.verbose > 0:
         _logger.setLevel(logging.DEBUG)
 
-    cache_dir    = settings.get('cacheDir')
-    m2_repo      = settings.get('m2Repo')
+    cache_dir = settings.get('cacheDir')
+    m2_repo   = settings.get('m2Repo')
     for repository in args.repository:
         repositories[repository.split('=')[0]] = repository.split('=')[1]
 
     if args.force_update:
         args.update_cache = True
 
-    endpoint_string       = argv[endpoint_index]
+    endpoint_string = '+'.join([argv[endpoint_index]] + args.additional_endpoints)
 
     primary_endpoint, workspace = resolve_dependencies(
         endpoint_string,
@@ -496,7 +498,7 @@ def run(parser, argv=sys.argv[1:]):
         shortcuts           = shortcuts,
         verbose             = args.verbose)
 
-    main_class_file       = os.path.join(workspace, primary_endpoint.main_class, 'mainClass') if primary_endpoint.main_class else os.path.join(workspace, 'mainClass')
+    main_class_file = os.path.join(workspace, primary_endpoint.main_class, 'mainClass') if primary_endpoint.main_class else os.path.join(workspace, 'mainClass')
 
     try:
         with open(main_class_file, 'r') as f:
