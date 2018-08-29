@@ -170,13 +170,14 @@ def launch_java(
         jvm_args,
         main_class,
         *app_args,
-        additional_jar_dirs=[],
         additional_jars=[]
         ):
     java = executable_path('java')
     if not java:
         raise ExecutableNotFound('java', os.getenv('PATH'))
-    cp = classpath_separator().join([os.path.join(d, '*') for d in additional_jar_dirs] + [os.path.join(jar_dir, '*')] + additional_jars)
+
+    cp = classpath_separator().join([os.path.join(jar_dir, '*')] + additional_jars)
+    _logger.debug("class path: %s", cp)
     jvm_args = tuple(arg for arg in jvm_args) if jvm_args else tuple()
     return subprocess.run((java, '-cp', cp) + jvm_args + (main_class,) + app_args)
 
@@ -303,8 +304,33 @@ def autocomplete_main_class(main_class, artifactId, workspace):
 
     return main_class
 
+def split_endpoint_string(endpoint_string):
+    endpoint_strings    = endpoint_string.split('+')
+    endpoint_strings    = endpoint_strings[0:1] + sorted(endpoint_strings[1:])
+    return endpoint_strings
+
+def endpoints_from_strings(endpoint_strings, shortcuts={}):
+    return [Endpoint.parse_endpoint(expand_coordinate(ep, shortcuts=shortcuts)) for ep in endpoint_strings]
+
+def coordinates_from_endpoints(endpoints):
+    return [ep.get_coordinates() for ep in endpoints]
+
+def workspace_dir_from_coordinates(coordinates, cache_dir):
+    workspace = os.path.join(cache_dir, *(coordinates[0][0].split('.') + coordinates[0][1:]))
+    workspace = '+'.join([workspace] + ['-'.join(c) for c in coordinates[1:]])
+    return workspace
+
+
+def workspace_dir_from_endpoint_strings(endpoint_strings, cache_dir, shortcuts={}):
+    if (isinstance(endpoint_strings, str)):
+        return workspace_dir_from_endpoint_strings(split_endpoint_string(endpoint_strings))
+
+    endpoints   = endpoints_from_strings(endpoint_strings)
+    coordinates = coordinates_from_endpoints(endpoints)
+    return workspace_dir_from_coordinates(coordinates, cache_dir)
+
 def resolve_dependencies(
-        endpoint,
+        endpoint_string,
         cache_dir,
         m2_repo,
         update_cache=False,
@@ -312,23 +338,37 @@ def resolve_dependencies(
         manage_dependencies=False,
         repositories={},
         shortcuts={},
-        verbose=0):
+        verbose=0
+):
+
+
+    endpoint_strings    = split_endpoint_string(endpoint_string)
+    endpoints           = endpoints_from_strings(endpoint_strings, shortcuts=shortcuts)
+    primary_endpoint    = endpoints[0]
+    deps                = ''.join('<dependency>{}</dependency>'.format(ep.dependency_string()) for ep in endpoints)
+    repo_str            = ''.join('<repository><id>{rid}</id><url>{url}</url></repository>'.format(rid=k, url=v) for (k, v) in repositories.items())
+    coordinates         = coordinates_from_endpoints(endpoints)
+    workspace           = workspace_dir_from_coordinates(coordinates, cache_dir=cache_dir)
 
     update_cache = True if force_update else update_cache
+    update_cache = update_cache or os.path.isdir(workspace)
 
-    endpoint    = endpoint if isinstance(endpoint, Endpoint) else Endpoint.parse_endpoint(expand_coordinate(endpoint, shortcuts=shortcuts))
-    deps        = "<dependency>{}</dependency>".format(endpoint.dependency_string())
-    repo_str    = ''.join('<repository><id>{rid}</id><url>{url}</url></repository>'.format(rid=k, url=v) for (k, v) in repositories.items())
-    coordinates = endpoint.get_coordinates()
-    workspace   = os.path.join(cache_dir, *(coordinates[0].split('.') + coordinates[1:]))
+    if not update_cache:
+        primary_endpoint, workspace
 
+    if update_cache:
+        shutil.rmtree(workspace, True)
+
+    os.makedirs(workspace, exist_ok=True)
+
+    # TODO should this be for all endpoints or only the primary endpoint?
     if manage_dependencies:
         dependency_management = '<dependency><groupId>{g}</groupId><artifactId>{a}</artifactId><version>{v}</version>'.format(
-            g=endpoint.groupId,
-            a=endpoint.artifactId,
-            v=endpoint.version)
-        if endpoint.classifier:
-            dependency_management += '<classifier>{c}</classifier>'.format(c=endpoint.classifier)
+            g=primary_endpoint.groupId,
+            a=primary_endpoint.artifactId,
+            v=primary_endpoint.version)
+        if primary_endpoint.classifier:
+            dependency_management += '<classifier>{c}</classifier>'.format(c=primary_endpoint.classifier)
         dependency_management += '<type>pom</type><scope>import</scope></dependency>'
 
     else:
@@ -347,8 +387,8 @@ def resolve_dependencies(
 	<repositories>{repos}</repositories>
 </project>
 '''.format(
-    groupId=endpoint.groupId,
-    artifactId=endpoint.artifactId,
+    groupId=primary_endpoint.groupId,
+    artifactId=primary_endpoint.artifactId,
     depMgmt=dependency_management,
     deps=deps,
     repos=repo_str)
@@ -386,10 +426,10 @@ def resolve_dependencies(
 
             split_line     = info_regex.sub('', l).split(':')
             split_line_len = len(split_line)
-            
+
             if split_line_len < 5 and split_line_len > 6:
                 continue
-            
+
             if split_line_len == 6:
                 # G:A:P:C:V:S
                 (g, a, extension, c, version, scope) = split_line
@@ -397,7 +437,7 @@ def resolve_dependencies(
                 # G:A:P:V:S
                 (g, a, extension, version, scope) = split_line
                 c = None
-                
+
 
             artifact_name         = '-'.join((a, version, c) if c else (a, version))
             jar_file              = '{}.{}'.format(artifact_name, extension)
@@ -410,7 +450,7 @@ def resolve_dependencies(
             except FileExistsError as e:
                 # Do not throw exceptionif target file exists.
                 pass
-    return relevant_jars
+    return primary_endpoint, workspace
 
 
 def run(parser, argv=sys.argv[1:]):
@@ -443,38 +483,10 @@ def run(parser, argv=sys.argv[1:]):
     if args.force_update:
         args.update_cache = True
 
-    endpoints             = argv[endpoint_index].split('+')
-    endpoint              = Endpoint.parse_endpoint(expand_coordinate(endpoints[0], shortcuts=shortcuts))
-    deps                  = "<dependency>{}</dependency>".format(endpoint.dependency_string())
-    repo_str              = ''.join('<repository><id>{rid}</id><url>{url}</url></repository>'.format(rid=k, url=v) for (k, v) in repositories.items())
-    coordinates           = endpoint.get_coordinates()
-    workspace             = os.path.join(cache_dir, *(coordinates[0].split('.') + coordinates[1:]))
-    secondary_endpoints   = [Endpoint.parse_endpoint(expand_coordinate(ep, shortcuts=shortcuts)).remove_main_class() for ep in endpoints[1:]]
-    secondary_coordinates = [ep.get_coordinates() for ep in secondary_endpoints]
-    secondary_workspaces  = [os.path.join(cache_dir, *(c[0].split('.') + c[1:])) for c in secondary_coordinates]
-    main_class_dir        = os.path.join(workspace, '+'.join(endpoints[1:]))
-    main_class_file       = os.path.join(main_class_dir, endpoint.main_class, 'mainClass') if endpoint.main_class else os.path.join(main_class_dir, 'mainClass')
+    endpoint_string       = argv[endpoint_index]
 
-    _logger.debug("Got secondary endpoints: %s", secondary_endpoints)
-    _logger.debug("Got secondary workspaces: %s", secondary_workspaces)
-
-
-    if args.update_cache:
-        shutil.rmtree(workspace, True)
-
-    os.makedirs(workspace, exist_ok=True)
-
-    if len([d for d in secondary_workspaces if not os.path.isdir(d)]) == 0:
-        try:
-            with open(main_class_file, 'r') as f:
-                main_class = f.readline()
-            launch_java(workspace, jvm_args, main_class, *program_args, additional_jar_dirs=secondary_workspaces, additional_jars=args.additional_jars)
-            return
-        except FileNotFoundError as e:
-            pass
-
-    relevant_jars = resolve_dependencies(
-        endpoint,
+    primary_endpoint, workspace = resolve_dependencies(
+        endpoint_string,
         cache_dir           = cache_dir,
         m2_repo             = m2_repo,
         update_cache        = args.update_cache,
@@ -484,27 +496,18 @@ def run(parser, argv=sys.argv[1:]):
         shortcuts           = shortcuts,
         verbose             = args.verbose)
 
-    _logger.debug('Secondary endpoint coordinates %s', endpoints[1:])
+    main_class_file       = os.path.join(workspace, primary_endpoint.main_class, 'mainClass') if primary_endpoint.main_class else os.path.join(workspace, 'mainClass')
 
-    secondary_jars      = [
-        resolve_dependencies(
-            ep,
-            cache_dir           = cache_dir,
-            m2_repo             = m2_repo,
-            update_cache        = args.update_cache,
-            force_update        = args.force_update,
-            manage_dependencies = args.manage_dependencies,
-            repositories        = repositories,
-            shortcuts           = shortcuts,
-            verbose             = args.verbose)
-        for ep in secondary_endpoints
-    ]
+    try:
+        with open(main_class_file, 'r') as f:
+            main_class = f.readline()
+        launch_java(workspace, jvm_args, main_class, *program_args, additional_jars=args.additional_jars)
+        return
+    except FileNotFoundError:
+        pass
 
-    _logger.debug("Relevant jars  %s", relevant_jars)
-    _logger.debug("Secondary jars %s", secondary_jars)
-
-    if not endpoint.main_class:
-        jar_path = glob.glob(os.path.join(workspace, endpoint.jar_name()).replace(Endpoint.VERSION_RELEASE, '*').replace(Endpoint.VERSION_LATEST, '*'))[0]
+    if not primary_endpoint.main_class:
+        jar_path = glob.glob(os.path.join(workspace, primary_endpoint.jar_name()).replace(Endpoint.VERSION_RELEASE, '*').replace(Endpoint.VERSION_LATEST, '*'))[0]
         with zipfile.ZipFile(jar_path) as jar_file:
             with jar_file.open('META-INF/MANIFEST.MF') as manifest:
                 main_class_pattern = re.compile('.*Main-Class: *')
@@ -517,17 +520,17 @@ def run(parser, argv=sys.argv[1:]):
         if not main_class:
             raise NoMainClassInManifest(jar_path)
     else:
-        main_class = endpoint.main_class
+        main_class = primary_endpoint.main_class
 
-    main_class = autocomplete_main_class(main_class, endpoint.artifactId, workspace)
+    main_class = autocomplete_main_class(main_class, primary_endpoint.artifactId, workspace)
 
     os.makedirs(os.path.dirname(main_class_file), exist_ok=True)
     with open(main_class_file, 'w') as f:
         f.write(main_class)
 
 
-    launch_java(workspace, jvm_args, main_class, *program_args, additional_jar_dirs=secondary_workspaces, additional_jars=args.additional_jars)
-    
-    
-    
+    launch_java(workspace, jvm_args, main_class, *program_args, additional_jars=args.additional_jars)
+
+
+
 
