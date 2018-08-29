@@ -170,12 +170,13 @@ def launch_java(
         jvm_args,
         main_class,
         *app_args,
-        additional_jar_dirs=[]
+        additional_jar_dirs=[],
+        additional_jars=[]
         ):
     java = executable_path('java')
     if not java:
         raise ExecutableNotFound('java', os.getenv('PATH'))
-    cp = classpath_separator().join([os.path.join(d, '*') for d in additional_jar_dirs] + [os.path.join(jar_dir, '*')])
+    cp = classpath_separator().join([os.path.join(d, '*') for d in additional_jar_dirs] + [os.path.join(jar_dir, '*')] + additional_jars)
     jvm_args = tuple(arg for arg in jvm_args) if jvm_args else tuple()
     return subprocess.run((java, '-cp', cp) + jvm_args + (main_class,) + app_args)
 
@@ -210,7 +211,7 @@ and it will be auto-completed.
 
     parser = argparse.ArgumentParser(
         description     = 'Run Java main class from maven coordinates.',
-        usage           = '%(prog)s [-v] [-u] [-U] [-m] [--ignore-jrunrc] [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]',
+        usage           = '%(prog)s [-v] [-u] [-U] [-m] [--ignore-jrunrc] [--additional-jars] [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]',
         epilog          = epilog,
         formatter_class = argparse.RawTextHelpFormatter
     )
@@ -219,6 +220,7 @@ and it will be auto-completed.
     parser.add_argument('-U', '--force-update', action='store_true', help='force update from remote Maven repositories (implies -u)')
     parser.add_argument('-m', '--manage-dependencies', action='store_true', help='use endpoints for dependency management (see "Details" below)')
     parser.add_argument('-r', '--repository', nargs='+', help='Add additional maven repository (key=url format)', default=[], required=False)
+    parser.add_argument('-a', '--additional-jars', nargs='+', help='Add additional jars to classpath', default=[], required=False)
     parser.add_argument('--ignore-jrunrc', action='store_true', help='Ignore ~/.jrunrc')
 
 
@@ -464,7 +466,7 @@ def run(parser, argv=sys.argv[1:]):
         try:
             with open(main_class_file, 'r') as f:
                 main_class = f.readline()
-            launch_java(workspace, jvm_args, main_class, *program_args, additional_jar_dirs=secondary_workspaces)
+            launch_java(workspace, jvm_args, main_class, *program_args, additional_jar_dirs=secondary_workspaces, additional_jars=args.additional_jars)
             return
         except FileNotFoundError as e:
             pass
@@ -522,7 +524,7 @@ def run(parser, argv=sys.argv[1:]):
         f.write(main_class)
 
 
-    launch_java(workspace, jvm_args, main_class, *program_args, additional_jar_dirs=secondary_workspaces)
+    launch_java(workspace, jvm_args, main_class, *program_args, additional_jar_dirs=secondary_workspaces, additional_jars=args.additional_jars)
     
     
     
