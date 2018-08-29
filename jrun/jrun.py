@@ -70,7 +70,7 @@ class Endpoint():
 
     VERSION_RELEASE = "RELEASE"
     VERSION_LATEST  = "LATEST"
-    
+
     def __init__(
             self,
             groupId,
@@ -135,7 +135,7 @@ class Endpoint():
     def remove_main_class(self):
         self.main_class=None
         return self
-        
+
 
 def executable_path_or_raise(tool):
     path = executable_path(tool)
@@ -148,7 +148,7 @@ def executable_path(tool):
 
 def link(source, link_name, link_type="hard"):
     if link_type.lower() == "soft":
-        os.symlink(source, linke_name)
+        os.symlink(source, link_name)
     elif link_type.lower() == "hard":
         os.link(source, link_name)
     else:
