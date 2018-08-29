@@ -378,7 +378,9 @@ def resolve_dependencies(
     info_regex = re.compile('^.*\\[[A-Z]+\\] *')
     relevant_jars = []
     for l in str(mvn_out).split('\\n'):
-        if re.match('.*:(compile|runtime)', l) and not re.match('.*\\[DEBUG\\]', l):
+        # TODO: the compile|runtime|provided matches might fail if an artifactId starts with accordingly
+        # TODO: If that ever turns out to be an issue, it is going to be necessary to update these checks
+        if re.match('.*:(compile|runtime)', l) and not re.match('.*\\[DEBUG\\]', l) and not re.match('.*:provided', l):
 
             _logger.debug("Relevant maven output: %s", l)
 
