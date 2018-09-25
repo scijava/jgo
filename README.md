@@ -20,9 +20,23 @@ a main class if needed/desired, and `jrun` uses Maven to obtain and run it.
 
 ## Installation
 
-Just clone this repo, and symlink `jrun` into your favorite `bin` directory.
+There are two implementations from which to choose! Each has pros and cons.
 
-For example, on a POSIX-friendly system, assuming `~/bin` is on your PATH:
+### The shell script
+
+The `jrun.sh` shell script requires a POSIX-friendly system. It is known to
+work on Linux, macOS, [Cygwin](https://www.cygwin.com/), Microsoft's
+[Windows Subsystem for Linux](https://msdn.microsoft.com/en-us/commandline/wsl/install_guide),
+and [MinGW](http://www.mingw.org/) via the
+[Git for Windows](https://git-for-windows.github.io/) project.
+
+The script uses some common utilities (e.g., `cat`) as well as `mvn` and `java`
+for the heavy lifting. If you are missing anything, the script will tell you.
+
+To install it, just clone this repo, and symlink `jrun` into your favorite
+`bin` directory.
+
+For example, assuming `~/bin` is on your PATH:
 
 ```
 cd
@@ -32,8 +46,21 @@ ln -s ../jrun/jrun
 jrun --help
 ```
 
-The script uses some common utilities (e.g., `cat`) as well as `mvn` and `java`
-for the heavy lifting. If you are missing anything, the script will tell you.
+### The Python module
+
+The `jrun/jrun.py` module (not to be confused with the
+[jrun module on PyPI](https://pypi.org/project/jrun/),
+which is something else entirely!) requires Python.
+
+You can install the latest stable version from the `hanslovsky` channel via:
+
+```
+conda install -c hanslovsky jrun
+```
+
+Or install it from source:
+
+* \<INSTRUCTIONS COMING SOON\>
 
 ## Usage
 
@@ -93,12 +120,6 @@ Note the usage of the `+` syntax as needed to append elements to the classpath.
 * __What if an endpoint has a new version?__
   Pass the `-U` flag to `jrun` to rebuild the endpoint.
   Note that unlike `mvn`, though, `jrun` does not check for updates otherwise.
-* __Does it work on Windows?__
-  It works with [Cygwin](https://www.cygwin.com/),
-  Microsoft's [Windows Subsystem for
-  Linux](https://msdn.microsoft.com/en-us/commandline/wsl/install_guide),
-  or [MinGW](http://www.mingw.org/) (the latter tested via the
-  [Git for Windows](https://git-for-windows.github.io/) project).
 
 ### Configuration
 
