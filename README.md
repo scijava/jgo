@@ -22,6 +22,16 @@ a main class if needed/desired, and `jrun` uses Maven to obtain and run it.
 
 Just clone this repo, and symlink `jrun` into your favorite `bin` directory.
 
+For example, on a POSIX-friendly system, assuming `~/bin` is on your PATH:
+
+```
+cd
+git clone https://github.com/ctrueden/jrun
+cd bin
+ln -s ../jrun/jrun
+jrun --help
+```
+
 The script uses some common utilities (e.g., `cat`) as well as `mvn` and `java`
 for the heavy lifting. If you are missing anything, the script will tell you.
 
