@@ -42,7 +42,7 @@ For example, assuming `~/bin` is on your PATH:
 cd
 git clone https://github.com/ctrueden/jrun
 cd bin
-ln -s ../jrun/jrun
+ln -s ../jrun/jrun.sh jrun
 jrun --help
 ```
 
