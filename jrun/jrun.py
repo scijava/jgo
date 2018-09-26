@@ -43,7 +43,7 @@ class NoMainClassInManifest(Exception):
 
 class ExecutableNotFound(Exception):
     def __init__(self, executable, path):
-        super(ExecutableNotFound, self).__init__('{} not found on path {}',format(executable, path))
+        super(ExecutableNotFound, self).__init__('{} not found on path {}'.format(executable, path))
 
 class InvalidEndpoint(Exception):
     def __init__(self, endpoint, reason):
