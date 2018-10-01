@@ -281,10 +281,12 @@ def expand_coordinate(coordinate, shortcuts={}):
         matched_shortcut = False
         for shortcut, replacement in shortcuts.items():
             if coordinate.startswith(shortcut):
+                _logger.debug("Replacing %s with %s in %s.", shortcut, replacement, coordinate)
                 coordinate = coordinate.replace(shortcut, replacement)
                 matched_shortcut = True
         was_changed = matched_shortcut
 
+    _logger.debug("Returning expanded coordinate %s.", coordinate)
     return coordinate
 
 def autocomplete_main_class(main_class, artifactId, workspace):
