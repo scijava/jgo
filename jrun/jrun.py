@@ -277,13 +277,15 @@ def default_config():
 
 def expand_coordinate(coordinate, shortcuts={}):
     was_changed = True
+    used_shortcuts = set()
     while was_changed:
         matched_shortcut = False
         for shortcut, replacement in shortcuts.items():
-            if coordinate.startswith(shortcut):
+            if shortcut not in used_shortcuts and coordinate.startswith(shortcut):
                 _logger.debug("Replacing %s with %s in %s.", shortcut, replacement, coordinate)
                 coordinate = coordinate.replace(shortcut, replacement)
                 matched_shortcut = True
+                used_shortcuts.add(shortcut)
         was_changed = matched_shortcut
 
     _logger.debug("Returning expanded coordinate %s.", coordinate)
