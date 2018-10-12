@@ -276,15 +276,19 @@ def default_config():
     return config
 
 def expand_coordinate(coordinate, shortcuts={}):
-    if coordinate in shortcuts:
-        coordinate = shortcuts[coordinate]
-        was_changed = True
+    was_changed = True
+    used_shortcuts = set()
+    while was_changed:
+        matched_shortcut = False
+        for shortcut, replacement in shortcuts.items():
+            if shortcut not in used_shortcuts and coordinate.startswith(shortcut):
+                _logger.debug("Replacing %s with %s in %s.", shortcut, replacement, coordinate)
+                coordinate = coordinate.replace(shortcut, replacement)
+                matched_shortcut = True
+                used_shortcuts.add(shortcut)
+        was_changed = matched_shortcut
 
-    split = coordinate.split(':')
-    for i, s in enumerate(split):
-        if s in shortcuts:
-            split[i] = shortcuts[s]
-    coordinate = ':'.join(split)
+    _logger.debug("Returning expanded coordinate %s.", coordinate)
     return coordinate
 
 def autocomplete_main_class(main_class, artifactId, workspace):
