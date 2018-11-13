@@ -13,4 +13,5 @@ setup(
             'jrun=jrun.jrun:jrun_main'
         ]
     },
+    python_requires='>=3',
 )
