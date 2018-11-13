@@ -40,7 +40,7 @@ For example, assuming `~/bin` is on your PATH:
 
 ```
 cd
-git clone https://github.com/ctrueden/jrun
+git clone https://github.com/scijava/jrun
 cd bin
 ln -s ../jrun/jrun.sh jrun
 jrun --help
@@ -60,7 +60,7 @@ conda install -c hanslovsky jrun
 
 Or install it from source via python [pip](https://pip.pypa.io/en/stable):
 ```
-git clone https://github.com/ctrueden/jrun
+git clone https://github.com/scijava/jrun
 
 # install globally (not recommended unless using conda or other virtual environment)
 pip install jrun
@@ -206,7 +206,7 @@ project should more precisely match those of each endpoint itself—although in
 the case of multiple endpoints concatenated via the `+` operator with
 conflicting dependency management, the earlier endpoints will win because they
 will be declared earlier in the POM. See also
-[issue #9](https://github.com/ctrueden/jrun/issues/9) in the jrun issue tracker.
+[issue #9](https://github.com/scijava/jrun/issues/9) in the jrun issue tracker.
 
 ## Alternatives
 

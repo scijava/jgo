@@ -6,7 +6,7 @@ setup(
     author='Philipp Hanslovsky',
     author_email='hanslovskyp@janelia.hhmi.org',
     description='jrun',
-    url='https://github.com/ctrueden/jrun',
+    url='https://github.com/scijava/jrun',
     packages=['jrun'],
     entry_points={
         'console_scripts': [
