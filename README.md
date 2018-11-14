@@ -50,24 +50,40 @@ jgo --help
 
 The `jgo/jgo.py` module requires Python.
 
-You can install the latest stable version from the `hanslovsky` [conda](https://conda.io/docs/) channel via:
+It offers a `jgo` console script, as well as a `jgo` module
+for programmatically creating endpoints.
+
+#### Installing with pip
+
+You can install the latest stable version using pip:
+
+```
+pip install jgo
+```
+
+#### Installing with conda
+
+You can install the latest stable version using [conda](https://conda.io/docs/) from the `hanslovsky` channel:
 
 ```
 conda install -c hanslovsky jgo
 ```
 
-Or install it from source via python [pip](https://pip.pypa.io/en/stable):
+#### Installing from source
+
+To install jgo from source:
 ```
 git clone https://github.com/scijava/jgo
+cd jgo
 
 # install globally (not recommended unless using conda or other virtual environment)
-pip install jgo
+python setup.py install
 
 # install into $HOME/.local (see pip install --help for details)
-pip install jgo --user
+python setup.py install --user
 
 # install into $PREFIX
-pip install jgo --prefix=$PREFIX
+python setup.py install --prefix=$PREFIX
 ```
 
 ## Usage
