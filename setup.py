@@ -5,7 +5,7 @@ setup(
     version='0.1.0-dev',
     author='Philipp Hanslovsky',
     author_email='hanslovskyp@janelia.hhmi.org',
-    description='jrun',
+    description='Launch Java code from Python and the CLI, installation-free.',
     url='https://github.com/scijava/jrun',
     packages=['jrun'],
     entry_points={
