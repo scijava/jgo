@@ -32,20 +32,20 @@ doLink() {
 			check ln cp
 			(test $verbose && set -x; ln -s "$1" "$2") ||
 			(test $verbose && set -x; cp "$1" "$2") ||
-				die "Cannot copy '$1' into jrun workspace '$2'"
+				die "Cannot copy '$1' into jgo workspace '$2'"
 			;;
 		none)
 			# Do not use links.
 			check cp
 			(test $verbose && set -x; cp "$1" "$2") ||
-				die "Cannot copy '$1' into jrun workspace '$2'"
+				die "Cannot copy '$1' into jgo workspace '$2'"
 			;;
 		*)
 			# Use hard links (the default).
 			check ln cp
 			(test $verbose && set -x; ln "$1" "$2") ||
 			(test $verbose && set -x; cp "$1" "$2") ||
-				die "Cannot copy '$1' into jrun workspace '$2'"
+				die "Cannot copy '$1' into jgo workspace '$2'"
 			;;
 	esac
 }
@@ -110,8 +110,8 @@ launchJava() {
 
 # Parse configuration file.
 
-configFile="$HOME/.jrunrc"
-cacheDir="$HOME/.jrun"
+configFile="$HOME/.jgorc"
+cacheDir="$HOME/.jgo"
 m2Repo="$(m2Path)/repository"
 repositories=()
 shortcuts=()
@@ -162,7 +162,7 @@ do
 		# Argument to the main class.
 		app_args+=("$1")
 	else
-		# Argument to the JVM, or jrun itself.
+		# Argument to the JVM, or jgo itself.
 		case "$1" in
 			-m)
 				manageDeps=1
@@ -244,7 +244,7 @@ do
 			v="RELEASE"
 			;;
 		*)
-			echo "Usage: jrun [-v] [-u] [-U] [-m] <jvm-args> <endpoint> <main-args>"
+			echo "Usage: jgo [-v] [-u] [-U] [-m] <jvm-args> <endpoint> <main-args>"
 			echo
 			echo "  -v          : verbose mode flag"
 			echo "  -u          : update/regenerate cached environment"
@@ -292,7 +292,7 @@ do
 	fi
 done
 
-# Create a workspace in the jrun cache directory
+# Create a workspace in the jgo cache directory
 
 check sed rm mkdir
 workspace="$cacheDir/$(echo "$endpoint" | sed 's/[:+]/\//g' | sed 's/[^0-9a-zA-Z/\.-]/_/g')"
@@ -346,7 +346,7 @@ then
 	err
 	err "Possible solutions:"
 	err "* Double check the endpoint for correctness (https://search.maven.org/)."
-	err "* Add needed repositories to ~/.jrunrc [repositories] block (see README)."
+	err "* Add needed repositories to ~/.jgorc [repositories] block (see README)."
 	err "* Try with an explicit version number (release metadata might be wrong)."
 	err
 	if [ "$verbose" ]

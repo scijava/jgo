@@ -1,6 +1,6 @@
-# jrun: painless Java component execution
+# jgo: painless Java component execution
 
-![](jrun.png)
+![](jgo.png)
 
 ## Summary
 
@@ -13,10 +13,10 @@ wealth of code, ripe for reuse in your own projects.
 But shockingly, Maven provides no easy way to actually __launch code__ from the
 beautifully managed dependencies stored so lovingly into `~/.m2/repository`.
 
-This project fills that gap: `jrun` launches Java code. You do not need to
+This project fills that gap: `jgo` launches Java code. You do not need to
 download or install any JARs; you just specify an "endpoint" consisting of a
 [Maven artifact](http://stackoverflow.com/a/2487511/1207769) identifier, plus
-a main class if needed/desired, and `jrun` uses Maven to obtain and run it.
+a main class if needed/desired, and `jgo` uses Maven to obtain and run it.
 
 ## Installation
 
@@ -24,7 +24,7 @@ There are two implementations from which to choose! Each has pros and cons.
 
 ### The shell script
 
-The `jrun.sh` shell script requires a POSIX-friendly system. It is known to
+The `jgo.sh` shell script requires a POSIX-friendly system. It is known to
 work on Linux, macOS, [Cygwin](https://www.cygwin.com/), Microsoft's
 [Windows Subsystem for Linux](https://msdn.microsoft.com/en-us/commandline/wsl/install_guide),
 and [MinGW](http://www.mingw.org/) via the
@@ -33,49 +33,47 @@ and [MinGW](http://www.mingw.org/) via the
 The script uses some common utilities (e.g., `cat`) as well as `mvn` and `java`
 for the heavy lifting. If you are missing anything, the script will tell you.
 
-To install it, just clone this repo, and symlink `jrun` into your favorite
+To install it, just clone this repo, and symlink `jgo` into your favorite
 `bin` directory.
 
 For example, assuming `~/bin` is on your PATH:
 
 ```
 cd
-git clone https://github.com/scijava/jrun
+git clone https://github.com/scijava/jgo
 cd bin
-ln -s ../jrun/jrun.sh jrun
-jrun --help
+ln -s ../jgo/jgo.sh jgo
+jgo --help
 ```
 
 ### The Python module
 
-The `jrun/jrun.py` module (not to be confused with the
-[jrun module on PyPI](https://pypi.org/project/jrun/),
-which is something else entirely!) requires Python.
+The `jgo/jgo.py` module requires Python.
 
 You can install the latest stable version from the `hanslovsky` [conda](https://conda.io/docs/) channel via:
 
 ```
-conda install -c hanslovsky jrun
+conda install -c hanslovsky jgo
 ```
 
 Or install it from source via python [pip](https://pip.pypa.io/en/stable):
 ```
-git clone https://github.com/scijava/jrun
+git clone https://github.com/scijava/jgo
 
 # install globally (not recommended unless using conda or other virtual environment)
-pip install jrun
+pip install jgo
 
 # install into $HOME/.local (see pip install --help for details)
-pip install jrun --user
+pip install jgo --user
 
 # install into $PREFIX
-pip install jrun --prefix=$PREFIX
+pip install jgo --prefix=$PREFIX
 ```
 
 ## Usage
 
 ```
-Usage: jrun [-v] [-u] [-U] [-m] <jvm-args> <endpoint> <main-args>
+Usage: jgo [-v] [-u] [-U] [-m] <jvm-args> <endpoint> <main-args>
 
   -v          : verbose mode flag
   -u          : update/regenerate cached environment
@@ -105,35 +103,35 @@ However, you should not specify multiple main classes.
 
 ### Examples
 
-| Program                      | Command                                                                              |
-|-----------------------------:|:-------------------------------------------------------------------------------------|
-| Jython REPL                  | `jrun org.python:jython-standalone`                                                  |
-| JRuby eval                   | `echo "puts 'Hello Ruby'" \| jrun org.jruby:jruby-complete:@jruby.Main`              |
-| Groovy REPL                  | `jrun org.codehaus.groovy:groovy-groovysh:@shell.Main+commons-cli:commons-cli:1.3.1` |
-| SciJava REPL with JRuby      | `jrun org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-jruby`            |
-| SciJava REPL with Jython     | `jrun org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-jython`           |
-| SciJava REPL with Groovy     | `jrun org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-groovy`           |
-| SciJava REPL with Clojure    | `jrun org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-clojure`          |
-| SciJava REPL with JavaScript | `jrun org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-javascript`       |
+| Program                      | Command                                                                             |
+|-----------------------------:|:------------------------------------------------------------------------------------|
+| Jython REPL                  | `jgo org.python:jython-standalone`                                                  |
+| JRuby eval                   | `echo "puts 'Hello Ruby'" \| jgo org.jruby:jruby-complete:@jruby.Main`              |
+| Groovy REPL                  | `jgo org.codehaus.groovy:groovy-groovysh:@shell.Main+commons-cli:commons-cli:1.3.1` |
+| SciJava REPL with JRuby      | `jgo org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-jruby`            |
+| SciJava REPL with Jython     | `jgo org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-jython`           |
+| SciJava REPL with Groovy     | `jgo org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-groovy`           |
+| SciJava REPL with Clojure    | `jgo org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-clojure`          |
+| SciJava REPL with JavaScript | `jgo org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-javascript`       |
 
 Note the usage of the `+` syntax as needed to append elements to the classpath.
 
 ### FAQ
 
 * __Is it fast?__
-  Endpoints are synthesized in a local cache under `~/.jrun`.
+  Endpoints are synthesized in a local cache under `~/.jgo`.
   So invoking the same endpoint a second time is really quick.
 * __What does "no installation" mean?__
   Classpath elements are [hard-linked](https://en.wikipedia.org/wiki/Hard_link)
-  into `~/.jrun` from `~/.m2/repository` rather than copied, so the `~/.jrun`
+  into `~/.jgo` from `~/.m2/repository` rather than copied, so the `~/.jgo`
   folder has a tiny footprint even if you execute lots of different endpoints.
 * __What if an endpoint has a new version?__
-  Pass the `-U` flag to `jrun` to rebuild the endpoint.
-  Note that unlike `mvn`, though, `jrun` does not check for updates otherwise.
+  Pass the `-U` flag to `jgo` to rebuild the endpoint.
+  Note that unlike `mvn`, though, `jgo` does not check for updates otherwise.
 
 ### Configuration
 
-You can configure the behavior of `jrun` using the `$HOME/.jrunrc` file.
+You can configure the behavior of `jgo` using the `$HOME/.jgorc` file.
 
 #### Repositories
 
@@ -165,7 +163,7 @@ scifio = io.scif:scifio-cli
 Shortcuts are substituted verbatim from the beginning of the endpoint,
 single-pass in the order they are defined. So e.g. now you can run:
 ```
-jrun repl
+jgo repl
 ```
 Note that with the `repl` shortcut above, the main class
 (`org.scijava.script.ScriptREPL`) comes from a _different_ artifact than
@@ -180,7 +178,7 @@ There are a few configurable settings:
 ```ini
 [settings]
 m2Repo = /path/to/.m2Repo (default ~/.m2/repository)
-cacheDir = /path/to/.jrun (default ~/.jrun)
+cacheDir = /path/to/.jgo (default ~/.jgo)
 links = soft (options: hard, soft, none; default hard)
 ```
 
@@ -197,7 +195,7 @@ See [this SO thread](https://stackoverflow.com/q/45041888/1207769) and
 [this gist](https://gist.github.com/ctrueden/d058330c8a3687317806ce8cc18332c3)
 for full details.
 
-To work around this issue, you can pass `-m` to jrun, which
+To work around this issue, you can pass `-m` to jgo, which
 causes it to add all endpoints to the synthesized POM's
 `<dependencyManagement>` section using
 [import scope](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Importing_Dependencies).
@@ -206,7 +204,7 @@ project should more precisely match those of each endpoint itself—although in
 the case of multiple endpoints concatenated via the `+` operator with
 conflicting dependency management, the earlier endpoints will win because they
 will be declared earlier in the POM. See also
-[issue #9](https://github.com/scijava/jrun/issues/9) in the jrun issue tracker.
+[issue #9](https://github.com/scijava/jgo/issues/9) in the jgo issue tracker.
 
 ## Alternatives
 
