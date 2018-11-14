@@ -48,28 +48,44 @@ jrun --help
 
 ### The Python module
 
-The `jrun/jrun.py` module (not to be confused with the
+The `javarun/jrun.py` module (not to be confused with the
 [jrun module on PyPI](https://pypi.org/project/jrun/),
 which is something else entirely!) requires Python.
 
-You can install the latest stable version from the `hanslovsky` [conda](https://conda.io/docs/) channel via:
+It offers a `jrun` console script, as well as a `javarun.jrun` module
+for programmatically creating endpoints.
+
+#### Installing with pip
+
+You can install the latest stable version using pip:
+
+```
+pip install javarun
+```
+
+#### Installing with conda
+
+You can install the latest stable version using [conda](https://conda.io/docs/) from the `hanslovsky` channel:
 
 ```
 conda install -c hanslovsky jrun
 ```
 
-Or install it from source via python [pip](https://pip.pypa.io/en/stable):
+#### Installing from source
+
+Or install it from source:
 ```
 git clone https://github.com/scijava/jrun
+cd jrun
 
 # install globally (not recommended unless using conda or other virtual environment)
-pip install jrun
+python setup.py install
 
 # install into $HOME/.local (see pip install --help for details)
-pip install jrun --user
+python setup.py install --user
 
 # install into $PREFIX
-pip install jrun --prefix=$PREFIX
+python setup.py install --prefix=$PREFIX
 ```
 
 ## Usage
