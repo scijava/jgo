@@ -31,7 +31,7 @@ logging.basicConfig(
     level   = logging.INFO,
     # datefmt = '%Y-%m-%d -  %H:%M:%S',
     format  = LOG_FORMAT)
-_logger = logging.getLogger(os.getenv('JRUN_LOGGER_NAME', 'jrun'))
+_logger = logging.getLogger(os.getenv('JRUN_LOGGER_NAME', 'jgo'))
 
 def classpath_separator():
     return _classpath_separator
@@ -194,7 +194,7 @@ def find_endpoint(argv, shortcuts={}):
             indices.append(index)
     return -1 if len(indices) == 0 else indices[-1]
 
-def jrun_main(argv=sys.argv[1:]):
+def jgo_main(argv=sys.argv[1:]):
 
     epilog='''
 The endpoint should have one of the following formats:
@@ -213,7 +213,7 @@ and it will be auto-completed.
 
     parser = argparse.ArgumentParser(
         description     = 'Run Java main class from maven coordinates.',
-        usage           = '%(prog)s [-v] [-u] [-U] [-m] [--ignore-jrunrc] [--additional-jars jar [jar ...]] [--additional-endpoints endpoint [endpoint ...]] [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]',
+        usage           = '%(prog)s [-v] [-u] [-U] [-m] [--ignore-jgorc] [--additional-jars jar [jar ...]] [--additional-endpoints endpoint [endpoint ...]] [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]',
         epilog          = epilog,
         formatter_class = argparse.RawTextHelpFormatter
     )
@@ -224,7 +224,7 @@ and it will be auto-completed.
     parser.add_argument('-r', '--repository', nargs='+', help='Add additional maven repository (key=url format)', default=[], required=False)
     parser.add_argument('-a', '--additional-jars', nargs='+', help='Add additional jars to classpath', default=[], required=False)
     parser.add_argument( '--additional-endpoints', nargs='+', help='Add additional endpoints', default=[], required=False)
-    parser.add_argument('--ignore-jrunrc', action='store_true', help='Ignore ~/.jrunrc')
+    parser.add_argument('--ignore-jgorc', action='store_true', help='Ignore ~/.jgorc')
 
 
     try:
@@ -264,7 +264,7 @@ def default_config():
     # settings
     config.add_section('settings')
     config.set('settings', 'm2Repo', os.path.join(str(pathlib.Path.home()), '.m2', 'repository'))
-    config.set('settings', 'cacheDir', os.path.join(str(pathlib.Path.home()), '.jrun'))
+    config.set('settings', 'cacheDir', os.path.join(str(pathlib.Path.home()), '.jgo'))
     config.set('settings', 'links', 'hard')
 
     # repositories
@@ -415,7 +415,7 @@ def resolve_dependencies(
         _logger.info("")
         _logger.info("Possible solutions:")
         _logger.info("* Double check the endpoint for correctness (https://search.maven.org/).")
-        _logger.info("* Add needed repositories to ~/.jrunrc [repositories] block (see README).")
+        _logger.info("* Add needed repositories to ~/.jgorc [repositories] block (see README).")
         _logger.info("* Try with an explicit version number (release metadata might be wrong).")
         print()
         raise e
@@ -462,8 +462,8 @@ def resolve_dependencies(
 def run(parser, argv=sys.argv[1:]):
 
     config = default_config()
-    if not '--ignore-jrunrc' in argv:
-        config_file = pathlib.Path.home() / '.jrunrc'
+    if not '--ignore-jgorc' in argv:
+        config_file = pathlib.Path.home() / '.jgorc'
         config.read(config_file)
 
     settings     = config['settings']
