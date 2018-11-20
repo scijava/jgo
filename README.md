@@ -38,8 +38,7 @@ and [MinGW](http://www.mingw.org/) via the
 
 <details><summary><strong>Installing the shell script</strong></summary>
 
-To install it, just clone this repo, and symlink `jgo` into your favorite
-`bin` directory.
+Just clone this repo and symlink `jgo.sh` into your favorite `bin` directory.
 
 For example, assuming `~/bin` is on your PATH:
 
@@ -55,10 +54,8 @@ jgo --help
 
 ### The Python module
 
-The `jgo/jgo.py` module requires Python.
-
-It offers a `jgo` console script, as well as a `jgo` module
-for programmatically creating endpoints.
+The `jgo/jgo.py` module requires Python. It offers a `jgo` console script,
+as well as a `jgo` module for programmatically creating endpoints.
 
 <details><summary><strong>Installing with pip</strong></summary>
 
