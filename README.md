@@ -66,7 +66,7 @@ pip install jgo
 You can install the latest stable version using [conda](https://conda.io/docs/) from the `hanslovsky` channel:
 
 ```
-conda install -c hanslovsky jgo
+conda install -c conda-forge jgo
 ```
 
 #### Installing from source
@@ -77,13 +77,13 @@ git clone https://github.com/scijava/jgo
 cd jgo
 
 # install globally (not recommended unless using conda or other virtual environment)
-python setup.py install
+pip install .
 
 # install into $HOME/.local (see pip install --help for details)
-python setup.py install --user
+pip install --user .
 
 # install into $PREFIX
-python setup.py install --prefix=$PREFIX
+pip install --prefix=$PREFIX .
 ```
 
 ## Usage
