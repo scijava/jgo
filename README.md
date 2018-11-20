@@ -22,6 +22,12 @@ a main class if needed/desired, and `jgo` uses Maven to obtain and run it.
 
 There are two implementations from which to choose! Each has pros and cons.
 
+### Prerequisites
+
+`jgo` uses `mvn` and `java` for the heavy lifting.
+The shell script version needs some common utilities (e.g., `cat`).
+If you are missing anything, the script will tell you.
+
 ### The shell script
 
 The `jgo.sh` shell script requires a POSIX-friendly system. It is known to
@@ -30,8 +36,7 @@ work on Linux, macOS, [Cygwin](https://www.cygwin.com/), Microsoft's
 and [MinGW](http://www.mingw.org/) via the
 [Git for Windows](https://git-for-windows.github.io/) project.
 
-The script uses some common utilities (e.g., `cat`) as well as `mvn` and `java`
-for the heavy lifting. If you are missing anything, the script will tell you.
+<details><summary><strong>Installing the shell script</strong></summary>
 
 To install it, just clone this repo, and symlink `jgo` into your favorite
 `bin` directory.
@@ -46,6 +51,8 @@ ln -s ../jgo/jgo.sh jgo
 jgo --help
 ```
 
+</details>
+
 ### The Python module
 
 The `jgo/jgo.py` module requires Python.
@@ -53,25 +60,22 @@ The `jgo/jgo.py` module requires Python.
 It offers a `jgo` console script, as well as a `jgo` module
 for programmatically creating endpoints.
 
-#### Installing with pip
-
-You can install the latest stable version using pip:
+<details><summary><strong>Installing with pip</strong></summary>
 
 ```
 pip install jgo
 ```
 
-#### Installing with conda
-
-You can install the latest stable version using [conda](https://conda.io/docs/) from the `hanslovsky` channel:
+</details>
+<details><summary><strong>Installing with conda</strong></summary>
 
 ```
 conda install -c conda-forge jgo
 ```
 
-#### Installing from source
+</details>
+<details><summary><strong>Installing from source</strong></summary>
 
-To install jgo from source:
 ```
 git clone https://github.com/scijava/jgo
 cd jgo
@@ -85,6 +89,8 @@ pip install --user .
 # install into $PREFIX
 pip install --prefix=$PREFIX .
 ```
+
+</details>
 
 ## Usage
 
