@@ -4,9 +4,9 @@
 
 ## Summary
 
-[Maven](https://maven.apache.org/) is amazing. It manages dependencies so that
-Java projects become reusable "building blocks" in a much more robust way than
-many other languages offer. And the
+[Maven](https://maven.apache.org/) is a great tool. It manages dependencies so
+that Java projects become reusable "building blocks" in a much more robust way
+than many other languages offer. And the
 [Maven Central repository](https://search.maven.org/) contains a tremendous
 wealth of code, ripe for reuse in your own projects.
 
