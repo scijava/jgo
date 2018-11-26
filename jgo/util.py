@@ -29,14 +29,14 @@ def add_jvm_args_as_necessary(argv, gc_option='-XX:+UseConcMarkSweepGC'):
 
     return argv
 
-def maven_imagej_public_repo():
+def maven_scijava_repository():
     return 'https://maven.imagej.net/content/groups/public'
 
 
 def main_from_endpoint(
         primary_endpoint,
         argv=sys.argv[1:],
-        repositories={'imagej.public': maven_imagej_public_repo()},
+        repositories={'imagej.public': maven_scijava_repository()},
         primary_endpoint_version=None,
         primary_endpoint_main_class=None,
         secondary_endpoints=()):
@@ -53,7 +53,7 @@ def main_from_endpoint(
     ``
 
     :param primary_endpoint: The primary endpoint of the Java program you want to run.
-    :param repositories: Any maven repository that holds the required jars. Defaults to {'imagej.public': maven_imagej_public_repo()}.
+    :param repositories: Any maven repository that holds the required jars. Defaults to {'imagej.public': maven_scijava_repository()}.
     :param primary_endpoint_version: Will be appended to ``primary_endpoint`` if it does not evaluate to ``False``
     :param primary_endpoint_main_class: Will be appended to ``primary_endpoitn`` if it does not evaluate to ``False``.
     :param secondary_endpoints: Any other endpoints that should be added.
