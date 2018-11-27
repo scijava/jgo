@@ -344,6 +344,7 @@ def resolve_dependencies(
         endpoint_string,
         cache_dir,
         m2_repo,
+        link_type='hard',
         update_cache=False,
         force_update=False,
         manage_dependencies=False,
@@ -457,7 +458,7 @@ def resolve_dependencies(
             relevant_jars.append(jar_file_in_workspace)
 
             try:
-                link(os.path.join(m2_repo, *g.split('.'), a, version, jar_file), jar_file_in_workspace)
+                link(os.path.join(m2_repo, *g.split('.'), a, version, jar_file), jar_file_in_workspace, link_type=link_type)
             except FileExistsError as e:
                 # Do not throw exceptionif target file exists.
                 pass
@@ -493,6 +494,7 @@ def run(parser, argv=sys.argv[1:]):
 
     cache_dir = settings.get('cacheDir')
     m2_repo   = settings.get('m2Repo')
+    link_type = settings.get('links')
     for repository in args.repository:
         repositories[repository.split('=')[0]] = repository.split('=')[1]
 
@@ -514,7 +516,8 @@ def run(parser, argv=sys.argv[1:]):
         manage_dependencies = args.manage_dependencies,
         repositories        = repositories,
         shortcuts           = shortcuts,
-        verbose             = args.verbose)
+        verbose             = args.verbose,
+        link_type           = link_type)
 
     main_class_file = os.path.join(workspace, primary_endpoint.main_class, 'mainClass') if primary_endpoint.main_class else os.path.join(workspace, 'mainClass')
 
