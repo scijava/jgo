@@ -200,6 +200,12 @@ m2Repo = /path/to/.m2Repo (default ~/.m2/repository)
 cacheDir = /path/to/.jgo (default ~/.jgo)
 links = soft (options: hard, soft, none; default hard)
 ```
+Note that the `jgo` cache dir can also be set via the `JGO_CACHE_DIR` environment
+variable when using **Python** `jgo`. The precedence of reading the cache dir, from
+highest to lowest:
+  - `JGO_CACHE_DIR` environment variable
+  - `cacheDir` in `settings` sections in `~/.jgorc`
+  - default to `~/.jgo`
 
 ### Details
 
