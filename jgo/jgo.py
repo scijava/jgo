@@ -213,7 +213,7 @@ and it will be auto-completed.
 
     parser = argparse.ArgumentParser(
         description     = 'Run Java main class from maven coordinates.',
-        usage           = '%(prog)s [-v] [-u] [-U] [-m] [--ignore-jgorc] [--additional-jars jar [jar ...]] [--additional-endpoints endpoint [endpoint ...]] [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]',
+        usage           = '%(prog)s [-v] [-u] [-U] [-m] [--ignore-jgorc] [--link-type type] [--additional-jars jar [jar ...]] [--additional-endpoints endpoint [endpoint ...]] [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]',
         epilog          = epilog,
         formatter_class = argparse.RawTextHelpFormatter
     )
@@ -225,6 +225,7 @@ and it will be auto-completed.
     parser.add_argument('-a', '--additional-jars', nargs='+', help='Add additional jars to classpath', default=[], required=False)
     parser.add_argument( '--additional-endpoints', nargs='+', help='Add additional endpoints', default=[], required=False)
     parser.add_argument('--ignore-jgorc', action='store_true', help='Ignore ~/.jgorc')
+    parser.add_argument('--link-type', default=None, type=str, help='How to link from local maven repository into jgo cache. Defaults to the `links\' setting in ~/.jrunrc or \'hard\' if not specified.', choices=('hard', 'soft', 'copy'))
 
 
     try:
@@ -491,6 +492,9 @@ def run(parser, argv=sys.argv[1:]):
 
     if args.verbose > 0:
         _logger.setLevel(logging.DEBUG)
+
+    if args.link_type is not None:
+        config.set('settings', 'links', args.link_type)
 
     cache_dir = settings.get('cacheDir')
     m2_repo   = settings.get('m2Repo')
