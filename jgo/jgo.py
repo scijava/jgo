@@ -258,6 +258,11 @@ and it will be auto-completed.
         parser.print_help(file=sys.stderr)
         sys.exit(1)
 
+
+def jgo_cache_dir_environment_variable():
+    return 'JGO_CACHE_DIR'
+
+
 def default_config():
     config = configparser.ConfigParser()
 
@@ -466,6 +471,11 @@ def run(parser, argv=sys.argv[1:]):
         config_file = pathlib.Path.home() / '.jgorc'
         config.read(config_file)
 
+    if os.getenv(jgo_cache_dir_environment_variable()) is not None:
+        cache_dir = os.getenv(jgo_cache_dir_environment_variable())
+        _logger.debug('Setting cache dir from environment: %s', cache_dir)
+        config.set('settings', 'cacheDir', cache_dir)
+
     settings     = config['settings']
     repositories = config['repositories']
     shortcuts    = config['shortcuts']
@@ -485,6 +495,10 @@ def run(parser, argv=sys.argv[1:]):
     m2_repo   = settings.get('m2Repo')
     for repository in args.repository:
         repositories[repository.split('=')[0]] = repository.split('=')[1]
+
+    _logger.debug('Using settings:      %s', dict(settings))
+    _logger.debug('Using respositories: %s', dict(repositories))
+    _logger.debug('Using shortcuts:     %s', dict(shortcuts))
 
     if args.force_update:
         args.update_cache = True
