@@ -146,13 +146,30 @@ def executable_path_or_raise(tool):
 def executable_path(tool):
     return shutil.which(tool)
 
-def link(source, link_name, link_type="hard"):
-    if link_type.lower() == "soft":
-        os.symlink(source, link_name)
-    elif link_type.lower() == "hard":
-        os.link(source, link_name)
-    else:
-        shutil.copyfile(source, link_name)
+def link(source, link_name, link_type='auto'):
+    _logger.debug("Linking source %s to target %s with link_type %s", source, link_name, link_type)
+    if link_type.lower() == 'soft':
+        return os.symlink(source, link_name)
+    elif link_type.lower() == 'hard':
+        return os.link(source, link_name)
+    elif link_type.lower() == 'copy':
+        return shutil.copyfile(source, link_name)
+    elif link_type.lower() == 'auto':
+        try:
+            return link(source=source, link_name=link_name, link_type='hard')
+        except OSError as e:
+            if e.errno != 18:
+                raise e
+        try:
+            return link(source=source, link_name=link_name, link_type='soft')
+        except OSError as e:
+            pass
+
+        return link(source=source, link_name=link_name, link_type='copy')
+
+    raise Exception('Unable to link source {} to target {} with link_type {}', source, link_name, link_type)
+
+
 
 def m2_path():
     return os.getenv("M2_REPO", (pathlib.Path.home() / '.m2').absolute())
@@ -213,7 +230,7 @@ and it will be auto-completed.
 
     parser = argparse.ArgumentParser(
         description     = 'Run Java main class from maven coordinates.',
-        usage           = '%(prog)s [-v] [-u] [-U] [-m] [--ignore-jgorc] [--additional-jars jar [jar ...]] [--additional-endpoints endpoint [endpoint ...]] [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]',
+        usage           = '%(prog)s [-v] [-u] [-U] [-m] [--ignore-jgorc] [--link-type type] [--additional-jars jar [jar ...]] [--additional-endpoints endpoint [endpoint ...]] [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]',
         epilog          = epilog,
         formatter_class = argparse.RawTextHelpFormatter
     )
@@ -225,6 +242,7 @@ and it will be auto-completed.
     parser.add_argument('-a', '--additional-jars', nargs='+', help='Add additional jars to classpath', default=[], required=False)
     parser.add_argument( '--additional-endpoints', nargs='+', help='Add additional endpoints', default=[], required=False)
     parser.add_argument('--ignore-jgorc', action='store_true', help='Ignore ~/.jgorc')
+    parser.add_argument('--link-type', default=None, type=str, help='How to link from local maven repository into jgo cache. Defaults to the `links\' setting in ~/.jrunrc or \'auto\' if not specified.', choices=('hard', 'soft', 'copy', 'auto'))
 
 
     try:
@@ -270,7 +288,7 @@ def default_config():
     config.add_section('settings')
     config.set('settings', 'm2Repo', os.path.join(str(pathlib.Path.home()), '.m2', 'repository'))
     config.set('settings', 'cacheDir', os.path.join(str(pathlib.Path.home()), '.jgo'))
-    config.set('settings', 'links', 'hard')
+    config.set('settings', 'links', 'auto')
 
     # repositories
     config.add_section('repositories')
@@ -344,6 +362,7 @@ def resolve_dependencies(
         endpoint_string,
         cache_dir,
         m2_repo,
+        link_type='auto',
         update_cache=False,
         force_update=False,
         manage_dependencies=False,
@@ -457,7 +476,7 @@ def resolve_dependencies(
             relevant_jars.append(jar_file_in_workspace)
 
             try:
-                link(os.path.join(m2_repo, *g.split('.'), a, version, jar_file), jar_file_in_workspace)
+                link(os.path.join(m2_repo, *g.split('.'), a, version, jar_file), jar_file_in_workspace, link_type=link_type)
             except FileExistsError as e:
                 # Do not throw exceptionif target file exists.
                 pass
@@ -491,8 +510,12 @@ def run(parser, argv=sys.argv[1:]):
     if args.verbose > 0:
         _logger.setLevel(logging.DEBUG)
 
+    if args.link_type is not None:
+        config.set('settings', 'links', args.link_type)
+
     cache_dir = settings.get('cacheDir')
     m2_repo   = settings.get('m2Repo')
+    link_type = settings.get('links')
     for repository in args.repository:
         repositories[repository.split('=')[0]] = repository.split('=')[1]
 
@@ -514,7 +537,8 @@ def run(parser, argv=sys.argv[1:]):
         manage_dependencies = args.manage_dependencies,
         repositories        = repositories,
         shortcuts           = shortcuts,
-        verbose             = args.verbose)
+        verbose             = args.verbose,
+        link_type           = link_type)
 
     main_class_file = os.path.join(workspace, primary_endpoint.main_class, 'mainClass') if primary_endpoint.main_class else os.path.join(workspace, 'mainClass')
 
