@@ -307,7 +307,7 @@ then
 	check cat
 	mainClass=$(cat "$workspace/mainClass")
 	launchJava
-	exit 0
+	exit $?
 fi
 
 # Synthesize a dummy Maven project.
