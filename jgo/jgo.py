@@ -187,7 +187,8 @@ def launch_java(
         jvm_args,
         main_class,
         *app_args,
-        additional_jars=[]
+        additional_jars=[],
+        **subprocess_run_kwargs,
         ):
     java = executable_path('java')
     if not java:
@@ -196,7 +197,7 @@ def launch_java(
     cp = classpath_separator().join([os.path.join(jar_dir, '*')] + additional_jars)
     _logger.debug("class path: %s", cp)
     jvm_args = tuple(arg for arg in jvm_args) if jvm_args else tuple()
-    return subprocess.run((java, '-cp', cp) + jvm_args + (main_class,) + app_args)
+    return subprocess.run((java, '-cp', cp) + jvm_args + (main_class,) + app_args, **subprocess_run_kwargs)
 
 def run_and_combine_outputs(command, *args):
     return subprocess.check_output((command,) + args, stderr=subprocess.STDOUT)
@@ -246,16 +247,18 @@ and it will be auto-completed.
 
 
     try:
-        run(parser, argv=argv)
+        completed_process = run(parser, argv=argv)
+        completed_process.check_returncode()
     except subprocess.CalledProcessError as e:
-        _logger.error("Error in %s: %s", e.cmd, e)
+        _logger.error("Error in `%s': %d", ' '.join(e.cmd), e.returncode)
+        _logger.debug("Exception: %s", e)
         _logger.debug("Debug Trace:", exc_info=True)
         if e.stdout:
-            _logger.debug("\tMaven std out:")
+            _logger.debug("\tstd out:")
             for l in str(e.stdout).split('\\n'):
                 _logger.debug('\t\t%s', l)
         if e.stderr:
-            _logger.debug("Maven std err:")
+            _logger.debug("\tstd err:")
             for l in str(e.stderr).split('\\n'):
                 _logger.debug('\t\t%s', l)
         parser.print_help(file=sys.stderr)
@@ -545,8 +548,7 @@ def run(parser, argv=sys.argv[1:]):
     try:
         with open(main_class_file, 'r') as f:
             main_class = f.readline()
-        launch_java(workspace, jvm_args, main_class, *program_args, additional_jars=args.additional_jars)
-        return
+        return launch_java(workspace, jvm_args, main_class, *program_args, additional_jars=args.additional_jars, check=False)
     except FileNotFoundError:
         pass
 
@@ -573,7 +575,7 @@ def run(parser, argv=sys.argv[1:]):
         f.write(main_class)
 
 
-    launch_java(workspace, jvm_args, main_class, *program_args, additional_jars=args.additional_jars)
+    return launch_java(workspace, jvm_args, main_class, *program_args, additional_jars=args.additional_jars, check=False)
 
 
 
