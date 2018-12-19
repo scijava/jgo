@@ -18,9 +18,10 @@ PARSINGTON_VERSION  = '1.0.4'
 PARSINGTON_ENDPOINT = 'org.scijava:parsington:{}'.format(PARSINGTON_VERSION)
 
 def run_parsington(cache_dir, link_type, parsington_args):
+    parser = jgo.jgo.jgo_parser()
     argv = (IGNORE_JGORC, LINK_TYPE, link_type, PARSINGTON_ENDPOINT) + parsington_args
     os.environ[jgo.jgo.jgo_cache_dir_environment_variable()] = cache_dir
-    return jgo.jgo.jgo_main(argv=argv, stdout=subprocess.PIPE)
+    return jgo.jgo.run(parser=parser, argv=argv, stdout=subprocess.PIPE)
 
 def resolve_parsington(cache_dir, link_type, m2_repo):
     return jgo.resolve_dependencies(
@@ -92,6 +93,7 @@ class ParsingtonTest(unittest.TestCase):
 
         try:
             completed_process = run_parsington(cache_dir=tmp_dir, link_type='auto', parsington_args=('1+3',))
+            self.assertIsNotNone(completed_process)
             self.assertEqual(completed_process.returncode, 0, 'Expected return code zero.')
             self.assertEqual(completed_process.stdout.decode('ascii').strip(), str(1+3))
         finally:
