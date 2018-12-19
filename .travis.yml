@@ -1,0 +1,14 @@
+language: python
+jdk: oraclejdk8
+python:
+  - "3.6"
+  - "3.7"
+branches:
+  only:
+  - master
+  - "/[0-9]+\\.[0-9]+\\.[0-9]+.*/"
+install: true
+script: ".travis/build.sh"
+cache:
+  directories:
+  - "~/.m2/repository"
