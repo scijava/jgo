@@ -391,10 +391,12 @@ def resolve_dependencies(
     workspace           = workspace_dir_from_coordinates(coordinates, cache_dir=cache_dir)
 
     update_cache = True if force_update else update_cache
-    update_cache = update_cache or os.path.isdir(workspace)
+    update_cache = update_cache \
+                   or not os.path.isdir(workspace) \
+                   or os.path.isdir(workspace) and not os.path.isfile(os.path.join(workspace, 'mainClass'))
 
     if not update_cache:
-        primary_endpoint, workspace
+        return primary_endpoint, workspace
 
     if update_cache:
         shutil.rmtree(workspace, True)
