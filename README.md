@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/scijava/jgo.svg?branch=master)](https://travis-ci.org/scijava/jgo)
+
 # jgo: painless Java component execution
 
 ![](jgo.png)
