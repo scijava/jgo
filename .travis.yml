@@ -2,7 +2,6 @@ language: python
 jdk: oraclejdk8
 python:
   - "3.6"
-  - "3.7"
 branches:
   only:
   - master
