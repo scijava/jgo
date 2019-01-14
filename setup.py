@@ -17,10 +17,12 @@ setup(
     license='Public domain',
     url='https://github.com/scijava/jgo',
     packages=['jgo'],
+    test_suite='nose.collector',
     entry_points={
         'console_scripts': [
             'jgo=jgo.jgo:jgo_main'
         ]
     },
     python_requires='>=3',
+    tests_require=['nose>=1.0']
 )

@@ -188,6 +188,8 @@ def launch_java(
         main_class,
         *app_args,
         additional_jars=[],
+        stdout=None,
+        stderr=None,
         **subprocess_run_kwargs,
         ):
     java = executable_path('java')
@@ -197,7 +199,7 @@ def launch_java(
     cp = classpath_separator().join([os.path.join(jar_dir, '*')] + additional_jars)
     _logger.debug("class path: %s", cp)
     jvm_args = tuple(arg for arg in jvm_args) if jvm_args else tuple()
-    return subprocess.run((java, '-cp', cp) + jvm_args + (main_class,) + app_args, **subprocess_run_kwargs)
+    return subprocess.run((java, '-cp', cp) + jvm_args + (main_class,) + app_args, stdout=stdout, stderr=stderr, **subprocess_run_kwargs)
 
 def run_and_combine_outputs(command, *args):
     return subprocess.check_output((command,) + args, stderr=subprocess.STDOUT)
@@ -212,7 +214,7 @@ def find_endpoint(argv, shortcuts={}):
             indices.append(index)
     return -1 if len(indices) == 0 else indices[-1]
 
-def jgo_main(argv=sys.argv[1:]):
+def jgo_parser():
 
     epilog='''
 The endpoint should have one of the following formats:
@@ -245,9 +247,14 @@ and it will be auto-completed.
     parser.add_argument('--ignore-jgorc', action='store_true', help='Ignore ~/.jgorc')
     parser.add_argument('--link-type', default=None, type=str, help='How to link from local maven repository into jgo cache. Defaults to the `links\' setting in ~/.jrunrc or \'auto\' if not specified.', choices=('hard', 'soft', 'copy', 'auto'))
 
+    return parser
+
+def jgo_main(argv=sys.argv[1:], stdout=None, stderr=None):
+
+    parser = jgo_parser()
 
     try:
-        completed_process = run(parser, argv=argv)
+        completed_process = run(parser, argv=argv, stdout=stdout, stderr=stderr)
         completed_process.check_returncode()
     except subprocess.CalledProcessError as e:
         _logger.error("Error in `%s': %d", ' '.join(e.cmd), e.returncode)
@@ -486,7 +493,7 @@ def resolve_dependencies(
     return primary_endpoint, workspace
 
 
-def run(parser, argv=sys.argv[1:]):
+def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
 
     config = default_config()
     if not '--ignore-jgorc' in argv:
@@ -548,7 +555,7 @@ def run(parser, argv=sys.argv[1:]):
     try:
         with open(main_class_file, 'r') as f:
             main_class = f.readline()
-        return launch_java(workspace, jvm_args, main_class, *program_args, additional_jars=args.additional_jars, check=False)
+        return launch_java(workspace, jvm_args, main_class, *program_args, additional_jars=args.additional_jars, stdout=stdout, stderr=stderr, check=False)
     except FileNotFoundError:
         pass
 
@@ -574,8 +581,7 @@ def run(parser, argv=sys.argv[1:]):
     with open(main_class_file, 'w') as f:
         f.write(main_class)
 
-
-    return launch_java(workspace, jvm_args, main_class, *program_args, additional_jars=args.additional_jars, check=False)
+    return launch_java(workspace, jvm_args, main_class, *program_args, additional_jars=args.additional_jars, stdout=stdout, stderr=stderr, check=False)
 
 
 
