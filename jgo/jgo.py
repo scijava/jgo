@@ -11,6 +11,8 @@ import sys
 import traceback
 import zipfile
 
+from .version_info import _version as version
+
 # A script to execute a main class of a Maven artifact
 # which is available locally or from Maven Central.
 #
@@ -271,6 +273,7 @@ and it will be auto-completed.
     parser.add_argument( '--additional-endpoints', nargs='+', help='Add additional endpoints', default=[], required=False)
     parser.add_argument('--ignore-jgorc', action='store_true', help='Ignore ~/.jgorc')
     parser.add_argument('--link-type', default=None, type=str, help='How to link from local maven repository into jgo cache. Defaults to the `links\' setting in ~/.jgorc or \'auto\' if not specified.', choices=('hard', 'soft', 'copy', 'auto'))
+    parser.add_argument('--version', action='version', version=str(version))
 
     return parser
 
@@ -514,7 +517,7 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
 
     endpoint_index = find_endpoint(argv, shortcuts)
     if endpoint_index == -1:
-        raise HelpRequested(argv) if '-h' in argv or '--help' in argv else NoEndpointProvided(argv)
+        raise HelpRequested(argv) if any(arg in argv for arg in ('--help', '-h', '--version')) else NoEndpointProvided(argv)
 
     args, unknown = parser.parse_known_args(argv[:endpoint_index])
     jvm_args      = unknown if unknown else []
