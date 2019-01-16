@@ -6,9 +6,11 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md')) as f:
     jgo_long_description = f.read()
 
+from jgo import __version__ as version
+
 setup(
     name='jgo',
-    version='0.4.1.dev0',
+    version=version,
     author='Philipp Hanslovsky, Curtis Rueden',
     author_email='hanslovskyp@janelia.hhmi.org',
     description='Launch Java code from Python and the CLI, installation-free.',
