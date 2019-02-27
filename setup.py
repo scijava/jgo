@@ -24,5 +24,5 @@ setup(
         ]
     },
     python_requires='>=3',
-    tests_require=['nose>=1.0']
+    tests_require=['nose>=1.0', 'psutil']
 )
