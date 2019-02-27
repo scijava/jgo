@@ -24,5 +24,6 @@ setup(
         ]
     },
     python_requires='>=3',
+    install_requires=['psutil'],
     tests_require=['nose>=1.0']
 )
