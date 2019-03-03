@@ -271,6 +271,7 @@ and it will be auto-completed.
     parser.add_argument( '--additional-endpoints', nargs='+', help='Add additional endpoints', default=[], required=False)
     parser.add_argument('--ignore-jgorc', action='store_true', help='Ignore ~/.jgorc')
     parser.add_argument('--link-type', default=None, type=str, help='How to link from local maven repository into jgo cache. Defaults to the `links\' setting in ~/.jgorc or \'auto\' if not specified.', choices=('hard', 'soft', 'copy', 'auto'))
+    parser.add_argument('--resolve-only', action='store_true', help='Only resolve dependencies and print workspace location. Will not run any code.', required=False)
 
     return parser
 
@@ -552,6 +553,12 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
         shortcuts           = shortcuts,
         verbose             = args.verbose,
         link_type           = link_type)
+    if args.resolve_only:
+        print(workspace)
+        class MockObject(object):
+            def check_returncode(self):
+                pass
+        return MockObject()
 
     main_class_file = os.path.join(workspace, primary_endpoint.main_class, 'mainClass') if primary_endpoint.main_class else os.path.join(workspace, 'mainClass')
 
