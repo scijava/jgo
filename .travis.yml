@@ -1,5 +1,5 @@
 language: python
-jdk: oraclejdk8
+jdk: openjdk8
 python:
   - "3.6"
 branches:
