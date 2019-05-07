@@ -161,7 +161,7 @@ from which artifacts will be retrieved. E.g.:
 
 ```ini
 [repositories]
-imagej.public = https://maven.imagej.net/content/groups/public
+scijava.public = https://maven.scijava.org/content/groups/public
 ```
 
 If you need more control over where artifacts come from—for example, if you

@@ -30,7 +30,7 @@ def add_jvm_args_as_necessary(argv, gc_option='-XX:+UseConcMarkSweepGC'):
     return argv
 
 def maven_scijava_repository():
-    return 'https://maven.imagej.net/content/groups/public'
+    return 'https://maven.scijava.org/content/groups/public'
 
 
 def main_from_endpoint(
