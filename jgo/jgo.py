@@ -26,11 +26,6 @@ import zipfile
 
 _classpath_separator = ';' if os.name == 'nt' else ':'
 
-LOG_FORMAT = '%(levelname)s %(asctime)s: %(message)s'
-logging.basicConfig(
-    level   = logging.INFO,
-    # datefmt = '%Y-%m-%d -  %H:%M:%S',
-    format  = LOG_FORMAT)
 _logger = logging.getLogger(os.getenv('JRUN_LOGGER_NAME', 'jgo'))
 
 def classpath_separator():
@@ -250,6 +245,12 @@ and it will be auto-completed.
     return parser
 
 def jgo_main(argv=sys.argv[1:], stdout=None, stderr=None):
+	
+    LOG_FORMAT = '%(levelname)s %(asctime)s: %(message)s'
+    logging.basicConfig(
+        level   = logging.INFO,
+        # datefmt = '%Y-%m-%d -  %H:%M:%S',
+        format  = LOG_FORMAT)
 
     parser = jgo_parser()
 
