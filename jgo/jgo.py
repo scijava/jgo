@@ -197,38 +197,38 @@ def launch_java(
     return subprocess.run((java, '-cp', cp) + jvm_args + (main_class,) + app_args, stdout=stdout, stderr=stderr, **subprocess_run_kwargs)
 
 def run_and_combine_outputs(command, *args):
-	try:
-		return subprocess.check_output((command,) + args, stderr=subprocess.STDOUT)
-	except subprocess.CalledProcessError as e:
-		_logger.error("Error in `%s': %d", ' '.join(e.cmd), e.returncode)
-		_logger.debug("Exception: %s", e)
-		_logger.debug("Debug Trace:", exc_info=True)
-		if e.stdout:
-			_logger.debug("\tstd out:")
-			for l in str(e.stdout).split('\\n'):
-				_logger.debug('\t\t%s', l)
-		if e.stderr:
-			_logger.debug("\tstd err:")
-			for l in str(e.stderr).split('\\n'):
-				_logger.debug('\t\t%s', l)
-		# parser.print_help(file=sys.stderr)
-		sys.exit(e.returncode)
-		
-	except NoMainClassInManifest as e:
-		_logger.error(e)
-		_logger.error("No main class given, and none found.")
-		# parser.print_help(file=sys.stderr)
-		sys.exit(1)
+    try:
+        return subprocess.check_output((command,) + args, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        _logger.error("Error in `%s': %d", ' '.join(e.cmd), e.returncode)
+        _logger.debug("Exception: %s", e)
+        _logger.debug("Debug Trace:", exc_info=True)
+        if e.stdout:
+            _logger.debug("\tstd out:")
+            for l in str(e.stdout).split('\\n'):
+                _logger.debug('\t\t%s', l)
+        if e.stderr:
+            _logger.debug("\tstd err:")
+            for l in str(e.stderr).split('\\n'):
+                _logger.debug('\t\t%s', l)
+        # parser.print_help(file=sys.stderr)
+        sys.exit(e.returncode)
 
-	except HelpRequested as e:
-		pass
-		#parser.parse_known_args(e.argv)
+    except NoMainClassInManifest as e:
+        _logger.error(e)
+        _logger.error("No main class given, and none found.")
+        # parser.print_help(file=sys.stderr)
+        sys.exit(1)
 
-	except Exception as e:
-		_logger.error(e)
-		traceback.print_tb(e.__traceback__)
-		parser.print_help(file=sys.stderr)
-		sys.exit(1)
+    except HelpRequested as e:
+        pass
+    #parser.parse_known_args(e.argv)
+
+    except Exception as e:
+        _logger.error(e)
+        traceback.print_tb(e.__traceback__)
+        parser.print_help(file=sys.stderr)
+        sys.exit(1)
 
 def find_endpoint(argv, shortcuts={}):
     # endpoint is first positional argument
@@ -275,7 +275,7 @@ and it will be auto-completed.
     return parser
 
 def jgo_main(argv=sys.argv[1:], stdout=None, stderr=None):
-	
+
     LOG_FORMAT = '%(levelname)s %(asctime)s: %(message)s'
     logging.basicConfig(
         level   = logging.INFO,
@@ -419,15 +419,15 @@ def resolve_dependencies(
 
     maven_project ='''
 <project>
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>{groupId}-BOOTSTRAPPER</groupId>
-	<artifactId>{artifactId}-BOOTSTRAPPER</artifactId>
-	<version>0</version>
-	<dependencyManagement>
-		<dependencies>{depMgmt}</dependencies>
-	</dependencyManagement>
-	<dependencies>{deps}</dependencies>
-	<repositories>{repos}</repositories>
+\t<modelVersion>4.0.0</modelVersion>
+\t<groupId>{groupId}-BOOTSTRAPPER</groupId>
+\t<artifactId>{artifactId}-BOOTSTRAPPER</artifactId>
+\t<version>0</version>
+\t<dependencyManagement>
+\t\t<dependencies>{depMgmt}</dependencies>
+\t</dependencyManagement>
+\t<dependencies>{deps}</dependencies>
+\t<repositories>{repos}</repositories>
 </project>
 '''.format(
     groupId=primary_endpoint.groupId,
