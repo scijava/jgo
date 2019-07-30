@@ -211,23 +211,19 @@ def run_and_combine_outputs(command, *args):
             _logger.debug("\tstd err:")
             for l in str(e.stderr).split('\\n'):
                 _logger.debug('\t\t%s', l)
-        # parser.print_help(file=sys.stderr)
         sys.exit(e.returncode)
 
     except NoMainClassInManifest as e:
         _logger.error(e)
         _logger.error("No main class given, and none found.")
-        # parser.print_help(file=sys.stderr)
         sys.exit(1)
 
-    except HelpRequested as e:
+    except HelpRequested:
         pass
-    #parser.parse_known_args(e.argv)
 
     except Exception as e:
         _logger.error(e)
         traceback.print_tb(e.__traceback__)
-        parser.print_help(file=sys.stderr)
         sys.exit(1)
 
 def find_endpoint(argv, shortcuts={}):
