@@ -562,6 +562,9 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
     except FileNotFoundError:
         pass
 
+    _logger.info('First time start-up may be slow. '
+                 'Downloaded dependencies will be cached '
+                 'for shorter start-up times in subsequent executions.')
     if not primary_endpoint.main_class:
         jar_path = glob.glob(os.path.join(workspace, primary_endpoint.jar_name()).replace(Endpoint.VERSION_RELEASE, '*').replace(Endpoint.VERSION_LATEST, '*'))[0]
         with zipfile.ZipFile(jar_path) as jar_file:
