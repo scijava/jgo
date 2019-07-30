@@ -284,8 +284,23 @@ def _jgo_main(argv=sys.argv[1:], stdout=None, stderr=None):
 
     parser = jgo_parser()
 
-    completed_process = run(parser, argv=argv, stdout=stdout, stderr=stderr)
-    completed_process.check_returncode()
+    try:
+        completed_process = run(parser, argv=argv, stdout=stdout, stderr=stderr)
+        completed_process.check_returncode()
+
+    except HelpRequested:
+        pass
+        parser.print_help()
+
+    except NoEndpointProvided:
+        parser.print_usage()
+        _logger.error('No endpoint provided. Run `jgo --help\' for a detailed help message.')
+        return 254
+
+    except subprocess.CalledProcessError as e:
+        return e.returncode
+
+    return 0
 
 
 def jgo_cache_dir_environment_variable():
