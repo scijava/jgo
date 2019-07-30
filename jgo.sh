@@ -310,6 +310,8 @@ then
 	exit $?
 fi
 
+info 'First time start-up may be slow. Downloaded dependencies will be cached for shorter start-up times in subsequent executions.'
+
 # Synthesize a dummy Maven project.
 
 for repository in "${repositories[@]}"
