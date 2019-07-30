@@ -274,7 +274,7 @@ and it will be auto-completed.
 
     return parser
 
-def jgo_main(argv=sys.argv[1:], stdout=None, stderr=None):
+def _jgo_main(argv=sys.argv[1:], stdout=None, stderr=None):
 
     LOG_FORMAT = '%(levelname)s %(asctime)s: %(message)s'
     logging.basicConfig(

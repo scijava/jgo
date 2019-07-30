@@ -1,7 +1,7 @@
 import psutil
 import sys
 
-from .jgo import jgo_main as main
+from .jgo import _jgo_main as main
 
 def add_jvm_args_as_necessary(argv, gc_option='-XX:+UseConcMarkSweepGC'):
     """
