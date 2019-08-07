@@ -531,6 +531,11 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
     jvm_args      = unknown if unknown else []
     program_args  = [] if endpoint_index == -1 else argv[endpoint_index+1:]
 
+    if args.additional_jars is not None and len(args.additional_jars) > 0:
+        _logger.warning('The -a, --additional-jars option has been deprecated and will be removed in the future. '
+                        'Please use `mvn install:install-file\' instead to make relevant JARS available in your '
+                        'local Maven repository and pass appropriate coordinates as endpoints.')
+
     if args.verbose > 0:
         _logger.setLevel(logging.DEBUG)
 
