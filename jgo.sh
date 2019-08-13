@@ -13,6 +13,7 @@
 
 # Define some useful functions.
 
+notice() { test $quiet || echo "$@"; }
 info() { test $verbose && echo "[INFO] $@"; }
 err() { echo "$@" 1>&2; }
 die() { err "$@"; exit 1; }
@@ -180,6 +181,9 @@ do
 				updateMaven=1
 				updateCache=1
 				;;
+                        -q)
+				quiet=1
+				;;
 			-*)
 				jvm_args+=("$1")
 				;;
@@ -244,12 +248,13 @@ do
 			v="RELEASE"
 			;;
 		*)
-			echo "Usage: jgo [-v] [-u] [-U] [-m] <jvm-args> <endpoint> <main-args>"
+			echo "Usage: jgo [-v] [-u] [-U] [-m] [-q] <jvm-args> <endpoint> <main-args>"
 			echo
 			echo "  -v          : verbose mode flag"
 			echo "  -u          : update/regenerate cached environment"
 			echo "  -U          : force update from remote Maven repositories (implies -u)"
 			echo "  -m          : use endpoints for dependency management (see README)"
+			echo "  -q          : quiet mode flag to suppress regular output"
 			echo "  <jvm-args>  : any list of arguments to the JVM"
 			echo "  <endpoint>  : the artifact(s) + main class to execute"
 			echo "  <main-args> : any list of arguments to the main class"
@@ -310,7 +315,7 @@ then
 	exit $?
 fi
 
-info 'First time start-up may be slow. Downloaded dependencies will be cached for shorter start-up times in subsequent executions.'
+notice 'First time start-up may be slow. Downloaded dependencies will be cached for shorter start-up times in subsequent executions.'
 
 # Synthesize a dummy Maven project.
 
