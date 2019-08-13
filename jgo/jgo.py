@@ -235,7 +235,9 @@ def find_endpoint(argv, shortcuts={}):
             indices.append(index)
     return -1 if len(indices) == 0 else indices[-1]
 
-def jgo_parser():
+_default_log_levels = ('NOTSET', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL', 'FATAL', 'TRACE')
+
+def jgo_parser(log_levels = _default_log_levels):
 
     epilog='''
 The endpoint should have one of the following formats:
@@ -254,7 +256,7 @@ and it will be auto-completed.
 
     parser = argparse.ArgumentParser(
         description     = 'Run Java main class from maven coordinates.',
-        usage           = '%(prog)s [-v] [-u] [-U] [-m] [--ignore-jgorc] [--link-type type] [--additional-jars jar [jar ...]] [--additional-endpoints endpoint [endpoint ...]] [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]',
+        usage           = '%(prog)s [-v] [-u] [-U] [-m] [-q] [--log-level] [--ignore-jgorc] [--link-type type] [--additional-jars jar [jar ...]] [--additional-endpoints endpoint [endpoint ...]] [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]',
         epilog          = epilog,
         formatter_class = argparse.RawTextHelpFormatter
     )
@@ -264,19 +266,23 @@ and it will be auto-completed.
     parser.add_argument('-m', '--manage-dependencies', action='store_true', help='use endpoints for dependency management (see "Details" below)')
     parser.add_argument('-r', '--repository', nargs='+', help='Add additional maven repository (key=url format)', default=[], required=False)
     parser.add_argument('-a', '--additional-jars', nargs='+', help='Add additional jars to classpath', default=[], required=False)
+    parser.add_argument('-q', '--quiet', action='store_true', required=False, help='Suppress jgo output, including logging')
     parser.add_argument( '--additional-endpoints', nargs='+', help='Add additional endpoints', default=[], required=False)
     parser.add_argument('--ignore-jgorc', action='store_true', help='Ignore ~/.jgorc')
     parser.add_argument('--link-type', default=None, type=str, help='How to link from local maven repository into jgo cache. Defaults to the `links\' setting in ~/.jgorc or \'auto\' if not specified.', choices=('hard', 'soft', 'copy', 'auto'))
+    parser.add_argument('--log-level', default=None, type=str, help='Set log level', choices=log_levels)
 
     return parser
 
 def _jgo_main(argv=sys.argv[1:], stdout=None, stderr=None):
 
     LOG_FORMAT = '%(levelname)s %(asctime)s: %(message)s'
-    logging.basicConfig(
-        level   = logging.INFO,
-        # datefmt = '%Y-%m-%d -  %H:%M:%S',
-        format  = LOG_FORMAT)
+
+    if not ('-q' in argv or '--quiet' in argv):
+        logging.basicConfig(
+            level   = logging.INFO,
+            # datefmt = '%Y-%m-%d -  %H:%M:%S',
+            format  = LOG_FORMAT)
 
     parser = jgo_parser()
 
@@ -390,8 +396,7 @@ def resolve_dependencies(
         manage_dependencies=False,
         repositories={},
         shortcuts={},
-        verbose=0
-):
+        verbose=0):
 
 
     endpoint_strings    = split_endpoint_string(endpoint_string)
@@ -409,6 +414,10 @@ def resolve_dependencies(
 
     if not update_cache:
         return primary_endpoint, workspace
+
+    _logger.info('First time start-up may be slow. '
+                 'Downloaded dependencies will be cached '
+                 'for shorter start-up times in subsequent executions.')
 
     if update_cache:
         shutil.rmtree(workspace, True)
@@ -530,6 +539,7 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
     args, unknown = parser.parse_known_args(argv[:endpoint_index])
     jvm_args      = unknown if unknown else []
     program_args  = [] if endpoint_index == -1 else argv[endpoint_index+1:]
+    if args.log_level: logging.getLogger().setLevel(logging.getLevelName(args.log_level))
 
     if args.additional_jars is not None and len(args.additional_jars) > 0:
         _logger.warning('The -a, --additional-jars option has been deprecated and will be removed in the future. '
@@ -570,7 +580,6 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
         link_type           = link_type)
 
     main_class_file = os.path.join(workspace, primary_endpoint.main_class, 'mainClass') if primary_endpoint.main_class else os.path.join(workspace, 'mainClass')
-
     try:
         with open(main_class_file, 'r') as f:
             main_class = f.readline()
