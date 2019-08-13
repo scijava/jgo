@@ -274,7 +274,7 @@ and it will be auto-completed.
     parser.add_argument( '--additional-endpoints', nargs='+', help='Add additional endpoints', default=[], required=False)
     parser.add_argument('--ignore-jgorc', action='store_true', help='Ignore ~/.jgorc')
     parser.add_argument('--link-type', default=None, type=str, help='How to link from local maven repository into jgo cache. Defaults to the `links\' setting in ~/.jgorc or \'auto\' if not specified.', choices=('hard', 'soft', 'copy', 'auto'))
-    parser.add_argument('--log-level', default=None, type=str, help='Set log level')
+    parser.add_argument('--log-level', default=None, type=str, help='Set log level', choices=log_levels)
 
     return parser
 
