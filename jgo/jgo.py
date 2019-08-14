@@ -367,6 +367,7 @@ def split_endpoint_string(endpoint_string):
     return endpoint_strings
 
 def endpoints_from_strings(endpoint_strings, shortcuts={}):
+    _logger.debug('Creating endpoints from strings %s with shortcuts %s', endpoint_strings, shortcuts)
     return [Endpoint.parse_endpoint(expand_coordinate(ep, shortcuts=shortcuts)) for ep in endpoint_strings]
 
 def coordinates_from_endpoints(endpoints):
