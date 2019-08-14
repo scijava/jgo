@@ -406,11 +406,12 @@ def resolve_dependencies(
     repo_str            = ''.join('<repository><id>{rid}</id><url>{url}</url></repository>'.format(rid=k, url=v) for (k, v) in repositories.items())
     coordinates         = coordinates_from_endpoints(endpoints)
     workspace           = workspace_dir_from_coordinates(coordinates, cache_dir=cache_dir)
+    build_success_file  = os.path.join(workspace, 'buildSuccess')
 
     update_cache = True if force_update else update_cache
     update_cache = update_cache \
                    or not os.path.isdir(workspace) \
-                   or os.path.isdir(workspace) and not os.path.isfile(os.path.join(workspace, 'mainClass'))
+                   or not os.path.isfile(build_success_file)
 
     if not update_cache:
         return primary_endpoint, workspace
@@ -513,6 +514,7 @@ def resolve_dependencies(
             except FileExistsError as e:
                 # Do not throw exceptionif target file exists.
                 pass
+    pathlib.Path(build_success_file).touch(exist_ok=True)
     return primary_endpoint, workspace
 
 
@@ -587,7 +589,9 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
     except FileNotFoundError:
         pass
 
+
     if not primary_endpoint.main_class:
+        _logger.info('Inferring main class from jar manifest')
         jar_path = glob.glob(os.path.join(workspace, primary_endpoint.jar_name()).replace(Endpoint.VERSION_RELEASE, '*').replace(Endpoint.VERSION_LATEST, '*'))[0]
         with zipfile.ZipFile(jar_path) as jar_file:
             with jar_file.open('META-INF/MANIFEST.MF') as manifest:
@@ -600,6 +604,7 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
                         break
         if not main_class:
             raise NoMainClassInManifest(jar_path)
+        _logger.info('Inferred main class: %s', main_class)
     else:
         main_class = primary_endpoint.main_class
 
