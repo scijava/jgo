@@ -373,7 +373,7 @@ def coordinates_from_endpoints(endpoints):
     return [ep.get_coordinates() for ep in endpoints]
 
 def workspace_dir_from_coordinates(coordinates, cache_dir):
-    workspace = os.path.join(cache_dir, *(coordinates[0][0].split('.') + coordinates[0][1:]))
+    workspace = os.path.join(cache_dir, *coordinates[0])
     workspace = '+'.join([workspace] + ['-'.join(c) for c in coordinates[1:]])
     return workspace
 
