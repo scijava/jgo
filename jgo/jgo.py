@@ -581,7 +581,7 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
         verbose             = args.verbose,
         link_type           = link_type)
 
-    main_class_file = os.path.join(workspace, primary_endpoint.main_class, 'mainClass') if primary_endpoint.main_class else os.path.join(workspace, 'mainClass')
+    main_class_file = os.path.join(workspace, primary_endpoint.main_class) if primary_endpoint.main_class else os.path.join(workspace, 'mainClass')
     try:
         with open(main_class_file, 'r') as f:
             main_class = f.readline()
