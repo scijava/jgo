@@ -231,7 +231,7 @@ def find_endpoint(argv, shortcuts={}):
     pattern = re.compile('.*https?://.*')
     indices = []
     for index, arg in enumerate(argv):
-        if arg in shortcuts or (Endpoint.is_endpoint(arg) and not pattern.match(arg)):
+        if any(a in shortcuts for a in arg.split('+')) or (Endpoint.is_endpoint(arg) and not pattern.match(arg)):
             indices.append(index)
     return -1 if len(indices) == 0 else indices[-1]
 
