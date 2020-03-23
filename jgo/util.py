@@ -3,18 +3,16 @@ import sys
 
 from .jgo import _jgo_main as main
 
-def add_jvm_args_as_necessary(argv, gc_option='-XX:+UseConcMarkSweepGC'):
+
+def set_xmx_if_not_set(argv):
     """
 
-    Extend existing ``argv`` with reasonable default values for garbage collection and max heap size.
+    Extend existing ``argv`` with reasonable default values for max heap size.
     If ``-Xmx`` is not specified in ``argv``, set max heap size to half the system's memory.
 
     :param argv: arugment vector
-    :param gc_option: Use this garbage collector settings, if any.
     :return: ``argv`` with
     """
-    if gc_option and not gc_option in argv:
-        argv += [gc_option]
 
     for arg in argv:
         if '-Xmx' in arg:
@@ -39,7 +37,8 @@ def main_from_endpoint(
         repositories={'scijava.public': maven_scijava_repository()},
         primary_endpoint_version=None,
         primary_endpoint_main_class=None,
-        secondary_endpoints=()):
+        secondary_endpoints=(),
+        set_reasonable_default_xmx_if_not_set=True):
     """
     Convenience method to populate appropriate argv for jgo. This is useful to distribute Java programs as Python modules.
 
@@ -66,6 +65,6 @@ def main_from_endpoint(
     primary_endpoint   = primary_endpoint + ':{}'.format(primary_endpoint_main_class) if primary_endpoint_main_class else primary_endpoint
     endpoint           = ['+'.join((primary_endpoint,) + secondary_endpoints)]
     paintera_argv      = argv if double_dash_index < 0 else argv[double_dash_index+1:]
-    argv               = add_jvm_args_as_necessary(jgo_and_jvm_argv) + repository_strings + endpoint + paintera_argv
+    argv               = (set_xmx_if_not_set(jgo_and_jvm_argv) if set_reasonable_default_xmx_if_not_set else jgo_and_jvm_argv) + repository_strings + endpoint + paintera_argv
 
     main(argv=argv)
