@@ -87,6 +87,9 @@ pip install --user .
 
 # install into $PREFIX
 pip install --prefix=$PREFIX .
+
+# install globally in developer mode (hot linked to working copy folder)
+pip install -e .
 ```
 
 </details>
