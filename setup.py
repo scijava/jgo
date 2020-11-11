@@ -10,7 +10,7 @@ setup(
     name='jgo',
     version='1.0.1.dev0',
     author='Philipp Hanslovsky, Curtis Rueden',
-    author_email='hanslovskyp@janelia.hhmi.org',
+    author_email='ctrueden@wisc.edu',
     description='Launch Java code from Python and the CLI, installation-free.',
     long_description=jgo_long_description,
     long_description_content_type='text/markdown',
