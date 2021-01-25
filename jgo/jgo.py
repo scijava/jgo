@@ -524,10 +524,11 @@ def resolve_dependencies(
             except FileExistsError as e:
                 # Do not throw exceptionif target file exists.
                 pass
-    if len(set(modules_deps)) != len(modules_discovered):
-        missing_mods = '\n'.join(x for x in modules_deps - modules_discovered)
-        _logger.info(f"Missing Modules:\n{missing_mods}")
-        raise Exception("Could not discover all modules dependencies")
+    module_set = set(modules_deps)
+    if len(module_set) != len(modules_discovered):
+        missing_mods = '\n'.join(x for x in module_set - modules_discovered)
+        _logger.info("Missing Modules:\n{}".format(missing_mods))
+        raise Exception("Could not discover all module dependencies")
     pathlib.Path(build_success_file).touch(exist_ok=True)
     return primary_endpoint, workspace
 
