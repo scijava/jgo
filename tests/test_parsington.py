@@ -88,6 +88,25 @@ class ParsingtonTest(unittest.TestCase):
         finally:
             shutil.rmtree(tmp_dir)
 
+    def test_resolve_as_module(self):
+        tmp_dir = tempfile.mkdtemp(prefix='jgo-test-cache-dir')
+        m2_repo = os.path.join(str(pathlib.Path.home()), '.m2', 'repository')
+        try:
+            _, workspace = jgo.resolve_dependencies(
+                PARSINGTON_ENDPOINT,
+                m2_repo=m2_repo,
+                cache_dir=tmp_dir,
+                link_type='auto',
+                modules_deps=[PARSINGTON_ENDPOINT]
+            )
+            jars = glob.glob(os.path.join(workspace, '*jar'))
+            self.assertEqual(len(jars), 0, 'Expected zero jars in workspace')
+            modules = glob.glob(os.path.join(workspace, "modules", '*jar'))
+            self.assertEqual(len(modules), 1, 'Expected one jar in the module directory')
+            self.assertEqual(modules[0], os.path.join(workspace, "modules", 'parsington-%s.jar' % PARSINGTON_VERSION), 'Expected parsington jar')
+        finally:
+            shutil.rmtree(tmp_dir)
+
     def test_run_jgo(self):
         tmp_dir = tempfile.mkdtemp(prefix='jgo-test-cache-dir')
 

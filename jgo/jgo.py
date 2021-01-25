@@ -520,7 +520,7 @@ def resolve_dependencies(
                     modules_discovered.add(dependency_identifier)
                 else:
                     jar_file_in_workspace = os.path.join(workspace, jar_file)
-                link(os.path.join(m2_repo, *g.split('.'), a, version, jar_file), jar_file_in_workspace, link_type=link_type)
+                    link(os.path.join(m2_repo, *g.split('.'), a, version, jar_file), jar_file_in_workspace, link_type=link_type)
             except FileExistsError as e:
                 # Do not throw exceptionif target file exists.
                 pass
