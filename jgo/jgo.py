@@ -256,7 +256,7 @@ and it will be auto-completed.
 
     parser = argparse.ArgumentParser(
         description     = 'Run Java main class from maven coordinates.',
-        usage           = '%(prog)s [-v] [-u] [-U] [-m] [-q] [--log-level] [--ignore-jgorc] [--link-type type] [--additional-jars jar [jar ...]] [--additional-endpoints endpoint [endpoint ...]] [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]',
+        usage           = '%(prog)s [-v] [-u] [-U] [-m] [-q] [--log-level] [--ignore-jgorc] [--link-type type] [--modules-dependencies dep [dep ..]] [--additional-jars jar [jar ...]] [--additional-endpoints endpoint [endpoint ...]] [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]',
         epilog          = epilog,
         formatter_class = argparse.RawTextHelpFormatter
     )
@@ -267,6 +267,7 @@ and it will be auto-completed.
     parser.add_argument('-r', '--repository', nargs='+', help='Add additional maven repository (key=url format)', default=[], required=False)
     parser.add_argument('-a', '--additional-jars', nargs='+', help='Add additional jars to classpath', default=[], required=False)
     parser.add_argument('-q', '--quiet', action='store_true', required=False, help='Suppress jgo output, including logging')
+    parser.add_argument('--module-dependencies', nargs='+', help='Specify which dependencies should be treated as modules (of the form "group:artifact:version[:classifier]', default=[], required=False)
     parser.add_argument( '--additional-endpoints', nargs='+', help='Add additional endpoints', default=[], required=False)
     parser.add_argument('--ignore-jgorc', action='store_true', help='Ignore ~/.jgorc')
     parser.add_argument('--link-type', default=None, type=str, help='How to link from local maven repository into jgo cache. Defaults to the `links\' setting in ~/.jgorc or \'auto\' if not specified.', choices=('hard', 'soft', 'copy', 'auto'))
@@ -396,6 +397,7 @@ def resolve_dependencies(
         manage_dependencies=False,
         repositories={},
         shortcuts={},
+        modules_deps=[],
         verbose=0):
 
 
@@ -406,6 +408,7 @@ def resolve_dependencies(
     repo_str            = ''.join('<repository><id>{rid}</id><url>{url}</url></repository>'.format(rid=k, url=v) for (k, v) in repositories.items())
     coordinates         = coordinates_from_endpoints(endpoints)
     workspace           = workspace_dir_from_coordinates(coordinates, cache_dir=cache_dir)
+    module_dir = os.path.join(workspace, "modules")
     build_success_file  = os.path.join(workspace, 'buildSuccess')
 
     update_cache = True if force_update else update_cache
@@ -424,6 +427,7 @@ def resolve_dependencies(
         shutil.rmtree(workspace, True)
 
     os.makedirs(workspace, exist_ok=True)
+    os.makedirs(module_dir, exist_ok=True)
 
     # TODO should this be for all endpoints or only the primary endpoint?
     if manage_dependencies:
@@ -480,7 +484,7 @@ def resolve_dependencies(
 
 
     info_regex = re.compile('^.*\\[[A-Z]+\\] *')
-    relevant_jars = []
+    modules_discovered = set()
     for l in str(mvn_out).split('\\n'):
         # TODO: the compile|runtime|provided matches might fail if an artifactId starts with accordingly
         # TODO: If that ever turns out to be an issue, it is going to be necessary to update these checks
@@ -507,13 +511,23 @@ def resolve_dependencies(
             jar_file              = '{}.{}'.format(artifact_name, extension)
             jar_file_in_workspace = os.path.join(workspace, jar_file)
 
-            relevant_jars.append(jar_file_in_workspace)
 
             try:
+                dependency_identifier = ':'.join((g, a, version, c) if c else (g, a, version))
+                if dependency_identifier in modules_deps:
+                    jar_file_in_module_dir = os.path.join(module_dir, jar_file)
+                    link(os.path.join(m2_repo, *g.split('.'), a, version, jar_file), jar_file_in_module_dir, link_type=link_type)
+                    modules_discovered.add(dependency_identifier)
+                else:
+                    jar_file_in_workspace = os.path.join(workspace, jar_file)
                 link(os.path.join(m2_repo, *g.split('.'), a, version, jar_file), jar_file_in_workspace, link_type=link_type)
             except FileExistsError as e:
                 # Do not throw exceptionif target file exists.
                 pass
+    if len(set(modules_deps)) != len(modules_discovered):
+        missing_mods = '\n'.join(x for x in modules_deps - modules_discovered)
+        _logger.info(f"Missing Modules:\n{missing_mods}")
+        raise Exception("Could not discover all modules dependencies")
     pathlib.Path(build_success_file).touch(exist_ok=True)
     return primary_endpoint, workspace
 
@@ -579,7 +593,13 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
         repositories        = repositories,
         shortcuts           = shortcuts,
         verbose             = args.verbose,
-        link_type           = link_type)
+        link_type           = link_type,
+        modules_deps=args.module_dependencies)
+
+    if len(args.module_dependencies) > 0:
+        jvm_args.append("--module-path")
+        jvm_args.append(os.path.join(workspace, "modules"))
+
 
     main_class_file = os.path.join(workspace, primary_endpoint.main_class) if primary_endpoint.main_class else os.path.join(workspace, 'mainClass')
     try:
