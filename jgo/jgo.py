@@ -198,7 +198,9 @@ def launch_java(
 
 def run_and_combine_outputs(command, *args):
     try:
-        return subprocess.check_output((command,) + args, stderr=subprocess.STDOUT)
+        command_string = (command,) + args
+        _logger.debug(f'Executing: {command_string}')
+        return subprocess.check_output(command_string, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         _logger.error("Error in `%s': %d", ' '.join(e.cmd), e.returncode)
         _logger.debug("Exception: %s", e)
