@@ -8,7 +8,7 @@ with open(path.join(here, 'README.md')) as f:
 
 setup(
     name='jgo',
-    version='1.0.1',
+    version='1.0.2.dev0',
     author='Philipp Hanslovsky, Curtis Rueden',
     author_email='ctrueden@wisc.edu',
     description='Launch Java code from Python and the CLI, installation-free.',
