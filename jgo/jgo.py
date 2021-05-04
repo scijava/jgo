@@ -120,7 +120,7 @@ class Endpoint():
             return Endpoint(*endpoint_elements[:3], main_class=endpoint_elements[3])
 
         if (endpoint_elements_count == 3):
-            if re.match('({})|({})|({})'.format('[0-9].*', Endpoint.VERSION_RELEASE, Endpoint.VERSION_LATEST), endpoint_elements[2]):
+            if re.match('({})|({})|({})'.format('[0-9a-f].*', Endpoint.VERSION_RELEASE, Endpoint.VERSION_LATEST), endpoint_elements[2]):
                 return Endpoint(*endpoint_elements[:2], version=endpoint_elements[2])
             else:
                 return Endpoint(*endpoint_elements[:2], main_class=endpoint_elements[2])

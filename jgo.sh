@@ -233,7 +233,7 @@ do
 			g=${artifact%%:*}; remain=${artifact#*:}
 			a=${remain%%:*}; remain=${remain#*:}
 			case "$remain" in
-				[0-9]*|RELEASE|LATEST)
+				[0-9a-f]*|RELEASE|LATEST)
 					v="$remain"
 					;;
 				*)
@@ -404,7 +404,7 @@ then
 	jarPathPrefix="$workspace/$a"
 	test "$c" && jarPathPrefix="$jarPathPrefix-$c"
 	mainClass=$((test $verbose && set -x;
-		unzip -p "$jarPathPrefix"-[0-9]*.jar META-INF/MANIFEST.MF 2>/dev/null) |
+		unzip -p "$jarPathPrefix"-[0-9a-f]*.jar META-INF/MANIFEST.MF 2>/dev/null) |
 		grep Main-Class | head -n1 | sed 's/^Main-Class: *\([a-zA-Z0-9_\.]*\).*/\1/')
 	info "Inferred main class: $mainClass"
 fi
