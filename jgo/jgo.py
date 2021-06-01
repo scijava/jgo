@@ -521,10 +521,10 @@ def coordinates_from_endpoints(endpoints):
 
 
 def workspace_dir_from_coordinates(coordinates, cache_dir):
-    workspace = os.path.join(cache_dir, *coordinates[0])
-    coord_string = "+".join(["-".join(c) for c in coordinates[1:]])
+    coord_string = "+".join(["-".join(c) for c in coordinates])
     hash_path = hashlib.sha256(coord_string.encode("utf-8")).hexdigest()
-    workspace = "+".join([workspace, hash_path])
+    workspace = os.path.join(cache_dir, *coordinates[0], hash_path)
+
     return workspace
 
 
@@ -586,6 +586,11 @@ def resolve_dependencies(
         shutil.rmtree(workspace, True)
 
     os.makedirs(workspace, exist_ok=True)
+
+    # Write a file with the coordinates into the workspace dir
+    with open(os.path.join(workspace, "coordinates.txt"), "w") as f:
+        for coordinate in coordinates:
+            f.write("".join([":".join(coordinate)] + ["\n"]))
 
     # TODO should this be for all endpoints or only the primary endpoint?
     if manage_dependencies:
