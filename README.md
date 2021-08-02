@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/scijava/jgo.svg?branch=master)](https://travis-ci.org/scijava/jgo)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 # jgo: painless Java component execution
 
@@ -235,6 +236,15 @@ the case of multiple endpoints concatenated via the `+` operator with
 conflicting dependency management, the earlier endpoints will win because they
 will be declared earlier in the POM. See also
 [issue #9](https://github.com/scijava/jgo/issues/9) in the jgo issue tracker.
+
+## Development
+
+After `pip install tox`, you can use [`black`](https://github.com/psf/black)
+to lint the code with:
+
+```shell
+$ tox -e lint
+```
 
 ## Alternatives
 
