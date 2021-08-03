@@ -9,10 +9,13 @@ next_version() {
   echo "$prefix.$((suffix+1)).dev0"
 }
 
-grep -q '\.dev' setup.py &&
-  die "Refusing to release dev version!"
+for cmd in echo git grep mv python rm sed test twine; do
+  which "$cmd" >/dev/null || die "Missing required tool: $cmd"
+done
 
-sed 's/\.dev0//' setup.py > setup.py.new &&
+python setup.py test || die "Some tests failed!"
+
+sed 's/\.dev[0-9]\+//' setup.py > setup.py.new &&
 mv -f setup.py.new setup.py &&
 version=$(grep version= setup.py | sed "s/.*version='\([^']*\)'.*/\1/") &&
 test "$version" && echo "Releasing version: $version" ||
