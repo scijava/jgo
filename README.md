@@ -8,12 +8,12 @@
 ## Summary
 
 [Maven](https://maven.apache.org/) is a great tool. It manages dependencies so
-that Java projects become reusable "building blocks" in a much more robust way
-than many other languages offer. And the
-[Maven Central repository](https://search.maven.org/) contains a tremendous
-wealth of code, ripe for reuse in your own projects.
+that Java projects become reusable "building blocks" in a robust way, like
+`pip` for Python, `npm` for JavaScript, `gem` for Ruby, `cpan` for Perl, etc.
+And the [Maven Central repository](https://search.maven.org/) contains a
+tremendous wealth of code, ripe for reuse in your own projects.
 
-But shockingly, Maven provides no easy way to actually __launch code__ from the
+Unfortunately, Maven provides no easy way to actually __launch code__ from the
 beautifully managed dependencies stored so lovingly into `~/.m2/repository`.
 
 This project fills that gap: `jgo` launches Java code. You do not need to
@@ -21,9 +21,18 @@ download or install any JARs; you just specify an "endpoint" consisting of a
 [Maven artifact](http://stackoverflow.com/a/2487511/1207769) identifier, plus
 a main class if needed/desired, and `jgo` uses Maven to obtain and run it.
 
+To do this, `jgo` builds the local environment on demand, caching it into a
+subfolder of `~/.jgo`, so that the endpoint's particular dependencies are
+available in one place.
+
 ## Installation
 
-There are two implementations from which to choose! Each has pros and cons.
+The `jgo` project began life as a shell script, but was later translated into
+Python, so that tools such as [scyjava](https://github.com/scijava/scyjava)
+could leverage its environment-building capabilities.
+
+As such, there are now two implementations from which to choose!
+Each has pros and cons.
 
 ### Prerequisites
 
@@ -45,7 +54,7 @@ Just clone this repo and symlink `jgo.sh` into your favorite `bin` directory.
 
 For example, assuming `~/bin` is on your PATH:
 
-```
+```shell
 cd
 git clone https://github.com/scijava/jgo
 cd bin
@@ -57,33 +66,33 @@ jgo --help
 
 ### The Python module
 
-The `jgo/jgo.py` module requires Python. It offers a `jgo` console script,
-as well as a `jgo` module for programmatically creating endpoints.
+The Python version of `jgo` offers a `jgo` console script, as
+well as a `jgo` module for programmatically creating endpoints.
 
 <details><summary><strong>Installing with pip</strong></summary>
 
-```
+```shell
 pip install jgo
 ```
 
 </details>
 <details><summary><strong>Installing with conda</strong></summary>
 
-```
+```shell
 conda install -c conda-forge jgo
 ```
 
 </details>
 <details><summary><strong>Installing from source</strong></summary>
 
-```
+```shell
 git clone https://github.com/scijava/jgo
 cd jgo
 
-# install globally (not recommended unless using conda or other virtual environment)
+# install globally (not recommended unless using a virtual environment)
 pip install .
 
-# install into $HOME/.local (see pip install --help for details)
+# install into ~/.local (see pip install --help for details)
 pip install --user .
 
 # install into $PREFIX
@@ -156,7 +165,7 @@ Note the usage of the `+` syntax as needed to append elements to the classpath.
 
 ### Configuration
 
-You can configure the behavior of `jgo` using the `$HOME/.jgorc` file.
+You can configure the behavior of `jgo` using the `~/.jgorc` file.
 
 #### Repositories
 
@@ -187,7 +196,7 @@ scifio = io.scif:scifio-cli
 
 Shortcuts are substituted verbatim from the beginning of the endpoint,
 single-pass in the order they are defined. So e.g. now you can run:
-```
+```shell
 jgo repl
 ```
 Note that with the `repl` shortcut above, the main class
@@ -213,7 +222,7 @@ highest to lowest:
   - `cacheDir` in `settings` sections in `~/.jgorc`
   - default to `~/.jgo`
 
-### Details
+### Pitfalls
 
 #### Dependency management
 
@@ -239,11 +248,14 @@ will be declared earlier in the POM. See also
 
 ## Development
 
-After `pip install tox`, you can use [`black`](https://github.com/psf/black)
-to lint the code with:
+### Code style
+
+`jgo` uses [`black`](https://github.com/psf/black) for its code style.
+
+After `pip install tox`, you can lint the code with:
 
 ```shell
-$ tox -e lint
+tox -e lint
 ```
 
 ## Alternatives
