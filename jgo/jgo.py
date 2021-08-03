@@ -340,8 +340,11 @@ and it will be auto-completed.
 """
 
     parser = argparse.ArgumentParser(
-        description="Run Java main class from maven coordinates.",
-        usage="%(prog)s [-v] [-u] [-U] [-m] [-q] [--log-level] [--ignore-jgorc] [--link-type type] [--additional-jars jar [jar ...]] [--additional-endpoints endpoint [endpoint ...]] [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]",
+        description="Run Java main class from Maven coordinates.",
+        usage="jgo [-v] [-u] [-U] [-m] [-q] [--log-level] [--ignore-jgorc]\n" +
+              "           [--link-type type] [--additional-jars jar [jar ...]]\n" +
+              "           [--additional-endpoints endpoint [endpoint ...]]\n" +
+              "           [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]",
         epilog=epilog,
         formatter_class=argparse.RawTextHelpFormatter,
     )
@@ -364,13 +367,13 @@ and it will be auto-completed.
         "-m",
         "--manage-dependencies",
         action="store_true",
-        help='use endpoints for dependency management (see "Details" below)',
+        help='use endpoints for dependency management (see "Pitfalls")',
     )
     parser.add_argument(
         "-r",
         "--repository",
         nargs="+",
-        help="Add additional maven repository (key=url format)",
+        help="Add additional Maven repository (key=url format)",
         default=[],
         required=False,
     )
@@ -401,7 +404,8 @@ and it will be auto-completed.
         "--link-type",
         default=None,
         type=str,
-        help="How to link from local maven repository into jgo cache. Defaults to the `links' setting in ~/.jgorc or 'auto' if not specified.",
+        help="How to link from local Maven repository into jgo cache.\n" +
+             "Defaults to the `links' setting in ~/.jgorc or 'auto' if not specified.",
         choices=("hard", "soft", "copy", "auto"),
     )
     parser.add_argument(
@@ -683,7 +687,7 @@ def resolve_dependencies(
             and not re.match(".*:provided", l)
         ):
 
-            _logger.debug("Relevant maven output: %s", l)
+            _logger.debug("Relevant mvn output: %s", l)
 
             split_line = info_regex.sub("", l).split(":")
             split_line_len = len(split_line)
