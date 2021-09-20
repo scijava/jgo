@@ -24,8 +24,11 @@ test "$version" && echo "Releasing version: $version" ||
 git commit -m "Release version $version" setup.py &&
 rm -rf dist &&
 python setup.py sdist bdist_wheel &&
-twine upload dist/* &&
+git tag "$version" &&
 sed "s/version=.*/version=\"$(next_version "$version")\",/" setup.py > setup.py.new &&
 mv -f setup.py.new setup.py &&
 git commit -m "Bump to next development cycle" setup.py &&
-echo "Release complete. Don't forget to git push after ensuring all looks good!"
+echo "Release complete. Don't forget to run:
+twine upload dist/*
+git push
+git push origin $version"
