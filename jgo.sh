@@ -233,7 +233,7 @@ do
 			g=${artifact%%:*}; remain=${artifact#*:}
 			a=${remain%%:*}; remain=${remain#*:}
 			case "$remain" in
-				[0-9a-f]*|RELEASE|LATEST)
+				[0-9a-f]*|RELEASE|LATEST|MANAGED)
 					v="$remain"
 					;;
 				*)
@@ -268,6 +268,8 @@ do
 			echo "- groupId:artifactId:version:classifier:mainClass"
 			echo
 			echo "If version is omitted, then RELEASE is used."
+			echo "If version is MANAGED, then the <version> tag is omitted in"
+			echo "the dependency xml and must be managed by another endpoint."
 			echo "If mainClass is omitted, it is auto-detected."
 			echo "You can also write part of a class beginning with an @ sign,"
 			echo "and it will be auto-completed."
@@ -285,11 +287,12 @@ do
 	test "$c" && info "- classifier = $c" || info "- classifier = <none>"
 	test "$m" && mainClass="$m"
 
-	deps="$deps<dependency><groupId>$g</groupId><artifactId>$a</artifactId><version>$v</version>"
+	deps="$deps<dependency><groupId>$g</groupId><artifactId>$a</artifactId>"
+	test "$v" != "MANAGED" && deps="$deps<version>$v</version>"
 	test "$c" && deps="$deps<classifier>$c</classifier>"
 	deps="$deps</dependency>"
 
-	if [ "$manageDeps" ]
+	if [ "$manageDeps" ] && [ "$v" != "MANAGED" ]
 	then
 		depMgmt="$depMgmt<dependency><groupId>$g</groupId><artifactId>$a</artifactId><version>$v</version>"
 		test "$c" && depMgmt="$depMgmt<classifier>$c</classifier>"
