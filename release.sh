@@ -9,6 +9,8 @@ next_version() {
   echo "$prefix.$((suffix+1)).dev0"
 }
 
+echo "***Reminder: this script should be run on the up-to-date main branch of the repository***"
+
 # Check for .pypirc which is required for uploading via twine
 if [ ! -f ~/.pypirc ]; then
   die "Please set set up a .pypirc file with username and password in your user home directory before proceeding. See https://packaging.python.org/specifications/pypirc/"
