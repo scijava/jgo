@@ -9,6 +9,10 @@ next_version() {
   echo "$prefix.$((suffix+1)).dev0"
 }
 
+if [ ! -f ~/.pypirc ]; then
+  die "Please set set up a .pypirc file with username and password in your user home directory before proceeding. See https://packaging.python.org/specifications/pypirc/"
+fi
+
 for cmd in echo git grep mv python rm sed test twine; do
   which "$cmd" >/dev/null || die "Missing required tool: $cmd"
 done
