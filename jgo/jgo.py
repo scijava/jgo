@@ -84,6 +84,7 @@ class Endpoint:
 
     VERSION_RELEASE = "RELEASE"
     VERSION_LATEST = "LATEST"
+    VERSION_MANAGED = "MANAGED"
 
     def __init__(
         self,
@@ -117,9 +118,13 @@ class Endpoint:
         )
 
     def dependency_string(self):
-        xml = "<groupId>{groupId}</groupId><artifactId>{artifactId}</artifactId><version>{version}</version>".format(
-            groupId=self.groupId, artifactId=self.artifactId, version=self.version
+        xml = (
+            "<groupId>{groupId}</groupId><artifactId>{artifactId}</artifactId>".format(
+                groupId=self.groupId, artifactId=self.artifactId
+            )
         )
+        if self.version != Endpoint.VERSION_MANAGED:
+            xml += "<version>{version}</version>".format(version=self.version)
         if self.classifier:
             xml = xml + "<classifier>{classifier}</classifier>".format(
                 classifier=self.classifier
@@ -127,9 +132,9 @@ class Endpoint:
         return xml
 
     def get_coordinates(self):
-        return [self.groupId, self.artifactId, self.version] + (
-            [self.classifier] if self.classifier else []
-        )
+        return [self.groupId, self.artifactId]
+        +([self.version] if self.version != VERSION_MANAGED else [])
+        +([self.classifier] if self.classifier else [])
 
     def is_endpoint(string):
         endpoint_elements = (
@@ -161,8 +166,11 @@ class Endpoint:
 
         if endpoint_elements_count == 3:
             if re.match(
-                "({})|({})|({})".format(
-                    "[0-9a-f].*", Endpoint.VERSION_RELEASE, Endpoint.VERSION_LATEST
+                "({})|({})|({})|({})".format(
+                    "[0-9a-f].*",
+                    Endpoint.VERSION_RELEASE,
+                    Endpoint.VERSION_LATEST,
+                    Endpoint.VERSION_MANAGED,
                 ),
                 endpoint_elements[2],
             ):
@@ -597,6 +605,10 @@ def resolve_dependencies(
 
     # TODO should this be for all endpoints or only the primary endpoint?
     if manage_dependencies:
+        if primary_endpoint.version == Endpoint.VERSION_MANAGED:
+            raise InvalidEndpoint(
+                primary_endpoint, "A primary endpoint cannot also be version=MANAGED."
+            )
         dependency_management = "<dependency><groupId>{g}</groupId><artifactId>{a}</artifactId><version>{v}</version>".format(
             g=primary_endpoint.groupId,
             a=primary_endpoint.artifactId,
