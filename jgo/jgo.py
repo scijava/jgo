@@ -100,6 +100,9 @@ class Endpoint:
         self.classifier = classifier
         self.main_class = main_class
 
+    def __repr__(self):
+        return f"<jgo.Endpoint:g={self.groupId},a={self.artifactId},v={self.version},c={self.classifier},main={self.main_class}>"
+
     def jar_name(self):
         return (
             "-".join(
