@@ -268,36 +268,9 @@ def launch_java(
 
 
 def run_and_combine_outputs(command, *args):
-    try:
-        command_string = (command,) + args
-        _logger.debug(f"Executing: {command_string}")
-        return subprocess.check_output(command_string, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as e:
-        _logger.error("Error in `%s': %d", " ".join(e.cmd), e.returncode)
-        _logger.debug("Exception: %s", e)
-        _logger.debug("Debug Trace:", exc_info=True)
-        if e.stdout:
-            _logger.debug("\tstd out:")
-            for l in str(e.stdout).split("\\n"):
-                _logger.debug("\t\t%s", l)
-        if e.stderr:
-            _logger.debug("\tstd err:")
-            for l in str(e.stderr).split("\\n"):
-                _logger.debug("\t\t%s", l)
-        sys.exit(e.returncode)
-
-    except NoMainClassInManifest as e:
-        _logger.error(e)
-        _logger.error("No main class given, and none found.")
-        sys.exit(1)
-
-    except HelpRequested:
-        pass
-
-    except Exception as e:
-        _logger.error(e)
-        traceback.print_tb(e.__traceback__)
-        sys.exit(1)
+    command_string = (command,) + args
+    _logger.debug(f"Executing: {command_string}")
+    return subprocess.check_output(command_string, stderr=subprocess.STDOUT)
 
 
 def find_endpoint(argv, shortcuts={}):
@@ -661,19 +634,33 @@ def resolve_dependencies(
         mvn = executable_path_or_raise("mvn")
         mvn_out = run_and_combine_outputs(mvn, *mvn_args)
     except subprocess.CalledProcessError as e:
-        _logger.info("Failed to bootstrap the artifact.")
-        _logger.info("")
-        _logger.info("Possible solutions:")
-        _logger.info(
+        _logger.error("Failed to bootstrap the artifact.")
+        _logger.error("")
+
+        _logger.error("Possible solutions:")
+        _logger.error(
             "* Double check the endpoint for correctness (https://search.maven.org/)."
         )
-        _logger.info(
+        _logger.error(
             "* Add needed repositories to ~/.jgorc [repositories] block (see README)."
         )
-        _logger.info(
+        _logger.error(
             "* Try with an explicit version number (release metadata might be wrong)."
         )
-        print()
+        _logger.error("")
+        _logger.error("Full Maven error output:")
+        err_lines = []
+        if e.stdout:
+            err_lines += e.stdout.decode().splitlines()
+        if e.stderr:
+            err_lines += e.stderr.decode().splitlines()
+        for l in err_lines:
+            if l.startswith('[ERROR]'):
+                _logger.error("\t%s", l)
+            else:
+                _logger.debug("\t%s", l)
+        _logger.error("")
+
         raise e
 
     info_regex = re.compile("^.*\\[[A-Z]+\\] *")
