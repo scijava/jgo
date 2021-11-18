@@ -1,4 +1,4 @@
-[![build status](https://github.com/hinerm/jgo/actions/workflows/python-test-conda.yml/badge.svg)](https://github.com/hinerm/jgo/actions/workflows/python-test-conda.yml)
+[![build status](https://github.com/scijava/jgo/actions/workflows/python-test-conda.yml/badge.svg)](https://github.com/scijava/jgo/actions/workflows/python-test-conda.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 # jgo: painless Java component execution
