@@ -111,7 +111,7 @@ Usage: jgo [-v] [-u] [-U] [-m] <jvm-args> <endpoint> <main-args>
   -v          : verbose mode flag
   -u          : update/regenerate cached environment
   -U          : force update from remote Maven repositories (implies -u)
-  -m          : use endpoints for dependency management (see "Details" below)
+  -m          : use endpoints for dependency management (see "Pitfalls" below)
   <jvm-args>  : any list of arguments to the JVM
   <endpoint>  : the artifact(s) + main class to execute
   <main-args> : any list of arguments to the main class
