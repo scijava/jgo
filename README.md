@@ -18,7 +18,7 @@ beautifully managed dependencies stored so lovingly into `~/.m2/repository`.
 
 This project fills that gap: `jgo` launches Java code. You do not need to
 download or install any JARs; you just specify an "endpoint" consisting of a
-[Maven artifact](http://stackoverflow.com/a/2487511/1207769) identifier, plus
+[Maven artifact](https://stackoverflow.com/a/2487511/1207769) identifier, plus
 a main class if needed/desired, and `jgo` uses Maven to obtain and run it.
 
 To do this, `jgo` builds the local environment on demand, caching it into a
@@ -44,9 +44,8 @@ If you are missing anything, the script will tell you.
 
 The `jgo.sh` shell script requires a POSIX-friendly system. It is known to
 work on Linux, macOS, [Cygwin](https://www.cygwin.com/), Microsoft's
-[Windows Subsystem for Linux](https://msdn.microsoft.com/en-us/commandline/wsl/install_guide),
-and [MinGW](http://www.mingw.org/) via the
-[Git for Windows](https://git-for-windows.github.io/) project.
+[Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install),
+and Git BASH from the [Git for Windows](https://git-for-windows.github.io/) project.
 
 <details><summary><strong>Installing the shell script</strong></summary>
 
