@@ -259,5 +259,6 @@ tox -e lint
 
 ## Alternatives
 
+* [JBang](https://github.com/jbangdev/jbang)
 * [JPM4J](https://github.com/jpm4j) (discontinued)
 * [Mop](https://github.com/chirino/mop) (unmaintained)
