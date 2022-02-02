@@ -25,7 +25,7 @@ done
 python setup.py test || die "Some tests failed!"
 
 # Update the version string to non-dev version
-sed 's/\.dev[0-9]\+//' setup.py > setup.py.new &&
+sed 's/\.dev[0-9][0-9]*//' setup.py > setup.py.new &&
 mv -f setup.py.new setup.py &&
 version=$(grep version= setup.py | sed "s/.*version=\"\([^\"]*\)\".*/\1/") &&
 test "$version" && echo "Releasing version: $version" ||
