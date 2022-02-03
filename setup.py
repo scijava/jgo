@@ -8,6 +8,7 @@ with open(path.join(here, "README.md")) as f:
 
 setup(
     name="jgo",
+    python_requires='>=3.6',
     version="1.0.4.dev0",
     author="SciJava team",
     author_email="ctrueden@wisc.edu",
