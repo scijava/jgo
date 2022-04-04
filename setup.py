@@ -8,7 +8,6 @@ with open(path.join(here, "README.md")) as f:
 
 setup(
     name="jgo",
-    python_requires='>=3.6',
     version="1.0.4.dev0",
     author="SciJava team",
     author_email="ctrueden@wisc.edu",
@@ -20,6 +19,7 @@ setup(
     packages=["jgo"],
     test_suite="nose.collector",
     entry_points={"console_scripts": ["jgo=jgo:main"]},
+    python_requires='>=3.6',
     install_requires=["psutil"],
     tests_require=["nose>=1.0"],
 )
