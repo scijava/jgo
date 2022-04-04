@@ -20,7 +20,6 @@ setup(
     packages=["jgo"],
     test_suite="nose.collector",
     entry_points={"console_scripts": ["jgo=jgo:main"]},
-    python_requires=">=3",
     install_requires=["psutil"],
     tests_require=["nose>=1.0"],
 )

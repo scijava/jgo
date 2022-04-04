@@ -1,6 +1,7 @@
 import glob
 from jgo.jgo import InvalidEndpoint
 import jgo
+import re
 import os
 import pathlib
 import unittest
@@ -32,6 +33,13 @@ def resolve_managed(endpoint, cache_dir, m2_repo):
         repositories=REPOSITORIES,
     )
 
+def find_jar_matching(jars, pattern):
+    for jar in jars:
+        lastindex = jar.rindex('/')
+        if jar[lastindex:].find(pattern) != -1:
+            return jar
+    return None
+
 
 class ManagedDependencyTest(unittest.TestCase):
     def test_resolve_managed(self):
@@ -42,14 +50,16 @@ class ManagedDependencyTest(unittest.TestCase):
                 MANAGED_ENDPOINT, cache_dir=tmp_dir, m2_repo=m2_repo
             )
             jars = glob.glob(os.path.join(workspace, "*jar"))
-            self.assertEqual(len(jars), 4, "Expected two jars in workspace")
+            self.assertEqual(len(jars), 4, "Expected four jars in workspace")
+            sj_common_jar = find_jar_matching(jars, 'scijava-common')
             self.assertEqual(
-                jars[2],
+                sj_common_jar,
                 os.path.join(workspace, "scijava-common-%s.jar" % SJC_VERSION),
                 "Expected scijava-common jar",
             )
+            sj_optional_jar = find_jar_matching(jars, 'scijava-optional')
             self.assertEqual(
-                jars[3],
+                sj_optional_jar,
                 os.path.join(
                     workspace, "scijava-optional-%s.jar" % SJC_OPTIONAL_VERSION
                 ),
