@@ -132,9 +132,10 @@ class Endpoint:
         return xml
 
     def get_coordinates(self):
-        return [self.groupId, self.artifactId]
-        +([self.version] if self.version != VERSION_MANAGED else [])
-        +([self.classifier] if self.classifier else [])
+        return ([self.groupId, self.artifactId]
+            + ([self.version] if self.version != Endpoint.VERSION_MANAGED else [])
+            + ([self.classifier] if self.classifier else [])
+            )
 
     def is_endpoint(string):
         endpoint_elements = (
