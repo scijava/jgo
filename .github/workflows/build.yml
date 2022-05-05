@@ -22,7 +22,7 @@ jobs:
         echo $CONDA/bin >> $GITHUB_PATH
     - name: Install mamba
       run: |
-        conda install -c conda-forge mamba
+        conda install -c conda-forge mamba=0.20.0
     - name: Install dependencies
       run: |
         mamba env update --file environment-test.yml --name base
