@@ -65,8 +65,9 @@ class ManagedDependencyTest(unittest.TestCase):
                 ),
                 "Expected scijava-optional jar",
             )
+
             pom = (
-                    os.path.join(tmp_dir, 'org.scijava', 'scijava-common', 'cdcf7e6e4f89d0815be7f9c57eae1fa3361f9b75f0eaa89d4099a731690d0c5e', 'pom.xml')
+                    os.path.join(tmp_dir, 'org.scijava', 'scijava-common', SJC_VERSION, 'd9deda31e3772a497c66ee3593296f33e918cda69b376c33039ba181dab14db4', 'pom.xml')
             )
             with open(pom) as f:
                 if "RELEASE" in f.read():
