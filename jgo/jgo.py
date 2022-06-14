@@ -757,9 +757,9 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
     for repository in args.repository:
         repositories[repository.split("=")[0]] = repository.split("=")[1]
 
-    _logger.debug("Using settings:      %s", dict(settings))
-    _logger.debug("Using respositories: %s", dict(repositories))
-    _logger.debug("Using shortcuts:     %s", dict(shortcuts))
+    _logger.debug("Using settings:     %s", dict(settings))
+    _logger.debug("Using repositories: %s", dict(repositories))
+    _logger.debug("Using shortcuts:    %s", dict(shortcuts))
 
     if args.force_update:
         args.update_cache = True
