@@ -35,7 +35,7 @@ def resolve_managed(endpoint, cache_dir, m2_repo):
 
 def find_jar_matching(jars, pattern):
     for jar in jars:
-        lastindex = jar.rindex('/')
+        lastindex = jar.rindex(os.sep)
         if jar[lastindex:].find(pattern) != -1:
             return jar
     return None
