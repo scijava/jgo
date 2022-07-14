@@ -11,15 +11,19 @@ on:
       - master
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
+  build:
+
+    strategy:
+      matrix:
+        os:
+          - ubuntu-22.04
+          - macos-12
+          - windows-2022
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
-    - name: Add conda to system path
-      run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
-        echo $CONDA/bin >> $GITHUB_PATH
+    - uses: s-weigand/setup-conda@v1
     - name: Install mamba
       run: |
         conda install -c conda-forge mamba=0.20.0
