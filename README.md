@@ -260,5 +260,7 @@ tox -e lint
 ## Alternatives
 
 * [JBang](https://github.com/jbangdev/jbang)
+* [mvnx](https://github.com/mvnx/mvnx)
 * [JPM4J](https://github.com/jpm4j) (discontinued)
 * [Mop](https://github.com/chirino/mop) (unmaintained)
+* [marun](https://github.com/nishemon/marun) (unmaintained, Python 2 only)
