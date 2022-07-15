@@ -22,10 +22,10 @@ def add_jvm_args_as_necessary(argv, gc_option="-XX:+UseConcMarkSweepGC"):
             return argv
 
     total_memory = psutil.virtual_memory().total
-    exponent = 3 if total_memory > 2 * 1024 ** 3 else 2
+    exponent = 3 if total_memory > 2 * 1024**3 else 2
     memory_unit = "G" if exponent == 3 else "M"
     max_heap_size = "{}{}".format(
-        max(total_memory // (1024 ** exponent) // 2, 1), memory_unit
+        max(total_memory // (1024**exponent) // 2, 1), memory_unit
     )
 
     argv = ["-Xmx{}".format(max_heap_size)] + argv

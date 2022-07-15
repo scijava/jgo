@@ -1,7 +1,6 @@
 import glob
 from jgo.jgo import InvalidEndpoint
 import jgo
-import re
 import os
 import pathlib
 import unittest
@@ -33,6 +32,7 @@ def resolve_managed(endpoint, cache_dir, m2_repo):
         repositories=REPOSITORIES,
     )
 
+
 def find_jar_matching(jars, pattern):
     for jar in jars:
         lastindex = jar.rindex(os.sep)
@@ -51,13 +51,13 @@ class ManagedDependencyTest(unittest.TestCase):
             )
             jars = glob.glob(os.path.join(workspace, "*jar"))
             self.assertEqual(len(jars), 4, "Expected four jars in workspace")
-            sj_common_jar = find_jar_matching(jars, 'scijava-common')
+            sj_common_jar = find_jar_matching(jars, "scijava-common")
             self.assertEqual(
                 sj_common_jar,
                 os.path.join(workspace, "scijava-common-%s.jar" % SJC_VERSION),
                 "Expected scijava-common jar",
             )
-            sj_optional_jar = find_jar_matching(jars, 'scijava-optional')
+            sj_optional_jar = find_jar_matching(jars, "scijava-optional")
             self.assertEqual(
                 sj_optional_jar,
                 os.path.join(
@@ -66,8 +66,13 @@ class ManagedDependencyTest(unittest.TestCase):
                 "Expected scijava-optional jar",
             )
 
-            pom = (
-                    os.path.join(tmp_dir, 'org.scijava', 'scijava-common', SJC_VERSION, 'd9deda31e3772a497c66ee3593296f33e918cda69b376c33039ba181dab14db4', 'pom.xml')
+            pom = os.path.join(
+                tmp_dir,
+                "org.scijava",
+                "scijava-common",
+                SJC_VERSION,
+                "d9deda31e3772a497c66ee3593296f33e918cda69b376c33039ba181dab14db4",
+                "pom.xml",
             )
             with open(pom) as f:
                 if "RELEASE" in f.read():
@@ -81,7 +86,7 @@ class ManagedDependencyTest(unittest.TestCase):
         tmp_dir = tempfile.mkdtemp(prefix="jgo-test-cache-dir")
         m2_repo = os.path.join(str(pathlib.Path.home()), ".m2", "repository")
         try:
-            with self.assertRaises(InvalidEndpoint) as context:
+            with self.assertRaises(InvalidEndpoint):
                 resolve_managed(
                     MANAGED_PRIMARY_ENDPOINT, cache_dir=tmp_dir, m2_repo=m2_repo
                 )

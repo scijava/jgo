@@ -8,7 +8,6 @@ import re
 import shutil
 import subprocess
 import sys
-import traceback
 import zipfile
 import hashlib
 
@@ -132,10 +131,11 @@ class Endpoint:
         return xml
 
     def get_coordinates(self):
-        return ([self.groupId, self.artifactId]
+        return (
+            [self.groupId, self.artifactId]
             + ([self.version] if self.version != Endpoint.VERSION_MANAGED else [])
             + ([self.classifier] if self.classifier else [])
-            )
+        )
 
     def is_endpoint(string):
         endpoint_elements = (
@@ -215,7 +215,7 @@ def link(source, link_name, link_type="auto"):
                 raise e
         try:
             return link(source=source, link_name=link_name, link_type="soft")
-        except OSError as e:
+        except OSError:
             pass
 
         return link(source=source, link_name=link_name, link_type="copy")
@@ -230,17 +230,6 @@ def link(source, link_name, link_type="auto"):
 
 def m2_path():
     return os.getenv("M2_REPO", (pathlib.Path.home() / ".m2").absolute())
-
-
-def expand(string, **shortcuts):
-
-    for (k, v) in shortcuts.items():
-        if string in k:
-            return "{}{}".format(
-                v,
-            )
-
-    return string
 
 
 def launch_java(
@@ -297,7 +286,12 @@ _default_log_levels = (
 
 
 def jgo_parser(log_levels=_default_log_levels):
-
+    usage = (
+        "usage: jgo [-v] [-u] [-U] [-m] [-q] [--log-level] [--ignore-jgorc]\n"
+        "           [--link-type type] [--additional-jars jar [jar ...]]\n"
+        "           [--additional-endpoints endpoint [endpoint ...]]\n"
+        "           [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]"
+    )
     epilog = """
 The endpoint should have one of the following formats:
 
@@ -315,10 +309,7 @@ and it will be auto-completed.
 
     parser = argparse.ArgumentParser(
         description="Run Java main class from Maven coordinates.",
-        usage="jgo [-v] [-u] [-U] [-m] [-q] [--log-level] [--ignore-jgorc]\n" +
-              "           [--link-type type] [--additional-jars jar [jar ...]]\n" +
-              "           [--additional-endpoints endpoint [endpoint ...]]\n" +
-              "           [JVM_OPTIONS [JVM_OPTIONS ...]] <endpoint> [main-args]",
+        usage=usage[len("usage: ") :],
         epilog=epilog,
         formatter_class=argparse.RawTextHelpFormatter,
     )
@@ -378,8 +369,8 @@ and it will be auto-completed.
         "--link-type",
         default=None,
         type=str,
-        help="How to link from local Maven repository into jgo cache.\n" +
-             "Defaults to the `links' setting in ~/.jgorc or 'auto' if not specified.",
+        help="How to link from local Maven repository into jgo cache.\n"
+        + "Defaults to the `links' setting in ~/.jgorc or 'auto' if not specified.",
         choices=("hard", "soft", "copy", "auto"),
     )
     parser.add_argument(
@@ -656,7 +647,7 @@ def resolve_dependencies(
         if e.stderr:
             err_lines += e.stderr.decode().splitlines()
         for l in err_lines:
-            if l.startswith('[ERROR]'):
+            if l.startswith("[ERROR]"):
                 _logger.error("\t%s", l)
             else:
                 _logger.debug("\t%s", l)
@@ -703,8 +694,8 @@ def resolve_dependencies(
                     jar_file_in_workspace,
                     link_type=link_type,
                 )
-            except FileExistsError as e:
-                # Do not throw exceptionif target file exists.
+            except FileExistsError:
+                # Do not throw exception if target file exists.
                 pass
     pathlib.Path(build_success_file).touch(exist_ok=True)
     return primary_endpoint, workspace
