@@ -35,8 +35,10 @@ jobs:
         pip install -e .
     - name: Install pytest
       run: |
-        mamba install -c conda-forge pytest
+        mamba install -c conda-forge pytest black
     - name: Test with pytest
       run: |
         pytest
-
+    - name: Lint with black
+      run: |
+        black --check .
