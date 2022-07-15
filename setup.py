@@ -18,6 +18,6 @@ setup(
     url="https://github.com/scijava/jgo",
     packages=["jgo"],
     entry_points={"console_scripts": ["jgo=jgo:main"]},
-    python_requires='>=3.6',
+    python_requires=">=3.6",
     install_requires=["psutil"],
 )
