@@ -1,5 +1,4 @@
 import glob
-import io
 import jgo
 import os
 import pathlib

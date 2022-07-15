@@ -1,7 +1,6 @@
 import glob
 from jgo.jgo import InvalidEndpoint
 import jgo
-import re
 import os
 import pathlib
 import unittest
@@ -87,7 +86,7 @@ class ManagedDependencyTest(unittest.TestCase):
         tmp_dir = tempfile.mkdtemp(prefix="jgo-test-cache-dir")
         m2_repo = os.path.join(str(pathlib.Path.home()), ".m2", "repository")
         try:
-            with self.assertRaises(InvalidEndpoint) as context:
+            with self.assertRaises(InvalidEndpoint):
                 resolve_managed(
                     MANAGED_PRIMARY_ENDPOINT, cache_dir=tmp_dir, m2_repo=m2_repo
                 )

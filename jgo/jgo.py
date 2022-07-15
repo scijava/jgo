@@ -8,7 +8,6 @@ import re
 import shutil
 import subprocess
 import sys
-import traceback
 import zipfile
 import hashlib
 
@@ -216,7 +215,7 @@ def link(source, link_name, link_type="auto"):
                 raise e
         try:
             return link(source=source, link_name=link_name, link_type="soft")
-        except OSError as e:
+        except OSError:
             pass
 
         return link(source=source, link_name=link_name, link_type="copy")
@@ -231,17 +230,6 @@ def link(source, link_name, link_type="auto"):
 
 def m2_path():
     return os.getenv("M2_REPO", (pathlib.Path.home() / ".m2").absolute())
-
-
-def expand(string, **shortcuts):
-
-    for (k, v) in shortcuts.items():
-        if string in k:
-            return "{}{}".format(
-                v,
-            )
-
-    return string
 
 
 def launch_java(
@@ -706,8 +694,8 @@ def resolve_dependencies(
                     jar_file_in_workspace,
                     link_type=link_type,
                 )
-            except FileExistsError as e:
-                # Do not throw exceptionif target file exists.
+            except FileExistsError:
+                # Do not throw exception if target file exists.
                 pass
     pathlib.Path(build_success_file).touch(exist_ok=True)
     return primary_endpoint, workspace

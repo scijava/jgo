@@ -4,3 +4,11 @@ from .util import (
     maven_scijava_repository,
     add_jvm_args_as_necessary,
 )
+
+__all__ = (
+    "add_jvm_args_as_necessary",
+    "main_from_endpoint",
+    "main",
+    "maven_scijava_repository",
+    "resolve_dependencies",
+)

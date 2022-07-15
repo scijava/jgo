@@ -35,10 +35,12 @@ jobs:
         pip install -e .
     - name: Install pytest
       run: |
-        mamba install -c conda-forge pytest black
+        mamba install -c conda-forge black pyflakes pytest
     - name: Test with pytest
       run: |
         pytest
-    - name: Lint with black
+    - name: Lint with pyflakes and black
+      shell: bash
       run: |
+        pyflakes jgo/*.py
         black --check .
