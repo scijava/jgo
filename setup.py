@@ -17,9 +17,7 @@ setup(
     license="Public domain",
     url="https://github.com/scijava/jgo",
     packages=["jgo"],
-    test_suite="nose.collector",
     entry_points={"console_scripts": ["jgo=jgo:main"]},
     python_requires='>=3.6',
     install_requires=["psutil"],
-    tests_require=["nose>=1.0"],
 )
