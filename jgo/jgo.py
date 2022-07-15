@@ -265,7 +265,7 @@ def run_and_combine_outputs(command, *args):
 
 def find_endpoint(argv, shortcuts={}):
     # endpoint is first positional argument
-    pattern = re.compile(".*https?://.*")
+    pattern = re.compile("(.*https?://.*|\S:\\.*)")
     indices = []
     for index, arg in enumerate(argv):
         if arg in shortcuts or (Endpoint.is_endpoint(arg) and not pattern.match(arg)):
