@@ -368,6 +368,66 @@ class TestRun(unittest.TestCase):
         self.assertIsNone(stdout)
         self.assertIsNone(stderr)
 
+    @patch("jgo.jgo._run")
+    def test_program_arg_path_windows_drive(self, run_mock):
+        parser = jgo_parser()
+        argv = [
+            "-r",
+            "clojars=https://clojars.org/repo/",
+            "mvxcvi:cljstyle",
+            "fix",
+            "c:/path/to/file.clj",
+        ]
+
+        run(parser, argv)
+        self.assertTrue(run_mock.called)
+        workspace = run_mock.call_args.args[0]
+        primary_endpoint: Endpoint = run_mock.call_args.args[1]
+        jvm_args = run_mock.call_args.args[2]
+        program_args = run_mock.call_args.args[3]
+        additional_jars = run_mock.call_args.args[4]
+        stdout = run_mock.call_args.args[5]
+        stderr = run_mock.call_args.args[6]
+        self.assertIsInstance(workspace, str)
+        self.assertIsInstance(primary_endpoint, Endpoint)
+        self.assertEqual(primary_endpoint.groupId, "mvxcvi")
+        self.assertEqual(primary_endpoint.artifactId, "cljstyle")
+        self.assertEqual(jvm_args, [])
+        self.assertEqual(program_args, ["fix", "c:/path/to/file.clj"])
+        self.assertEqual(additional_jars, [])
+        self.assertIsNone(stdout)
+        self.assertIsNone(stderr)
+
+    @patch("jgo.jgo._run")
+    def test_program_arg_path_windows_sep(self, run_mock):
+        parser = jgo_parser()
+        argv = [
+            "-r",
+            "clojars=https://clojars.org/repo/",
+            "mvxcvi:cljstyle",
+            "fix",
+            "c:\\path\\to\\file.clj",
+        ]
+
+        run(parser, argv)
+        self.assertTrue(run_mock.called)
+        workspace = run_mock.call_args.args[0]
+        primary_endpoint: Endpoint = run_mock.call_args.args[1]
+        jvm_args = run_mock.call_args.args[2]
+        program_args = run_mock.call_args.args[3]
+        additional_jars = run_mock.call_args.args[4]
+        stdout = run_mock.call_args.args[5]
+        stderr = run_mock.call_args.args[6]
+        self.assertIsInstance(workspace, str)
+        self.assertIsInstance(primary_endpoint, Endpoint)
+        self.assertEqual(primary_endpoint.groupId, "mvxcvi")
+        self.assertEqual(primary_endpoint.artifactId, "cljstyle")
+        self.assertEqual(jvm_args, [])
+        self.assertEqual(program_args, ["fix", "c:\\path\\to\\file.clj"])
+        self.assertEqual(additional_jars, [])
+        self.assertIsNone(stdout)
+        self.assertIsNone(stderr)
+
     @patch("jgo.jgo.launch_java")
     def test_explicit_main_class(self, launch_java_mock):
         parser = jgo_parser()
