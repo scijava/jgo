@@ -1,8 +1,9 @@
 # Use this environment file when running the tests, when jgo will be
 # installed from source 
-name: jgo
+name: jgo-dev
 channels:
   - conda-forge
   - defaults
 dependencies:
   - psutil
+  - tox
