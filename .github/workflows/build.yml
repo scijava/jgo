@@ -35,10 +35,10 @@ jobs:
         pip install -e .
     - name: Install pytest
       run: |
-        mamba install -c conda-forge black pyflakes pytest
+        mamba install -c conda-forge black pyflakes pytest-cov
     - name: Test with pytest
       run: |
-        pytest
+        pytest --cov=jgo --cov-report=term-missing --cov-fail-under=90
     - name: Lint with pyflakes and black
       shell: bash
       run: |

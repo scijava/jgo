@@ -398,7 +398,6 @@ def _jgo_main(argv=sys.argv[1:], stdout=None, stderr=None):
         completed_process.check_returncode()
 
     except HelpRequested:
-        pass
         parser.print_help()
 
     except NoEndpointProvided:
@@ -508,7 +507,10 @@ def workspace_dir_from_coordinates(coordinates, cache_dir):
     return workspace
 
 
-def workspace_dir_from_endpoint_strings(endpoint_strings, cache_dir, shortcuts={}):
+def workspace_dir_from_endpoint_strings(
+    endpoint_strings, cache_dir, shortcuts={}
+):  # pragma: no cover
+    """Unused"""
     if isinstance(endpoint_strings, str):
         return workspace_dir_from_endpoint_strings(
             split_endpoint_string(endpoint_strings)
@@ -769,7 +771,20 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
         verbose=args.verbose,
         link_type=link_type,
     )
+    return _run(
+        workspace,
+        primary_endpoint,
+        jvm_args,
+        program_args,
+        args.additional_jars,
+        stdout,
+        stderr,
+    )
 
+
+def _run(
+    workspace, primary_endpoint, jvm_args, program_args, additional_jars, stdout, stderr
+):
     main_class_file = (
         os.path.join(workspace, primary_endpoint.main_class)
         if primary_endpoint.main_class
@@ -783,7 +798,7 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
             jvm_args,
             main_class,
             *program_args,
-            additional_jars=args.additional_jars,
+            additional_jars=additional_jars,
             stdout=stdout,
             stderr=stderr,
             check=False,
@@ -826,7 +841,7 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
         jvm_args,
         main_class,
         *program_args,
-        additional_jars=args.additional_jars,
+        additional_jars=additional_jars,
         stdout=stdout,
         stderr=stderr,
         check=False,
