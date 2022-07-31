@@ -22,7 +22,11 @@ def run_parsington(cache_dir, link_type, parsington_args):
     parser = jgo.jgo.jgo_parser()
     argv = (IGNORE_JGORC, LINK_TYPE, link_type, PARSINGTON_ENDPOINT) + parsington_args
     os.environ[jgo.jgo.jgo_cache_dir_environment_variable()] = cache_dir
-    return jgo.jgo.run(parser=parser, argv=argv, stdout=subprocess.PIPE)
+    try:
+        rv = jgo.jgo.run(parser=parser, argv=argv, stdout=subprocess.PIPE)
+    finally:
+        del os.environ[jgo.jgo.jgo_cache_dir_environment_variable()]
+    return rv
 
 
 def resolve_parsington(cache_dir, link_type, m2_repo):

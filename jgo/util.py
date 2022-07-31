@@ -10,7 +10,7 @@ def add_jvm_args_as_necessary(argv, gc_option="-XX:+UseConcMarkSweepGC"):
     Extend existing ``argv`` with reasonable default values for garbage collection and max heap size.
     If ``-Xmx`` is not specified in ``argv``, set max heap size to half the system's memory.
 
-    :param argv: arugment vector
+    :param argv: argument vector
     :param gc_option: Use this garbage collector settings, if any.
     :return: ``argv`` with
     """
@@ -60,7 +60,7 @@ def main_from_endpoint(
     :param primary_endpoint: The primary endpoint of the Java program you want to run.
     :param repositories: Any maven repository that holds the required jars. Defaults to {'scijava.public': maven_scijava_repository()}.
     :param primary_endpoint_version: Will be appended to ``primary_endpoint`` if it does not evaluate to ``False``
-    :param primary_endpoint_main_class: Will be appended to ``primary_endpoitn`` if it does not evaluate to ``False``.
+    :param primary_endpoint_main_class: Will be appended to ``primary_endpoint`` if it does not evaluate to ``False``.
     :param secondary_endpoints: Any other endpoints that should be added.
     :return: ``None``
     """
