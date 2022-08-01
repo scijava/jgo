@@ -263,16 +263,6 @@ def run_and_combine_outputs(command, *args):
     return subprocess.check_output(command_string, stderr=subprocess.STDOUT)
 
 
-def find_endpoint(argv, shortcuts={}):
-    # endpoint is first positional argument
-    pattern = re.compile("(.*https?://.*|[a-zA-Z]:\\.*)")
-    indices = []
-    for index, arg in enumerate(argv):
-        if arg in shortcuts or (Endpoint.is_endpoint(arg) and not pattern.match(arg)):
-            indices.append(index)
-    return -1 if len(indices) == 0 else indices[-1]
-
-
 _default_log_levels = (
     "NOTSET",
     "DEBUG",
@@ -283,6 +273,45 @@ _default_log_levels = (
     "FATAL",
     "TRACE",
 )
+
+
+class CustomArgParser(argparse.ArgumentParser):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._found_unknown_hyphenated_args = False
+        self._found_endpoint = False
+        self._found_optionals = []
+
+    def _match_arguments_partial(self, actions, arg_strings_pattern):
+        # Doesnt support --additional-endpoints yet
+        result = []
+        args_after_double_equals = len(arg_strings_pattern.partition("-")[2])
+        for i, arg_string in enumerate(self._found_optionals):
+            if Endpoint.is_endpoint(arg_string):
+                rv = [
+                    i,
+                    1,
+                    len(self._found_optionals) - i - 1 + args_after_double_equals,
+                ]
+                return rv
+        return result
+
+    def _parse_optional(self, arg_string):
+        if arg_string.startswith("-") and arg_string not in self._option_string_actions:
+            self._found_unknown_hyphenated_args = True
+        elif Endpoint.is_endpoint(arg_string):
+            self._found_endpoint = True
+
+        if self._found_unknown_hyphenated_args or self._found_endpoint:
+            self._found_optionals.append(arg_string)
+            return None
+
+        rv = super()._parse_optional(arg_string)
+        return rv
+
+    def error(self, message):
+        if message == "the following arguments are required: <endpoint>":
+            raise NoEndpointProvided([])
 
 
 def jgo_parser(log_levels=_default_log_levels):
@@ -307,7 +336,8 @@ You can also write part of a class beginning with an @ sign,
 and it will be auto-completed.
 """
 
-    parser = argparse.ArgumentParser(
+    parser = CustomArgParser(
+        prog="jgo",
         description="Run Java main class from Maven coordinates.",
         usage=usage[len("usage: ") :],
         epilog=epilog,
@@ -375,6 +405,25 @@ and it will be auto-completed.
     )
     parser.add_argument(
         "--log-level", default=None, type=str, help="Set log level", choices=log_levels
+    )
+    parser.add_argument(
+        "jvm_args",
+        help="JVM arguments",
+        metavar="jvm-args",
+        nargs="*",
+        default=[],
+    )
+    parser.add_argument(
+        "endpoint",
+        help="Endpoint",
+        metavar="<endpoint>",
+    )
+    parser.add_argument(
+        "program_args",
+        help="Program arguments",
+        metavar="main-args",
+        nargs="*",
+        default=[],
     )
 
     return parser
@@ -719,15 +768,18 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
     repositories = config["repositories"]
     shortcuts = config["shortcuts"]
 
-    endpoint_index = find_endpoint(argv, shortcuts)
-    if endpoint_index == -1:
-        raise HelpRequested(
-            argv
-        ) if "-h" in argv or "--help" in argv else NoEndpointProvided(argv)
+    if "-h" in argv or "--help" in argv:
+        raise HelpRequested(argv)
 
-    args, unknown = parser.parse_known_args(argv[:endpoint_index])
-    jvm_args = unknown if unknown else []
-    program_args = [] if endpoint_index == -1 else argv[endpoint_index + 1 :]
+    args = parser.parse_args(argv)
+
+    if not args.endpoint:
+        raise NoEndpointProvided(argv)
+    if args.endpoint in shortcuts and not Endpoint.is_endpoint(args.endpoint):
+        raise NoEndpointProvided(argv)
+
+    jvm_args = args.jvm_args
+    program_args = args.program_args
     if args.log_level:
         logging.getLogger().setLevel(logging.getLevelName(args.log_level))
 
@@ -757,7 +809,7 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
     if args.force_update:
         args.update_cache = True
 
-    endpoint_string = "+".join([argv[endpoint_index]] + args.additional_endpoints)
+    endpoint_string = "+".join([args.endpoint] + args.additional_endpoints)
 
     primary_endpoint, workspace = resolve_dependencies(
         endpoint_string,

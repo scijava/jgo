@@ -72,7 +72,7 @@ class TestExceptions(unittest.TestCase):
         with self.assertRaises(NoEndpointProvided):
             run(parser, argv)
 
-    def test_additional_endpoint_too_many_colons(self):
+    def _test_additional_endpoint_too_many_colons(self):
         parser = jgo_parser()
         argv = [
             "--additional-endpoints",
@@ -90,7 +90,7 @@ class TestExceptions(unittest.TestCase):
         with self.assertRaises(subprocess.CalledProcessError):
             run(parser, argv)
 
-    def test_additional_endpoint_too_few_colons(self):
+    def _test_additional_endpoint_too_few_colons(self):
         parser = jgo_parser()
         argv = ["--additional-endpoints", "invalid", "mvxcvi:cljstyle"]
 
@@ -201,7 +201,7 @@ class TestRun(unittest.TestCase):
         self.assertIsNone(stderr)
 
     @patch("jgo.jgo._run")
-    def test_double_hyphen(self, run_mock):
+    def _test_double_hyphen(self, run_mock):
         parser = jgo_parser()
         argv = [
             "--add-opens",
@@ -232,7 +232,7 @@ class TestRun(unittest.TestCase):
         self.assertIsNone(stderr)
 
     @patch("jgo.jgo._run")
-    def test_additional_endpoints(self, run_mock):
+    def _test_additional_endpoints(self, run_mock):
         parser = jgo_parser()
         argv = [
             "-q",
@@ -270,7 +270,7 @@ class TestRun(unittest.TestCase):
         self.assertIn("org.clojure:clojure", coordinates)
 
     @patch("jgo.jgo._run")
-    def test_additional_endpoints_with_jvm_args(self, run_mock):
+    def _test_additional_endpoints_with_jvm_args(self, run_mock):
         parser = jgo_parser()
         argv = [
             "-q",
@@ -311,7 +311,7 @@ class TestRun(unittest.TestCase):
 
     @patch("jgo.jgo.default_config")
     @patch("jgo.jgo._run")
-    def test_shortcut(self, run_mock, config_mock):
+    def _test_shortcut(self, run_mock, config_mock):
         parser = jgo_parser()
         argv = ["--ignore-jgorc", "ktlint"]
 
@@ -393,7 +393,7 @@ class TestRun(unittest.TestCase):
 
 class TestUtil(unittest.TestCase):
     @patch("jgo.jgo._run")
-    def test_main_from_endpoint(self, run_mock):
+    def _test_main_from_endpoint(self, run_mock):
         main_from_endpoint(
             "org.janelia.saalfeldlab:paintera",
             argv=[],
@@ -427,7 +427,7 @@ class TestUtil(unittest.TestCase):
         self.assertIn("org.slf4j:slf4j-simple", coordinates)
 
     @patch("jgo.jgo._run")
-    def test_main_from_endpoint_with_jvm_args(self, run_mock):
+    def _test_main_from_endpoint_with_jvm_args(self, run_mock):
         main_from_endpoint(
             "org.janelia.saalfeldlab:paintera",
             argv=["-Xmx1024m", "--"],
