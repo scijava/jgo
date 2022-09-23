@@ -80,6 +80,7 @@ jobs:
           mamba-version: "*"
 
 
+      # TODO: Determine why python -m pytest fails
       - name: Test napari-imagej
         run: |
             conda run -n jgo-dev --no-capture-output pytest -s -p no:faulthandler --color=yes --cov-report=xml --cov=.
