@@ -82,9 +82,8 @@ jobs:
 
       - name: Test napari-imagej
         run: |
-            conda run -n jgo-dev --no-capture-output pytest -s -p no:faulthandler --color=yes 
+            conda run -n jgo-dev --no-capture-output pytest -s -p no:faulthandler --color=yes --cov-report=xml --cov=.
 
-      # TODO: Uncomment and add above --cov-report=xml --cov=.
       # We could do this in its own action, but we'd have to setup the environment again.
-      # - name: Upload Coverage to Codecov
-      #   uses: codecov/codecov-action@v2
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v2
