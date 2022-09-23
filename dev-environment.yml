@@ -1,9 +1,26 @@
-# Use this environment file when running the tests, when jgo will be
-# installed from source 
+# Use this file to construct an environment
+# for developing jgo from source.
+#
+#   mamba env create -f dev-environment.yml
+#   conda activate jgo-dev
+#
+# In addition to the dependencies needed for using jgo, it includes tools
+# for developer-related actions like running automated tests (pytest) and
+# linting the code (black)
+# If you want an environment without these tools, use environment.yml.
 name: jgo-dev
 channels:
   - conda-forge
   - defaults
 dependencies:
+  # Project dependencies
   - psutil
-  - tox
+  # Developer tools
+  - black
+  - pyflakes
+  - pytest
+  - pytest-cov
+  # Project from source
+  - pip
+  - pip:
+    - -e '.'
