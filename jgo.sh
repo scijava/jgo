@@ -393,6 +393,8 @@ do
 			s=${remain#*:}
 			;;
 	esac
+	# NB: test-jar packaging means jar packaging + tests classifier.
+	test "$p" = test-jar && p=jar && c=tests
 	g=$(echo "$g" | sed 's/\./\//g')
 	test "$c" && artName="$a-$v-$c" || artName="$a-$v"
 	doLink "$m2Repo/$g/$a/$v/$artName.$p" "$workspace"

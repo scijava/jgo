@@ -659,6 +659,7 @@ def resolve_dependencies(
 
     info_regex = re.compile("^.*\\[[A-Z]+\\] *")
     relevant_jars = []
+
     for l in str(mvn_out).split("\\n"):
         # TODO: the compile|runtime|provided matches might fail if an artifactId starts with accordingly
         # TODO: If that ever turns out to be an issue, it is going to be necessary to update these checks
@@ -683,6 +684,11 @@ def resolve_dependencies(
                 # G:A:P:V:S
                 (g, a, extension, version, scope) = split_line
                 c = None
+
+            # NB: test-jar packaging means jar packaging + tests classifier.
+            if extension == "test-jar":
+                extension = "jar"
+                c = "tests"
 
             artifact_name = "-".join((a, version, c) if c else (a, version))
             jar_file = "{}.{}".format(artifact_name, extension)
