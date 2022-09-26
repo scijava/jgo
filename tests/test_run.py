@@ -80,7 +80,10 @@ class TestExceptions(unittest.TestCase):
     def test_extra_endpoint_elements(self):
         parser = jgo_parser()
         argv = [
-            "io.netty:netty-transport-native-epoll:4.1.79.Final:linux-x86_64:FakeMainClass:SomethingElse"
+            (
+                "io.netty:netty-transport-native-epoll:4.1.79.Final:"
+                "linux-x86_64:FakeMainClass:SomethingElse"
+            )
         ]
 
         with self.assertRaises(NoEndpointProvided):
@@ -365,7 +368,10 @@ class TestRun(unittest.TestCase):
     def test_classifier(self, run_mock):
         parser = jgo_parser()
         argv = [
-            "io.netty:netty-transport-native-epoll:4.1.79.Final:linux-x86_64:FakeMainClass"
+            (
+                "io.netty:netty-transport-native-epoll:4.1.79.Final:"
+                "linux-x86_64:FakeMainClass"
+            )
         ]
 
         run(parser, argv)

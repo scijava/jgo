@@ -19,8 +19,10 @@ jgo = "jgo:main"
 [project.optional-dependencies]
 # Ensure any changes to this list are also added to environment-test.yml!
 dev = [
+    "autopep8",
     "build",
     "black",
+    "flake8",
     "pyflakes",
     "pytest",
     "pytest-cov",
