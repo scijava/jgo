@@ -20,6 +20,7 @@ dependencies:
   - build
   - black
   - flake8
+  - isort
   - pyflakes
   - pytest
   - pytest-cov

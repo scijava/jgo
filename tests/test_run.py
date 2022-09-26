@@ -2,22 +2,20 @@ import os
 import pathlib
 import subprocess
 import sys
-from typing import Dict, Tuple
-
-
 import unittest
+from typing import Dict, Tuple
 from unittest.mock import MagicMock, patch
 
 from jgo.jgo import (
-    _jgo_main,
     Endpoint,
-    executable_path_or_raise,
     ExecutableNotFound,
     HelpRequested,
     InvalidEndpoint,
-    jgo_parser,
     NoEndpointProvided,
     NoMainClassInManifest,
+    _jgo_main,
+    executable_path_or_raise,
+    jgo_parser,
     run,
 )
 from jgo.util import main_from_endpoint

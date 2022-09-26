@@ -23,10 +23,14 @@ dev = [
     "build",
     "black",
     "flake8",
+    "isort",
     "pyflakes",
     "pytest",
     "pytest-cov",
 ]
+
+[tool.isort]
+profile = "black"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

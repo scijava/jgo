@@ -1,5 +1,6 @@
-import psutil
 import sys
+
+import psutil
 
 from .jgo import _jgo_main as main
 

@@ -1,6 +1,7 @@
 import argparse
 import configparser
 import glob
+import hashlib
 import logging
 import os
 import pathlib
@@ -9,7 +10,6 @@ import shutil
 import subprocess
 import sys
 import zipfile
-import hashlib
 
 # A script to execute a main class of a Maven artifact
 # which is available locally or from Maven Central.

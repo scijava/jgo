@@ -1,13 +1,13 @@
 import glob
-import jgo
+import logging
 import os
 import pathlib
-import unittest
 import shutil
 import subprocess
 import tempfile
+import unittest
 
-import logging
+import jgo
 
 _logger = logging.getLogger(__name__)
 

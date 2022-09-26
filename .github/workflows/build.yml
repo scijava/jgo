@@ -50,11 +50,10 @@ jobs:
           python -m pip install flake8
           python -m flake8 src tests
 
-  # TODO: Uncomment
-  #     - name: Check import ordering
-  #       uses: isort/isort-action@master
-  #       with:
-  #         configuration: --check-only
+      - name: Check import ordering
+        uses: isort/isort-action@master
+        with:
+          configuration: --check-only
 
   conda-dev-test:
     name: Conda Setup & Code Coverage

@@ -1,13 +1,13 @@
 import glob
-from jgo.jgo import InvalidEndpoint
-import jgo
+import logging
 import os
 import pathlib
-import unittest
 import shutil
 import tempfile
+import unittest
 
-import logging
+import jgo
+from jgo.jgo import InvalidEndpoint
 
 _logger = logging.getLogger(__name__)
 _logger.level = logging.INFO
