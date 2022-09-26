@@ -16,6 +16,7 @@ dependencies:
   # Project dependencies
   - psutil
   # Developer tools
+  - build
   - black
   - pyflakes
   - pytest

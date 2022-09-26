@@ -19,6 +19,7 @@ jgo = "jgo:main"
 [project.optional-dependencies]
 # Ensure any changes to this list are also added to environment-test.yml!
 dev = [
+    "build",
     "black",
     "pyflakes",
     "pytest",
@@ -26,5 +27,9 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["jgo"]
+package-dir = {"" = "src"}
 include-package-data = false
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = false
