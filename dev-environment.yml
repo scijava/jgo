@@ -21,6 +21,7 @@ dependencies:
   - black
   - flake8
   - isort
+  - pre-commit
   - pyflakes
   - pytest
   - pytest-cov
