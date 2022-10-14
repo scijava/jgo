@@ -1,24 +1,36 @@
 import os
 import pathlib
 import subprocess
-
-
+import sys
 import unittest
-from unittest.mock import patch
+from typing import Dict, Tuple
+from unittest.mock import MagicMock, patch
 
 from jgo.jgo import (
-    _jgo_main,
     Endpoint,
-    executable_path_or_raise,
     ExecutableNotFound,
     HelpRequested,
     InvalidEndpoint,
-    jgo_parser,
     NoEndpointProvided,
     NoMainClassInManifest,
+    _jgo_main,
+    executable_path_or_raise,
+    jgo_parser,
     run,
 )
 from jgo.util import main_from_endpoint
+
+
+def _call_args(mock: MagicMock) -> Tuple[Tuple, Dict]:
+    """
+    Returns the arguments and keyword arguments passed in a mock call.
+    :param mock: The mock that was called
+    :return: A tuple, where the first element is the args passed in the call,
+        and the second element is the keyword args passed in the call
+    """
+    if sys.version_info.minor >= 8:
+        return (mock.call_args.args, mock.call_args.kwargs)
+    return (mock.call_args[0], mock.call_args[1])
 
 
 class TestExceptions(unittest.TestCase):
@@ -66,7 +78,10 @@ class TestExceptions(unittest.TestCase):
     def test_extra_endpoint_elements(self):
         parser = jgo_parser()
         argv = [
-            "io.netty:netty-transport-native-epoll:4.1.79.Final:linux-x86_64:FakeMainClass:SomethingElse"
+            (
+                "io.netty:netty-transport-native-epoll:4.1.79.Final:"
+                "linux-x86_64:FakeMainClass:SomethingElse"
+            )
         ]
 
         with self.assertRaises(NoEndpointProvided):
@@ -150,13 +165,14 @@ class TestRun(unittest.TestCase):
 
         run(parser, argv)
         self.assertTrue(run_mock.called)
-        workspace = run_mock.call_args.args[0]
-        primary_endpoint: Endpoint = run_mock.call_args.args[1]
-        jvm_args = run_mock.call_args.args[2]
-        program_args = run_mock.call_args.args[3]
-        additional_jars = run_mock.call_args.args[4]
-        stdout = run_mock.call_args.args[5]
-        stderr = run_mock.call_args.args[6]
+        args, _ = _call_args(run_mock)
+        workspace = args[0]
+        primary_endpoint: Endpoint = args[1]
+        jvm_args = args[2]
+        program_args = args[3]
+        additional_jars = args[4]
+        stdout = args[5]
+        stderr = args[6]
         self.assertIsInstance(workspace, str)
         self.assertIsInstance(primary_endpoint, Endpoint)
         self.assertEqual(primary_endpoint.groupId, "com.pinterest")
@@ -181,13 +197,14 @@ class TestRun(unittest.TestCase):
 
         run(parser, argv)
         self.assertTrue(run_mock.called)
-        workspace = run_mock.call_args.args[0]
-        primary_endpoint: Endpoint = run_mock.call_args.args[1]
-        jvm_args = run_mock.call_args.args[2]
-        program_args = run_mock.call_args.args[3]
-        additional_jars = run_mock.call_args.args[4]
-        stdout = run_mock.call_args.args[5]
-        stderr = run_mock.call_args.args[6]
+        args, _ = _call_args(run_mock)
+        workspace = args[0]
+        primary_endpoint: Endpoint = args[1]
+        jvm_args = args[2]
+        program_args = args[3]
+        additional_jars = args[4]
+        stdout = args[5]
+        stderr = args[6]
         self.assertIsInstance(workspace, str)
         self.assertIsInstance(primary_endpoint, Endpoint)
         self.assertEqual(primary_endpoint.groupId, "com.pinterest")
@@ -214,13 +231,14 @@ class TestRun(unittest.TestCase):
 
         run(parser, argv)
         self.assertTrue(run_mock.called)
-        workspace = run_mock.call_args.args[0]
-        primary_endpoint: Endpoint = run_mock.call_args.args[1]
-        jvm_args = run_mock.call_args.args[2]
-        program_args = run_mock.call_args.args[3]
-        additional_jars = run_mock.call_args.args[4]
-        stdout = run_mock.call_args.args[5]
-        stderr = run_mock.call_args.args[6]
+        args, _ = _call_args(run_mock)
+        workspace = args[0]
+        primary_endpoint: Endpoint = args[1]
+        jvm_args = args[2]
+        program_args = args[3]
+        additional_jars = args[4]
+        stdout = args[5]
+        stderr = args[6]
         self.assertIsInstance(workspace, str)
         self.assertIsInstance(primary_endpoint, Endpoint)
         self.assertEqual(primary_endpoint.groupId, "com.pinterest")
@@ -246,13 +264,14 @@ class TestRun(unittest.TestCase):
 
         run(parser, argv)
         self.assertTrue(run_mock.called)
-        workspace = run_mock.call_args.args[0]
-        primary_endpoint: Endpoint = run_mock.call_args.args[1]
-        jvm_args = run_mock.call_args.args[2]
-        program_args = run_mock.call_args.args[3]
-        additional_jars = run_mock.call_args.args[4]
-        stdout = run_mock.call_args.args[5]
-        stderr = run_mock.call_args.args[6]
+        args, _ = _call_args(run_mock)
+        workspace = args[0]
+        primary_endpoint: Endpoint = args[1]
+        jvm_args = args[2]
+        program_args = args[3]
+        additional_jars = args[4]
+        stdout = args[5]
+        stderr = args[6]
         self.assertIsInstance(workspace, str)
         self.assertIsInstance(primary_endpoint, Endpoint)
         self.assertEqual(primary_endpoint.groupId, "org.scijava")
@@ -286,13 +305,14 @@ class TestRun(unittest.TestCase):
 
         run(parser, argv)
         self.assertTrue(run_mock.called)
-        workspace = run_mock.call_args.args[0]
-        primary_endpoint: Endpoint = run_mock.call_args.args[1]
-        jvm_args = run_mock.call_args.args[2]
-        program_args = run_mock.call_args.args[3]
-        additional_jars = run_mock.call_args.args[4]
-        stdout = run_mock.call_args.args[5]
-        stderr = run_mock.call_args.args[6]
+        args, _ = _call_args(run_mock)
+        workspace = args[0]
+        primary_endpoint: Endpoint = args[1]
+        jvm_args = args[2]
+        program_args = args[3]
+        additional_jars = args[4]
+        stdout = args[5]
+        stderr = args[6]
         self.assertIsInstance(workspace, str)
         self.assertIsInstance(primary_endpoint, Endpoint)
         self.assertEqual(primary_endpoint.groupId, "org.scijava")
@@ -324,13 +344,14 @@ class TestRun(unittest.TestCase):
         run(parser, argv)
         self.assertTrue(config_mock.called)
         self.assertTrue(run_mock.called)
-        workspace = run_mock.call_args.args[0]
-        primary_endpoint: Endpoint = run_mock.call_args.args[1]
-        jvm_args = run_mock.call_args.args[2]
-        program_args = run_mock.call_args.args[3]
-        additional_jars = run_mock.call_args.args[4]
-        stdout = run_mock.call_args.args[5]
-        stderr = run_mock.call_args.args[6]
+        args, _ = _call_args(run_mock)
+        workspace = args[0]
+        primary_endpoint: Endpoint = args[1]
+        jvm_args = args[2]
+        program_args = args[3]
+        additional_jars = args[4]
+        stdout = args[5]
+        stderr = args[6]
         self.assertIsInstance(workspace, str)
         self.assertIsInstance(primary_endpoint, Endpoint)
         self.assertEqual(primary_endpoint.groupId, "com.pinterest")
@@ -345,18 +366,22 @@ class TestRun(unittest.TestCase):
     def test_classifier(self, run_mock):
         parser = jgo_parser()
         argv = [
-            "io.netty:netty-transport-native-epoll:4.1.79.Final:linux-x86_64:FakeMainClass"
+            (
+                "io.netty:netty-transport-native-epoll:4.1.79.Final:"
+                "linux-x86_64:FakeMainClass"
+            )
         ]
 
         run(parser, argv)
         self.assertTrue(run_mock.called)
-        workspace = run_mock.call_args.args[0]
-        primary_endpoint: Endpoint = run_mock.call_args.args[1]
-        jvm_args = run_mock.call_args.args[2]
-        program_args = run_mock.call_args.args[3]
-        additional_jars = run_mock.call_args.args[4]
-        stdout = run_mock.call_args.args[5]
-        stderr = run_mock.call_args.args[6]
+        args, _ = _call_args(run_mock)
+        workspace = args[0]
+        primary_endpoint: Endpoint = args[1]
+        jvm_args = args[2]
+        program_args = args[3]
+        additional_jars = args[4]
+        stdout = args[5]
+        stderr = args[6]
         self.assertIsInstance(workspace, str)
         self.assertIsInstance(primary_endpoint, Endpoint)
         self.assertEqual(primary_endpoint.groupId, "io.netty")
@@ -375,13 +400,14 @@ class TestRun(unittest.TestCase):
 
         run(parser, argv)
         self.assertTrue(launch_java_mock.called)
-        workspace = launch_java_mock.call_args.args[0]
-        jvm_args = launch_java_mock.call_args.args[1]
-        program_args = launch_java_mock.call_args.args[2:]
-        additional_jars = launch_java_mock.call_args.kwargs["additional_jars"]
-        stdout = launch_java_mock.call_args.kwargs["stdout"]
-        stderr = launch_java_mock.call_args.kwargs["stderr"]
-        check = launch_java_mock.call_args.kwargs["check"]
+        args, kwargs = _call_args(launch_java_mock)
+        workspace = args[0]
+        jvm_args = args[1]
+        program_args = args[2:]
+        additional_jars = kwargs["additional_jars"]
+        stdout = kwargs["stdout"]
+        stderr = kwargs["stderr"]
+        check = kwargs["check"]
         self.assertIsInstance(workspace, str)
         self.assertEqual(jvm_args, [])
         self.assertEqual(program_args, ("org.jruby.Main",))
@@ -402,13 +428,14 @@ class TestUtil(unittest.TestCase):
         )
 
         self.assertTrue(run_mock.called)
-        workspace = run_mock.call_args.args[0]
-        primary_endpoint: Endpoint = run_mock.call_args.args[1]
-        jvm_args = run_mock.call_args.args[2]
-        program_args = run_mock.call_args.args[3]
-        additional_jars = run_mock.call_args.args[4]
-        stdout = run_mock.call_args.args[5]
-        stderr = run_mock.call_args.args[6]
+        args, _ = _call_args(run_mock)
+        workspace = args[0]
+        primary_endpoint: Endpoint = args[1]
+        jvm_args = args[2]
+        program_args = args[3]
+        additional_jars = args[4]
+        stdout = args[5]
+        stderr = args[6]
         self.assertIsInstance(workspace, str)
         self.assertIsInstance(primary_endpoint, Endpoint)
         self.assertEqual(primary_endpoint.groupId, "org.janelia.saalfeldlab")
@@ -436,13 +463,14 @@ class TestUtil(unittest.TestCase):
         )
 
         self.assertTrue(run_mock.called)
-        workspace = run_mock.call_args.args[0]
-        primary_endpoint: Endpoint = run_mock.call_args.args[1]
-        jvm_args = run_mock.call_args.args[2]
-        program_args = run_mock.call_args.args[3]
-        additional_jars = run_mock.call_args.args[4]
-        stdout = run_mock.call_args.args[5]
-        stderr = run_mock.call_args.args[6]
+        args, _ = _call_args(run_mock)
+        workspace = args[0]
+        primary_endpoint: Endpoint = args[1]
+        jvm_args = args[2]
+        program_args = args[3]
+        additional_jars = args[4]
+        stdout = args[5]
+        stderr = args[6]
         self.assertIsInstance(workspace, str)
         self.assertIsInstance(primary_endpoint, Endpoint)
         self.assertEqual(primary_endpoint.groupId, "org.janelia.saalfeldlab")

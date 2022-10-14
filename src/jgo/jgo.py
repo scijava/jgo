@@ -1,6 +1,7 @@
 import argparse
 import configparser
 import glob
+import hashlib
 import logging
 import os
 import pathlib
@@ -9,7 +10,6 @@ import shutil
 import subprocess
 import sys
 import zipfile
-import hashlib
 
 # A script to execute a main class of a Maven artifact
 # which is available locally or from Maven Central.
@@ -101,7 +101,14 @@ class Endpoint:
         self.main_class = main_class
 
     def __repr__(self):
-        return f"<jgo.Endpoint:g={self.groupId},a={self.artifactId},v={self.version},c={self.classifier},main={self.main_class}>"
+        return (
+            "<jgo.Endpoint:"
+            f"g={self.groupId},"
+            f"a={self.artifactId},"
+            f"v={self.version},"
+            f"c={self.classifier},"
+            f"main={self.main_class}>"
+        )
 
     def jar_name(self):
         return (
@@ -580,7 +587,12 @@ def resolve_dependencies(
             raise InvalidEndpoint(
                 primary_endpoint, "A primary endpoint cannot also be version=MANAGED."
             )
-        dependency_management = "<dependency><groupId>{g}</groupId><artifactId>{a}</artifactId><version>{v}</version>".format(
+        dependency_management = (
+            "<dependency>"
+            "<groupId>{g}</groupId>"
+            "<artifactId>{a}</artifactId>"
+            "<version>{v}</version>"
+        ).format(
             g=primary_endpoint.groupId,
             a=primary_endpoint.artifactId,
             v=primary_endpoint.version,
@@ -648,30 +660,30 @@ def resolve_dependencies(
             err_lines += e.stdout.decode().splitlines()
         if e.stderr:
             err_lines += e.stderr.decode().splitlines()
-        for l in err_lines:
-            if l.startswith("[ERROR]"):
-                _logger.error("\t%s", l)
+        for line in err_lines:
+            if line.startswith("[ERROR]"):
+                _logger.error("\t%s", line)
             else:
-                _logger.debug("\t%s", l)
+                _logger.debug("\t%s", line)
         _logger.error("")
 
         raise e
 
     info_regex = re.compile("^.*\\[[A-Z]+\\] *")
     relevant_jars = []
-
-    for l in str(mvn_out).split("\\n"):
-        # TODO: the compile|runtime|provided matches might fail if an artifactId starts with accordingly
-        # TODO: If that ever turns out to be an issue, it is going to be necessary to update these checks
+    for line in str(mvn_out).split("\\n"):
+        # TODO: The compile|runtime|provided matches might fail if an
+        # artifactId starts with accordingly. If that ever turns out to
+        # be an issue, it is going to be necessary to update these checks.
         if (
-            re.match(".*:(compile|runtime)", l)
-            and not re.match(".*\\[DEBUG\\]", l)
-            and not re.match(".*:provided", l)
+            re.match(".*:(compile|runtime)", line)
+            and not re.match(".*\\[DEBUG\\]", line)
+            and not re.match(".*:provided", line)
         ):
 
-            _logger.debug("Relevant mvn output: %s", l)
+            _logger.debug("Relevant mvn output: %s", line)
 
-            split_line = info_regex.sub("", l).split(":")
+            split_line = info_regex.sub("", line).split(":")
             split_line_len = len(split_line)
 
             if split_line_len < 5 and split_line_len > 6:
@@ -712,7 +724,7 @@ def resolve_dependencies(
 def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
 
     config = default_config()
-    if not "--ignore-jgorc" in argv:
+    if "--ignore-jgorc" not in argv:
         config_file = pathlib.Path.home() / ".jgorc"
         config.read(config_file)
 
@@ -739,9 +751,10 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
 
     if args.additional_jars is not None and len(args.additional_jars) > 0:
         _logger.warning(
-            "The -a, --additional-jars option has been deprecated and will be removed in the future. "
-            "Please use `mvn install:install-file' instead to make relevant JARS available in your "
-            "local Maven repository and pass appropriate coordinates as endpoints."
+            "The -a, --additional-jars option has been deprecated and will be removed "
+            "in the future. Please use `mvn install:install-file' instead to make "
+            "relevant JARS available in your local Maven repository and pass "
+            "appropriate coordinates as endpoints."
         )
 
     if args.verbose > 0:

@@ -1,7 +1,20 @@
+# Use this file to set up jgo:
+#
+#   mamba env create
+#   conda activate jgo
+#
+# It includes the dependencies needed for using jgo but not tools
+# for developer-related actions like running automated tests (pytest) and
+# linting the code (black).
+# If you want an environment including these tools, use dev-environment.yml.
 name: jgo
 channels:
   - conda-forge
   - defaults
 dependencies:
+  # Project dependencies
   - psutil
-  - jgo
+  # Project from source
+  - pip
+  - pip:
+    - -e '.'
