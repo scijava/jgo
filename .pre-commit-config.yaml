@@ -21,3 +21,7 @@ repos:
     rev: 22.3.0
     hooks:
       - id: black
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: v0.10.1
+    hooks:
+      - id: validate-pyproject

@@ -52,6 +52,7 @@ dev = [
     "pyflakes",
     "pytest",
     "pytest-cov",
+    "validate-pyproject[all]",
 ]
 
 [project.scripts]

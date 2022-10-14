@@ -55,6 +55,11 @@ jobs:
         with:
           configuration: --check-only
 
+      - name: Validate pyproject.toml
+        run: |
+          python -m pip install validate-pyproject[all]
+          python -m validate_pyproject pyproject.toml
+
   conda-dev-test:
     name: Conda Setup & Code Coverage
     runs-on: ubuntu-latest
