@@ -5,19 +5,43 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "jgo"
 version = "1.0.5.dev0"
-authors = [{name = "SciJava developers", email = "ctrueden@wisc.edu"}]
-license = {text = "Unlicense"}
 description = "Launch Java code from Python and the CLI, installation-free."
+license = {text = "Unlicense"}
+authors = [{name = "SciJava developers", email = "ctrueden@wisc.edu"}]
 readme = "README.md"
-urls = {Homepage = "https://github.com/scijava/jgo"}
-requires-python = ">=3.7"
-dependencies = ["psutil"]
+keywords = ["java", "maven", "launch"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: System Administrators",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: The Unlicense (Unlicense)",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: Unix",
+    "Operating System :: MacOS",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Libraries :: Java Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Installation/Setup",
+    "Topic :: System :: Shells",
+    "Topic :: System :: System Shells",
+    "Topic :: Utilities",
+]
 
-[project.scripts]
-jgo = "jgo:main"
+# NB: Keep this in sync with environment.yml AND dev-environment.yml!
+requires-python = ">=3.7"
+dependencies = [
+  "psutil",
+]
 
 [project.optional-dependencies]
-# Ensure any changes to this list are also added to environment-test.yml!
+# NB: Keep this in sync with dev-environment.yml!
 dev = [
     "autopep8",
     "build",
@@ -30,8 +54,15 @@ dev = [
     "pytest-cov",
 ]
 
-[tool.isort]
-profile = "black"
+[project.scripts]
+jgo = "jgo:main"
+
+[project.urls]
+homepage = "https://github.com/scijava/jgo"
+documentation = "https://github.com/scijava/jgo/blob/master/README.md"
+source = "https://github.com/scijava/jgo"
+download = "https://pypi.org/project/jgo/"
+tracker = "https://github.com/scijava/jgo/issues"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -40,3 +71,6 @@ include-package-data = false
 [tool.setuptools.packages.find]
 where = ["src"]
 namespaces = false
+
+[tool.isort]
+profile = "black"
