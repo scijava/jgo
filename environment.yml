@@ -1,17 +1,25 @@
-# Use this file to set up jgo:
+# Use this file to construct an environment for
+# working with jgo in a runtime setting.
+#
+# First, install mambaforge:
+#
+#   https://github.com/conda-forge/miniforge#mambaforge
+#
+# Then run:
 #
 #   mamba env create
-#   conda activate jgo
+#   mamba activate jgo
 #
-# It includes the dependencies needed for using jgo but not tools
-# for developer-related actions like running automated tests (pytest) and
-# linting the code (black).
+# It includes the dependencies needed for using jgo, but not tools
+# for developer-related actions like running automated tests (pytest),
+# linting the code (black), and generating the API documentation (sphinx).
 # If you want an environment including these tools, use dev-environment.yml.
 name: jgo
 channels:
   - conda-forge
   - defaults
 dependencies:
+  - python >= 3.7
   # Project dependencies
   - psutil
   # Project from source
