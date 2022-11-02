@@ -3,4 +3,9 @@
 dir=$(dirname "$0")
 cd "$dir/.."
 
-python -m pytest tests/ -p no:faulthandler $@
+if [ $# -gt 0 ]
+then
+  python -m pytest -p no:faulthandler $@
+else
+  python -m pytest -p no:faulthandler tests/
+fi
