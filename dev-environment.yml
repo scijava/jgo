@@ -8,7 +8,7 @@
 # Then run:
 #
 #   mamba env create -f dev-environment.yml
-#   conda activate jgo-dev
+#   mamba activate jgo-dev
 #
 # In addition to the dependencies needed for using jgo, it
 # includes tools for developer-related actions like running
