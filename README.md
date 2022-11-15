@@ -3,7 +3,7 @@
 
 # jgo: painless Java component execution
 
-![](https://raw.githubusercontent.com/scijava/jgo/master/jgo.png)
+![](https://raw.githubusercontent.com/scijava/jgo/main/jgo.png)
 
 ## Summary
 
