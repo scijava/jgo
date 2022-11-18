@@ -191,6 +191,9 @@ want to use your own remote Maven repository as a mirror of Maven Central—you
 can do it using Maven's usual `~/.m2/settings.xml`; see [Using Mirrors for
 Repositories](https://maven.apache.org/guides/mini/guide-mirror-settings.html).
 
+You can also use the `-r` flag to pass additional repositories to individual
+invocations of jgo.
+
 #### Shortcuts
 
 You can define shortcuts for launching commonly used programs:
