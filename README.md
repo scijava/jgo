@@ -141,13 +141,23 @@ However, you should not specify multiple main classes.
 | Jython REPL                  | `jgo org.python:jython-standalone`                                                  |
 | JRuby eval                   | `echo "puts 'Hello Ruby'" \| jgo org.jruby:jruby-complete:@jruby.Main`              |
 | Groovy REPL                  | `jgo org.codehaus.groovy:groovy-groovysh:@shell.Main+commons-cli:commons-cli:1.3.1` |
+
+Note the usage of the `+` syntax as needed to append elements to the classpath.
+
+If you add
+`scijava.public = https://maven.scijava.org/content/groups/public`
+to the
+`[repositories]` section of your `.jgorc`
+(see [Repositories](#repositories) below),
+you can also try:
+
+| Program                      | Command                                                                             |
+|-----------------------------:|:------------------------------------------------------------------------------------|
 | SciJava REPL with JRuby      | `jgo org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-jruby`            |
 | SciJava REPL with Jython     | `jgo org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-jython`           |
 | SciJava REPL with Groovy     | `jgo org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-groovy`           |
 | SciJava REPL with Clojure    | `jgo org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-clojure`          |
 | SciJava REPL with JavaScript | `jgo org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-javascript`       |
-
-Note the usage of the `+` syntax as needed to append elements to the classpath.
 
 ### FAQ
 
