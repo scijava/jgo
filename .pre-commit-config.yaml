@@ -13,7 +13,7 @@ repos:
         additional_dependencies: [flake8-typing-imports==1.7.0]
   # Next, sort imports
   - repo: https://github.com/PyCQA/isort
-    rev: 5.10.1
+    rev: 5.12.0
     hooks:
       - id: isort
   # Finally, lint
