@@ -80,7 +80,6 @@ class NoEndpointProvided(Exception):
 
 
 class Endpoint:
-
     VERSION_RELEASE = "RELEASE"
     VERSION_LATEST = "LATEST"
     VERSION_MANAGED = "MANAGED"
@@ -388,7 +387,6 @@ and it will be auto-completed.
 
 
 def _jgo_main(argv=sys.argv[1:], stdout=None, stderr=None):
-
     LOG_FORMAT = "%(levelname)s %(asctime)s: %(message)s"
 
     if not ("-q" in argv or "--quiet" in argv):
@@ -540,7 +538,6 @@ def resolve_dependencies(
     shortcuts={},
     verbose=0,
 ):
-
     endpoint_strings = split_endpoint_string(endpoint_string)
     endpoints = endpoints_from_strings(endpoint_strings, shortcuts=shortcuts)
     primary_endpoint = endpoints[0]
@@ -680,7 +677,6 @@ def resolve_dependencies(
             and not re.match(".*\\[DEBUG\\]", line)
             and not re.match(".*:provided", line)
         ):
-
             _logger.debug("Relevant mvn output: %s", line)
 
             split_line = info_regex.sub("", line).split(":")
@@ -722,7 +718,6 @@ def resolve_dependencies(
 
 
 def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
-
     config = default_config()
     if "--ignore-jgorc" not in argv:
         config_file = pathlib.Path.home() / ".jgorc"
