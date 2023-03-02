@@ -152,6 +152,7 @@ class Endpoint:
             len(endpoint_elements) < 2
             or len(endpoint_elements) > 5
             or endpoint_elements[0].startswith("-")
+            or endpoint_elements[1].startswith("/")
         ):
             return False
 
