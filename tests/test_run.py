@@ -487,5 +487,13 @@ class TestUtil(unittest.TestCase):
         self.assertIn("org.slf4j:slf4j-simple", coordinates)
 
 
+class TestUtilMainCaughtExceptions(unittest.TestCase):
+    def test_without_endpoint(self):
+        rv = main_from_endpoint(
+            "", argv=[], primary_endpoint_version="", secondary_endpoints=()
+        )
+        self.assertEqual(rv, 254, "Expected return code 254.")
+
+
 if __name__ == "__main__":
     unittest.main()

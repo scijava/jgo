@@ -98,4 +98,4 @@ def main_from_endpoint(
         + paintera_argv
     )
 
-    main(argv=argv)
+    return main(argv=argv)
