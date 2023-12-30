@@ -821,12 +821,18 @@ def _run(
         pass
 
     if not primary_endpoint.main_class:
-        _logger.info("Inferring main class from jar manifest")
-        jar_path = glob.glob(
-            os.path.join(workspace, primary_endpoint.jar_name())
+        glob_pattern = (
+            primary_endpoint.jar_name()
             .replace(Endpoint.VERSION_RELEASE, "*")
             .replace(Endpoint.VERSION_LATEST, "*")
-        )[0]
+        )
+        _logger.info(
+            f"Inferring main class from manifest of {primary_endpoint.jar_name()}"
+            f" using glob '{glob_pattern}'"
+        )
+        jar_paths = sorted(glob.glob(os.path.join(workspace, glob_pattern)))
+        _logger.debug(f"Using first jar from matching jars {jar_paths}")
+        jar_path = jar_paths[0]
         with zipfile.ZipFile(jar_path) as jar_file:
             with jar_file.open("META-INF/MANIFEST.MF") as manifest:
                 main_class_pattern = re.compile(".*Main-Class: *")
