@@ -416,6 +416,29 @@ class TestRun(unittest.TestCase):
         self.assertIsNone(stderr)
         self.assertFalse(check)
 
+    @patch("jgo.jgo.launch_java")
+    def test_infer_main_class(self, launch_java_mock):
+        parser = jgo_parser()
+        argv = ["com.pinterest.ktlint:ktlint-cli"]
+
+        run(parser, argv)
+        self.assertTrue(launch_java_mock.called)
+        args, kwargs = _call_args(launch_java_mock)
+        workspace = args[0]
+        jvm_args = args[1]
+        program_args = args[2:]
+        additional_jars = kwargs["additional_jars"]
+        stdout = kwargs["stdout"]
+        stderr = kwargs["stderr"]
+        check = kwargs["check"]
+        self.assertIsInstance(workspace, str)
+        self.assertEqual(jvm_args, [])
+        self.assertEqual(program_args, ("com.pinterest.ktlint.Main",))
+        self.assertEqual(additional_jars, [])
+        self.assertIsNone(stdout)
+        self.assertIsNone(stderr)
+        self.assertFalse(check)
+
 
 class TestUtil(unittest.TestCase):
     @patch("jgo.jgo._run")
