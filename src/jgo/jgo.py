@@ -710,7 +710,7 @@ def resolve_dependencies(
                     jar_file_in_workspace,
                     link_type=link_type,
                 )
-            except FileExistsError:
+            except (FileExistsError, shutil.SameFileError):
                 # Do not throw exception if target file exists.
                 pass
     pathlib.Path(build_success_file).touch(exist_ok=True)
