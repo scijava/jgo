@@ -734,9 +734,11 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
 
     endpoint_index = find_endpoint(argv, shortcuts)
     if endpoint_index == -1:
-        raise HelpRequested(
-            argv
-        ) if "-h" in argv or "--help" in argv else NoEndpointProvided(argv)
+        raise (
+            HelpRequested(argv)
+            if "-h" in argv or "--help" in argv
+            else NoEndpointProvided(argv)
+        )
 
     args, unknown = parser.parse_known_args(argv[:endpoint_index])
     jvm_args = unknown if unknown else []
