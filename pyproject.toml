@@ -17,10 +17,11 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Intended Audience :: System Administrators",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "License :: OSI Approved :: The Unlicense (Unlicense)",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: Unix",
@@ -35,7 +36,7 @@ classifiers = [
 ]
 
 # NB: Keep this in sync with environment.yml AND dev-environment.yml!
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 dependencies = [
   "psutil",
 ]
