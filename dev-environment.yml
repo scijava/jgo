@@ -27,6 +27,7 @@ dependencies:
   - build
   - black
   - flake8
+  - flake8-pyproject
   - isort
   - pre-commit
   - pyflakes
