@@ -26,7 +26,7 @@ import zipfile
 
 _classpath_separator = ";" if os.name == "nt" else ":"
 
-_logger = logging.getLogger(os.getenv("JRUN_LOGGER_NAME", "jgo"))
+_logger = logging.getLogger(os.getenv("JGO_LOGGER_NAME", "jgo"))
 
 
 def classpath_separator():
