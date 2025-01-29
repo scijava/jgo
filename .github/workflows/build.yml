@@ -79,12 +79,12 @@ jobs:
           path: ~/conda_pkgs_dir
           key:
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('dev-environment.yml') }}
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: conda-incubator/setup-miniconda@v3
         with:
           # Create env with dev packages
           auto-update-conda: true
           python-version: 3.9
-          miniforge-variant: Mambaforge
+          miniforge-version: latest
           environment-file: dev-environment.yml
           # Activate jgo-dev environment
           activate-environment: jgo-dev
