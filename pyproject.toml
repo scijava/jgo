@@ -17,7 +17,6 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Intended Audience :: System Administrators",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -35,7 +34,7 @@ classifiers = [
 ]
 
 # NB: Keep this in sync with environment.yml AND dev-environment.yml!
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
   "psutil",
 ]
@@ -79,7 +78,7 @@ exclude = ["bin", "build", "docs", "dist"]
 extend-ignore = ["E203"]
 # See https://black.readthedocs.io/en/stable/guides/using_black_with_other_tools.html#flake8
 max-line-length = 88
-min_python_version = "3.8"
+min_python_version = "3.9"
 
 [tool.isort]
 profile = "black"
