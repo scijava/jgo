@@ -19,4 +19,4 @@ test: check
 	bin/test.sh
 
 dist: check clean
-	uv run python -m build
+	bin/dist.sh
