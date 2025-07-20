@@ -5,7 +5,7 @@ cd "$dir/.."
 
 if [ $# -gt 0 ]
 then
-  uv run python -m pytest -p no:faulthandler $@
+  uv run python -m pytest -v -p no:faulthandler $@
 else
-  uv run python -m pytest -p no:faulthandler tests/
+  uv run python -m pytest -v -p no:faulthandler tests/
 fi
