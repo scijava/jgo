@@ -11,7 +11,7 @@ on:
       - main
 
 jobs:
-  test-pip:
+  build:
     name: ${{ matrix.platform }} py${{ matrix.python-version }}
     runs-on: ${{ matrix.platform }}
     strategy:
@@ -20,84 +20,26 @@ jobs:
         python-version: ['3.9', '3.12']
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install jgo
+      - name: Set up uv
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e '.[dev]'
+          python -m pip install uv
 
-      - name: Test jgo
+      - name: Run the tests
         run: |
-          python -m pytest -s -p no:faulthandler --color=yes
+          bin/test.sh
 
-  ensure-clean-code:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v3
-
-      - name: Lint code
-        uses: psf/black@stable
-
-      - name: Flake code
+      - name: Lint the code
         run: |
-          python -m pip install flake8 Flake8-pyproject
-          python -m flake8 src tests
+          bin/lint.sh
 
-      - name: Check import ordering
-        uses: isort/isort-action@master
-        with:
-          configuration: --check-only
-
-      - name: Validate pyproject.toml
-        run: |
-          python -m pip install validate-pyproject[all]
-          python -m validate_pyproject pyproject.toml
-
-  conda-dev-test:
-    name: Conda Setup & Code Coverage
-    runs-on: ubuntu-latest
-    defaults:
-      # Steps that rely on the activated environment must be run with this shell setup.
-      # See https://github.com/marketplace/actions/setup-miniconda#important
-      run:
-        shell: bash -l {0}
-    steps:
-      - uses: actions/checkout@v2
-      - name: Cache conda
-        uses: actions/cache@v4
-        env:
-          # Increase this value to reset cache if dev-environment.yml has not changed
-          CACHE_NUMBER: 0
-        with:
-          path: ~/conda_pkgs_dir
-          key:
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('dev-environment.yml') }}
-      - uses: conda-incubator/setup-miniconda@v3
-        with:
-          # Create env with dev packages
-          auto-update-conda: true
-          python-version: 3.9
-          miniforge-version: latest
-          environment-file: dev-environment.yml
-          # Activate jgo-dev environment
-          activate-environment: jgo-dev
-          auto-activate-base: false
-          # Use mamba for faster setup
-          use-mamba: true
-
-
-      # TODO: Determine why python -m pytest fails
-      - name: Test napari-imagej
-        run: |
-            conda run -n jgo-dev --no-capture-output pytest -s -p no:faulthandler --color=yes --cov-report=xml --cov=.
-
-      # We could do this in its own action, but we'd have to setup the environment again.
       - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@v2
+        if: matrix.platform == 'ubuntu-latest' && matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v4

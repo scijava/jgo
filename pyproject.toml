@@ -33,14 +33,12 @@ classifiers = [
     "Topic :: Utilities",
 ]
 
-# NB: Keep this in sync with environment.yml AND dev-environment.yml!
 requires-python = ">=3.9"
 dependencies = [
   "psutil",
 ]
 
-[project.optional-dependencies]
-# NB: Keep this in sync with dev-environment.yml!
+[dependency-groups]
 dev = [
     "autopep8",
     "build",
