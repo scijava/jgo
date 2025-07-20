@@ -40,11 +40,8 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "autopep8",
     "build",
-    "black",
-    "flake8",
-    "isort",
+    "ruff",
     "pre-commit",
     "pyflakes",
     "pytest",
@@ -70,13 +67,15 @@ include-package-data = false
 where = ["src"]
 namespaces = false
 
-# Thanks to Flake8-pyproject, we can configure flake8 here!
-[tool.flake8]
-exclude = ["bin", "build", "docs", "dist"]
-extend-ignore = ["E203"]
-# See https://black.readthedocs.io/en/stable/guides/using_black_with_other_tools.html#flake8
-max-line-length = 88
-min_python_version = "3.9"
+[tool.ruff]
+line-length = 88
+src = ["src", "tests"]
+include = ["pyproject.toml", "src/**/*.py", "tests/**/*.py"]
+extend-exclude = ["bin", "build", "dist"]
 
-[tool.isort]
-profile = "black"
+[tool.ruff.lint]
+extend-ignore = ["E203"]
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore `E402` (import violations) in all `__init__.py` files, and in `path/to/file.py`.
+"__init__.py" = ["E402", "F401"]
