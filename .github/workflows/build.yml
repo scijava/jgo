@@ -32,14 +32,14 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install uv
 
-      - name: Run the tests
+      - name: Run tests
         run: |
-          bin/test.sh
+          bin/test.sh --cov-report=xml --cov=.
 
-      - name: Lint the code
+      - name: Lint code
         run: |
           bin/lint.sh
 
-      - name: Upload Coverage to Codecov
-        if: matrix.platform == 'ubuntu-latest' && matrix.python-version == '3.12'
+      - name: Upload coverage
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
         uses: codecov/codecov-action@v4
