@@ -31,42 +31,12 @@ The `jgo` project began life as a shell script, but was later translated into
 Python, so that tools such as [scyjava](https://github.com/scijava/scyjava)
 could leverage its environment-building capabilities.
 
-As such, there are now two implementations from which to choose!
-Each has pros and cons.
-
 ### Prerequisites
 
 `jgo` uses `mvn` and `java` for the heavy lifting.
-The shell script version needs some common utilities (e.g., `cat`).
-If you are missing anything, the script will tell you.
 
-### The shell script
-
-The `jgo.sh` shell script requires a POSIX-friendly system. It is known to
-work on Linux, macOS, [Cygwin](https://www.cygwin.com/), Microsoft's
-[Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install),
-and Git BASH from the [Git for Windows](https://git-for-windows.github.io/) project.
-
-<details><summary><strong>Installing the shell script</strong></summary>
-
-Just clone this repo and symlink `jgo.sh` into your favorite `bin` directory.
-
-For example, assuming `~/bin` is on your PATH:
-
-```shell
-cd
-git clone https://github.com/scijava/jgo
-cd bin
-ln -s ../jgo/jgo.sh jgo
-jgo --help
-```
-
-</details>
-
-### The Python module
-
-The Python version of `jgo` offers a `jgo` console script, as
-well as a `jgo` module for programmatically creating endpoints.
+There is a `jgo` console script, as well as a `jgo` module
+for programmatically creating endpoints.
 
 <details><summary><strong>Installing with pip</strong></summary>
 
@@ -227,9 +197,8 @@ m2Repo = /path/to/.m2Repo (default ~/.m2/repository)
 cacheDir = /path/to/.jgo (default ~/.jgo)
 links = soft (options: hard, soft, none; default hard)
 ```
-Note that the `jgo` cache dir can also be set via the `JGO_CACHE_DIR` environment
-variable when using **Python** `jgo`. The precedence of reading the cache dir, from
-highest to lowest:
+The `jgo` cache dir can also be set via the `JGO_CACHE_DIR` environment
+variable. The precedence of reading the cache dir, from highest to lowest:
   - `JGO_CACHE_DIR` environment variable
   - `cacheDir` in `settings` sections in `~/.jgorc`
   - default to `~/.jgo`
