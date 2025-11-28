@@ -4,12 +4,12 @@ import glob
 import hashlib
 import logging
 import os
-import pathlib
 import re
 import shutil
 import subprocess
 import sys
 import zipfile
+from pathlib import Path
 
 # A script to execute a main class of a Maven artifact
 # which is available locally or from Maven Central.
@@ -234,8 +234,25 @@ def link(source, link_name, link_type="auto"):
     )
 
 
+def m2_home() -> Path:
+    value = os.getenv("M2_HOME", None)
+    return m2_ / "repository"
+
+
+def m2_repo() -> Path:
+    value = os.getenv("M2_REPO", None)
+    repo_path = m2_home / "repository" if value is None else Path(value)
+    return repo_path.absolute()
+
+
 def m2_path():
-    return os.getenv("M2_REPO", (pathlib.Path.home() / ".m2").absolute())
+    _logger.warning(
+        "The m2_path() function is deprecated and will be removed in the future. "
+        "Please use either m2_repo() or m2_home() to obtain Maven directory paths."
+    )
+    # NB: This logic is wrong, but left as is for backward compatibility.
+    # Please use m2_home() for ~/.m2 or m2_repo() for ~/.m2/repository.
+    return os.getenv("M2_REPO", (Path.home() / ".m2").absolute())
 
 
 def launch_java(
@@ -430,9 +447,9 @@ def default_config():
     config.set(
         "settings",
         "m2Repo",
-        os.path.join(str(pathlib.Path.home()), ".m2", "repository"),
+        os.path.join(str(Path.home()), ".m2", "repository"),
     )
-    config.set("settings", "cacheDir", os.path.join(str(pathlib.Path.home()), ".jgo"))
+    config.set("settings", "cacheDir", os.path.join(str(Path.home()), ".jgo"))
     config.set("settings", "links", "auto")
 
     # repositories
@@ -529,7 +546,7 @@ def workspace_dir_from_endpoint_strings(
 def resolve_dependencies(
     endpoint_string,
     cache_dir,
-    m2_repo,
+    m2_repo=None,
     link_type="auto",
     update_cache=False,
     force_update=False,
@@ -713,14 +730,14 @@ def resolve_dependencies(
             except (FileExistsError, shutil.SameFileError):
                 # Do not throw exception if target file exists.
                 pass
-    pathlib.Path(build_success_file).touch(exist_ok=True)
+    Path(build_success_file).touch(exist_ok=True)
     return primary_endpoint, workspace
 
 
 def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
     config = default_config()
     if "--ignore-jgorc" not in argv:
-        config_file = pathlib.Path.home() / ".jgorc"
+        config_file = Path.home() / ".jgorc"
         config.read(config_file)
 
     if os.getenv(jgo_cache_dir_environment_variable()) is not None:
