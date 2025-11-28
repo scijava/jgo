@@ -236,13 +236,16 @@ def link(source, link_name, link_type="auto"):
 
 def m2_home() -> Path:
     value = os.getenv("M2_HOME", None)
-    return m2_ / "repository"
+    if value is not None:
+        return Path(value)
+    return (Path.home() / ".m2").absolute()
 
 
 def m2_repo() -> Path:
     value = os.getenv("M2_REPO", None)
-    repo_path = m2_home / "repository" if value is None else Path(value)
-    return repo_path.absolute()
+    if value is not None:
+        return Path(value)
+    return m2_home() / "repository"
 
 
 def m2_path():
