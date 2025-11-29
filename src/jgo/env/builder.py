@@ -10,22 +10,50 @@ import hashlib
 from jgo.maven import MavenContext, Component
 from .environment import Environment
 from .linking import LinkStrategy, link_file
+from .spec import EnvironmentSpec
+from .lockfile import LockFile
 
 
 class EnvironmentBuilder:
     """
     Builds environment directories from Maven components.
+
+    Supports hybrid caching:
+    - Project mode: Uses .jgo/ in current directory (when jgo.toml exists)
+    - Ad-hoc mode: Uses ~/.cache/jgo/ for one-off executions
+    - Override: Explicit cache_dir can be provided
     """
 
     def __init__(
         self,
         maven_context: MavenContext,
-        cache_dir: Path,
+        cache_dir: Optional[Path] = None,
         link_strategy: LinkStrategy = LinkStrategy.AUTO,
     ):
         self.maven_context = maven_context
-        self.cache_dir = Path(cache_dir).expanduser()
         self.link_strategy = link_strategy
+
+        # Auto-detect cache directory if not specified
+        if cache_dir is None:
+            cache_dir = self._auto_detect_cache_dir()
+
+        self.cache_dir = Path(cache_dir).expanduser()
+
+    @staticmethod
+    def _auto_detect_cache_dir() -> Path:
+        """
+        Auto-detect cache directory based on context.
+
+        Returns:
+            Path(".jgo") if jgo.toml exists in current directory (project mode)
+            Otherwise Path.home() / ".cache" / "jgo" (ad-hoc mode)
+        """
+        # Check if jgo.toml exists in current directory
+        if Path("jgo.toml").exists():
+            return Path(".jgo")
+
+        # Default to centralized cache
+        return Path.home() / ".cache" / "jgo"
 
     def from_endpoint(
         self, endpoint: str, update: bool = False, main_class: Optional[str] = None
@@ -68,7 +96,82 @@ class EnvironmentBuilder:
             return environment
 
         # Build/rebuild environment
+        # Note: We don't need the returned deps here since from_components
+        # is primarily for endpoint-based builds, not spec-based builds
         self._build_environment(environment, components, main_class)
+
+        return environment
+
+    def from_spec(
+        self,
+        spec: EnvironmentSpec,
+        update: bool = False,
+        entrypoint: Optional[str] = None,
+    ) -> Environment:
+        """
+        Build an environment from an EnvironmentSpec (jgo.toml).
+
+        Args:
+            spec: Environment specification
+            update: If True, force rebuild even if environment exists
+            entrypoint: Optional entrypoint name to use (overrides spec default)
+
+        Returns:
+            Environment instance
+        """
+        # Parse coordinates into components
+        components = []
+        for coord in spec.coordinates:
+            parts = coord.split(":")
+            groupId = parts[0]
+            artifactId = parts[1]
+            version = parts[2] if len(parts) >= 3 else "RELEASE"
+            # TODO: Handle classifier (parts[3]) when Component supports it
+
+            component = self.maven_context.project(groupId, artifactId).at_version(
+                version
+            )
+            components.append(component)
+
+        # Get main class from entrypoint
+        main_class = spec.get_main_class(entrypoint)
+
+        # Use spec's cache_dir if specified, otherwise use builder's default
+        cache_dir = (
+            Path(spec.cache_dir).expanduser() if spec.cache_dir else self.cache_dir
+        )
+
+        # Generate cache key for this spec
+        cache_key = self._cache_key(components)
+
+        # Environment path
+        primary = components[0]
+        workspace_path = cache_dir / primary.project.path_prefix / cache_key
+
+        # Check if environment exists and is valid
+        environment = Environment(workspace_path)
+        if workspace_path.exists() and not update:
+            # TODO: Validate environment is up to date
+            return environment
+
+        # Build environment and get resolved dependencies
+        resolved_deps = self._build_environment(environment, components, main_class)
+
+        # Save spec and lock file to environment directory
+        spec_path = environment.path / "jgo.toml"
+        lock_path = environment.path / "jgo.lock.toml"
+
+        spec.save(spec_path)
+
+        # Generate lock file from resolved dependencies
+        lockfile = LockFile.from_resolved_dependencies(
+            dependencies=resolved_deps,
+            environment_name=spec.name,
+            min_java_version=environment.min_java_version,
+            entrypoints=spec.entrypoints,
+            default_entrypoint=spec.default_entrypoint,
+        )
+        lockfile.save(lock_path)
 
         return environment
 
@@ -86,8 +189,13 @@ class EnvironmentBuilder:
         environment: Environment,
         components: List[Component],
         main_class: Optional[str],
-    ):
-        """Actually build the environment by resolving and linking JARs."""
+    ) -> List:
+        """
+        Actually build the environment by resolving and linking JARs.
+
+        Returns:
+            List of resolved dependencies (for lock file generation)
+        """
         # Create directories
         environment.path.mkdir(parents=True, exist_ok=True)
         jars_dir = environment.path / "jars"
@@ -127,6 +235,9 @@ class EnvironmentBuilder:
         else:
             # TODO: Auto-detect from primary component
             pass
+
+        # Return dependencies for lock file generation
+        return all_deps
 
     def _parse_endpoint(self, endpoint: str) -> Tuple[List[Component], Optional[str]]:
         """
