@@ -81,19 +81,9 @@ class Model:
             Model._propvalue(k, self.props)
 
         # Replace ${...} expressions in dependency coordinate values.
-        for dep in list(self.deps.values()) + list(self.dep_mgmt.values()):
-            # CTR START HERE --
-            # We need to interpolate into dep fields other than version.
-            # But changing GACT changes the dict key, which moves the
-            # dependency around... so maybe we need to interpolate it
-            # sooner? Look more closely at the order of logic here.
-            # g = dep.groupId
-            # a = dep.artifactId
-            v = dep.version
-            # if g is not None: dep.set_groupId(Model._evaluate(g, self.props))
-            # if a is not None: dep.set_artifactId(Model._evaluate(a, self.props))
-            if v is not None:
-                dep.set_version(Model._evaluate(v, self.props))
+        # We must rebuild the dicts because interpolation can change GACT keys.
+        self.deps = self._interpolate_deps(self.deps)
+        self.dep_mgmt = self._interpolate_deps(self.dep_mgmt)
 
         # -- dependency management import --
         _log.debug(f"{self.gav}: dependency management import")
@@ -240,6 +230,52 @@ class Model:
             "project.name":        pom.name,
             "project.description": pom.description,
         })
+
+    def _interpolate_deps(self, deps: Dict[GACT, Dependency]) -> Dict[GACT, Dependency]:
+        """
+        Interpolate ${...} expressions in dependency coordinates.
+
+        This rebuilds the deps dict because interpolation can change GACT keys.
+        For example, if a dependency has groupId="${project.groupId}", after
+        interpolation the GACT key will be different.
+        """
+        new_deps = {}
+        for old_gact, dep in deps.items():
+            # Interpolate each coordinate field
+            g = Model._evaluate(dep.groupId, self.props) if dep.groupId else dep.groupId
+            a = Model._evaluate(dep.artifactId, self.props) if dep.artifactId else dep.artifactId
+            c = Model._evaluate(dep.classifier, self.props) if dep.classifier else dep.classifier
+            t = Model._evaluate(dep.type, self.props) if dep.type else dep.type
+            v = Model._evaluate(dep.version, self.props) if dep.version else dep.version
+
+            # Mutate the underlying artifact/component to match interpolated values
+            # (This is what set_version() does for the version field)
+            if g != dep.groupId:
+                dep.artifact.component.project.groupId = g
+            if a != dep.artifactId:
+                dep.artifact.component.project.artifactId = a
+            if c != dep.classifier:
+                dep.artifact.classifier = c
+            if t != dep.type:
+                dep.artifact.packaging = t
+            if v != dep.version:
+                dep.set_version(v)
+
+            # Build new GACT key with interpolated values
+            new_gact = (g, a, c, t)
+
+            # Check for collisions (rare, but possible)
+            if new_gact in new_deps and new_gact != old_gact:
+                _log.warning(
+                    f"Interpolation caused GACT key collision: "
+                    f"{old_gact} -> {new_gact}. "
+                    f"Keeping first occurrence (nearest wins)."
+                )
+                continue
+
+            new_deps[new_gact] = dep
+
+        return new_deps
 
     @staticmethod
     def _is_excluded(dep: Dependency, exclusions: Iterable[Project]):
