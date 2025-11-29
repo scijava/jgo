@@ -113,14 +113,15 @@ def test_link_file():
         source_file = Path(tmp_dir) / "source.txt"
         source_file.write_text("test content")
         
-        link_file = Path(tmp_dir) / "link.txt"
+        target_file = Path(tmp_dir) / "link.txt"
         
         # Test hard link
         try:
             from jgo.env.linking import link_file, LinkStrategy
-            link_file(source_file, link_file, LinkStrategy.HARD)
-            assert link_file.exists()
-            assert link_file.is_file()
+            link_file(source_file, target_file, LinkStrategy.HARD)
+            assert target_file.exists()
+            assert target_file.is_file()
+            assert target_file.resolve() == source_file.resolve()
         except OSError:
             # Hard link might not work on some filesystems
             pass
