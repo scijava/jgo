@@ -84,7 +84,6 @@ celerybeat-schedule
 # Environments
 .env
 .venv
-env/
 venv/
 ENV/
 env.bak/
@@ -106,3 +105,6 @@ venv.bak/
 # uv
 /uv.lock
 /.venv/
+
+# aider
+/.aider*
