@@ -140,12 +140,27 @@ class EnvironmentBuilder:
         for part in parts:
             # Parse G:A:V:C:mainClass
             tokens = part.split(":")
-            # This is a simplified implementation - full parsing would be more complex
-            # For now, we'll just create components from the basic G:A:V format
+            
+            # Handle case where main class is specified at the end
+            # We'll extract main class if it's the last token and looks like a class name
+            main_class = None
+            if len(tokens) >= 5:
+                # Check if the last token looks like a main class (not a version)
+                last_token = tokens[-1]
+                if last_token and not last_token.startswith("-") and len(last_token) > 1:
+                    # Check if it's a valid version pattern (contains numbers)
+                    if not (last_token.replace(".", "").replace("-", "").isdigit() and 
+                            len(last_token) > 1):
+                        main_class = last_token
+                        tokens = tokens[:-1]
+            
+            # Now parse the main part
             if len(tokens) >= 2:
                 groupId = tokens[0]
                 artifactId = tokens[1]
                 version = tokens[2] if len(tokens) > 2 else "RELEASE"
+                classifier = tokens[3] if len(tokens) > 3 else None
+                
                 component = self.maven_context.project(groupId, artifactId).at_version(version)
                 components.append(component)
             else:
