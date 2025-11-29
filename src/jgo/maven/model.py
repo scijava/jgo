@@ -1,0 +1,333 @@
+"""
+Maven dependency model and resolution.
+"""
+
+import logging
+from re import findall
+from typing import Dict, Iterable, List, Optional, Set, Tuple
+
+from .core import Dependency, MavenContext, Project
+from .pom import POM
+
+_log = logging.getLogger(__name__)
+
+# (groupId, artifactId, classifier, type)
+GACT = Tuple[str, str, str, str]
+
+
+class Model:
+    """
+    A minimal Maven metadata model, tracking only dependencies and properties.
+    """
+
+    def __init__(self, pom: POM):
+        """
+        Build a Maven metadata model from the given POM.
+
+        :param pom: A source POM from which to extract metadata (e.g. dependencies).
+        """
+        self.maven_context = pom.maven_context
+        self.gav = f"{pom.groupId}:{pom.artifactId}:{pom.version}"
+        _log.debug(f"{self.gav}: begin model initialization")
+
+        # Transfer raw metadata from POM source to target model.
+        # For now, we handle only dependencies, dependencyManagement, and properties.
+        self.deps: Dict[GACT, Dependency] = {}
+        self.dep_mgmt: Dict[GACT, Dependency] = {}
+        self.props: Dict[str, str] = {}
+        self._merge(pom)
+
+        # The following steps are adapted from the maven-model-builder:
+        # https://maven.apache.org/ref/3.3.9/maven-model-builder/
+
+        # -- profile activation and injection --
+        _log.debug(f"{self.gav}: profile activation and injection")
+
+        # Compute active profiles.
+        active_profiles = [
+            profile
+            for profile in pom.elements("profiles/profile")
+            if Model._is_active_profile(profile)
+        ]
+
+        # Merge values from the active profiles into the model.
+        for profile in active_profiles:
+            profile_dep_els = profile.findall("dependencies/dependency")
+            profile_deps = [self.maven_context.dependency(el) for el in profile_dep_els]
+            self._merge_deps(profile_deps)
+
+            profile_dep_mgmt_els = profile.findall("dependencyManagement/dependencies/dependency")
+            profile_dep_mgmt = [self.maven_context.dependency(el) for el in profile_dep_mgmt_els]
+            self._merge_deps(profile_dep_mgmt, managed=True)
+
+            profile_props_els = profile.findall("properties/*")
+            profile_props = {el.tag: el.text for el in profile_props_els}
+            self._merge_props(profile_props)
+
+        # -- parent resolution and inheritance assembly --
+        _log.debug(f"{self.gav}: parent resolution and inheritance assembly")
+
+        # Merge values up the parent chain into the current model.
+        parent = pom.parent()
+        while parent:
+            self._merge(parent)
+            parent = parent.parent()
+
+        # -- model interpolation --
+        _log.debug(f"{self.gav}: model interpolation")
+
+        # Replace ${...} expressions in property values.
+        for k in self.props:
+            Model._propvalue(k, self.props)
+
+        # Replace ${...} expressions in dependency coordinate values.
+        for dep in list(self.deps.values()) + list(self.dep_mgmt.values()):
+            # CTR START HERE --
+            # We need to interpolate into dep fields other than version.
+            # But changing GACT changes the dict key, which moves the
+            # dependency around... so maybe we need to interpolate it
+            # sooner? Look more closely at the order of logic here.
+            # g = dep.groupId
+            # a = dep.artifactId
+            v = dep.version
+            # if g is not None: dep.set_groupId(Model._evaluate(g, self.props))
+            # if a is not None: dep.set_artifactId(Model._evaluate(a, self.props))
+            if v is not None:
+                dep.set_version(Model._evaluate(v, self.props))
+
+        # -- dependency management import --
+        _log.debug(f"{self.gav}: dependency management import")
+
+        # NB: BOM-type dependencies imported in the <dependencyManagement> section are
+        # fully interpolated before merging their dependencyManagement into this model,
+        # without any consideration for differing property values set in this POM's
+        # inheritance chain. Therefore, unlike with parent POMs, dependency versions
+        # defined indirectly via version properties cannot be overridden by setting
+        # those version properties in the consuming POM!
+        # NB: We need to copy the dep_mgmt dict to avoid mutating while iterating it.
+        self._import_boms(self.dep_mgmt.copy())
+
+        # -- dependency management injection --
+        _log.debug(f"{self.gav}: dependency management injection")
+
+        # Handles injection of dependency management into the model.
+        for gact, dep in self.deps.items():
+            if dep.version is not None:
+                continue
+            # This dependency's version is still unset; use managed version.
+            managed = self.dep_mgmt.get(gact, None)
+            if managed is None:
+                raise ValueError(f"No version available for dependency {dep}")
+            dep.set_version(managed.version)
+
+        _log.debug(f"{self.gav}: model construction complete")
+
+    def dependencies(self, resolved: Dict[GACT, Dependency] = None) -> List[Dependency]:
+        """
+        Compute the component's list of dependencies, including transitive dependencies.
+
+        :param resolved:
+            Optional dictionary of already-resolved dependency coordinates.
+            Items present in this structure will be pruned from the
+            returned dependency list rather than recursively explored.
+        :return: The list of Dependency objects.
+        """
+        deps: Dict[GACT, Dependency] = {}
+
+        # Determine whether we are currently diving into transitive dependencies.
+        recursing: bool = resolved is not None
+        if resolved is None:
+            resolved = {}
+
+        # Process direct dependencies.
+        direct_deps: Dict[GACT, Dependency] = {}
+        for gact, dep in self.deps.items():
+            if gact in resolved:
+                continue  # Dependency has already been processed.
+            if recursing and dep.scope not in ("compile", "runtime"):
+                continue  # Non-transitive scope.
+
+            # Record this new direct dependency.
+            deps[gact] = direct_deps[gact] = dep
+            _log.debug(f"{self.gav}: {dep}")
+
+        # Look for transitive dependencies (i.e. dependencies of direct dependencies).
+        for dep in direct_deps.values():
+            dep_model = Model(dep.artifact.component.pom())
+            dep_deps = dep_model.dependencies(deps)
+            for dep_dep in dep_deps:
+                if dep_dep.optional:
+                    continue  # Optional dependency is not transitive.
+                if dep_dep.scope not in ("compile", "runtime"):
+                    continue  # Non-transitive scope.
+                if Model._is_excluded(dep_dep, dep.exclusions):
+                    continue  # Dependency is excluded.
+                dep_dep_gact = (dep_dep.groupId, dep_dep.artifactId, dep_dep.classifier, dep_dep.type)
+                if dep_dep_gact in resolved:
+                    continue  # Dependency has already been processed.
+
+                # Record the transitive dependency.
+                deps[dep_dep_gact] = dep_dep
+
+                # Adjust scope of transitive dependency appropriately.
+                if dep.scope == "runtime":
+                    dep_dep.scope = "runtime"  # We only need this dependency at runtime.
+                elif dep.scope == "test":
+                    dep_dep.scope = "test"  # We only need this dependency for testing.
+
+                # If the transitive dependency has a managed version, prefer it.
+                managed_note = ""
+                if dep_dep_gact in self.dep_mgmt:
+                    managed_dep = self.dep_mgmt.get(dep_dep_gact)
+                    managed_note = f" (managed from {dep_dep.version})"
+                    dep_dep.set_version(managed_dep.version)
+
+                _log.debug(f"{self.gav}: {dep} -> {dep_dep}{managed_note}")
+
+        return list(deps.values())
+
+    def _import_boms(self, candidates: Dict[GACT, Dependency]) -> None:
+        """
+        Scan the candidates for dependencies of type pom with scope import.
+        For each such dependency found, import its dependencyManagement section
+        into ours, scanning it recursively for more BOMs to import.
+        :param candidates: The candidate dependencies, which might be BOMs.
+        """
+        for dep in candidates.values():
+            if not (dep.scope == "import" and dep.type == "pom"):
+                continue
+
+            # Load the POM to import.
+            bom_project = self.maven_context.project(dep.groupId, dep.artifactId)
+            bom_pom = bom_project.at_version(dep.version).pom()
+
+            # Fully build the BOM's model, agnostic of this one.
+            bom_model = Model(bom_pom)
+
+            # Merge the BOM model's <dependencyManagement> into this model.
+            self._merge_deps(bom_model.dep_mgmt.values(), managed=True)
+
+            # Scan BOM <dependencyManagement> for additional potential BOMs.
+            self._import_boms(bom_model.dep_mgmt)
+
+    def _merge_deps(self, source: Iterable[Dependency], managed: bool = False) -> None:
+        target = self.dep_mgmt if managed else self.deps
+        for dep in source:
+            k = (dep.groupId, dep.artifactId, dep.classifier, dep.type)
+            if k not in target:
+                target[k] = dep
+
+    def _merge_props(self, source: Dict[str, str]) -> None:
+        for k, v in source.items():
+            if v is not None and k not in self.props:
+                self.props[k] = v
+
+    def _merge(self, pom: POM) -> None:
+        """
+        Merge metadata from the given POM source into this model.
+        For now, we handle only dependencies, dependencyManagement, and properties.
+        """
+        self._merge_deps(pom.dependencies())
+        self._merge_deps(pom.dependencies(managed=True), managed=True)
+        self._merge_props(pom.properties)
+
+        # Make an effort to populate Maven special properties.
+        # https://github.com/cko/predefined_maven_properties/blob/master/README.md
+        self._merge_props({
+            "project.groupId":     pom.groupId,
+            "project.artifactId":  pom.artifactId,
+            "project.version":     pom.version,
+            "project.name":        pom.name,
+            "project.description": pom.description,
+        })
+
+    @staticmethod
+    def _is_excluded(dep: Dependency, exclusions: Iterable[Project]):
+        return any(
+            (
+                exclusion.groupId in ["*", dep.groupId] and
+                exclusion.artifactId in ["*", dep.artifactId]
+            )
+            for exclusion in exclusions
+        )
+
+    @staticmethod
+    def _is_active_profile(el):
+        activation = el.find("activation")
+        if activation is None:
+            return False
+
+        for condition in activation:
+            if condition.tag == "activeByDefault":
+                if condition.text == "true":
+                    return True
+
+            elif condition.tag == "jdk":
+                # TODO: Tricky...
+                pass
+
+            elif condition.tag == "os":
+                # <name>Windows XP</name>
+                # <family>Windows</family>
+                # <arch>x86</arch>
+                # <version>5.1.2600</version>
+                # TODO: The db.xml generator would benefit from being able to glean
+                # platform-specific dependencies. We can support it in the SimpleResolver
+                # by inventing our own `platforms` field in the Dependency class and
+                # changing this method to return a list of platforms rather than True.
+                # But the MavenResolver won't be able to populate it naively.
+                pass
+
+            elif condition.tag == "property":
+                # <name>sparrow-type</name>
+                # <value>African</value>
+                pass
+
+            elif condition.tag == "file":
+                # <file>
+                # <exists>${basedir}/file2.properties</exists>
+                # <missing>${basedir}/file1.properties</missing>
+                pass
+
+        return False
+
+    @staticmethod
+    def _evaluate(
+            expression: str,
+            props: Dict[str, str],
+            visited: Optional[Set[str]] = None
+    ) -> str:
+        props_referenced = set(findall(r"\${([^}]*)}", expression))
+        if not props_referenced:
+            return expression
+
+        value = expression
+        for prop_reference in props_referenced:
+            replacement = Model._propvalue(prop_reference, props, visited)
+            if replacement is None:
+                # NB: Leave "${...}" expressions alone when property is absent.
+                # This matches Maven behavior, but it still makes me nervous.
+                if prop_reference.startswith("project.groupId"):
+                    raise ValueError(f"No replacement for {prop_reference}")
+                continue
+            value = value.replace("${" + prop_reference + "}", replacement)
+        return value
+
+    @staticmethod
+    def _propvalue(
+            propname: str,
+            props: Dict[str, str],
+            visited: Optional[Set[str]] = None
+    ) -> Optional[str]:
+        if visited is None:
+            visited = set()
+        if propname in visited:
+            raise ValueError(f"Infinite reference loop for property '{propname}'")
+        visited.add(propname)
+
+        expression = props.get(propname, None)
+        if expression is None:
+            return None
+        evaluated = Model._evaluate(expression, props, visited)
+        props[propname] = evaluated
+        return evaluated
