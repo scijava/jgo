@@ -14,12 +14,12 @@ from re import match
 import pytest
 
 from jgo.maven import MavenContext, MavenResolver
+from jgo.maven.model import Model
 
 
 class TestPropertyInterpolation:
     """Test that ${...} property expressions are correctly interpolated."""
 
-    @pytest.mark.xfail(reason="TODO: Fix G/A/C property interpolation in model.py:1022-1032")
     def test_interpolate_syscall(self):
         """
         Test property interpolation with both SimpleResolver and MavenResolver.
@@ -31,32 +31,40 @@ class TestPropertyInterpolation:
         """
         # Test with SimpleResolver (pure Python)
         maven = MavenContext()
-        pom_simple = maven.project("org.scijava", "pom-scijava").at_version("35.1.1").pom()
-        self.assert_pom_interpolated(pom_simple)
+        component_simple = maven.project("org.scijava", "pom-scijava").at_version("35.1.1")
+        model_simple = Model(component_simple.pom())
+        self.assert_model_interpolated(model_simple)
 
         # Test with MavenResolver (mvn-based)
         maven_syscall = MavenContext(resolver=MavenResolver("mvn"))
         maven_syscall.resolver.mvn_flags = ["-o"] + maven_syscall.resolver.mvn_flags
-        pom_syscall = maven_syscall.project("org.scijava", "pom-scijava").at_version("35.1.1").pom()
-        self.assert_pom_interpolated(pom_syscall)
+        component_syscall = maven_syscall.project("org.scijava", "pom-scijava").at_version("35.1.1")
+        model_syscall = Model(component_syscall.pom())
+        self.assert_model_interpolated(model_syscall)
 
         # Ensure both resolvers produce identical results
-        self.assert_equal_xml(pom_syscall, pom_simple)
+        self.assert_equal_xml(component_syscall.pom(), component_simple.pom())
 
-    def assert_pom_interpolated(self, pom):
+    def assert_model_interpolated(self, model):
         """
         Validate that all managed dependency versions are fully interpolated.
 
         Good: "1.16.0"
         Bad: "${batik.version}"
         """
-        assert pom is not None
-        for dep in pom.dependencies(managed=True):
+        assert model is not None
+        # Check both deps and dep_mgmt
+        all_deps = list(model.deps.values()) + list(model.dep_mgmt.values())
+        assert len(all_deps) > 0, "No dependencies found in model"
+
+        for dep in all_deps:
             # Ensure all versions are populated with actual version numbers,
             # not unresolved property references like ${foo.version}
             assert dep.version is not None, f"Dependency {dep} has no version"
-            assert match(r"\d+($|\.\d+)", dep.version), \
+            assert "${" not in dep.version, \
                 f"Dependency {dep} has uninterpolated version: {dep.version}"
+            assert match(r"\d+($|\.\d+)", dep.version), \
+                f"Dependency {dep} has invalid version format: {dep.version}"
 
     def assert_equal_xml(self, xml1, xml2):
         """
@@ -100,7 +108,6 @@ class TestPropertyInterpolationEdgeCases:
         assert pom.artifactId == "pom-scijava"
         assert pom.version == "35.1.1"
 
-    @pytest.mark.xfail(reason="TODO: Fix G/A/C property interpolation in model.py:1022-1032")
     def test_version_properties_in_dependency_management(self):
         """
         Test that version properties in <dependencyManagement> are interpolated.
@@ -109,9 +116,10 @@ class TestPropertyInterpolationEdgeCases:
         versioning extensively.
         """
         maven = MavenContext()
-        pom = maven.project("org.scijava", "pom-scijava").at_version("35.1.1").pom()
+        component = maven.project("org.scijava", "pom-scijava").at_version("35.1.1")
+        model = Model(component.pom())
 
-        managed_deps = pom.dependencies(managed=True)
+        managed_deps = list(model.dep_mgmt.values())
         assert len(managed_deps) > 0, "No managed dependencies found"
 
         # All managed dependency versions should be fully resolved
