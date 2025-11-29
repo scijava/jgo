@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import List, Optional
 import json
 
+from .bytecode import detect_environment_java_version
+
 
 class Environment:
     """
@@ -61,3 +63,35 @@ class Environment:
         self._manifest = self.manifest  # Load manifest if not already loaded
         self._manifest["main_class"] = main_class
         self.save_manifest()
+
+    @property
+    def min_java_version(self) -> Optional[int]:
+        """
+        Minimum Java version required by this environment.
+
+        Scans bytecode of JAR files to detect the highest class file version,
+        then rounds up to the nearest LTS version (8, 11, 17, 21).
+
+        The result is cached in manifest.json to avoid re-scanning.
+
+        Returns:
+            Minimum Java version (e.g., 8, 11, 17, 21), or None if no JARs found
+        """
+        # Check cache first
+        cached_version = self.manifest.get("min_java_version")
+        if cached_version is not None:
+            return cached_version
+
+        # Detect from bytecode
+        jars_dir = self.path / "jars"
+        detected_version = detect_environment_java_version(jars_dir)
+
+        # Cache the result
+        if detected_version is not None:
+            self._manifest = self.manifest  # Load manifest if not already loaded
+            self._manifest["min_java_version"] = detected_version
+            # Only save if environment directory exists
+            if self.path.exists():
+                self.save_manifest()
+
+        return detected_version

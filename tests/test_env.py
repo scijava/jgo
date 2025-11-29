@@ -121,6 +121,48 @@ def test_link_file():
             pass
 
 
+def test_environment_min_java_version():
+    """Test min_java_version property with bytecode detection."""
+    import struct
+    import zipfile
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        env_path = Path(tmp_dir) / "test_env"
+        env = Environment(env_path)
+
+        # Should return None when no jars directory exists
+        assert env.min_java_version is None
+
+        # Create jars directory
+        jars_dir = env_path / "jars"
+        jars_dir.mkdir(parents=True)
+
+        # Create a fake JAR with Java 17 bytecode (major version 61)
+        jar_path = jars_dir / "test.jar"
+        with zipfile.ZipFile(jar_path, "w") as jar:
+            # Create a minimal Java class file with version 61 (Java 17)
+            # Magic: 0xCAFEBABE, Minor: 0, Major: 61
+            class_bytes = (
+                struct.pack(">I", 0xCAFEBABE)
+                + struct.pack(">H", 0)
+                + struct.pack(">H", 61)
+                + struct.pack(">H", 0)
+            )  # Const pool count
+            jar.writestr("Test.class", class_bytes)
+
+        # Should detect Java 17
+        version = env.min_java_version
+        assert version == 17
+
+        # Should be cached in manifest
+        assert env.manifest.get("min_java_version") == 17
+
+        # Create new environment pointing to same path
+        env2 = Environment(env_path)
+        # Should read from cache without re-scanning
+        assert env2.min_java_version == 17
+
+
 if __name__ == "__main__":
     test_environment_creation()
     test_environment_classpath()
@@ -129,4 +171,5 @@ if __name__ == "__main__":
     test_cache_key_generation()
     test_link_strategy_enum()
     test_link_file()
+    test_environment_min_java_version()
     print("All tests passed!")
