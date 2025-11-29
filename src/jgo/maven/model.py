@@ -6,7 +6,7 @@ import logging
 from re import findall
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
-from .core import Dependency, MavenContext, Project
+from .core import Dependency, Project
 from .pom import POM
 
 _log = logging.getLogger(__name__)
@@ -56,8 +56,12 @@ class Model:
             profile_deps = [self.maven_context.dependency(el) for el in profile_dep_els]
             self._merge_deps(profile_deps)
 
-            profile_dep_mgmt_els = profile.findall("dependencyManagement/dependencies/dependency")
-            profile_dep_mgmt = [self.maven_context.dependency(el) for el in profile_dep_mgmt_els]
+            profile_dep_mgmt_els = profile.findall(
+                "dependencyManagement/dependencies/dependency"
+            )
+            profile_dep_mgmt = [
+                self.maven_context.dependency(el) for el in profile_dep_mgmt_els
+            ]
             self._merge_deps(profile_dep_mgmt, managed=True)
 
             profile_props_els = profile.findall("properties/*")
@@ -152,7 +156,12 @@ class Model:
                     continue  # Non-transitive scope.
                 if Model._is_excluded(dep_dep, dep.exclusions):
                     continue  # Dependency is excluded.
-                dep_dep_gact = (dep_dep.groupId, dep_dep.artifactId, dep_dep.classifier, dep_dep.type)
+                dep_dep_gact = (
+                    dep_dep.groupId,
+                    dep_dep.artifactId,
+                    dep_dep.classifier,
+                    dep_dep.type,
+                )
                 if dep_dep_gact in resolved:
                     continue  # Dependency has already been processed.
 
@@ -161,7 +170,9 @@ class Model:
 
                 # Adjust scope of transitive dependency appropriately.
                 if dep.scope == "runtime":
-                    dep_dep.scope = "runtime"  # We only need this dependency at runtime.
+                    dep_dep.scope = (
+                        "runtime"  # We only need this dependency at runtime.
+                    )
                 elif dep.scope == "test":
                     dep_dep.scope = "test"  # We only need this dependency for testing.
 
@@ -223,13 +234,15 @@ class Model:
 
         # Make an effort to populate Maven special properties.
         # https://github.com/cko/predefined_maven_properties/blob/master/README.md
-        self._merge_props({
-            "project.groupId":     pom.groupId,
-            "project.artifactId":  pom.artifactId,
-            "project.version":     pom.version,
-            "project.name":        pom.name,
-            "project.description": pom.description,
-        })
+        self._merge_props(
+            {
+                "project.groupId": pom.groupId,
+                "project.artifactId": pom.artifactId,
+                "project.version": pom.version,
+                "project.name": pom.name,
+                "project.description": pom.description,
+            }
+        )
 
     def _interpolate_deps(self, deps: Dict[GACT, Dependency]) -> Dict[GACT, Dependency]:
         """
@@ -243,8 +256,16 @@ class Model:
         for old_gact, dep in deps.items():
             # Interpolate each coordinate field
             g = Model._evaluate(dep.groupId, self.props) if dep.groupId else dep.groupId
-            a = Model._evaluate(dep.artifactId, self.props) if dep.artifactId else dep.artifactId
-            c = Model._evaluate(dep.classifier, self.props) if dep.classifier else dep.classifier
+            a = (
+                Model._evaluate(dep.artifactId, self.props)
+                if dep.artifactId
+                else dep.artifactId
+            )
+            c = (
+                Model._evaluate(dep.classifier, self.props)
+                if dep.classifier
+                else dep.classifier
+            )
             t = Model._evaluate(dep.type, self.props) if dep.type else dep.type
             v = Model._evaluate(dep.version, self.props) if dep.version else dep.version
 
@@ -281,8 +302,8 @@ class Model:
     def _is_excluded(dep: Dependency, exclusions: Iterable[Project]):
         return any(
             (
-                exclusion.groupId in ["*", dep.groupId] and
-                exclusion.artifactId in ["*", dep.artifactId]
+                exclusion.groupId in ["*", dep.groupId]
+                and exclusion.artifactId in ["*", dep.artifactId]
             )
             for exclusion in exclusions
         )
@@ -329,9 +350,7 @@ class Model:
 
     @staticmethod
     def _evaluate(
-            expression: str,
-            props: Dict[str, str],
-            visited: Optional[Set[str]] = None
+        expression: str, props: Dict[str, str], visited: Optional[Set[str]] = None
     ) -> str:
         props_referenced = set(findall(r"\${([^}]*)}", expression))
         if not props_referenced:
@@ -351,9 +370,7 @@ class Model:
 
     @staticmethod
     def _propvalue(
-            propname: str,
-            props: Dict[str, str],
-            visited: Optional[Set[str]] = None
+        propname: str, props: Dict[str, str], visited: Optional[Set[str]] = None
     ) -> Optional[str]:
         if visited is None:
             visited = set()

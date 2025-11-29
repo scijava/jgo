@@ -17,38 +17,31 @@ class Metadata(ABC):
 
     @property
     @abstractmethod
-    def groupId(self) -> Optional[str]:
-        ...
+    def groupId(self) -> Optional[str]: ...
 
     @property
     @abstractmethod
-    def artifactId(self) -> Optional[str]:
-        ...
+    def artifactId(self) -> Optional[str]: ...
 
     @property
     @abstractmethod
-    def lastUpdated(self) -> Optional[datetime]:
-        ...
+    def lastUpdated(self) -> Optional[datetime]: ...
 
     @property
     @abstractmethod
-    def latest(self) -> Optional[str]:
-        ...
+    def latest(self) -> Optional[str]: ...
 
     @property
     @abstractmethod
-    def versions(self) -> List[str]:
-        ...
+    def versions(self) -> List[str]: ...
 
     @property
     @abstractmethod
-    def lastVersion(self) -> Optional[str]:
-        ...
+    def lastVersion(self) -> Optional[str]: ...
 
     @property
     @abstractmethod
-    def release(self) -> Optional[str]:
-        ...
+    def release(self) -> Optional[str]: ...
 
 
 class MetadataXML(XML, Metadata):
@@ -56,7 +49,9 @@ class MetadataXML(XML, Metadata):
     Convenience wrapper around a maven-metadata.xml document.
     """
 
-    def __init__(self, source: Path | str, maven_context: Optional[MavenContext] = None):
+    def __init__(
+        self, source: Path | str, maven_context: Optional[MavenContext] = None
+    ):
         super().__init__(source, maven_context)
 
     @property

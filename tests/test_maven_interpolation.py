@@ -11,7 +11,6 @@ Ported from db-xml-maven/tests/test_maven.py
 
 from re import match
 
-import pytest
 
 from jgo.maven import MavenContext, MavenResolver
 from jgo.maven.model import Model
@@ -31,14 +30,18 @@ class TestPropertyInterpolation:
         """
         # Test with SimpleResolver (pure Python)
         maven = MavenContext()
-        component_simple = maven.project("org.scijava", "pom-scijava").at_version("35.1.1")
+        component_simple = maven.project("org.scijava", "pom-scijava").at_version(
+            "35.1.1"
+        )
         model_simple = Model(component_simple.pom())
         self.assert_model_interpolated(model_simple)
 
         # Test with MavenResolver (mvn-based)
         maven_syscall = MavenContext(resolver=MavenResolver("mvn"))
         maven_syscall.resolver.mvn_flags = ["-o"] + maven_syscall.resolver.mvn_flags
-        component_syscall = maven_syscall.project("org.scijava", "pom-scijava").at_version("35.1.1")
+        component_syscall = maven_syscall.project(
+            "org.scijava", "pom-scijava"
+        ).at_version("35.1.1")
         model_syscall = Model(component_syscall.pom())
         self.assert_model_interpolated(model_syscall)
 
@@ -61,10 +64,12 @@ class TestPropertyInterpolation:
             # Ensure all versions are populated with actual version numbers,
             # not unresolved property references like ${foo.version}
             assert dep.version is not None, f"Dependency {dep} has no version"
-            assert "${" not in dep.version, \
+            assert "${" not in dep.version, (
                 f"Dependency {dep} has uninterpolated version: {dep.version}"
-            assert match(r"\d+($|\.\d+)", dep.version), \
+            )
+            assert match(r"\d+($|\.\d+)", dep.version), (
                 f"Dependency {dep} has invalid version format: {dep.version}"
+            )
 
     def assert_equal_xml(self, xml1, xml2):
         """
@@ -125,5 +130,6 @@ class TestPropertyInterpolationEdgeCases:
         # All managed dependency versions should be fully resolved
         for dep in managed_deps:
             if dep.version:  # Some may be None if managed by parent
-                assert "${" not in dep.version, \
+                assert "${" not in dep.version, (
                     f"Uninterpolated property in {dep.groupId}:{dep.artifactId}: {dep.version}"
+                )

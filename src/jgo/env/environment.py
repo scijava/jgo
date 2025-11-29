@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import List, Optional
 import json
 
+
 class Environment:
     """
     A materialized Maven environment - a directory containing JARs.
@@ -35,7 +36,7 @@ class Environment:
 
     def save_manifest(self):
         """Save manifest.json."""
-        with open(self.manifest_path, 'w') as f:
+        with open(self.manifest_path, "w") as f:
             json.dump(self._manifest, f, indent=2)
 
     @property
@@ -49,14 +50,14 @@ class Environment:
     @property
     def main_class(self) -> Optional[str]:
         """Main class for this environment (if detected/specified)."""
-        main_class_file = self.path / "main-class.txt"
-        if main_class_file.exists():
-            return main_class_file.read_text().strip()
         return self.manifest.get("main_class")
 
     def set_main_class(self, main_class: str):
         """Set the main class for this environment."""
-        main_class_file = self.path / "main-class.txt"
-        main_class_file.write_text(main_class)
-        self.manifest["main_class"] = main_class
+        # Ensure the environment directory exists
+        self.path.mkdir(parents=True, exist_ok=True)
+
+        # Store in manifest only
+        self._manifest = self.manifest  # Load manifest if not already loaded
+        self._manifest["main_class"] = main_class
         self.save_manifest()

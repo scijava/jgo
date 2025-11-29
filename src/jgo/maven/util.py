@@ -29,7 +29,7 @@ def coord2str(
     classifier: Optional[str] = None,
     packaging: Optional[str] = None,
     scope: Optional[str] = None,
-    optional: bool = False
+    optional: bool = False,
 ) -> str:
     """
     Return a string representation of the given Maven coordinates.

@@ -75,6 +75,7 @@ class SimpleResolver(Resolver):
 
     def dependencies(self, component: "Component") -> List["Dependency"]:
         from .model import Model
+
         model = Model(component.pom())
         return list(model.deps.values())
 
@@ -126,9 +127,10 @@ class MavenResolver(Resolver):
         assert pom_artifact.maven_context.repo_cache
         output = self._mvn(
             "dependency:list",
-            "-f", pom_artifact.resolve(),
+            "-f",
+            pom_artifact.resolve(),
             "-DexcludeTransitive=true",
-            f"-Dmaven.repo.local={pom_artifact.maven_context.repo_cache}"
+            f"-Dmaven.repo.local={pom_artifact.maven_context.repo_cache}",
         )
 
         # FIXME: Fix the following logic to parse dependency:list output.
@@ -143,7 +145,7 @@ class MavenResolver(Resolver):
                 snap = i
                 break
         assert snip is not None and snap is not None
-        pom = POM("\n".join(lines[snip:snap + 1]), pom_artifact.maven_context)
+        pom = POM("\n".join(lines[snip : snap + 1]), pom_artifact.maven_context)
 
         # Extract the flattened dependencies.
         return pom.dependencies()
@@ -161,8 +163,7 @@ class MavenResolver(Resolver):
             return result.stdout.decode()
 
         error_message = (
-            f"Command failed with exit code {result.returncode}:\n"
-            f"{command_and_args}"
+            f"Command failed with exit code {result.returncode}:\n{command_and_args}"
         )
         if result.stdout:
             error_message += f"\n\n[stdout]\n{result.stdout.decode()}"
