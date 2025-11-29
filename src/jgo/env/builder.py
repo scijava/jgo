@@ -5,11 +5,12 @@ Builds Environment instances from Maven components or endpoint strings.
 """
 
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import hashlib
 from jgo.maven import MavenContext, Component
 from .environment import Environment
 from .linking import LinkStrategy, link_file
+
 
 class EnvironmentBuilder:
     """
@@ -20,17 +21,14 @@ class EnvironmentBuilder:
         self,
         maven_context: MavenContext,
         cache_dir: Path,
-        link_strategy: LinkStrategy = LinkStrategy.AUTO
+        link_strategy: LinkStrategy = LinkStrategy.AUTO,
     ):
         self.maven_context = maven_context
         self.cache_dir = Path(cache_dir).expanduser()
         self.link_strategy = link_strategy
 
     def from_endpoint(
-        self,
-        endpoint: str,
-        update: bool = False,
-        main_class: Optional[str] = None
+        self, endpoint: str, update: bool = False, main_class: Optional[str] = None
     ) -> Environment:
         """
         Build an environment from an endpoint string.
@@ -38,7 +36,11 @@ class EnvironmentBuilder:
         Endpoint format: G:A[:V][:C][:mainClass][+G:A:V...]
         """
         # Parse endpoint
-        components = self._parse_endpoint(endpoint)
+        components, parsed_main_class = self._parse_endpoint(endpoint)
+
+        # Use parsed main class if caller didn't provide one
+        if main_class is None:
+            main_class = parsed_main_class
 
         # Build environment
         return self.from_components(components, update=update, main_class=main_class)
@@ -47,7 +49,7 @@ class EnvironmentBuilder:
         self,
         components: List[Component],
         update: bool = False,
-        main_class: Optional[str] = None
+        main_class: Optional[str] = None,
     ) -> Environment:
         """
         Build an environment from a list of components.
@@ -57,11 +59,7 @@ class EnvironmentBuilder:
 
         # Environment path
         primary = components[0]
-        workspace_path = (
-            self.cache_dir /
-            primary.project.path_prefix /
-            cache_key
-        )
+        workspace_path = self.cache_dir / primary.project.path_prefix / cache_key
 
         # Check if environment exists and is valid
         environment = Environment(workspace_path)
@@ -77,10 +75,9 @@ class EnvironmentBuilder:
     def _cache_key(self, components: List[Component]) -> str:
         """Generate a stable hash for a set of components."""
         # Sort to ensure stable ordering
-        coord_strings = sorted([
-            f"{c.groupId}:{c.artifactId}:{c.version}"
-            for c in components
-        ])
+        coord_strings = sorted(
+            [f"{c.groupId}:{c.artifactId}:{c.version}" for c in components]
+        )
         combined = "+".join(coord_strings)
         return hashlib.sha256(combined.encode()).hexdigest()[:16]
 
@@ -88,7 +85,7 @@ class EnvironmentBuilder:
         self,
         environment: Environment,
         components: List[Component],
-        main_class: Optional[str]
+        main_class: Optional[str],
     ):
         """Actually build the environment by resolving and linking JARs."""
         # Create directories
@@ -98,6 +95,7 @@ class EnvironmentBuilder:
 
         # Resolve dependencies
         from jgo.maven import Model
+
         all_deps = []
         for component in components:
             model = Model(component.pom())
@@ -118,8 +116,7 @@ class EnvironmentBuilder:
 
         # Save manifest
         environment.manifest["components"] = [
-            f"{c.groupId}:{c.artifactId}:{c.version}"
-            for c in components
+            f"{c.groupId}:{c.artifactId}:{c.version}" for c in components
         ]
         environment.manifest["link_strategy"] = self.link_strategy.name
         environment.save_manifest()
@@ -131,40 +128,74 @@ class EnvironmentBuilder:
             # TODO: Auto-detect from primary component
             pass
 
-    def _parse_endpoint(self, endpoint: str) -> List[Component]:
-        """Parse endpoint string into components."""
-        # Split on +
+    def _parse_endpoint(self, endpoint: str) -> Tuple[List[Component], Optional[str]]:
+        """
+        Parse endpoint string into components and main class.
+
+        Returns:
+            Tuple of (components_list, main_class)
+            Only the first endpoint part can specify a main class.
+        """
+        import re
+
+        # Split on + for multiple components
         parts = endpoint.split("+")
         components = []
+        main_class = None
 
-        for part in parts:
-            # Parse G:A:V:C:mainClass
+        for i, part in enumerate(parts):
+            # Parse G:A[:V][:C][:mainClass]
             tokens = part.split(":")
-            
-            # Handle case where main class is specified at the end
-            # We'll extract main class if it's the last token and looks like a class name
-            main_class = None
-            if len(tokens) >= 5:
-                # Check if the last token looks like a main class (not a version)
-                last_token = tokens[-1]
-                if last_token and not last_token.startswith("-") and len(last_token) > 1:
-                    # Check if it's a valid version pattern (contains numbers)
-                    if not (last_token.replace(".", "").replace("-", "").isdigit() and 
-                            len(last_token) > 1):
-                        main_class = last_token
-                        tokens = tokens[:-1]
-            
-            # Now parse the main part
-            if len(tokens) >= 2:
-                groupId = tokens[0]
-                artifactId = tokens[1]
-                version = tokens[2] if len(tokens) > 2 else "RELEASE"
-                classifier = tokens[3] if len(tokens) > 3 else None
-                
-                component = self.maven_context.project(groupId, artifactId).at_version(version)
-                components.append(component)
-            else:
-                # Handle error case
-                raise ValueError(f"Invalid endpoint format: {endpoint}")
 
-        return components
+            if len(tokens) < 2:
+                raise ValueError(
+                    f"Invalid endpoint format '{part}': need at least groupId:artifactId"
+                )
+
+            if len(tokens) > 5:
+                raise ValueError(
+                    f"Invalid endpoint format '{part}': too many elements (max 5)"
+                )
+
+            groupId = tokens[0]
+            artifactId = tokens[1]
+            version = "RELEASE"
+            classifier = None
+            part_main_class = None
+
+            # Parse remaining tokens based on count
+            if len(tokens) == 3:
+                # Could be G:A:V or G:A:mainClass
+                # Check if it looks like a version
+                if re.match(r"([0-9].*|RELEASE|LATEST|MANAGED)", tokens[2]):
+                    version = tokens[2]
+                else:
+                    part_main_class = tokens[2]
+
+            elif len(tokens) == 4:
+                # G:A:V:C or G:A:V:mainClass
+                # If tokens[3] contains a dot, it's likely a main class
+                version = tokens[2]
+                if "." in tokens[3] or tokens[3][0].isupper():
+                    part_main_class = tokens[3]
+                else:
+                    classifier = tokens[3]  # noqa: F841 - TODO: Use when Component supports classifiers
+
+            elif len(tokens) == 5:
+                # G:A:V:C:mainClass
+                version = tokens[2]
+                classifier = tokens[3]  # noqa: F841 - TODO: Use when Component supports classifiers
+                part_main_class = tokens[4]
+
+            # Only the first endpoint can specify main class
+            if i == 0 and part_main_class:
+                main_class = part_main_class
+
+            # Create component
+            component = self.maven_context.project(groupId, artifactId).at_version(
+                version
+            )
+            # TODO: Handle classifier when Component supports it
+            components.append(component)
+
+        return components, main_class

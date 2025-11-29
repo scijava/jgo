@@ -33,11 +33,11 @@ class MavenContext:
     """
 
     def __init__(
-            self,
-            repo_cache: Optional[Path] = None,
-            local_repos: Optional[List[Path]] = None,
-            remote_repos: Optional[Dict[str, str]] = None,
-            resolver: Optional["Resolver"] = None,
+        self,
+        repo_cache: Optional[Path] = None,
+        local_repos: Optional[List[Path]] = None,
+        remote_repos: Optional[Dict[str, str]] = None,
+        resolver: Optional["Resolver"] = None,
     ):
         """
         Create a Maven context.
@@ -75,6 +75,7 @@ class MavenContext:
         # Import here to avoid circular dependency
         if resolver is None:
             from .resolver import SimpleResolver
+
             resolver = SimpleResolver()
         self.resolver: "Resolver" = resolver
 
@@ -155,13 +156,13 @@ class Project:
         """Maven metadata about this project, encompassing all known sources."""
         if self._metadata is None:
             from .metadata import Metadatas, MetadataXML
+
             # Aggregate all locally available project maven-metadata.xml sources.
             repo_cache_dir = self.maven_context.repo_cache / self.path_prefix
-            paths = (
-                [p for p in repo_cache_dir.glob("maven-metadata*.xml")] +
-                [r / self.path_prefix / "maven-metadata.xml"
-                 for r in self.maven_context.local_repos]
-            )
+            paths = [p for p in repo_cache_dir.glob("maven-metadata*.xml")] + [
+                r / self.path_prefix / "maven-metadata.xml"
+                for r in self.maven_context.local_repos
+            ]
             self._metadata = Metadatas([MetadataXML(p) for p in paths if p.exists()])
         return self._metadata
 
@@ -210,8 +211,8 @@ class Project:
             self.at_version(v)
             for v in self.metadata.versions
             if (
-                (snapshots and v.endswith("-SNAPSHOT")) or
-                (releases and not v.endswith("-SNAPSHOT"))
+                (snapshots and v.endswith("-SNAPSHOT"))
+                or (releases and not v.endswith("-SNAPSHOT"))
             )
         ]
 
@@ -283,6 +284,7 @@ class Component:
         :return: The POM content.
         """
         from .pom import POM
+
         pom_artifact = self.artifact(packaging="pom")
         return POM(pom_artifact.resolve(), self.maven_context)
 
@@ -297,7 +299,7 @@ class Artifact:
         self,
         component: Component,
         classifier: str = DEFAULT_CLASSIFIER,
-        packaging: str = DEFAULT_PACKAGING
+        packaging: str = DEFAULT_PACKAGING,
     ):
         self.component = component
         self.classifier = classifier
@@ -407,23 +409,30 @@ class Dependency:
     """
 
     def __init__(
-            self,
-            artifact: Artifact,
-            scope: str = None,
-            optional: bool = False,
-            exclusions: Iterable[Project] = None
+        self,
+        artifact: Artifact,
+        scope: str = None,
+        optional: bool = False,
+        exclusions: Iterable[Project] = None,
     ):
         if scope is None:
             scope = "test" if artifact.classifier == "tests" else "compile"
         self.artifact = artifact
         self.scope = scope
         self.optional = optional
-        self.exclusions: Tuple[Project] = tuple() if exclusions is None else tuple(exclusions)
+        self.exclusions: Tuple[Project] = (
+            tuple() if exclusions is None else tuple(exclusions)
+        )
 
     def __str__(self):
         return coord2str(
-            self.groupId, self.artifactId, self.version,
-            self.classifier, self.type, self.scope, self.optional
+            self.groupId,
+            self.artifactId,
+            self.version,
+            self.classifier,
+            self.type,
+            self.scope,
+            self.optional,
         )
 
     @property
@@ -468,7 +477,9 @@ class Dependency:
 class XML:
     """Base class for XML document wrappers."""
 
-    def __init__(self, source: Path | str, maven_context: Optional[MavenContext] = None):
+    def __init__(
+        self, source: Path | str, maven_context: Optional[MavenContext] = None
+    ):
         self.source = source
         self.maven_context: MavenContext = maven_context or MavenContext()
         self.tree: ElementTree.ElementTree = (
@@ -512,10 +523,10 @@ class XML:
         Credit: https://stackoverflow.com/a/32552776/1207769
         """
         if el.tag.startswith("{"):
-            el.tag = el.tag[el.tag.find("}") + 1:]
+            el.tag = el.tag[el.tag.find("}") + 1 :]
         for k in list(el.attrib.keys()):
             if k.startswith("{"):
-                k2 = k[k.find("}") + 1:]
+                k2 = k[k.find("}") + 1 :]
                 el.attrib[k2] = el.attrib[k]
                 del el.attrib[k]
         for child in el:
