@@ -75,7 +75,7 @@ def test_read_class_version():
     assert read_class_version(invalid) is None
 
     # Too short
-    short = b"\xCA\xFE\xBA"
+    short = b"\xca\xfe\xba"
     assert read_class_version(short) is None
 
 

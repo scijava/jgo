@@ -37,6 +37,8 @@ requires-python = ">=3.9"
 dependencies = [
   "psutil",
   "requests",
+  "tomli>=2.0.0; python_version<'3.11'",  # TOML reading (stdlib tomllib in 3.11+)
+  "tomli-w>=1.0.0",  # TOML writing
 ]
 
 [dependency-groups]

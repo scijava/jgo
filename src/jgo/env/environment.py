@@ -10,6 +10,8 @@ from typing import List, Optional
 import json
 
 from .bytecode import detect_environment_java_version
+from .spec import EnvironmentSpec
+from .lockfile import LockFile
 
 
 class Environment:
@@ -22,8 +24,42 @@ class Environment:
         self._manifest = None
 
     @property
+    def spec_path(self) -> Path:
+        """Path to jgo.toml file in this environment."""
+        return self.path / "jgo.toml"
+
+    @property
+    def lock_path(self) -> Path:
+        """Path to jgo.lock.toml file in this environment."""
+        return self.path / "jgo.lock.toml"
+
+    @property
     def manifest_path(self) -> Path:
         return self.path / "manifest.json"
+
+    @property
+    def spec(self) -> Optional[EnvironmentSpec]:
+        """
+        Load the environment specification (jgo.toml) if it exists.
+
+        Returns:
+            EnvironmentSpec instance, or None if jgo.toml doesn't exist
+        """
+        if self.spec_path.exists():
+            return EnvironmentSpec.load(self.spec_path)
+        return None
+
+    @property
+    def lockfile(self) -> Optional[LockFile]:
+        """
+        Load the lock file (jgo.lock.toml) if it exists.
+
+        Returns:
+            LockFile instance, or None if jgo.lock.toml doesn't exist
+        """
+        if self.lock_path.exists():
+            return LockFile.load(self.lock_path)
+        return None
 
     @property
     def manifest(self) -> dict:

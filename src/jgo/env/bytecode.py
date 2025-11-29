@@ -13,15 +13,15 @@ import zipfile
 # Map class file major version to Java version
 # Source: https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-4.html
 BYTECODE_TO_JAVA = {
-    45: 1,   # Java 1.1
-    46: 2,   # Java 1.2
-    47: 3,   # Java 1.3
-    48: 4,   # Java 1.4
-    49: 5,   # Java 5
-    50: 6,   # Java 6
-    51: 7,   # Java 7
-    52: 8,   # Java 8
-    53: 9,   # Java 9
+    45: 1,  # Java 1.1
+    46: 2,  # Java 1.2
+    47: 3,  # Java 1.3
+    48: 4,  # Java 1.4
+    49: 5,  # Java 5
+    50: 6,  # Java 6
+    51: 7,  # Java 7
+    52: 8,  # Java 8
+    53: 9,  # Java 9
     54: 10,  # Java 10
     55: 11,  # Java 11
     56: 12,  # Java 12
@@ -113,7 +113,9 @@ def round_to_lts(java_version: int) -> int:
     return java_version
 
 
-def detect_jar_java_version(jar_path: Path, round_to_lts_version: bool = True) -> Optional[int]:
+def detect_jar_java_version(
+    jar_path: Path, round_to_lts_version: bool = True
+) -> Optional[int]:
     """
     Detect the minimum Java version required by a JAR file.
 
