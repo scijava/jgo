@@ -140,6 +140,8 @@ class Model:
                 continue  # Dependency has already been processed.
             if recursing and dep.scope not in ("compile", "runtime"):
                 continue  # Non-transitive scope.
+            if recursing and dep.optional:
+                continue  # Optional dependencies are not transitive.
 
             # Record this new direct dependency.
             deps[gact] = direct_deps[gact] = dep
