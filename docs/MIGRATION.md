@@ -163,6 +163,167 @@ To see deprecation warnings:
 python -W default::DeprecationWarning -m jgo ...
 ```
 
-## Questions?
+## New Features in 2.0
 
-For issues or questions, see: https://github.com/scijava/jgo/issues
+### jgo.toml Project Files
+
+jgo 2.0 introduces reproducible project environments:
+
+```toml
+# jgo.toml
+[environment]
+name = "my-project"
+
+[dependencies]
+coordinates = ["net.imagej:imagej:2.15.0"]
+
+[entrypoints]
+main = "net.imagej.Main"
+default = "main"
+
+[settings]
+cache_dir = ".jgo"  # Local environment
+```
+
+```bash
+# Run from current directory
+jgo
+
+# Creates .jgo/ directory (like .venv for Python)
+# Generates jgo.lock.toml with locked versions
+```
+
+**Benefits:**
+- Reproducible environments (lock files)
+- Version control friendly (commit jgo.toml + jgo.lock.toml)
+- Multiple entry points per project
+- Project-local or centralized cache
+
+### Automatic Java Management
+
+With optional cjdk integration:
+
+```bash
+pip install jgo[cjdk]
+
+# Automatically downloads Java if needed!
+jgo net.imagej:imagej
+```
+
+No need to pre-install Java - jgo detects requirements from bytecode and downloads the right version.
+
+### Three-Layer Architecture
+
+For power users, jgo 2.0 provides three independently useful layers:
+
+```python
+from jgo.maven import MavenContext, SimpleResolver
+from jgo.env import EnvironmentBuilder
+from jgo.exec import JavaRunner
+
+# Layer 1: Maven resolution (no Maven required!)
+maven = MavenContext(resolver=SimpleResolver())
+component = maven.project("org.python", "jython-standalone").at_version("2.7.3")
+
+# Layer 2: Environment materialization
+builder = EnvironmentBuilder(maven_context=maven)
+env = builder.from_components([component])
+
+# Layer 3: Execution
+runner = JavaRunner()
+runner.run(env)
+```
+
+Each layer is independently useful:
+- Use Maven layer for dependency analysis
+- Use Environment layer for IDE classpath generation
+- Use Execution layer for custom Java launching
+
+See [architecture.md](architecture.md) for details.
+
+### Pure Python Resolver
+
+jgo 2.0 includes a pure-Python Maven resolver:
+
+```bash
+# No Maven installation required!
+jgo --resolver pure org.python:jython-standalone
+```
+
+Falls back to system `mvn` command only when needed for edge cases.
+
+## Practical Migration Example
+
+### Before (jgo 1.x)
+
+```bash
+# Old script
+jgo -v -u \
+  --additional-endpoints org.slf4j:slf4j-simple \
+  -a /path/to/custom.jar \
+  org.example:myapp:1.0.0 \
+  --app-flag value
+```
+
+### After (jgo 2.0)
+
+**Option 1: Direct CLI migration**
+```bash
+jgo -v -u \
+  --classpath-append /path/to/custom.jar \
+  org.example:myapp:1.0.0+org.slf4j:slf4j-simple \
+  -- -- --app-flag value
+```
+
+**Option 2: Use jgo.toml (recommended)**
+```toml
+# jgo.toml
+[environment]
+name = "myapp"
+
+[dependencies]
+coordinates = [
+    "org.example:myapp:1.0.0",
+    "org.slf4j:slf4j-simple",
+]
+
+[entrypoints]
+default = "org.example.Main"
+
+[settings]
+classpath_append = ["/path/to/custom.jar"]
+```
+
+```bash
+# Much simpler!
+jgo -v -- -- --app-flag value
+```
+
+## Testing Your Migration
+
+1. **Run with deprecation warnings visible:**
+   ```bash
+   python -W default::DeprecationWarning -m jgo your-endpoint
+   ```
+
+2. **Test backward compatibility:**
+   ```python
+   # Your old code should still work
+   import jgo
+   jgo.main(['org.python:jython-standalone'])  # Shows warning but works
+   ```
+
+3. **Gradually migrate to new API:**
+   ```python
+   import jgo
+
+   # New style
+   jgo.run('org.python:jython-standalone')  # Recommended
+   ```
+
+## Getting Help
+
+- **User Guide**: See [user-guide.md](user-guide.md) for comprehensive documentation
+- **Architecture**: See [architecture.md](architecture.md) to understand the new design
+- **GitHub Issues**: https://github.com/scijava/jgo/issues
+- **API Reference**: Use `help(jgo)` in Python for detailed documentation

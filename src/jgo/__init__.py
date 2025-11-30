@@ -1,18 +1,104 @@
 """
 jgo: Launch Java applications from Maven coordinates.
 
-This module provides both a CLI tool and a Python library for running
-Java applications directly from Maven coordinates without manual installation.
+jgo is a tool for running Java applications directly from Maven coordinates
+without manual installation. It resolves dependencies, materializes JARs, and
+executes programs with automatic Java version management.
 
-High-level API:
-    run() - Run a Java application from an endpoint
-    build() - Build an environment without running
-    resolve() - Resolve dependencies to local paths
+Quick Start
+-----------
+>>> import jgo
+>>> # Run a Java application
+>>> jgo.run("org.python:jython-standalone:2.7.3", app_args=["script.py"])
+>>>
+>>> # Build environment without running
+>>> env = jgo.build("org.python:jython-standalone")
+>>> print(env.classpath)  # List of JAR paths
+>>>
+>>> # Resolve dependencies
+>>> components = jgo.resolve("org.python:jython-standalone")
 
-Compatibility API:
-    main() - Old CLI entry point (jgo 1.x compatibility)
-    main_from_endpoint() - Old programmatic API (jgo 1.x compatibility)
-    resolve_dependencies() - Old dependency resolution (jgo 1.x compatibility)
+High-Level API (Recommended)
+-----------------------------
+run(endpoint, app_args=None, jvm_args=None, **kwargs)
+    Run a Java application from a Maven endpoint.
+
+build(endpoint, update=False, cache_dir=None, **kwargs) -> Environment
+    Build an environment from an endpoint without running it.
+
+resolve(endpoint, repositories=None) -> List[Component]
+    Resolve dependencies for a Maven endpoint to Component objects.
+
+Layered API (Advanced)
+----------------------
+For fine-grained control, use the three-layer architecture:
+
+Layer 1 - Maven resolution (jgo.maven):
+    MavenContext - Maven configuration and repository access
+    SimpleResolver - Pure Python dependency resolution (no Maven required)
+    Component - Versioned Maven artifact (groupId:artifactId:version)
+
+Layer 2 - Environment materialization (jgo.env):
+    EnvironmentBuilder - Build environments from endpoints or specs
+    Environment - Materialized directory of JARs (like Python's virtualenv)
+    EnvironmentSpec - Parse/generate jgo.toml project files
+
+Layer 3 - Execution (jgo.exec):
+    JavaRunner - Execute Java programs from environments
+    JVMConfig - Configure JVM settings (heap, GC, system properties)
+    JavaSource - Java selection strategy (AUTO, SYSTEM, CJDK)
+
+Example - Full Control
+----------------------
+>>> from jgo.maven import MavenContext, SimpleResolver
+>>> from jgo.env import EnvironmentBuilder, LinkStrategy
+>>> from jgo.exec import JavaRunner, JVMConfig
+>>>
+>>> # Layer 1: Maven resolution
+>>> maven = MavenContext(resolver=SimpleResolver())
+>>> component = maven.project("org.python", "jython-standalone").at_version("2.7.3")
+>>>
+>>> # Layer 2: Environment materialization
+>>> builder = EnvironmentBuilder(maven_context=maven, link_strategy=LinkStrategy.HARD)
+>>> environment = builder.from_components([component])
+>>>
+>>> # Layer 3: Execution
+>>> runner = JavaRunner(jvm_config=JVMConfig(max_heap="2G"))
+>>> runner.run(environment, app_args=["script.py"])
+
+jgo.toml Project Files
+-----------------------
+Create reproducible environments with jgo.toml files:
+
+    [environment]
+    name = "my-project"
+
+    [dependencies]
+    coordinates = ["org.python:jython-standalone:2.7.3"]
+
+    [entrypoints]
+    default = "org.python.util.jython"
+
+Then run with: jgo (uses jgo.toml in current directory)
+
+Backward Compatibility (jgo 1.x)
+---------------------------------
+Old jgo 1.x APIs still work but show deprecation warnings:
+    main(argv) - Old CLI entry point (use jgo.run() instead)
+    main_from_endpoint(endpoint, **kwargs) - Old API (use jgo.run() instead)
+    resolve_dependencies(endpoint, **kwargs) - Old resolver (use jgo.resolve() instead)
+
+Installation
+------------
+Basic: pip install jgo  (requires Java pre-installed)
+Full:  pip install jgo[cjdk]  (automatic Java download/management)
+
+See Also
+--------
+- User Guide: docs/user-guide.md
+- Architecture: docs/architecture.md
+- Migration Guide: docs/MIGRATION.md (for upgrading from jgo 1.x)
+- GitHub: https://github.com/scijava/jgo
 """
 
 from pathlib import Path

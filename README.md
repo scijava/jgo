@@ -7,23 +7,99 @@
 
 ## Summary
 
-[Maven](https://maven.apache.org/) is a great tool. It manages dependencies so
-that Java projects become reusable "building blocks" in a robust way, like
-`pip` for Python, `npm` for JavaScript, `gem` for Ruby, `cpan` for Perl, etc.
-And the [Maven Central repository](https://search.maven.org/) contains a
-tremendous wealth of code, ripe for reuse in your own projects.
+`jgo` launches Java applications directly from Maven coordinates—no installation required. Just specify a Maven artifact identifier and an optional main class, and `jgo` resolves dependencies, materializes the environment, and runs your program.
 
-Unfortunately, Maven provides no easy way to actually __launch code__ from the
-beautifully managed dependencies stored so lovingly into `~/.m2/repository`.
+```bash
+# Run Jython REPL (latest version)
+jgo org.python:jython-standalone
 
-This project fills that gap: `jgo` launches Java code. You do not need to
-download or install any JARs; you just specify an "endpoint" consisting of a
-[Maven artifact](https://stackoverflow.com/a/2487511/1207769) identifier, plus
-a main class if needed/desired, and `jgo` uses Maven to obtain and run it.
+# Run with specific version
+jgo org.python:jython-standalone:2.7.3
 
-To do this, `jgo` builds the local environment on demand, caching it into a
-subfolder of `~/.jgo`, so that the endpoint's particular dependencies are
-available in one place.
+# With cjdk: automatically downloads Java if needed!
+pip install jgo[cjdk]
+jgo net.imagej:imagej  # Downloads Java 17 automatically
+```
+
+### What's New in 2.0
+
+- **🎯 Zero-configuration execution**: Automatic Java download and version management with optional `cjdk` integration
+- **📦 Reproducible environments**: `jgo.toml` project files with lock files (like `package.json` + `package-lock.json`)
+- **🏗️ Three-layer architecture**: Independently useful layers for Maven resolution, environment building, and execution
+- **🐍 Pure Python resolver**: No Maven installation required for basic operations
+- **🔧 Powerful Python API**: Fine-grained control over dependency resolution and execution
+
+See [docs/MIGRATION.md](docs/MIGRATION.md) for migration from jgo 1.x.
+
+## Quick Start
+
+### CLI Usage
+
+```bash
+# Run Jython REPL
+jgo org.python:jython-standalone
+
+# Run with arguments
+jgo org.python:jython-standalone -- -- script.py --verbose
+
+# Multiple artifacts (combine with +)
+jgo org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-jython
+
+# Force update from remote repos
+jgo -u org.python:jython-standalone
+
+# Use specific Java version
+jgo --java-version 17 net.imagej:imagej
+
+# Print classpath without running
+jgo --print-classpath org.python:jython-standalone
+```
+
+### Python API
+
+```python
+import jgo
+
+# Simple one-liner
+jgo.run("org.python:jython-standalone:2.7.3", app_args=["script.py"])
+
+# Build environment without running
+env = jgo.build("org.python:jython-standalone")
+print(env.classpath)  # List of JAR paths
+
+# Resolve dependencies
+components = jgo.resolve("org.python:jython-standalone")
+for comp in components:
+    print(f"{comp.groupId}:{comp.artifactId}:{comp.version}")
+```
+
+### Project Mode with jgo.toml
+
+Create reproducible environments:
+
+```toml
+# jgo.toml
+[environment]
+name = "my-java-app"
+
+[dependencies]
+coordinates = ["net.imagej:imagej:2.15.0"]
+
+[entrypoints]
+default = "net.imagej.Main"
+
+[settings]
+cache_dir = ".jgo"  # Local environment like .venv
+```
+
+```bash
+# Run from current directory
+jgo
+
+# Creates .jgo/ with jars/ and jgo.lock.toml
+# Add to git: jgo.toml, jgo.lock.toml
+# Ignore: .jgo/
+```
 
 ## Installation
 
@@ -73,35 +149,27 @@ pip install -e .
 
 </details>
 
-## Usage
+## CLI Reference
 
 ```
-Usage: jgo [-v] [-u] [-U] [-m] <jvm-args> <endpoint> <main-args>
+Usage: jgo [OPTIONS] <endpoint> [-- JVM_ARGS] [-- APP_ARGS]
 
-  -v          : verbose mode flag
-  -u          : update/regenerate cached environment
-  -U          : force update from remote Maven repositories (implies -u)
-  -m          : use endpoints for dependency management (see "Pitfalls" below)
-  <jvm-args>  : any list of arguments to the JVM
-  <endpoint>  : the artifact(s) + main class to execute
-  <main-args> : any list of arguments to the main class
+Common Options:
+  -v, --verbose           Verbose output (-vv for debug, -vvv for trace)
+  -u, --update            Update cached environment
+  --offline               Work offline (don't download)
+  --cache-dir PATH        Override cache directory
+  --java-version VERSION  Force specific Java version
+  --print-classpath       Print classpath and exit
+  -f FILE                 Use jgo.toml file
 
-The endpoint should have one of the following formats:
+Endpoint Format:
+  groupId:artifactId[:version][:classifier][:mainClass]
 
-- groupId:artifactId
-- groupId:artifactId:version
-- groupId:artifactId:mainClass
-- groupId:artifactId:version:mainClass
-- groupId:artifactId:version:classifier:mainClass
+  Multiple artifacts: org.python:jython-standalone+org.slf4j:slf4j-simple
+  Main class auto-complete: org.scijava:scijava-common:@ScriptREPL
 
-If version is omitted, then RELEASE is used.
-If mainClass is omitted, it is auto-detected.
-You can also write part of a class beginning with an @ sign,
-and it will be auto-completed.
-
-Multiple artifacts can be concatenated with pluses,
-and all of them will be included on the classpath.
-However, you should not specify multiple main classes.
+Full documentation: jgo --help
 ```
 
 ### Examples
@@ -227,6 +295,14 @@ conflicting dependency management, the earlier endpoints will win because they
 will be declared earlier in the POM. See also
 [issue #9](https://github.com/scijava/jgo/issues/9) in the jgo issue tracker.
 
+## Documentation
+
+- **[User Guide](docs/user-guide.md)** - Comprehensive guide covering installation, CLI reference, Python API, and common recipes
+- **[Migration Guide](docs/MIGRATION.md)** - Upgrading from jgo 1.x to 2.0
+- **[Architecture](docs/architecture.md)** - Understanding the three-layer design
+- **[API Reference](docs/)** - Use `help(jgo)` in Python for detailed API documentation
+- **[TODO](TODO.md)** - Current development status and roadmap
+
 ## Development
 
 ### Code style
@@ -237,6 +313,19 @@ After `pip install tox`, you can lint the code with:
 
 ```shell
 tox -e lint
+```
+
+### Testing
+
+```shell
+# Run all tests
+bin/test.sh
+
+# Run specific test file
+bin/test.sh tests/test_maven_basic.py
+
+# Run with coverage
+uv run pytest --cov=src/jgo tests/
 ```
 
 ## Alternatives
