@@ -223,7 +223,6 @@ class MavenResolver(Resolver):
         return output
 
     def _mvn(self, *args) -> str:
-        # TODO: Windows.
         return MavenResolver._run(self.mvn_command, *self.mvn_flags, *args)
 
     @staticmethod
