@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import sys
+import warnings
 import zipfile
 from pathlib import Path
 
@@ -407,6 +408,12 @@ and it will be auto-completed.
 
 
 def _jgo_main(argv=sys.argv[1:], stdout=None, stderr=None):
+    warnings.warn(
+        "jgo.main() is deprecated. Use the new jgo 2.0 API: jgo.run()",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     LOG_FORMAT = "%(levelname)s %(asctime)s: %(message)s"
 
     if not ("-q" in argv or "--quiet" in argv):
@@ -558,6 +565,13 @@ def resolve_dependencies(
     shortcuts={},
     verbose=0,
 ):
+    warnings.warn(
+        "jgo.resolve_dependencies() is deprecated. "
+        "Use the new jgo 2.0 API: jgo.build() or jgo.resolve()",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     endpoint_strings = split_endpoint_string(endpoint_string)
     endpoints = endpoints_from_strings(endpoint_strings, shortcuts=shortcuts)
     primary_endpoint = endpoints[0]

@@ -48,6 +48,7 @@ class JavaRunner:
         main_class: Optional[str] = None,
         app_args: Optional[List[str]] = None,
         additional_jvm_args: Optional[List[str]] = None,
+        additional_classpath: Optional[List[str]] = None,
         print_command: bool = False,
     ) -> subprocess.CompletedProcess:
         """
@@ -55,9 +56,12 @@ class JavaRunner:
 
         Args:
             environment: Environment containing classpath and metadata
-            main_class: Main class to execute (uses environment.main_class if not specified)
+            main_class: Main class to execute (uses environment.main_class
+                if not specified)
             app_args: Arguments to pass to the application
             additional_jvm_args: Additional JVM arguments (beyond jvm_config)
+            additional_classpath: Additional classpath elements (JARs,
+                directories, etc.)
             print_command: If True, print the java command being executed
 
         Returns:
@@ -104,8 +108,11 @@ class JavaRunner:
         if additional_jvm_args:
             cmd.extend(additional_jvm_args)
 
-        # Add classpath
-        classpath_str = self._build_classpath(classpath)
+        # Add classpath (include additional classpath if provided)
+        all_classpath = list(classpath)
+        if additional_classpath:
+            all_classpath.extend(Path(p) for p in additional_classpath)
+        classpath_str = self._build_classpath(all_classpath)
         cmd.extend(["-cp", classpath_str])
 
         # Add main class

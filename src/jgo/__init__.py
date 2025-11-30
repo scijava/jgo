@@ -28,6 +28,15 @@ from jgo.config.jgorc import JgoConfig
 # Old 1.x compatibility API
 from .jgo import _jgo_main as main
 from .jgo import resolve_dependencies
+from .jgo import (
+    Endpoint,
+    NoMainClassInManifest,
+    ExecutableNotFound,
+    InvalidEndpoint,
+    UnableToAutoComplete,
+    HelpRequested,
+    NoEndpointProvided,
+)
 from .util import (
     add_jvm_args_as_necessary,
     main_from_endpoint,
@@ -234,10 +243,18 @@ __all__ = (
     "run",
     "build",
     "resolve",
-    # Old 1.x compatibility API
+    # Old 1.x compatibility API - Functions
     "main",
     "main_from_endpoint",
     "resolve_dependencies",
     "add_jvm_args_as_necessary",
     "maven_scijava_repository",
+    # Old 1.x compatibility API - Classes and Exceptions
+    "Endpoint",
+    "NoMainClassInManifest",
+    "ExecutableNotFound",
+    "InvalidEndpoint",
+    "UnableToAutoComplete",
+    "HelpRequested",
+    "NoEndpointProvided",
 )
