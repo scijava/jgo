@@ -300,7 +300,10 @@ class JgoCommands:
         if self.args.resolver == "pure":
             resolver = SimpleResolver()
         elif self.args.resolver == "maven":
-            resolver = MavenResolver()
+            from jgo.util import ensure_maven_available
+
+            mvn_command = ensure_maven_available()
+            resolver = MavenResolver(mvn_command)
         else:  # auto
             resolver = SimpleResolver()  # Default to pure Python
 
