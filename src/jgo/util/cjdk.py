@@ -9,7 +9,7 @@ import logging
 import os
 import shutil
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 
 _logger = logging.getLogger(__name__)
 

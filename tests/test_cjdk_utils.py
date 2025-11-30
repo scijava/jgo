@@ -51,6 +51,7 @@ class TestEnsureMavenAvailable:
 
         # Mock the import to simulate cjdk not being installed
         import builtins
+
         real_import = builtins.__import__
 
         def mock_import(name, *args, **kwargs):
@@ -82,6 +83,7 @@ class TestFetchMaven:
     def test_fetch_maven_without_cjdk(self, monkeypatch):
         """Test that fetch_maven raises ImportError when cjdk is not installed."""
         import builtins
+
         real_import = builtins.__import__
 
         def mock_import(name, *args, **kwargs):

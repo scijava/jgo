@@ -210,6 +210,11 @@ Examples:
             help="Print Java version requirements and exit",
         )
         parser.add_argument(
+            "--print-dependencies",
+            action="store_true",
+            help="Print dependency tree and exit",
+        )
+        parser.add_argument(
             "--dry-run",
             action="store_true",
             help="Show what would be done, but don't do it",
@@ -333,6 +338,7 @@ Examples:
             list_versions=parsed.list_versions,
             print_classpath=parsed.print_classpath,
             print_java_info=parsed.print_java_info,
+            print_dependencies=parsed.print_dependencies,
             dry_run=parsed.dry_run,
             # Spec file
             file=parsed.file,
@@ -443,6 +449,7 @@ class ParsedArgs:
         list_versions: bool = False,
         print_classpath: bool = False,
         print_java_info: bool = False,
+        print_dependencies: bool = False,
         dry_run: bool = False,
         # Spec file
         file: Optional[Path] = None,
@@ -485,6 +492,7 @@ class ParsedArgs:
         self.list_versions = list_versions
         self.print_classpath = print_classpath
         self.print_java_info = print_java_info
+        self.print_dependencies = print_dependencies
         self.dry_run = dry_run
         # Spec file
         self.file = file

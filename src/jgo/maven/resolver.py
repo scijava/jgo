@@ -86,9 +86,11 @@ class MavenResolver(Resolver):
     Requires Maven to be installed.
     """
 
-    def __init__(self, mvn_command: Path):
+    def __init__(self, mvn_command: Path, update: bool = False):
         self.mvn_command = mvn_command
         self.mvn_flags = ["-B", "-T8"]
+        if update:
+            self.mvn_flags.append("-U")
 
     def download(self, artifact: "Artifact") -> Optional[Path]:
         _log.info(f"Downloading artifact: {artifact}")
@@ -120,35 +122,105 @@ class MavenResolver(Resolver):
         return artifact.cached_path
 
     def dependencies(self, component: "Component") -> List["Dependency"]:
-        from .pom import POM
-
-        # Invoke the dependency:list goal, direct dependencies only.
+        # Invoke the dependency:list goal, including all transitive dependencies.
         pom_artifact = component.artifact(packaging="pom")
         assert pom_artifact.maven_context.repo_cache
         output = self._mvn(
             "dependency:list",
             "-f",
             pom_artifact.resolve(),
-            "-DexcludeTransitive=true",
             f"-Dmaven.repo.local={pom_artifact.maven_context.repo_cache}",
         )
 
-        # FIXME: Fix the following logic to parse dependency:list output.
+        # Parse Maven's dependency:list output format:
+        # [INFO]    groupId:artifactId:packaging:version:scope
+        # [INFO]    groupId:artifactId:packaging:classifier:version:scope
+        dependencies = []
 
-        # Filter to include only the actual lines of XML.
-        lines = output.splitlines()
-        snip = snap = None
-        for i, line in enumerate(lines):
-            if snip is None and line.startswith("<?xml"):
-                snip = i
-            elif line == "</project>":
-                snap = i
-                break
-        assert snip is not None and snap is not None
-        pom = POM("\n".join(lines[snip : snap + 1]), pom_artifact.maven_context)
+        for line in output.splitlines():
+            line = line.strip()
+            if not line.startswith("[INFO]"):
+                continue
 
-        # Extract the flattened dependencies.
-        return pom.dependencies()
+            # Remove [INFO] prefix and whitespace
+            content = line[6:].strip()
+
+            # Skip non-dependency lines
+            if ":" not in content:
+                continue
+
+            # Parse G:A:P[:C]:V:S format
+            parts = content.split(":")
+            if len(parts) < 5:
+                continue
+
+            # Check if this looks like a dependency (ends with scope like 'compile', 'runtime', etc.)
+            if parts[-1] not in (
+                "compile",
+                "runtime",
+                "provided",
+                "test",
+                "system",
+                "import",
+            ):
+                continue
+
+            # Handle both G:A:P:V:S and G:A:P:C:V:S formats
+            if len(parts) == 5:
+                # G:A:P:V:S
+                groupId, artifactId, packaging, version, scope = parts
+                classifier = None
+            elif len(parts) == 6:
+                # G:A:P:C:V:S
+                groupId, artifactId, packaging, classifier, version, scope = parts
+            else:
+                # Unknown format, skip
+                continue
+
+            # Handle optional dependencies (marked with " (optional)")
+            optional = False
+            if scope.endswith(" (optional)"):
+                scope = scope[:-11]  # Remove " (optional)"
+                optional = True
+
+            # Create dependency object
+            from .core import Dependency
+
+            dep_component = component.maven_context.project(
+                groupId, artifactId
+            ).at_version(version)
+            dep_artifact = dep_component.artifact(
+                packaging=packaging, classifier=classifier if classifier else None
+            )
+            dep = Dependency(
+                artifact=dep_artifact,
+                scope=scope,
+                optional=optional,
+            )
+            dependencies.append(dep)
+
+        return dependencies
+
+    def print_dependency_tree(self, component: "Component") -> str:
+        """
+        Print the full dependency tree for the given component.
+        :param component: The component for which to print dependencies.
+        :return: The dependency tree as a string.
+        """
+        pom_artifact = component.artifact(packaging="pom")
+        assert pom_artifact.maven_context.repo_cache
+
+        # First ensure the POM is resolved
+        pom_artifact.resolve()
+
+        output = self._mvn(
+            "dependency:tree",
+            "-f",
+            pom_artifact.cached_path,
+            f"-Dmaven.repo.local={pom_artifact.maven_context.repo_cache}",
+        )
+
+        return output
 
     def _mvn(self, *args) -> str:
         # TODO: Windows.
