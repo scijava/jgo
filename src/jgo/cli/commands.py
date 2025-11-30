@@ -223,6 +223,11 @@ class JgoCommands:
             self._print_classpath(environment)
             return 0
 
+        # If --print-java-info, just print and exit
+        if self.args.print_java_info:
+            self._print_java_info(environment)
+            return 0
+
         # Create runner and execute
         if self.verbose:
             print(f"Running {spec.name}...")
@@ -264,6 +269,11 @@ class JgoCommands:
         # If --print-classpath, just print and exit
         if self.args.print_classpath:
             self._print_classpath(environment)
+            return 0
+
+        # If --print-java-info, just print and exit
+        if self.args.print_java_info:
+            self._print_java_info(environment)
             return 0
 
         # Create runner and execute
@@ -389,3 +399,96 @@ class JgoCommands:
         separator = ";" if sys.platform == "win32" else ":"
         classpath_str = separator.join(str(p) for p in classpath)
         print(classpath_str)
+
+    def _print_java_info(self, environment) -> None:
+        """
+        Print detailed Java version requirements for the environment.
+        """
+        from jgo.env.bytecode import (
+            analyze_jar_bytecode,
+            round_to_lts,
+            bytecode_to_java_version,
+        )
+
+        jars_dir = environment.path / "jars"
+        if not jars_dir.exists():
+            print("No JARs directory found", file=sys.stderr)
+            return
+
+        jar_files = sorted(jars_dir.glob("*.jar"))
+        if not jar_files:
+            print("No JARs in environment", file=sys.stderr)
+            return
+
+        print(f"Environment: {environment.path}")
+        print(f"JARs directory: {jars_dir}")
+        print(f"Total JARs: {len(jar_files)}\n")
+
+        # Analyze each JAR
+        jar_analyses = []
+        overall_max_java = None
+
+        for jar_path in jar_files:
+            analysis = analyze_jar_bytecode(jar_path)
+            if analysis and analysis.get("java_version"):
+                jar_analyses.append((jar_path.name, analysis))
+                java_ver = analysis["java_version"]
+                if overall_max_java is None or java_ver > overall_max_java:
+                    overall_max_java = java_ver
+
+        # Sort by Java version (highest first)
+        jar_analyses.sort(key=lambda x: x[1]["java_version"], reverse=True)
+
+        # Print summary
+        lts_version = round_to_lts(overall_max_java) if overall_max_java else None
+        print("=" * 70)
+        print("JAVA VERSION REQUIREMENTS")
+        print("=" * 70)
+        print(f"Detected minimum Java version: {overall_max_java}")
+        if lts_version != overall_max_java:
+            print(f"Rounded to LTS: {lts_version}")
+        else:
+            print("(already an LTS version)")
+        print()
+
+        # Print per-JAR analysis
+        print("=" * 70)
+        print("PER-JAR ANALYSIS")
+        print("=" * 70)
+        for jar_name, analysis in jar_analyses:
+            java_ver = analysis["java_version"]
+            max_bytecode = analysis["max_version"]
+            version_counts = analysis["version_counts"]
+
+            print(f"\n{jar_name}")
+            print(f"  Required Java version: {java_ver} (bytecode {max_bytecode})")
+
+            # Show distribution
+            print("  Bytecode version distribution:")
+            for bytecode_ver in sorted(version_counts.keys(), reverse=True):
+                count = version_counts[bytecode_ver]
+                java_v = bytecode_to_java_version(bytecode_ver)
+                print(
+                    f"    Java {java_v:2d} (bytecode {bytecode_ver}): {count:5d} classes"
+                )
+
+            # Show high-version classes if not all the same
+            if len(version_counts) > 1:
+                high_classes = analysis["high_version_classes"]
+                max_ver = high_classes[0][1] if high_classes else None
+                high_ver_only = [
+                    (name, ver) for name, ver in high_classes if ver == max_ver
+                ]
+                if high_ver_only and len(high_ver_only) <= 5:
+                    print(f"  Classes requiring Java {java_ver}:")
+                    for class_name, _ in high_ver_only:
+                        print(f"    - {class_name}")
+
+            # Show skipped files if any
+            skipped = analysis.get("skipped", [])
+            if skipped:
+                print(f"  Skipped files (sample): {len(skipped)} files")
+                for s in skipped[:3]:
+                    print(f"    - {s}")
+
+        print("\n" + "=" * 70)

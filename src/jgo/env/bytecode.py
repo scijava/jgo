@@ -208,3 +208,80 @@ def detect_environment_java_version(jars_dir: Path) -> Optional[int]:
         max_version = round_to_lts(max_version)
 
     return max_version
+
+
+def analyze_jar_bytecode(jar_path: Path) -> dict:
+    """
+    Analyze bytecode versions in a JAR file.
+
+    Returns detailed information about class file versions.
+
+    Args:
+        jar_path: Path to JAR file
+
+    Returns:
+        Dictionary with analysis results:
+        {
+            'version_counts': {50: 466, 52: 2, 53: 1},  # bytecode version -> count
+            'max_version': 52,  # maximum bytecode version (excluding skipped)
+            'java_version': 8,  # Java version required
+            'skipped': ['module-info.class'],  # skipped files
+            'high_version_classes': [('ij/plugin/MacAdapter.class', 52)],  # top classes
+        }
+    """
+    from collections import Counter
+
+    if not jar_path.exists():
+        return {}
+
+    version_counts = Counter()
+    skipped = []
+    class_versions = []  # List of (class_name, major_version) tuples
+
+    try:
+        with zipfile.ZipFile(jar_path, "r") as jar:
+            for name in jar.namelist():
+                if not name.endswith(".class"):
+                    continue
+
+                # Track skipped files
+                if name.startswith("META-INF/versions/"):
+                    skipped.append(name)
+                    continue
+
+                basename = name.split("/")[-1]
+                if basename in ("module-info.class", "package-info.class"):
+                    skipped.append(name)
+                    continue
+
+                try:
+                    class_bytes = jar.read(name)
+                    major_version = read_class_version(class_bytes)
+
+                    if major_version is not None:
+                        version_counts[major_version] += 1
+                        class_versions.append((name, major_version))
+
+                except Exception:
+                    continue
+
+    except (zipfile.BadZipFile, OSError):
+        return {}
+
+    if not version_counts:
+        return {"version_counts": {}, "max_version": None, "java_version": None}
+
+    max_version = max(version_counts.keys())
+    java_version = bytecode_to_java_version(max_version)
+
+    # Get top N classes with highest bytecode versions
+    class_versions.sort(key=lambda x: x[1], reverse=True)
+    high_version_classes = class_versions[:10]  # Top 10
+
+    return {
+        "version_counts": dict(version_counts),
+        "max_version": max_version,
+        "java_version": java_version,
+        "skipped": skipped[:10] if skipped else [],  # Sample of skipped files
+        "high_version_classes": high_version_classes,
+    }
