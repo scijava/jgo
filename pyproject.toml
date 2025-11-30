@@ -41,6 +41,10 @@ dependencies = [
   "tomli-w>=1.0.0",  # TOML writing
 ]
 
+[project.optional-dependencies]
+cjdk = ["cjdk>=0.4.0"]  # Automatic Java version management
+all = ["cjdk>=0.4.0"]   # All optional features
+
 [dependency-groups]
 dev = [
     "build",
