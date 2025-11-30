@@ -1,20 +1,22 @@
+"""
+Compatibility utilities for jgo 1.x API.
+
+These functions provide backward compatibility with the old jgo API.
+"""
+
 import sys
-
 import psutil
-
-from .jgo import _jgo_main as main
 
 
 def add_jvm_args_as_necessary(argv, gc_option="-XX:+UseConcMarkSweepGC"):
     """
-
-    Extend existing ``argv`` with reasonable default values for garbage collection
-    and max heap size. If ``-Xmx`` is not specified in ``argv``, set max heap size
+    Extend existing argv with reasonable default values for garbage collection
+    and max heap size. If -Xmx is not specified in argv, set max heap size
     to half the system's memory.
 
     :param argv: argument vector
     :param gc_option: Use this garbage collector settings, if any.
-    :return: ``argv`` with
+    :return: argv with added JVM arguments
     """
     if gc_option and gc_option not in argv:
         argv += [gc_option]
@@ -36,6 +38,11 @@ def add_jvm_args_as_necessary(argv, gc_option="-XX:+UseConcMarkSweepGC"):
 
 
 def maven_scijava_repository():
+    """
+    Get the SciJava Maven repository URL.
+
+    :return: SciJava repository URL
+    """
     return "https://maven.scijava.org/content/groups/public"
 
 
@@ -51,25 +58,26 @@ def main_from_endpoint(
     Convenience method to populate appropriate argv for jgo. This is useful to
     distribute Java programs as Python modules.
 
-    For example, to run paintera with slf4j logging bindings, call
-    ``
-    main_from_endpoint(
-        'org.janelia.saalfeldlab:paintera',
-        primary_endpoint_version='0.8.1',
-        secondary_endpoints=('org.slf4j:slf4j-simple:1.7.25',),
-    )
-    ``
+    For example, to run paintera with slf4j logging bindings, call:
+        main_from_endpoint(
+            'org.janelia.saalfeldlab:paintera',
+            primary_endpoint_version='0.8.1',
+            secondary_endpoints=('org.slf4j:slf4j-simple:1.7.25',),
+        )
 
     :param primary_endpoint: The primary endpoint of the Java program you want to run.
     :param repositories: Any maven repository that holds the required jars. Defaults
         to {'scijava.public': maven_scijava_repository()}.
-    :param primary_endpoint_version: Will be appended to ``primary_endpoint`` if it
-        does not evaluate to ``False``
-    :param primary_endpoint_main_class: Will be appended to ``primary_endpoint`` if it
-        does not evaluate to ``False``.
+    :param primary_endpoint_version: Will be appended to primary_endpoint if it
+        does not evaluate to False
+    :param primary_endpoint_main_class: Will be appended to primary_endpoint if it
+        does not evaluate to False.
     :param secondary_endpoints: Any other endpoints that should be added.
-    :return: ``None``
+    :return: None
     """
+    # Import here to avoid circular dependency
+    from ..jgo import _jgo_main as main
+
     double_dash_index = (
         [i for (i, arg) in enumerate(argv) if arg == "--"][0] if "--" in argv else -1
     )
