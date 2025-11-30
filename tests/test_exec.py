@@ -11,6 +11,15 @@ from jgo.exec import JVMConfig, JavaSource, JavaLocator, JavaRunner
 from jgo.env import Environment
 
 
+# Helper to check if cjdk is available
+def _has_cjdk():
+    try:
+        import cjdk
+        return True
+    except ImportError:
+        return False
+
+
 class TestJVMConfig:
     """Tests for JVMConfig class."""
 
@@ -123,7 +132,7 @@ class TestJavaLocator:
         with pytest.raises(RuntimeError, match="required"):
             locator.locate(min_version=999)
 
-    @pytest.mark.skipif("cjdk" not in sys.modules, reason="cjdk not installed")
+    @pytest.mark.skipif(not _has_cjdk(), reason="cjdk not installed")
     def test_cjdk_java(self):
         """Test obtaining Java via cjdk."""
         locator = JavaLocator(java_source=JavaSource.CJDK, java_version=11)
@@ -135,17 +144,17 @@ class TestJavaLocator:
 
     def test_auto_mode_without_cjdk(self, monkeypatch):
         """Test AUTO mode falls back to system when cjdk unavailable."""
-        # Mock cjdk as unavailable
-        import builtins
+        # Mock cjdk as unavailable by patching importlib.util.find_spec
+        import importlib.util
 
-        original_import = builtins.__import__
+        original_find_spec = importlib.util.find_spec
 
-        def mock_import(name, *args, **kwargs):
+        def mock_find_spec(name, *args, **kwargs):
             if name == "cjdk":
-                raise ImportError("No module named 'cjdk'")
-            return original_import(name, *args, **kwargs)
+                return None  # Simulate cjdk not being installed
+            return original_find_spec(name, *args, **kwargs)
 
-        monkeypatch.setattr(builtins, "__import__", mock_import)
+        monkeypatch.setattr(importlib.util, "find_spec", mock_find_spec)
 
         locator = JavaLocator(java_source=JavaSource.AUTO)
         java_path = locator.locate()
@@ -295,7 +304,8 @@ class TestIntegration:
 
     def test_run_hello_world(self, hello_world_jar):
         """Test running a simple Hello World program."""
-        runner = JavaRunner()
+        # Use SYSTEM Java to avoid cjdk version compatibility issues
+        runner = JavaRunner(java_source=JavaSource.SYSTEM)
         result = runner.run_and_capture(hello_world_jar)
 
         # Check that it ran successfully
@@ -305,7 +315,8 @@ class TestIntegration:
     def test_run_with_jvm_args(self, hello_world_jar):
         """Test running with JVM arguments."""
         config = JVMConfig(system_properties={"jgo.test.property": "test_value"})
-        runner = JavaRunner(jvm_config=config)
+        # Use SYSTEM Java to avoid cjdk version compatibility issues
+        runner = JavaRunner(jvm_config=config, java_source=JavaSource.SYSTEM)
         result = runner.run_and_capture(hello_world_jar)
 
         # Check that the system property was passed
@@ -314,7 +325,8 @@ class TestIntegration:
 
     def test_run_with_app_args(self, hello_world_jar):
         """Test running with application arguments."""
-        runner = JavaRunner()
+        # Use SYSTEM Java to avoid cjdk version compatibility issues
+        runner = JavaRunner(java_source=JavaSource.SYSTEM)
         result = runner.run_and_capture(hello_world_jar, app_args=["arg1", "arg2", "arg3"])
 
         # Check that arguments were passed
