@@ -75,7 +75,10 @@ Examples:
 
         # Cache and update options
         parser.add_argument(
-            "--update", action="store_true", help="Update cached environment"
+            "-u",
+            "--update",
+            action="store_true",
+            help="Update cached environment",
         )
         parser.add_argument(
             "--offline",
@@ -126,6 +129,7 @@ Examples:
 
         # Dependency management
         parser.add_argument(
+            "-m",
             "--managed",
             action="store_true",
             help="Use dependency management (import scope)",
@@ -134,6 +138,56 @@ Examples:
             "--main-class",
             metavar="CLASS",
             help="Specify main class explicitly",
+        )
+
+        # Classpath options
+        parser.add_argument(
+            "--classpath-append",
+            action="append",
+            metavar="PATH",
+            dest="classpath_append",
+            help="Append to classpath (JARs, directories, etc.)",
+        )
+
+        # Backward compatibility options
+        parser.add_argument(
+            "--ignore-jgorc",
+            action="store_true",
+            help="Ignore ~/.jgorc configuration file",
+        )
+
+        # Deprecated aliases (jgo 1.x compatibility)
+        parser.add_argument(
+            "-U",
+            "--force-update",
+            dest="update",
+            action="store_true",
+            help="(Deprecated: use -u/--update) Force update from remote",
+        )
+        parser.add_argument(
+            "-a",
+            "--additional-jars",
+            action="append",
+            metavar="JAR",
+            dest="classpath_append",
+            help="(Deprecated: use --classpath-append) Add JARs to classpath",
+        )
+        parser.add_argument(
+            "--additional-endpoints",
+            nargs="+",
+            metavar="ENDPOINT",
+            dest="additional_endpoints",
+            help="(Deprecated: use '+' syntax) Add additional endpoints",
+        )
+        parser.add_argument(
+            "--link-type",
+            dest="link",
+            choices=["hard", "soft", "copy", "auto"],
+            help="(Deprecated: use --link) How to link JARs",
+        )
+        parser.add_argument(
+            "--log-level",
+            help="(Deprecated: use -v/-vv/-vvv) Set log level",
         )
 
         # Information commands
@@ -200,7 +254,9 @@ Examples:
         parser.add_argument(
             "endpoint",
             nargs="?",
-            help="Maven endpoint (groupId:artifactId[:version][:classifier][:mainClass])",
+            help=(
+                "Maven endpoint (groupId:artifactId[:version][:classifier][:mainClass])"
+            ),
         )
 
         # Remaining arguments after -- separators
@@ -227,6 +283,20 @@ Examples:
         # Split remaining args on --
         jvm_args, app_args = self._split_remaining_args(parsed.remaining)
 
+        # Handle additional-endpoints by merging into endpoint with + syntax
+        # Note: additional_endpoints is a list if specified, None otherwise
+        endpoint = parsed.endpoint
+        if parsed.additional_endpoints:
+            additional_eps = (
+                parsed.additional_endpoints
+                if isinstance(parsed.additional_endpoints, list)
+                else [parsed.additional_endpoints]
+            )
+            if endpoint:
+                endpoint = "+".join([endpoint] + additional_eps)
+            else:
+                endpoint = "+".join(additional_eps)
+
         return ParsedArgs(
             # General
             verbose=parsed.verbose,
@@ -245,6 +315,12 @@ Examples:
             # Dependency management
             managed=parsed.managed,
             main_class=parsed.main_class,
+            # Classpath
+            classpath_append=parsed.classpath_append,
+            # Backward compatibility
+            ignore_jgorc=parsed.ignore_jgorc,
+            additional_endpoints=parsed.additional_endpoints,
+            log_level=parsed.log_level,
             # Information commands
             list_versions=parsed.list_versions,
             print_classpath=parsed.print_classpath,
@@ -259,7 +335,7 @@ Examples:
             java_vendor=parsed.java_vendor,
             java_source=parsed.java_source,
             # Endpoint and args
-            endpoint=parsed.endpoint,
+            endpoint=endpoint,
             jvm_args=jvm_args,
             app_args=app_args,
         )
@@ -348,6 +424,12 @@ class ParsedArgs:
         # Dependency management
         managed: bool = False,
         main_class: Optional[str] = None,
+        # Classpath
+        classpath_append: Optional[List[str]] = None,
+        # Backward compatibility
+        ignore_jgorc: bool = False,
+        additional_endpoints: Optional[List[str]] = None,
+        log_level: Optional[str] = None,
         # Information commands
         list_versions: bool = False,
         print_classpath: bool = False,
@@ -383,6 +465,12 @@ class ParsedArgs:
         # Dependency management
         self.managed = managed
         self.main_class = main_class
+        # Classpath
+        self.classpath_append = classpath_append or []
+        # Backward compatibility
+        self.ignore_jgorc = ignore_jgorc
+        self.additional_endpoints = additional_endpoints
+        self.log_level = log_level
         # Information commands
         self.list_versions = list_versions
         self.print_classpath = print_classpath

@@ -23,11 +23,14 @@ def main():
     # Setup logging
     setup_logging(verbose=args.verbose, quiet=args.quiet)
 
-    # Load configuration
-    config = JgoConfig.load()
+    # Load configuration (unless --ignore-jgorc is set)
+    if args.ignore_jgorc:
+        config = JgoConfig()  # Empty config
+    else:
+        config = JgoConfig.load()
 
     # Apply shortcuts to endpoint if present
-    if args.endpoint:
+    if args.endpoint and not args.ignore_jgorc:
         args.endpoint = config.expand_shortcuts(args.endpoint)
 
     # Execute command

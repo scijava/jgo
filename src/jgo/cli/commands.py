@@ -3,6 +3,7 @@ CLI command implementations for jgo 2.0.
 """
 
 import sys
+import warnings
 from pathlib import Path
 from typing import Optional
 
@@ -37,6 +38,9 @@ class JgoCommands:
         Returns:
             Exit code (0 for success, non-zero for failure)
         """
+        # Show deprecation warnings for old jgo 1.x flags
+        self._check_deprecated_flags()
+
         try:
             # Handle --init (generate jgo.toml)
             if self.args.init:
@@ -65,6 +69,28 @@ class JgoCommands:
                 raise  # Show full traceback in debug mode
             print(f"Error: {e}", file=sys.stderr)
             return 1
+
+    def _check_deprecated_flags(self):
+        """
+        Check for deprecated jgo 1.x flags and show warnings.
+        """
+        # Check for --additional-endpoints
+        if self.args.additional_endpoints:
+            warnings.warn(
+                "--additional-endpoints is deprecated. Use '+' syntax instead:\n"
+                "  Old: jgo --additional-endpoints org.dep:lib org.main:app\n"
+                "  New: jgo org.main:app+org.dep:lib",
+                DeprecationWarning,
+                stacklevel=3,
+            )
+
+        # Check for --log-level
+        if self.args.log_level:
+            warnings.warn(
+                "--log-level is deprecated. Use -v/-vv/-vvv for verbose output instead",
+                DeprecationWarning,
+                stacklevel=3,
+            )
 
     def _cmd_init(self) -> int:
         """
@@ -206,6 +232,7 @@ class JgoCommands:
             environment=environment,
             app_args=self.args.app_args,
             additional_jvm_args=self.args.jvm_args,
+            additional_classpath=self.args.classpath_append,
             print_command=self.debug,
         )
 
@@ -249,6 +276,7 @@ class JgoCommands:
             main_class=self.args.main_class,
             app_args=self.args.app_args,
             additional_jvm_args=self.args.jvm_args,
+            additional_classpath=self.args.classpath_append,
             print_command=self.debug,
         )
 

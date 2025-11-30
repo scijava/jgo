@@ -57,7 +57,7 @@ dev = [
 ]
 
 [project.scripts]
-jgo = "jgo:main"
+jgo = "jgo.__main__:main"
 
 [project.urls]
 homepage = "https://github.com/scijava/jgo"

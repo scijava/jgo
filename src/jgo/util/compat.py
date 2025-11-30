@@ -5,6 +5,7 @@ These functions provide backward compatibility with the old jgo API.
 """
 
 import sys
+import warnings
 import psutil
 
 
@@ -75,6 +76,12 @@ def main_from_endpoint(
     :param secondary_endpoints: Any other endpoints that should be added.
     :return: None
     """
+    warnings.warn(
+        "jgo.main_from_endpoint() is deprecated. Use the new jgo 2.0 API: jgo.run()",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     # Import here to avoid circular dependency
     from ..jgo import _jgo_main as main
 
