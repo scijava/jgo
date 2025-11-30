@@ -3,6 +3,7 @@ Tests for the execution layer (jgo.exec).
 """
 
 import sys
+import subprocess
 from pathlib import Path
 import pytest
 
@@ -244,21 +245,81 @@ class TestIntegration:
     @pytest.fixture
     def hello_world_jar(self, tmp_path):
         """Create a simple Hello World JAR for testing."""
-        # This would require compiling Java code
-        # For now, we'll skip this in basic tests
-        pytest.skip("Requires pre-built test JAR")
+        # Find the test Java source file
+        test_dir = Path(__file__).parent
+        java_source = test_dir / "resources" / "java" / "HelloWorld.java"
+        manifest_file = test_dir / "resources" / "java" / "MANIFEST.MF"
+
+        if not java_source.exists():
+            pytest.skip("Test Java source not found")
+
+        # Create compilation directory
+        build_dir = tmp_path / "build"
+        build_dir.mkdir()
+
+        # Compile the Java source
+        compile_result = subprocess.run(
+            ["javac", "-d", str(build_dir), str(java_source)],
+            capture_output=True,
+            text=True
+        )
+
+        if compile_result.returncode != 0:
+            pytest.skip(f"Java compilation failed: {compile_result.stderr}")
+
+        # Create JAR file
+        jar_path = tmp_path / "hello-world.jar"
+        jar_result = subprocess.run(
+            ["jar", "cfm", str(jar_path), str(manifest_file), "-C", str(build_dir), "."],
+            capture_output=True,
+            text=True
+        )
+
+        if jar_result.returncode != 0:
+            pytest.skip(f"JAR creation failed: {jar_result.stderr}")
+
+        # Create an Environment with this JAR
+        env_path = tmp_path / "env"
+        env_path.mkdir()
+        jars_dir = env_path / "jars"
+        jars_dir.mkdir()
+
+        # Copy JAR to environment
+        import shutil
+        shutil.copy(jar_path, jars_dir / "hello-world.jar")
+
+        env = Environment(env_path)
+        env.set_main_class("org.apposed.jgo.test.HelloWorld")
+
+        return env
 
     def test_run_hello_world(self, hello_world_jar):
         """Test running a simple Hello World program."""
-        # Would test with a real JAR
-        pass
+        runner = JavaRunner()
+        result = runner.run_and_capture(hello_world_jar)
+
+        # Check that it ran successfully
+        assert result.returncode == 0
+        assert "Hello, World!" in result.stdout
 
     def test_run_with_jvm_args(self, hello_world_jar):
         """Test running with JVM arguments."""
-        # Would test JVM args are properly passed
-        pass
+        config = JVMConfig(system_properties={"jgo.test.property": "test_value"})
+        runner = JavaRunner(jvm_config=config)
+        result = runner.run_and_capture(hello_world_jar)
+
+        # Check that the system property was passed
+        assert result.returncode == 0
+        assert "System property jgo.test.property: test_value" in result.stdout
 
     def test_run_with_app_args(self, hello_world_jar):
         """Test running with application arguments."""
-        # Would test app args are properly passed
-        pass
+        runner = JavaRunner()
+        result = runner.run_and_capture(hello_world_jar, app_args=["arg1", "arg2", "arg3"])
+
+        # Check that arguments were passed
+        assert result.returncode == 0
+        assert "Arguments received: 3" in result.stdout
+        assert "arg[0]: arg1" in result.stdout
+        assert "arg[1]: arg2" in result.stdout
+        assert "arg[2]: arg3" in result.stdout
