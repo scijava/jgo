@@ -124,7 +124,7 @@ jgo [OPTIONS] <endpoint> [-- JVM_ARGS] [-- APP_ARGS]
 
 **Output Options:**
 - `--print-classpath` - Print classpath and exit
-- `--print-dependencies` - Print dependency tree and exit
+- `--print-dependency-tree` - Print dependency tree and exit
 - `--print-java-info` - Print detected Java version requirements and exit
 - `--main-class CLASS` - Override main class detection
 

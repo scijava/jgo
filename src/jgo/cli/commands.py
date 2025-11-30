@@ -210,8 +210,8 @@ class JgoCommands:
         maven_context = self._create_maven_context()
         builder = self._create_environment_builder(maven_context)
 
-        # If --print-dependencies, parse coordinates and print dependencies without building full environment
-        if self.args.print_dependencies:
+        # If --print-dependency-tree or --print-dependency-list, parse coordinates and print without building
+        if self.args.print_dependency_tree or self.args.print_dependency_list:
             # Parse coordinates into components
             components = []
             for coord in spec.coordinates:
@@ -223,7 +223,9 @@ class JgoCommands:
                     version
                 )
                 components.append(component)
-            self._print_dependencies(components, maven_context)
+            self._print_dependencies(
+                components, maven_context, list_mode=self.args.print_dependency_list
+            )
             return 0
 
         # Build environment
@@ -272,10 +274,12 @@ class JgoCommands:
         maven_context = self._create_maven_context()
         builder = self._create_environment_builder(maven_context)
 
-        # If --print-dependencies, parse endpoint and print dependencies without building full environment
-        if self.args.print_dependencies:
+        # If --print-dependency-tree or --print-dependency-list, parse endpoint and print without building
+        if self.args.print_dependency_tree or self.args.print_dependency_list:
             components, _ = builder._parse_endpoint(self.args.endpoint)
-            self._print_dependencies(components, maven_context)
+            self._print_dependencies(
+                components, maven_context, list_mode=self.args.print_dependency_list
+            )
             return 0
 
         # Build environment
@@ -425,14 +429,25 @@ class JgoCommands:
         classpath_str = separator.join(str(p) for p in classpath)
         print(classpath_str)
 
-    def _print_dependencies(self, components, maven_context) -> None:
+    def _print_dependencies(
+        self, components, maven_context, list_mode: bool = False
+    ) -> None:
         """
-        Print dependency tree for the given components.
+        Print dependencies for the given components.
+
+        Args:
+            components: List of components to print dependencies for
+            maven_context: Maven context containing the resolver
+            list_mode: If True, print flat list (like mvn dependency:list).
+                      If False, print tree (like mvn dependency:tree).
         """
-        # Print dependency tree for the primary component
+        # Print dependencies for the primary component
         primary = components[0]
-        tree = maven_context.resolver.print_dependency_tree(primary)
-        print(tree)
+        if list_mode:
+            output = maven_context.resolver.print_dependency_list(primary)
+        else:
+            output = maven_context.resolver.print_dependency_tree(primary)
+        print(output)
 
     def _print_java_info(self, environment) -> None:
         """

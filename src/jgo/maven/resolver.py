@@ -79,9 +79,36 @@ class SimpleResolver(Resolver):
         model = Model(component.pom())
         return model.dependencies()
 
+    def print_dependency_list(self, component: "Component") -> str:
+        """
+        Print a flat list of resolved dependencies (like mvn dependency:list).
+        This shows what will actually be used when building the environment.
+        :param component: The component for which to print dependencies.
+        :return: The dependency list as a string.
+        """
+        from .model import Model
+
+        lines = []
+        lines.append(f"{component.groupId}:{component.artifactId}:{component.version}")
+
+        # Build the model and get mediated dependencies
+        model = Model(component.pom())
+        deps = model.dependencies()
+
+        # Sort for consistent output
+        deps.sort(key=lambda d: (d.groupId, d.artifactId, d.version))
+
+        for dep in deps:
+            scope_suffix = f":{dep.scope}" if dep.scope != "compile" else ""
+            line = f"   {dep.groupId}:{dep.artifactId}:{dep.type}:{dep.version}{scope_suffix}"
+            lines.append(line)
+
+        return "\n".join(lines)
+
     def print_dependency_tree(self, component: "Component") -> str:
         """
-        Print the full dependency tree for the given component.
+        Print the full dependency tree for the given component (like mvn dependency:tree).
+        Uses proper dependency mediation - only one version per artifact.
         :param component: The component for which to print dependencies.
         :return: The dependency tree as a string.
         """
@@ -93,7 +120,7 @@ class SimpleResolver(Resolver):
         # Build the model to get dependencies
         model = Model(component.pom())
 
-        # Track which dependencies we've already processed to avoid duplicates
+        # Track which G:A:C:T we've already processed (version not included for mediation)
         processed = set()
 
         def add_deps(deps, prefix="", is_last=True):
@@ -103,14 +130,15 @@ class SimpleResolver(Resolver):
                 connector = "└── " if is_last_item else "├── "
                 extension = "    " if is_last_item else "│   "
 
-                dep_key = (dep.groupId, dep.artifactId, dep.version)
+                # Use G:A:C:T (without version) for deduplication, like Maven does
+                dep_key = (dep.groupId, dep.artifactId, dep.classifier, dep.type)
                 scope_suffix = f":{dep.scope}" if dep.scope != "compile" else ""
                 optional_suffix = " (optional)" if dep.optional else ""
 
                 line = f"{prefix}{connector}{dep.groupId}:{dep.artifactId}:{dep.type}:{dep.version}{scope_suffix}{optional_suffix}"
                 lines.append(line)
 
-                # Recursively show transitive dependencies, but avoid infinite loops
+                # Recursively show transitive dependencies, but use proper mediation
                 if dep_key not in processed:
                     processed.add(dep_key)
                     try:
@@ -257,6 +285,28 @@ class MavenResolver(Resolver):
             dependencies.append(dep)
 
         return dependencies
+
+    def print_dependency_list(self, component: "Component") -> str:
+        """
+        Print a flat list of resolved dependencies (like mvn dependency:list).
+        This shows what will actually be used when building the environment.
+        :param component: The component for which to print dependencies.
+        :return: The dependency list as a string.
+        """
+        pom_artifact = component.artifact(packaging="pom")
+        assert pom_artifact.maven_context.repo_cache
+
+        # First ensure the POM is resolved
+        pom_artifact.resolve()
+
+        output = self._mvn(
+            "dependency:list",
+            "-f",
+            pom_artifact.cached_path,
+            f"-Dmaven.repo.local={pom_artifact.maven_context.repo_cache}",
+        )
+
+        return output
 
     def print_dependency_tree(self, component: "Component") -> str:
         """

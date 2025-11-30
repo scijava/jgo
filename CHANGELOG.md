@@ -63,7 +63,7 @@ jgo 2.0 is a complete architectural redesign around three clean, independently u
   - `--java-version VERSION`: Force specific Java version
   - `--java-vendor VENDOR`: Prefer specific Java vendor (adoptium, zulu, etc.)
   - `--resolver {auto,pure,maven}`: Choose dependency resolver
-  - `--print-dependencies`: Print dependency tree
+  - `--print-dependency-tree`: Print dependency tree
   - `--print-java-info`: Print detected Java version requirements
   - `--offline`: Work offline (don't download)
   - `--no-cache`: Skip cache entirely
