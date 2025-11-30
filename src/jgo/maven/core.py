@@ -168,7 +168,27 @@ class Project:
 
     def update(self) -> None:
         """Update metadata from remote sources."""
-        raise RuntimeError("Unimplemented")
+        import requests
+
+        repo_cache_dir = self.maven_context.repo_cache / self.path_prefix
+        repo_cache_dir.mkdir(parents=True, exist_ok=True)
+
+        # Try to fetch maven-metadata.xml from each remote repository
+        for repo_name, repo_url in self.maven_context.remote_repos.items():
+            metadata_url = f"{repo_url}/{self.path_prefix}/maven-metadata.xml"
+            try:
+                response = requests.get(metadata_url)
+                if response.status_code == 200:
+                    # Save to local cache with repo name suffix
+                    metadata_file = repo_cache_dir / f"maven-metadata-{repo_name}.xml"
+                    with open(metadata_file, "wb") as f:
+                        f.write(response.content)
+            except Exception:
+                # Silently ignore failures - metadata might not be available
+                pass
+
+        # Force reload of metadata
+        self._metadata = None
 
     @property
     def release(self) -> str:
@@ -226,6 +246,7 @@ class Component:
     def __init__(self, project: Project, version: str):
         self.project = project
         self.version = version
+        self._resolved_version = None
 
     def __eq__(self, other):
         return (
@@ -238,7 +259,7 @@ class Component:
         return hash((self.project, self.version))
 
     def __str__(self):
-        return coord2str(self.groupId, self.artifactId, self.version)
+        return coord2str(self.groupId, self.artifactId, self.resolved_version)
 
     @property
     def maven_context(self) -> MavenContext:
@@ -256,12 +277,44 @@ class Component:
         return self.project.artifactId
 
     @property
+    def resolved_version(self) -> str:
+        """
+        Get the resolved version, converting RELEASE/LATEST tokens to actual versions.
+        """
+        if self._resolved_version is not None:
+            return self._resolved_version
+
+        # Check if version needs resolution
+        if self.version in ("RELEASE", "LATEST"):
+            # Fetch metadata from remote if needed
+            if not self.project.metadata or not self.project.metadata.versions:
+                self.project.update()
+
+            # Resolve to actual version
+            if self.version == "RELEASE":
+                resolved = self.project.release
+            else:  # LATEST
+                resolved = self.project.latest
+
+            if not resolved:
+                raise RuntimeError(
+                    f"Could not resolve {self.version} version for "
+                    f"{self.project.groupId}:{self.project.artifactId}"
+                )
+
+            self._resolved_version = resolved
+            return resolved
+
+        # Version is already concrete
+        return self.version
+
+    @property
     def path_prefix(self) -> Path:
         """
         Relative directory where artifacts of this component are organized.
         E.g. org.jruby:jruby-core:9.3.3.0 -> org/jruby/jruby-core/9.3.3.0
         """
-        return self.project.path_prefix / self.version
+        return self.project.path_prefix / self.resolved_version
 
     def artifact(
         self, classifier: str = DEFAULT_CLASSIFIER, packaging: str = DEFAULT_PACKAGING
@@ -337,8 +390,8 @@ class Artifact:
 
     @property
     def version(self) -> str:
-        """The artifact's version."""
-        return self.component.version
+        """The artifact's version (resolved if RELEASE/LATEST)."""
+        return self.component.resolved_version
 
     @property
     def filename(self) -> str:
@@ -349,7 +402,7 @@ class Artifact:
         - g=org.scijava a=scijava-common v=2.94.2 p=pom -> scijava-common-2.94.2.pom
         """
         classifier_suffix = f"-{self.classifier}" if self.classifier else ""
-        return f"{self.artifactId}-{self.version}{classifier_suffix}.{self.packaging}"
+        return f"{self.artifactId}-{self.component.resolved_version}{classifier_suffix}.{self.packaging}"
 
     @property
     def cached_path(self) -> Optional[Path]:
