@@ -75,7 +75,7 @@ def demo_java_source_selection():
     runner_system = JavaRunner(java_source=JavaSource.SYSTEM, verbose=True)
     print(f"   Strategy: {runner_system.java_source.value}")
 
-    # Strategy 2: Use cjdk (if available)
+    # Strategy 2: Use cjdk
     print("\n2. CJDK: Use cjdk for automatic Java management")
     print("   Note: Requires 'pip install jgo[cjdk]'")
     # runner_cjdk = JavaRunner(
@@ -83,12 +83,6 @@ def demo_java_source_selection():
     #     java_version=17,
     #     java_vendor="zulu"  # Default is "zulu" (widest version support)
     # )
-
-    # Strategy 3: AUTO (default - prefer cjdk, fallback to system)
-    print("\n3. AUTO: Automatic selection (default)")
-    runner_auto = JavaRunner(java_source=JavaSource.AUTO, verbose=True)
-    print(f"   Strategy: {runner_auto.java_source.value}")
-    print("   Will use cjdk if available, otherwise system Java")
 
 
 def demo_bytecode_detection():
@@ -108,7 +102,7 @@ def demo_bytecode_detection():
     print("This was determined by scanning .class files in the JARs")
 
     # Runner will automatically use this detected version
-    runner = JavaRunner(java_source=JavaSource.AUTO)
+    runner = JavaRunner(java_source=JavaSource.CJDK)
     print(
         f"\nRunner will automatically ensure Java {min_java}+ is available when executing"
     )

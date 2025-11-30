@@ -21,7 +21,7 @@ class JavaRunner:
     def __init__(
         self,
         jvm_config: Optional[JVMConfig] = None,
-        java_source: JavaSource = JavaSource.AUTO,
+        java_source: JavaSource = JavaSource.CJDK,
         java_version: Optional[int] = None,
         java_vendor: Optional[str] = None,
         verbose: bool = False,

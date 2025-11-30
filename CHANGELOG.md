@@ -14,7 +14,7 @@ jgo 2.0 is a complete architectural redesign around three clean, independently u
 ### Added
 
 #### Zero-Configuration Execution
-- **Automatic Java management**: Optional integration with [cjdk](https://github.com/scijava/cjdk) to automatically download and manage Java versions
+- **Automatic Java management**: Integration with [cjdk](https://github.com/scijava/cjdk) to automatically download and manage Java versions
 - **Bytecode detection**: Automatically detect minimum Java version from JAR files
 - **Auto-download Java**: Install `jgo[cjdk]` to automatically download the correct Java version (no pre-installed Java required!)
 
@@ -41,7 +41,7 @@ jgo 2.0 is a complete architectural redesign around three clean, independently u
 - **Layer 3 - Execution** (`jgo.exec`): Launch Java programs
   - `JavaRunner`: Execute Java programs from environments
   - `JVMConfig`: Configure JVM settings (heap, GC, system properties)
-  - `JavaSource`: Java selection strategy (SYSTEM, CJDK, AUTO)
+  - `JavaSource`: Java selection strategy (SYSTEM, CJDK)
   - Cross-platform classpath handling
 
 #### Python API
@@ -144,8 +144,10 @@ Nothing removed in 2.0 - full backward compatibility maintained.
   - 108 tests, all passing
 
 - **Dependencies**:
-  - Core: `psutil`, `requests`, `tomli`/`tomli-w` (for jgo.toml)
-  - Optional: `cjdk>=0.4.0` (for automatic Java management)
+  - `cjdk` for automatic Java management
+  - `psutil` for max heap auto-detection
+  - `requests` for dependency fetching
+  - `tomli`/`tomli-w` for jgo.toml
 
 ## [1.1.0] - Previous Release
 

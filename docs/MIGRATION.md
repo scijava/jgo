@@ -201,16 +201,12 @@ jgo
 
 ### Automatic Java Management
 
-With optional cjdk integration:
-
 ```bash
-pip install jgo[cjdk]
-
 # Automatically downloads Java if needed!
 jgo net.imagej:imagej
 ```
 
-No need to pre-install Java - jgo detects requirements from bytecode and downloads the right version.
+No need to pre-install Java - jgo detects requirements from bytecode and downloads the right version using [cjdk](https://github.com/cachedjdk/cjdk).
 
 ### Three-Layer Architecture
 

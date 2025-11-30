@@ -120,7 +120,7 @@ jgo [OPTIONS] <endpoint> [-- JVM_ARGS] [-- APP_ARGS]
 **Java Version Control:**
 - `--java-version VERSION` - Force specific Java version
 - `--java-vendor VENDOR` - Prefer specific vendor (adoptium, zulu, etc.)
-- `--java-source {system,cjdk,auto}` - Java selection strategy
+- `--java-source {cjdk,system}` - Java selection strategy
 
 **Output Options:**
 - `--print-classpath` - Print classpath and exit

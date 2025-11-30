@@ -23,7 +23,7 @@ jgo net.imagej:imagej  # Downloads Java 17 automatically
 
 ### What's New in 2.0
 
-- **🎯 Zero-configuration execution**: Automatic Java download and version management with optional `cjdk` integration
+- **🎯 Zero-configuration execution**: Automatic Java download and version management thanks to `cjdk` integration
 - **📦 Reproducible environments**: `jgo.toml` project files with lock files (like `package.json` + `package-lock.json`)
 - **🏗️ Three-layer architecture**: Independently useful layers for Maven resolution, environment building, and execution
 - **🐍 Pure Python resolver**: No Maven installation required for basic operations

@@ -1,8 +1,8 @@
 """
 Utility functions for fetching Maven using cjdk.
 
-This module provides functions to automatically download and cache Maven
-when it's not available on the system, similar to how scyjava handles it.
+This module provides functions to automatically download
+and cache Maven when it's not available on the system.
 """
 
 import logging
@@ -10,6 +10,8 @@ import os
 import shutil
 from pathlib import Path
 from typing import Union
+
+import cjdk
 
 _logger = logging.getLogger(__name__)
 
@@ -30,15 +32,8 @@ def ensure_maven_available() -> Path:
         _logger.debug(f"Found Maven on PATH: {mvn_path}")
         return Path(mvn_path)
 
-    # Maven not found, try to fetch it with cjdk
-    try:
-        return fetch_maven()
-    except ImportError:
-        raise RuntimeError(
-            "Maven not found on system PATH and cjdk is not installed. "
-            "Either install Maven or install jgo with the 'cjdk' extra: "
-            "pip install jgo[cjdk]"
-        )
+    # Maven not found, fetch it with cjdk
+    return fetch_maven()
 
 
 def fetch_maven(url: str = "", sha: str = "") -> Path:
@@ -56,13 +51,6 @@ def fetch_maven(url: str = "", sha: str = "") -> Path:
         ImportError: If cjdk is not installed
         RuntimeError: If Maven download or setup fails
     """
-    try:
-        import cjdk
-    except ImportError:
-        raise ImportError(
-            "cjdk is required to automatically download Maven. "
-            "Install it with: pip install jgo[cjdk]"
-        )
 
     # Use default Maven URL if not provided
     # Maven 3.9.9 is a stable LTS version

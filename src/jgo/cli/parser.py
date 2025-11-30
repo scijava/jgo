@@ -263,8 +263,8 @@ Examples:
         )
         parser.add_argument(
             "--java-source",
-            choices=["auto", "system", "cjdk"],
-            default="auto",
+            choices=["cjdk", "system"],
+            default="cjdk",
             help="Java source strategy (default: auto)",
         )
 
@@ -466,7 +466,7 @@ class ParsedArgs:
         # Java
         java_version: Optional[int] = None,
         java_vendor: Optional[str] = None,
-        java_source: str = "auto",
+        java_source: str = "cjdk",
         # Endpoint and args
         endpoint: Optional[str] = None,
         jvm_args: Optional[List[str]] = None,

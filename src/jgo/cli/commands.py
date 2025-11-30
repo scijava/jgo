@@ -397,7 +397,6 @@ class JgoCommands:
         """
         # Map string to JavaSource enum
         java_source_map = {
-            "auto": JavaSource.AUTO,
             "system": JavaSource.SYSTEM,
             "cjdk": JavaSource.CJDK,
         }

@@ -10,6 +10,8 @@ from typing import Optional
 import subprocess
 import sys
 
+import cjdk
+
 
 class JavaSource(Enum):
     """
@@ -18,7 +20,6 @@ class JavaSource(Enum):
 
     SYSTEM = "system"  # Use system Java (from PATH or JAVA_HOME)
     CJDK = "cjdk"  # Use cjdk to download/manage Java
-    AUTO = "auto"  # Auto-select: prefer cjdk if available, fallback to system
 
 
 class JavaLocator:
@@ -30,7 +31,7 @@ class JavaLocator:
 
     def __init__(
         self,
-        java_source: JavaSource = JavaSource.AUTO,
+        java_source: JavaSource = JavaSource.CJDK,
         java_version: Optional[int] = None,
         java_vendor: Optional[str] = None,
         verbose: bool = False,
@@ -72,8 +73,6 @@ class JavaLocator:
             return self._locate_system_java(required_version)
         elif self.java_source == JavaSource.CJDK:
             return self._locate_cjdk_java(required_version)
-        elif self.java_source == JavaSource.AUTO:
-            return self._locate_auto_java(required_version)
         else:
             raise ValueError(f"Unknown JavaSource: {self.java_source}")
 
@@ -124,14 +123,8 @@ class JavaLocator:
             Path to java executable
 
         Raises:
-            RuntimeError: If cjdk not available or fails
+            RuntimeError: If cjdk fails
         """
-        try:
-            import cjdk
-        except ImportError:
-            raise RuntimeError(
-                "cjdk not installed. Install with: pip install jgo[cjdk]"
-            )
 
         # Default to latest LTS if no version specified
         version = required_version or 21
@@ -159,33 +152,6 @@ class JavaLocator:
 
         except Exception as e:
             raise RuntimeError(f"Failed to obtain Java via cjdk: {e}")
-
-    def _locate_auto_java(self, required_version: Optional[int] = None) -> Path:
-        """
-        Automatically select best Java source.
-
-        Prefers cjdk if available, falls back to system Java.
-
-        Args:
-            required_version: Minimum required Java version
-
-        Returns:
-            Path to java executable
-        """
-        # Try cjdk first if available
-        import importlib.util
-
-        if importlib.util.find_spec("cjdk") is not None:
-            return self._locate_cjdk_java(required_version)
-        else:
-            # cjdk not available, use system Java
-            if required_version and self.verbose:
-                print(
-                    f"Note: cjdk not installed. Using system Java. "
-                    f"Install jgo[cjdk] for automatic Java {required_version} management.",
-                    file=sys.stderr,
-                )
-            return self._locate_system_java(required_version)
 
     def _find_java_in_path(self) -> Optional[Path]:
         """

@@ -35,15 +35,12 @@ classifiers = [
 
 requires-python = ">=3.9"
 dependencies = [
+  "cjdk>=0.4.0",
   "psutil",
   "requests",
-  "tomli>=2.0.0; python_version<'3.11'",  # TOML reading (stdlib tomllib in 3.11+)
-  "tomli-w>=1.0.0",  # TOML writing
+  "tomli>=2.0.0; python_version<'3.11'",
+  "tomli-w>=1.0.0",
 ]
-
-[project.optional-dependencies]
-cjdk = ["cjdk>=0.4.0"]  # Automatic Java version management
-all = ["cjdk>=0.4.0"]   # All optional features
 
 [dependency-groups]
 dev = [

@@ -209,7 +209,7 @@ jvm_config = JVMConfig(
 # Run program
 runner = JavaRunner(
     jvm_config=jvm_config,
-    java_source=JavaSource.AUTO  # Auto-download Java if needed
+    java_source=JavaSource.CJDK  # Auto-download Java if needed
 )
 
 result = runner.run(
@@ -227,14 +227,9 @@ result = runner.run(
 - Requires pre-installed Java
 
 **CJDK**:
+- Detects environment's `min_java_version`
 - Uses cjdk to download Java automatically
 - Supports version and vendor selection
-- Requires `pip install jgo[cjdk]`
-
-**AUTO** (default):
-- Detects environment's `min_java_version`
-- Uses cjdk to download matching Java (if installed)
-- Falls back to system Java with compatibility warning
 
 ### Zero-Configuration Execution
 
@@ -375,7 +370,7 @@ Each layer can be tested in isolation:
 Mix and match components:
 - Use SimpleResolver or MavenResolver
 - Use hard links or copies
-- Use system Java or cjdk
+- Use cjdk or system Java
 
 ### 4. No External Dependencies (Core)
 
