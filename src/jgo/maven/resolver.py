@@ -100,7 +100,8 @@ class SimpleResolver(Resolver):
 
         for dep in deps:
             scope_suffix = f":{dep.scope}" if dep.scope != "compile" else ""
-            line = f"   {dep.groupId}:{dep.artifactId}:{dep.type}:{dep.version}{scope_suffix}"
+            classifier_part = f":{dep.classifier}" if dep.classifier else ""
+            line = f"   {dep.groupId}:{dep.artifactId}:{dep.type}{classifier_part}:{dep.version}{scope_suffix}"
             lines.append(line)
 
         return "\n".join(lines)
