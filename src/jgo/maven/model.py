@@ -105,14 +105,33 @@ class Model:
         _log.debug(f"{self.gav}: dependency management injection")
 
         # Handles injection of dependency management into the model.
+        # According to Maven semantics, dependency management provides default values for:
+        # version, scope, type, classifier, exclusions, and optional flag.
         for gact, dep in self.deps.items():
-            if dep.version is not None:
-                continue
-            # This dependency's version is still unset; use managed version.
             managed = self.dep_mgmt.get(gact, None)
             if managed is None:
-                raise ValueError(f"No version available for dependency {dep}")
-            dep.set_version(managed.version)
+                # No managed version available
+                if dep.version is None:
+                    raise ValueError(f"No version available for dependency {dep}")
+                continue
+
+            # Inject version if not set
+            if dep.version is None:
+                dep.set_version(managed.version)
+
+            # Inject scope if not explicitly set
+            if dep.scope is None and managed.scope is not None:
+                dep.scope = managed.scope
+
+            # Inject exclusions if managed dependency has them and current doesn't
+            if managed.exclusions and not dep.exclusions:
+                dep.exclusions = managed.exclusions
+
+        # -- set default scopes --
+        # Any dependencies that still don't have a scope get the default
+        for dep in self.deps.values():
+            if dep.scope is None:
+                dep.scope = "test" if dep.classifier == "tests" else "compile"
 
         _log.debug(f"{self.gav}: model construction complete")
 

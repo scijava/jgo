@@ -100,7 +100,8 @@ class MavenContext:
         version = el.findtext("version")  # NB: Might be None, which means managed.
         classifier = el.findtext("classifier") or DEFAULT_CLASSIFIER
         packaging = el.findtext("type") or DEFAULT_PACKAGING
-        scope = el.findtext("scope") or ("test" if packaging == "tests" else "compile")
+        # NB: Keep scope as None if not specified, so dependency management can inject it
+        scope = el.findtext("scope")
         optional = el.findtext("optional") == "true" or False
         exclusions = [
             self.project(ex.findtext("groupId"), ex.findtext("artifactId"))
@@ -468,8 +469,8 @@ class Dependency:
         optional: bool = False,
         exclusions: Iterable[Project] = None,
     ):
-        if scope is None:
-            scope = "test" if artifact.classifier == "tests" else "compile"
+        # NB: scope can be None here - it will be set by dependency management injection
+        # or default to "compile" later in the model building process
         self.artifact = artifact
         self.scope = scope
         self.optional = optional
