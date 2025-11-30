@@ -209,8 +209,6 @@ class EnvironmentBuilder:
         jars_dir.mkdir(exist_ok=True)
 
         # Resolve dependencies
-        from jgo.maven import Model
-
         all_deps = []
 
         # First, link the components themselves
@@ -223,9 +221,9 @@ class EnvironmentBuilder:
                 link_file(source_path, dest_path, self.link_strategy)
 
         # Then resolve and link their dependencies
+        # Use the resolver from maven_context to respect --resolver flag
         for component in components:
-            model = Model(component.pom())
-            deps = model.dependencies()
+            deps = component.maven_context.resolver.dependencies(component)
             all_deps.extend(deps)
 
         # Link/copy dependency JARs

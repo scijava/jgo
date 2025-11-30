@@ -210,6 +210,22 @@ class JgoCommands:
         maven_context = self._create_maven_context()
         builder = self._create_environment_builder(maven_context)
 
+        # If --print-dependencies, parse coordinates and print dependencies without building full environment
+        if self.args.print_dependencies:
+            # Parse coordinates into components
+            components = []
+            for coord in spec.coordinates:
+                parts = coord.split(":")
+                groupId = parts[0]
+                artifactId = parts[1]
+                version = parts[2] if len(parts) >= 3 else "RELEASE"
+                component = maven_context.project(groupId, artifactId).at_version(
+                    version
+                )
+                components.append(component)
+            self._print_dependencies(components, maven_context)
+            return 0
+
         # Build environment
         if self.verbose:
             print(f"Building environment from {spec_file}...")
@@ -255,6 +271,12 @@ class JgoCommands:
         # Create Maven context and environment builder
         maven_context = self._create_maven_context()
         builder = self._create_environment_builder(maven_context)
+
+        # If --print-dependencies, parse endpoint and print dependencies without building full environment
+        if self.args.print_dependencies:
+            components, _ = builder._parse_endpoint(self.args.endpoint)
+            self._print_dependencies(components, maven_context)
+            return 0
 
         # Build environment
         if self.verbose:
@@ -303,7 +325,7 @@ class JgoCommands:
             from jgo.util import ensure_maven_available
 
             mvn_command = ensure_maven_available()
-            resolver = MavenResolver(mvn_command)
+            resolver = MavenResolver(mvn_command, update=self.args.update)
         else:  # auto
             resolver = SimpleResolver()  # Default to pure Python
 
@@ -402,6 +424,25 @@ class JgoCommands:
         separator = ";" if sys.platform == "win32" else ":"
         classpath_str = separator.join(str(p) for p in classpath)
         print(classpath_str)
+
+    def _print_dependencies(self, components, maven_context) -> None:
+        """
+        Print dependency tree for the given components.
+        """
+        from jgo.maven import MavenResolver
+
+        # Only MavenResolver supports dependency tree printing
+        if not isinstance(maven_context.resolver, MavenResolver):
+            print(
+                "Error: --print-dependencies requires --resolver=maven",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
+        # Print dependency tree for the primary component
+        primary = components[0]
+        tree = maven_context.resolver.print_dependency_tree(primary)
+        print(tree)
 
     def _print_java_info(self, environment) -> None:
         """
