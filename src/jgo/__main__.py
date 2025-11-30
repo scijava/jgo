@@ -1,4 +1,41 @@
-import jgo
+"""
+Main entry point for jgo CLI.
+
+This module implements the command-line interface for jgo 2.0.
+"""
+
+import sys
+
+from jgo.cli.parser import JgoArgumentParser
+from jgo.cli.commands import JgoCommands
+from jgo.config.jgorc import JgoConfig
+from jgo.util.logging import setup_logging
+
+
+def main():
+    """
+    Main entry point for the jgo CLI.
+    """
+    # Parse arguments
+    parser = JgoArgumentParser()
+    args = parser.parse_args()
+
+    # Setup logging
+    setup_logging(verbose=args.verbose, quiet=args.quiet)
+
+    # Load configuration
+    config = JgoConfig.load()
+
+    # Apply shortcuts to endpoint if present
+    if args.endpoint:
+        args.endpoint = config.expand_shortcuts(args.endpoint)
+
+    # Execute command
+    commands = JgoCommands(args, config.to_dict())
+    exit_code = commands.execute()
+
+    sys.exit(exit_code)
+
 
 if __name__ == "__main__":
-    jgo.main()
+    main()

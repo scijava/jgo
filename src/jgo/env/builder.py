@@ -205,12 +205,23 @@ class EnvironmentBuilder:
         from jgo.maven import Model
 
         all_deps = []
+
+        # First, link the components themselves
+        for component in components:
+            artifact = component.artifact()
+            source_path = artifact.resolve()
+            dest_path = jars_dir / artifact.filename
+
+            if not dest_path.exists():
+                link_file(source_path, dest_path, self.link_strategy)
+
+        # Then resolve and link their dependencies
         for component in components:
             model = Model(component.pom())
             deps = model.dependencies()
             all_deps.extend(deps)
 
-        # Link/copy JARs
+        # Link/copy dependency JARs
         for dep in all_deps:
             if dep.scope not in ("compile", "runtime"):
                 continue  # Skip test deps, etc.

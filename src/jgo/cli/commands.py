@@ -1,0 +1,363 @@
+"""
+CLI command implementations for jgo 2.0.
+"""
+
+import sys
+from pathlib import Path
+from typing import Optional
+
+from jgo.maven import MavenContext, SimpleResolver, MavenResolver
+from jgo.env import EnvironmentBuilder, LinkStrategy, EnvironmentSpec
+from jgo.exec import JavaRunner, JVMConfig, JavaSource
+from .parser import ParsedArgs
+
+
+class JgoCommands:
+    """
+    Implementation of jgo CLI commands.
+    """
+
+    def __init__(self, args: ParsedArgs, config: Optional[dict] = None):
+        """
+        Initialize commands with parsed arguments and configuration.
+
+        Args:
+            args: Parsed command line arguments
+            config: Configuration from ~/.jgorc (optional)
+        """
+        self.args = args
+        self.config = config or {}
+        self.verbose = args.verbose > 0 and not args.quiet
+        self.debug = args.verbose >= 2
+
+    def execute(self) -> int:
+        """
+        Execute the appropriate command based on parsed arguments.
+
+        Returns:
+            Exit code (0 for success, non-zero for failure)
+        """
+        try:
+            # Handle --init (generate jgo.toml)
+            if self.args.init:
+                return self._cmd_init()
+
+            # Handle --list-entrypoints
+            if self.args.list_entrypoints:
+                return self._cmd_list_entrypoints()
+
+            # Handle --list-versions
+            if self.args.list_versions:
+                return self._cmd_list_versions()
+
+            # Handle spec file mode vs endpoint mode
+            if self.args.is_spec_mode():
+                return self._cmd_run_spec()
+            else:
+                return self._cmd_run_endpoint()
+
+        except KeyboardInterrupt:
+            if self.verbose:
+                print("\nInterrupted by user", file=sys.stderr)
+            return 130  # Standard exit code for SIGINT
+        except Exception as e:
+            if self.debug:
+                raise  # Show full traceback in debug mode
+            print(f"Error: {e}", file=sys.stderr)
+            return 1
+
+    def _cmd_init(self) -> int:
+        """
+        Generate jgo.toml from endpoint.
+        """
+        endpoint = self.args.init
+        if not endpoint:
+            print("Error: --init requires an endpoint", file=sys.stderr)
+            return 1
+
+        # Parse endpoint to extract coordinates
+        # For now, create a simple spec
+        spec = EnvironmentSpec(
+            name="jgo-environment",
+            description=f"Generated from {endpoint}",
+            coordinates=[endpoint],
+            entrypoints={},
+            default_entrypoint=None,
+        )
+
+        output_file = self.args.file or Path("jgo.toml")
+        spec.save(output_file)
+
+        if self.verbose:
+            print(f"Generated {output_file}")
+
+        return 0
+
+    def _cmd_list_entrypoints(self) -> int:
+        """
+        List available entrypoints from jgo.toml.
+        """
+        spec_file = self.args.get_spec_file()
+
+        if not spec_file.exists():
+            print(f"Error: {spec_file} not found", file=sys.stderr)
+            return 1
+
+        spec = EnvironmentSpec.load(spec_file)
+
+        if not spec.entrypoints:
+            print("No entrypoints defined")
+            return 0
+
+        print("Available entrypoints:")
+        for name, main_class in spec.entrypoints.items():
+            marker = " (default)" if name == spec.default_entrypoint else ""
+            print(f"  {name}: {main_class}{marker}")
+
+        return 0
+
+    def _cmd_list_versions(self) -> int:
+        """
+        List available versions for a Maven artifact.
+        """
+        if not self.args.endpoint:
+            print("Error: --list-versions requires an endpoint", file=sys.stderr)
+            return 1
+
+        # Parse endpoint to get groupId and artifactId
+        parts = self.args.endpoint.split(":")
+        if len(parts) < 2:
+            print(
+                "Error: Invalid endpoint format. Need at least groupId:artifactId",
+                file=sys.stderr,
+            )
+            return 1
+
+        groupId = parts[0]
+        artifactId = parts[1]
+
+        # Create Maven context
+        maven_context = self._create_maven_context()
+
+        # Get project and fetch versions
+        project = maven_context.project(groupId, artifactId)
+
+        try:
+            # Update metadata from remote
+            project.update()
+
+            # Get available versions
+            metadata = project.metadata
+            if not metadata or not metadata.versions:
+                print(f"No versions found for {groupId}:{artifactId}")
+                return 0
+
+            print(f"Available versions for {groupId}:{artifactId}:")
+            for version in metadata.versions:
+                marker = ""
+                if metadata.release and version == metadata.release:
+                    marker = " (release)"
+                elif metadata.latest and version == metadata.latest:
+                    marker = " (latest)"
+                print(f"  {version}{marker}")
+
+        except Exception as e:
+            print(f"Error fetching versions: {e}", file=sys.stderr)
+            return 1
+
+        return 0
+
+    def _cmd_run_spec(self) -> int:
+        """
+        Run from jgo.toml spec file.
+        """
+        spec_file = self.args.get_spec_file()
+
+        if not spec_file.exists():
+            print(f"Error: {spec_file} not found", file=sys.stderr)
+            return 1
+
+        # Load spec
+        spec = EnvironmentSpec.load(spec_file)
+
+        # Create Maven context and environment builder
+        maven_context = self._create_maven_context()
+        builder = self._create_environment_builder(maven_context)
+
+        # Build environment
+        if self.verbose:
+            print(f"Building environment from {spec_file}...")
+
+        environment = builder.from_spec(
+            spec, update=self.args.update, entrypoint=self.args.entrypoint
+        )
+
+        # If --print-classpath, just print and exit
+        if self.args.print_classpath:
+            self._print_classpath(environment)
+            return 0
+
+        # Create runner and execute
+        if self.verbose:
+            print(f"Running {spec.name}...")
+
+        runner = self._create_java_runner()
+        result = runner.run(
+            environment=environment,
+            app_args=self.args.app_args,
+            additional_jvm_args=self.args.jvm_args,
+            print_command=self.debug,
+        )
+
+        return result.returncode
+
+    def _cmd_run_endpoint(self) -> int:
+        """
+        Run from endpoint string.
+        """
+        if not self.args.endpoint:
+            print("Error: No endpoint specified", file=sys.stderr)
+            print("Use 'jgo --help' for usage information", file=sys.stderr)
+            return 1
+
+        # Create Maven context and environment builder
+        maven_context = self._create_maven_context()
+        builder = self._create_environment_builder(maven_context)
+
+        # Build environment
+        if self.verbose:
+            print(f"Building environment for {self.args.endpoint}...")
+
+        environment = builder.from_endpoint(
+            self.args.endpoint,
+            update=self.args.update,
+            main_class=self.args.main_class,
+        )
+
+        # If --print-classpath, just print and exit
+        if self.args.print_classpath:
+            self._print_classpath(environment)
+            return 0
+
+        # Create runner and execute
+        if self.verbose:
+            print("Running Java application...")
+
+        runner = self._create_java_runner()
+        result = runner.run(
+            environment=environment,
+            main_class=self.args.main_class,
+            app_args=self.args.app_args,
+            additional_jvm_args=self.args.jvm_args,
+            print_command=self.debug,
+        )
+
+        return result.returncode
+
+    def _create_maven_context(self) -> MavenContext:
+        """
+        Create Maven context from arguments and configuration.
+        """
+        # Determine resolver
+        if self.args.resolver == "pure":
+            resolver = SimpleResolver()
+        elif self.args.resolver == "maven":
+            resolver = MavenResolver()
+        else:  # auto
+            resolver = SimpleResolver()  # Default to pure Python
+
+        # Get repo cache path
+        repo_cache = self.args.repo_cache
+        if repo_cache is None:
+            # Check config, then default
+            repo_cache = self.config.get(
+                "repo_cache", Path.home() / ".m2" / "repository"
+            )
+        repo_cache = Path(repo_cache).expanduser()
+
+        # Get remote repositories
+        remote_repos = {}
+
+        # Start with Maven Central
+        remote_repos["central"] = "https://repo.maven.apache.org/maven2"
+
+        # Add from config
+        if "repositories" in self.config:
+            remote_repos.update(self.config["repositories"])
+
+        # Add from command line (overrides config)
+        if self.args.repositories:
+            remote_repos.update(self.args.repositories)
+
+        # Create context
+        return MavenContext(
+            repo_cache=repo_cache,
+            remote_repos=remote_repos,
+            resolver=resolver,
+        )
+
+    def _create_environment_builder(
+        self, maven_context: MavenContext
+    ) -> EnvironmentBuilder:
+        """
+        Create environment builder from arguments and configuration.
+        """
+        # Determine link strategy
+        link_strategy_map = {
+            "hard": LinkStrategy.HARD,
+            "soft": LinkStrategy.SOFT,
+            "copy": LinkStrategy.COPY,
+            "auto": LinkStrategy.AUTO,
+        }
+        link_strategy = link_strategy_map[self.args.link]
+
+        # Get cache directory
+        cache_dir = self.args.cache_dir
+        if cache_dir is None:
+            # Check config
+            cache_dir = self.config.get("cache_dir")
+        # If still None, EnvironmentBuilder will auto-detect
+
+        return EnvironmentBuilder(
+            maven_context=maven_context,
+            cache_dir=cache_dir,
+            link_strategy=link_strategy,
+        )
+
+    def _create_java_runner(self) -> JavaRunner:
+        """
+        Create Java runner from arguments and configuration.
+        """
+        # Map string to JavaSource enum
+        java_source_map = {
+            "auto": JavaSource.AUTO,
+            "system": JavaSource.SYSTEM,
+            "cjdk": JavaSource.CJDK,
+        }
+        java_source = java_source_map[self.args.java_source]
+
+        # Create JVM config
+        jvm_config = JVMConfig()
+
+        # TODO: Load JVM options from config file
+
+        return JavaRunner(
+            jvm_config=jvm_config,
+            java_source=java_source,
+            java_version=self.args.java_version,
+            java_vendor=self.args.java_vendor,
+            verbose=self.verbose,
+        )
+
+    def _print_classpath(self, environment) -> None:
+        """
+        Print environment classpath.
+        """
+        classpath = environment.classpath
+        if not classpath:
+            print("No JARs in classpath", file=sys.stderr)
+            return
+
+        separator = ";" if sys.platform == "win32" else ":"
+        classpath_str = separator.join(str(p) for p in classpath)
+        print(classpath_str)
