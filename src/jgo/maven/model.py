@@ -135,7 +135,11 @@ class Model:
 
         _log.debug(f"{self.gav}: model construction complete")
 
-    def dependencies(self, resolved: Dict[GACT, Dependency] = None) -> List[Dependency]:
+    def dependencies(
+        self,
+        resolved: Dict[GACT, Dependency] = None,
+        root_dep_mgmt: Dict[GACT, Dependency] = None,
+    ) -> List[Dependency]:
         """
         Compute the component's list of dependencies, including transitive dependencies.
 
@@ -143,6 +147,9 @@ class Model:
             Optional dictionary of already-resolved dependency coordinates.
             Items present in this structure will be pruned from the
             returned dependency list rather than recursively explored.
+        :param root_dep_mgmt:
+            Optional dependency management from the root project.
+            This will be used to override versions of transitive dependencies.
         :return: The list of Dependency objects.
         """
         deps: Dict[GACT, Dependency] = {}
@@ -151,6 +158,8 @@ class Model:
         recursing: bool = resolved is not None
         if resolved is None:
             resolved = {}
+            # At the root level, use our own dependency management for transitive deps
+            root_dep_mgmt = self.dep_mgmt
 
         # Process direct dependencies.
         direct_deps: Dict[GACT, Dependency] = {}
@@ -169,7 +178,7 @@ class Model:
         # Look for transitive dependencies (i.e. dependencies of direct dependencies).
         for dep in direct_deps.values():
             dep_model = Model(dep.artifact.component.pom())
-            dep_deps = dep_model.dependencies(deps)
+            dep_deps = dep_model.dependencies(deps, root_dep_mgmt)
             for dep_dep in dep_deps:
                 if dep_dep.optional:
                     continue  # Optional dependency is not transitive.
@@ -197,10 +206,11 @@ class Model:
                 elif dep.scope == "test":
                     dep_dep.scope = "test"  # We only need this dependency for testing.
 
-                # If the transitive dependency has a managed version, prefer it.
+                # If the transitive dependency has a managed version in the root, prefer it.
+                # This ensures the root project's dependency management applies to all dependencies.
                 managed_note = ""
-                if dep_dep_gact in self.dep_mgmt:
-                    managed_dep = self.dep_mgmt.get(dep_dep_gact)
+                if root_dep_mgmt and dep_dep_gact in root_dep_mgmt:
+                    managed_dep = root_dep_mgmt.get(dep_dep_gact)
                     managed_note = f" (managed from {dep_dep.version})"
                     dep_dep.set_version(managed_dep.version)
 
