@@ -1,3 +1,9 @@
+"""
+DEPRECATED library functions from jgo v1.x.
+Preserved here only for backwards compatibility.
+This file will be removed in jgo 3.0.0.
+"""
+
 import argparse
 import configparser
 import glob
