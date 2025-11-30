@@ -14,7 +14,8 @@ from jgo.env import Environment
 # Helper to check if cjdk is available
 def _has_cjdk():
     try:
-        import cjdk
+        import cjdk  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -270,7 +271,7 @@ class TestIntegration:
         compile_result = subprocess.run(
             ["javac", "-d", str(build_dir), str(java_source)],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         if compile_result.returncode != 0:
@@ -279,9 +280,17 @@ class TestIntegration:
         # Create JAR file
         jar_path = tmp_path / "hello-world.jar"
         jar_result = subprocess.run(
-            ["jar", "cfm", str(jar_path), str(manifest_file), "-C", str(build_dir), "."],
+            [
+                "jar",
+                "cfm",
+                str(jar_path),
+                str(manifest_file),
+                "-C",
+                str(build_dir),
+                ".",
+            ],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         if jar_result.returncode != 0:
@@ -295,6 +304,7 @@ class TestIntegration:
 
         # Copy JAR to environment
         import shutil
+
         shutil.copy(jar_path, jars_dir / "hello-world.jar")
 
         env = Environment(env_path)
@@ -327,7 +337,9 @@ class TestIntegration:
         """Test running with application arguments."""
         # Use SYSTEM Java to avoid cjdk version compatibility issues
         runner = JavaRunner(java_source=JavaSource.SYSTEM)
-        result = runner.run_and_capture(hello_world_jar, app_args=["arg1", "arg2", "arg3"])
+        result = runner.run_and_capture(
+            hello_world_jar, app_args=["arg1", "arg2", "arg3"]
+        )
 
         # Check that arguments were passed
         assert result.returncode == 0

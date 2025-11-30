@@ -92,8 +92,11 @@ class EnvironmentBuilder:
         # Check if environment exists and is valid
         environment = Environment(workspace_path)
         if workspace_path.exists() and not update:
-            # TODO: Validate environment is up to date
-            return environment
+            # Validate environment has JARs
+            if environment.classpath:
+                # Environment is valid, use it
+                return environment
+            # Otherwise fall through to rebuild
 
         # Build/rebuild environment
         # Note: We don't need the returned deps here since from_components
@@ -151,8 +154,11 @@ class EnvironmentBuilder:
         # Check if environment exists and is valid
         environment = Environment(workspace_path)
         if workspace_path.exists() and not update:
-            # TODO: Validate environment is up to date
-            return environment
+            # Validate environment has JARs
+            if environment.classpath:
+                # Environment is valid, use it
+                return environment
+            # Otherwise fall through to rebuild
 
         # Build environment and get resolved dependencies
         resolved_deps = self._build_environment(environment, components, main_class)
@@ -178,8 +184,9 @@ class EnvironmentBuilder:
     def _cache_key(self, components: List[Component]) -> str:
         """Generate a stable hash for a set of components."""
         # Sort to ensure stable ordering
+        # Use resolved_version to ensure RELEASE/LATEST resolve to consistent cache keys
         coord_strings = sorted(
-            [f"{c.groupId}:{c.artifactId}:{c.version}" for c in components]
+            [f"{c.groupId}:{c.artifactId}:{c.resolved_version}" for c in components]
         )
         combined = "+".join(coord_strings)
         return hashlib.sha256(combined.encode()).hexdigest()[:16]
@@ -235,7 +242,7 @@ class EnvironmentBuilder:
 
         # Save manifest
         environment.manifest["components"] = [
-            f"{c.groupId}:{c.artifactId}:{c.version}" for c in components
+            f"{c.groupId}:{c.artifactId}:{c.resolved_version}" for c in components
         ]
         environment.manifest["link_strategy"] = self.link_strategy.name
         environment.save_manifest()
@@ -244,8 +251,15 @@ class EnvironmentBuilder:
         if main_class:
             environment.set_main_class(main_class)
         else:
-            # TODO: Auto-detect from primary component
-            pass
+            # Auto-detect from primary component JAR
+            from .jar_util import detect_main_class_from_jar
+
+            primary_component = components[0]
+            primary_jar = jars_dir / primary_component.artifact().filename
+            if primary_jar.exists():
+                detected_main = detect_main_class_from_jar(primary_jar)
+                if detected_main:
+                    environment.set_main_class(detected_main)
 
         # Return dependencies for lock file generation
         return all_deps
