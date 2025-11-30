@@ -47,6 +47,9 @@ Examples:
   # Build environment without running
   jgo --print-classpath org.python:jython-standalone
 
+  # Show Java version requirements
+  jgo --print-java-info org.python:jython-standalone
+
   # Force update and use pure Python resolver
   jgo --update --resolver=pure org.python:jython-standalone
 
@@ -202,6 +205,11 @@ Examples:
             help="Print classpath and exit (don't run)",
         )
         parser.add_argument(
+            "--print-java-info",
+            action="store_true",
+            help="Print Java version requirements and exit",
+        )
+        parser.add_argument(
             "--dry-run",
             action="store_true",
             help="Show what would be done, but don't do it",
@@ -324,6 +332,7 @@ Examples:
             # Information commands
             list_versions=parsed.list_versions,
             print_classpath=parsed.print_classpath,
+            print_java_info=parsed.print_java_info,
             dry_run=parsed.dry_run,
             # Spec file
             file=parsed.file,
@@ -433,6 +442,7 @@ class ParsedArgs:
         # Information commands
         list_versions: bool = False,
         print_classpath: bool = False,
+        print_java_info: bool = False,
         dry_run: bool = False,
         # Spec file
         file: Optional[Path] = None,
@@ -474,6 +484,7 @@ class ParsedArgs:
         # Information commands
         self.list_versions = list_versions
         self.print_classpath = print_classpath
+        self.print_java_info = print_java_info
         self.dry_run = dry_run
         # Spec file
         self.file = file
