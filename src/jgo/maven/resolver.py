@@ -6,12 +6,13 @@ import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 from subprocess import run
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
 import requests
 
 if TYPE_CHECKING:
     from .core import Artifact, Component, Dependency
+    from .dependency_printer import DependencyNode
 
 _log = logging.getLogger(__name__)
 
@@ -38,6 +39,37 @@ class Resolver(ABC):
         Determine dependencies for the given Maven component.
         :param component: The component for which to determine the dependencies.
         :return: The list of dependencies.
+        """
+        ...
+
+    @abstractmethod
+    def get_dependency_list(
+        self, component: "Component"
+    ) -> Tuple["DependencyNode", List["DependencyNode"]]:
+        """
+        Get the flat list of resolved dependencies as data structures.
+
+        This returns the dependency data in a common format that can be used by
+        the dependency printing logic to ensure consistent output across resolvers.
+
+        :param component: The component for which to get dependencies.
+        :return: Tuple of (root_node, dependencies_list) where root_node is the
+                 component itself and dependencies_list is the sorted list of all
+                 resolved transitive dependencies.
+        """
+        ...
+
+    @abstractmethod
+    def get_dependency_tree(self, component: "Component") -> "DependencyNode":
+        """
+        Get the full dependency tree as a data structure.
+
+        This returns the dependency data in a common format that can be used by
+        the dependency printing logic to ensure consistent output across resolvers.
+
+        :param component: The component for which to get the dependency tree.
+        :return: DependencyNode representing the root component with children populated
+                 recursively to form the complete dependency tree.
         """
         ...
 
@@ -79,17 +111,22 @@ class SimpleResolver(Resolver):
         model = Model(component.pom())
         return model.dependencies()
 
-    def print_dependency_list(self, component: "Component") -> str:
+    def get_dependency_list(
+        self, component: "Component"
+    ) -> Tuple["DependencyNode", List["DependencyNode"]]:
         """
-        Print a flat list of resolved dependencies (like mvn dependency:list).
-        This shows what will actually be used when building the environment.
-        :param component: The component for which to print dependencies.
-        :return: The dependency list as a string.
+        Get the flat list of resolved dependencies as data structures.
         """
+        from .dependency_printer import DependencyNode
         from .model import Model
 
-        lines = []
-        lines.append(f"{component.groupId}:{component.artifactId}:{component.version}")
+        # Create root node
+        root = DependencyNode(
+            groupId=component.groupId,
+            artifactId=component.artifactId,
+            version=component.version,
+            packaging="jar",
+        )
 
         # Build the model and get mediated dependencies
         model = Model(component.pom())
@@ -98,25 +135,36 @@ class SimpleResolver(Resolver):
         # Sort for consistent output
         deps.sort(key=lambda d: (d.groupId, d.artifactId, d.version))
 
+        # Convert to DependencyNode list
+        dep_nodes = []
         for dep in deps:
-            scope_suffix = f":{dep.scope}" if dep.scope != "compile" else ""
-            classifier_part = f":{dep.classifier}" if dep.classifier else ""
-            line = f"   {dep.groupId}:{dep.artifactId}:{dep.type}{classifier_part}:{dep.version}{scope_suffix}"
-            lines.append(line)
+            node = DependencyNode(
+                groupId=dep.groupId,
+                artifactId=dep.artifactId,
+                version=dep.version,
+                packaging=dep.type,
+                classifier=dep.classifier if dep.classifier else None,
+                scope=dep.scope,
+                optional=dep.optional,
+            )
+            dep_nodes.append(node)
 
-        return "\n".join(lines)
+        return root, dep_nodes
 
-    def print_dependency_tree(self, component: "Component") -> str:
+    def get_dependency_tree(self, component: "Component") -> "DependencyNode":
         """
-        Print the full dependency tree for the given component (like mvn dependency:tree).
-        Uses proper dependency mediation - only one version per artifact.
-        :param component: The component for which to print dependencies.
-        :return: The dependency tree as a string.
+        Get the full dependency tree as a data structure.
         """
+        from .dependency_printer import DependencyNode
         from .model import Model
 
-        lines = []
-        lines.append(f"{component.groupId}:{component.artifactId}:{component.version}")
+        # Create root node
+        root = DependencyNode(
+            groupId=component.groupId,
+            artifactId=component.artifactId,
+            version=component.version,
+            packaging="jar",
+        )
 
         # Build the model to get dependencies
         model = Model(component.pom())
@@ -124,22 +172,25 @@ class SimpleResolver(Resolver):
         # Track which G:A:C:T we've already processed (version not included for mediation)
         processed = set()
 
-        def add_deps(deps, prefix="", is_last=True):
-            """Recursively add dependencies to the tree."""
-            for i, dep in enumerate(deps):
-                is_last_item = i == len(deps) - 1
-                connector = "└── " if is_last_item else "├── "
-                extension = "    " if is_last_item else "│   "
-
+        def build_tree(deps: List["Dependency"]) -> List[DependencyNode]:
+            """Recursively build dependency tree."""
+            nodes = []
+            for dep in deps:
                 # Use G:A:C:T (without version) for deduplication, like Maven does
                 dep_key = (dep.groupId, dep.artifactId, dep.classifier, dep.type)
-                scope_suffix = f":{dep.scope}" if dep.scope != "compile" else ""
-                optional_suffix = " (optional)" if dep.optional else ""
 
-                line = f"{prefix}{connector}{dep.groupId}:{dep.artifactId}:{dep.type}:{dep.version}{scope_suffix}{optional_suffix}"
-                lines.append(line)
+                # Create node
+                node = DependencyNode(
+                    groupId=dep.groupId,
+                    artifactId=dep.artifactId,
+                    version=dep.version,
+                    packaging=dep.type,
+                    classifier=dep.classifier if dep.classifier else None,
+                    scope=dep.scope,
+                    optional=dep.optional,
+                )
 
-                # Recursively show transitive dependencies, but use proper mediation
+                # Recursively process children if not already seen
                 if dep_key not in processed:
                     processed.add(dep_key)
                     try:
@@ -151,19 +202,43 @@ class SimpleResolver(Resolver):
                             if d.scope in ("compile", "runtime") and not d.optional
                         ]
                         if transitive_deps:
-                            add_deps(
-                                transitive_deps,
-                                prefix + extension,
-                                is_last=is_last_item,
-                            )
+                            node.children = build_tree(transitive_deps)
                     except Exception as e:
                         _log.debug(f"Could not resolve dependencies for {dep}: {e}")
 
-        # Add direct dependencies
-        direct_deps = list(model.deps.values())
-        add_deps(direct_deps)
+                nodes.append(node)
 
-        return "\n".join(lines)
+            return nodes
+
+        # Build tree from direct dependencies
+        direct_deps = list(model.deps.values())
+        root.children = build_tree(direct_deps)
+
+        return root
+
+    def print_dependency_list(self, component: "Component") -> str:
+        """
+        Print a flat list of resolved dependencies (like mvn dependency:list).
+        This shows what will actually be used when building the environment.
+        :param component: The component for which to print dependencies.
+        :return: The dependency list as a string.
+        """
+        from .dependency_printer import format_dependency_list
+
+        root, deps = self.get_dependency_list(component)
+        return format_dependency_list(root, deps)
+
+    def print_dependency_tree(self, component: "Component") -> str:
+        """
+        Print the full dependency tree for the given component (like mvn dependency:tree).
+        Uses proper dependency mediation - only one version per artifact.
+        :param component: The component for which to print dependencies.
+        :return: The dependency tree as a string.
+        """
+        from .dependency_printer import format_dependency_tree
+
+        root = self.get_dependency_tree(component)
+        return format_dependency_tree(root)
 
 
 class MavenResolver(Resolver):
@@ -219,8 +294,8 @@ class MavenResolver(Resolver):
         )
 
         # Parse Maven's dependency:list output format:
-        # [INFO]    groupId:artifactId:packaging:version:scope
-        # [INFO]    groupId:artifactId:packaging:classifier:version:scope
+        # Java 8:  [INFO]    groupId:artifactId:packaging:version:scope
+        # Java 9+: [INFO]    groupId:artifactId:packaging:version:scope -- module module.name
         dependencies = []
 
         for line in output.splitlines():
@@ -235,10 +310,20 @@ class MavenResolver(Resolver):
             if ":" not in content:
                 continue
 
+            # Strip module information added by Java 9+ (e.g., " -- module org.junit.jupiter.api")
+            if " -- module " in content:
+                content = content.split(" -- module ")[0].strip()
+
             # Parse G:A:P[:C]:V:S format
             parts = content.split(":")
             if len(parts) < 5:
                 continue
+
+            # Handle optional dependencies (marked with " (optional)") BEFORE scope validation
+            optional = False
+            if parts[-1].endswith(" (optional)"):
+                parts[-1] = parts[-1][:-11]  # Remove " (optional)"
+                optional = True
 
             # Check if this looks like a dependency (ends with scope like 'compile', 'runtime', etc.)
             if parts[-1] not in (
@@ -263,12 +348,6 @@ class MavenResolver(Resolver):
                 # Unknown format, skip
                 continue
 
-            # Handle optional dependencies (marked with " (optional)")
-            optional = False
-            if scope.endswith(" (optional)"):
-                scope = scope[:-11]  # Remove " (optional)"
-                optional = True
-
             # Create dependency object
             from .core import Dependency
 
@@ -287,34 +366,52 @@ class MavenResolver(Resolver):
 
         return dependencies
 
-    def print_dependency_list(self, component: "Component") -> str:
+    def get_dependency_list(
+        self, component: "Component"
+    ) -> Tuple["DependencyNode", List["DependencyNode"]]:
         """
-        Print a flat list of resolved dependencies (like mvn dependency:list).
-        This shows what will actually be used when building the environment.
-        :param component: The component for which to print dependencies.
-        :return: The dependency list as a string.
+        Get the flat list of resolved dependencies as data structures.
         """
-        pom_artifact = component.artifact(packaging="pom")
-        assert pom_artifact.maven_context.repo_cache
+        from .dependency_printer import DependencyNode
 
-        # First ensure the POM is resolved
-        pom_artifact.resolve()
-
-        output = self._mvn(
-            "dependency:list",
-            "-f",
-            pom_artifact.cached_path,
-            f"-Dmaven.repo.local={pom_artifact.maven_context.repo_cache}",
+        # Create root node
+        root = DependencyNode(
+            groupId=component.groupId,
+            artifactId=component.artifactId,
+            version=component.version,
+            packaging="jar",
         )
 
-        return output
+        # Get dependencies using existing method
+        deps = self.dependencies(component)
 
-    def print_dependency_tree(self, component: "Component") -> str:
+        # Sort for consistent output
+        deps.sort(key=lambda d: (d.groupId, d.artifactId, d.version))
+
+        # Convert to DependencyNode list
+        dep_nodes = []
+        for dep in deps:
+            node = DependencyNode(
+                groupId=dep.groupId,
+                artifactId=dep.artifactId,
+                version=dep.version,
+                packaging=dep.type,
+                classifier=dep.classifier if dep.classifier else None,
+                scope=dep.scope,
+                optional=dep.optional,
+            )
+            dep_nodes.append(node)
+
+        return root, dep_nodes
+
+    def get_dependency_tree(self, component: "Component") -> "DependencyNode":
         """
-        Print the full dependency tree for the given component.
-        :param component: The component for which to print dependencies.
-        :return: The dependency tree as a string.
+        Get the full dependency tree as a data structure.
+
+        Parses Maven's dependency:tree output and converts it to DependencyNode structure.
         """
+        from .dependency_printer import DependencyNode
+
         pom_artifact = component.artifact(packaging="pom")
         assert pom_artifact.maven_context.repo_cache
 
@@ -328,7 +425,175 @@ class MavenResolver(Resolver):
             f"-Dmaven.repo.local={pom_artifact.maven_context.repo_cache}",
         )
 
-        return output
+        # Parse the tree output
+        # Format: [INFO] net.imagej:imagej:jar:2.17.0
+        #         [INFO] +- dep1:jar:1.0:scope
+        #         [INFO] |  \- dep2:jar:2.0:scope
+        #         [INFO] \- dep3:jar:3.0:scope
+
+        lines = output.splitlines()
+        root = None
+        stack = []  # Stack of (indent_level, node)
+
+        for line in lines:
+            line_stripped = line.strip()
+            if not line_stripped.startswith("[INFO]"):
+                continue
+
+            # Remove [INFO] prefix
+            content = line[6:]  # Skip "[INFO] "
+
+            # Skip lines that don't look like dependencies
+            # (e.g., "Building ...", "Finished at:", etc.)
+            if ":" not in content:
+                continue
+
+            # Skip lines that contain common Maven status messages
+            skip_patterns = [
+                "Finished at:",
+                "Total time:",
+                "Building ",
+                "from ",
+                "---",
+                "Scanning",
+            ]
+            if any(pattern in content for pattern in skip_patterns):
+                continue
+
+            # Determine indentation level by counting tree characters
+            indent = 0
+            clean_content = content
+
+            # Count indent based on tree structure characters
+            for char in content:
+                if char in " |+\\-":
+                    indent += 1
+                else:
+                    break
+
+            # Clean up tree characters to get just the coordinate
+            clean_content = content.lstrip(" |+\\-")
+
+            if not clean_content or ":" not in clean_content:
+                continue
+
+            # Strip module information added by Java 9+ (e.g., " -- module org.junit.jupiter.api")
+            if " -- module " in clean_content:
+                clean_content = clean_content.split(" -- module ")[0].strip()
+
+            # Additional validation: coordinates should have at least G:A:P:V format
+            colon_count = clean_content.count(":")
+            if colon_count < 3:
+                continue
+
+            # Parse G:A:P[:C]:V[:S] format
+            # Can also have " (optional)" suffix
+            parts = clean_content.split(":")
+            if len(parts) < 4:
+                continue
+
+            optional = False
+            if parts[-1].endswith(" (optional)"):
+                parts[-1] = parts[-1][:-11]  # Remove " (optional)"
+                optional = True
+
+            # Parse based on number of parts
+            if len(parts) == 4:
+                # G:A:P:V
+                groupId, artifactId, packaging, version_scope = parts
+                classifier = None
+                # Check if last part has scope
+                if version_scope.count(":") == 0:
+                    version = version_scope
+                    scope = None
+                else:
+                    version, scope = version_scope.split(":", 1)
+            elif len(parts) == 5:
+                # Could be G:A:P:V:S or G:A:P:C:V
+                groupId, artifactId, packaging, part4, part5 = parts
+                # Check if part5 looks like a scope
+                if part5 in (
+                    "compile",
+                    "runtime",
+                    "provided",
+                    "test",
+                    "system",
+                    "import",
+                ):
+                    # G:A:P:C:V:S
+                    classifier = part4
+                    version = part5
+                    scope = None
+                else:
+                    # G:A:P:V:S
+                    classifier = None
+                    version = part4
+                    scope = part5
+            elif len(parts) == 6:
+                # G:A:P:C:V:S
+                groupId, artifactId, packaging, classifier, version, scope = parts
+            else:
+                continue
+
+            # Create node
+            node = DependencyNode(
+                groupId=groupId,
+                artifactId=artifactId,
+                version=version,
+                packaging=packaging,
+                classifier=classifier if classifier else None,
+                scope=scope if scope and scope != "compile" else None,
+                optional=optional,
+            )
+
+            # Handle root node (no indent)
+            if indent == 0 or root is None:
+                root = node
+                stack = [(0, root)]
+            else:
+                # Find parent by popping stack until we find correct indent level
+                while stack and stack[-1][0] >= indent:
+                    stack.pop()
+
+                if stack:
+                    parent_indent, parent_node = stack[-1]
+                    parent_node.children.append(node)
+
+                stack.append((indent, node))
+
+        return (
+            root
+            if root
+            else DependencyNode(
+                groupId=component.groupId,
+                artifactId=component.artifactId,
+                version=component.version,
+                packaging="jar",
+            )
+        )
+
+    def print_dependency_list(self, component: "Component") -> str:
+        """
+        Print a flat list of resolved dependencies (like mvn dependency:list).
+        This shows what will actually be used when building the environment.
+        :param component: The component for which to print dependencies.
+        :return: The dependency list as a string.
+        """
+        from .dependency_printer import format_dependency_list
+
+        root, deps = self.get_dependency_list(component)
+        return format_dependency_list(root, deps)
+
+    def print_dependency_tree(self, component: "Component") -> str:
+        """
+        Print the full dependency tree for the given component.
+        :param component: The component for which to print dependencies.
+        :return: The dependency tree as a string.
+        """
+        from .dependency_printer import format_dependency_tree
+
+        root = self.get_dependency_tree(component)
+        return format_dependency_tree(root)
 
     def _mvn(self, *args) -> str:
         return MavenResolver._run(self.mvn_command, *self.mvn_flags, *args)
