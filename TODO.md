@@ -6,6 +6,7 @@ This document tracks remaining work for the jgo 2.0.0 release.
 
 These items **must** be completed before releasing 2.0.0:
 
+- [ ] **Managed Dependency Resolution**: The `-m`/`--managed` flag must be fully implemented to behave correctly with both `SimpleResolver` and `MavenResolver`.
 - [ ] **Documentation**: Write user-facing documentation (see Documentation section below)
 - [ ] **CHANGELOG.md**: Create comprehensive changelog documenting all changes from 1.x
 - [ ] **README.md**: Update with jgo 2.0 features and architecture
