@@ -429,16 +429,6 @@ class JgoCommands:
         """
         Print dependency tree for the given components.
         """
-        from jgo.maven import MavenResolver
-
-        # Only MavenResolver supports dependency tree printing
-        if not isinstance(maven_context.resolver, MavenResolver):
-            print(
-                "Error: --print-dependencies requires --resolver=maven",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-
         # Print dependency tree for the primary component
         primary = components[0]
         tree = maven_context.resolver.print_dependency_tree(primary)

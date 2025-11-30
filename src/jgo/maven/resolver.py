@@ -77,7 +77,64 @@ class SimpleResolver(Resolver):
         from .model import Model
 
         model = Model(component.pom())
-        return list(model.deps.values())
+        return model.dependencies()
+
+    def print_dependency_tree(self, component: "Component") -> str:
+        """
+        Print the full dependency tree for the given component.
+        :param component: The component for which to print dependencies.
+        :return: The dependency tree as a string.
+        """
+        from .model import Model
+
+        lines = []
+        lines.append(f"{component.groupId}:{component.artifactId}:{component.version}")
+
+        # Build the model to get dependencies
+        model = Model(component.pom())
+
+        # Track which dependencies we've already processed to avoid duplicates
+        processed = set()
+
+        def add_deps(deps, prefix="", is_last=True):
+            """Recursively add dependencies to the tree."""
+            for i, dep in enumerate(deps):
+                is_last_item = i == len(deps) - 1
+                connector = "└── " if is_last_item else "├── "
+                extension = "    " if is_last_item else "│   "
+
+                dep_key = (dep.groupId, dep.artifactId, dep.version)
+                scope_suffix = f":{dep.scope}" if dep.scope != "compile" else ""
+                optional_suffix = " (optional)" if dep.optional else ""
+
+                line = f"{prefix}{connector}{dep.groupId}:{dep.artifactId}:{dep.type}:{dep.version}{scope_suffix}{optional_suffix}"
+                lines.append(line)
+
+                # Recursively show transitive dependencies, but avoid infinite loops
+                if dep_key not in processed:
+                    processed.add(dep_key)
+                    try:
+                        dep_model = Model(dep.artifact.component.pom())
+                        # Only show compile/runtime dependencies transitively
+                        transitive_deps = [
+                            d
+                            for d in dep_model.deps.values()
+                            if d.scope in ("compile", "runtime") and not d.optional
+                        ]
+                        if transitive_deps:
+                            add_deps(
+                                transitive_deps,
+                                prefix + extension,
+                                is_last=is_last_item,
+                            )
+                    except Exception as e:
+                        _log.debug(f"Could not resolve dependencies for {dep}: {e}")
+
+        # Add direct dependencies
+        direct_deps = list(model.deps.values())
+        add_deps(direct_deps)
+
+        return "\n".join(lines)
 
 
 class MavenResolver(Resolver):
