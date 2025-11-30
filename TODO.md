@@ -67,7 +67,7 @@ These can be deferred to 2.1.0 or later:
 **Priority**: Medium - needed for LWJGL and other native libraries
 
 ### SNAPSHOT Improvements
-**Files**: `src/jgo/maven/core.py:226,436`, `STEP_2.7_SUMMARY.md:237`
+**Files**: `src/jgo/maven/core.py:226,436`
 **Issue**: SNAPSHOT locking to exact timestamps not fully implemented
 **Impact**: jgo.lock.toml doesn't lock SNAPSHOTs to specific builds
 **Priority**: Low - SNAPSHOTs work, just not perfectly reproducible
@@ -95,6 +95,12 @@ These can be deferred to 2.1.0 or later:
 **Issue**: Complex dependency management scenarios not fully handled
 **Impact**: Rare resolution issues with complex BOMs
 **Priority**: Low - works for typical cases
+
+### Code Repetition in CLI Layer
+**File**: `src/jgo/cli/commands.py:196-324`
+**Issue**: Repetitive code: `_cmd_run_spec()` and `_cmd_run_endpoint()`
+**Impact**: Convoluted codepaths are harder to maintain
+**Priority**: Low - minor under the hood refactoring
 
 ## ✨ Future Enhancements (Post-2.0.0)
 
