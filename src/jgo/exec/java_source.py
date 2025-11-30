@@ -46,7 +46,9 @@ class JavaLocator:
         """
         self.java_source = java_source
         self.java_version = java_version
-        self.java_vendor = java_vendor
+        # Default to "zulu" vendor for cjdk since it has the widest Java version support
+        # (including Java 8 which adoptium lacks)
+        self.java_vendor = java_vendor or "zulu"
         self.verbose = verbose
 
     def locate(self, min_version: Optional[int] = None) -> Path:

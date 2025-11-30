@@ -141,6 +141,11 @@ def detect_jar_java_version(
                 if not name.endswith(".class"):
                     continue
 
+                # Skip META-INF/versions/* (Multi-Release JAR version-specific classes)
+                # Only base classes determine the minimum Java version
+                if name.startswith("META-INF/versions/"):
+                    continue
+
                 # Skip module-info.class and package-info.class
                 # (they might have different versions)
                 basename = name.split("/")[-1]

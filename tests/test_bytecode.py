@@ -151,6 +151,36 @@ def test_detect_jar_skips_metadata_classes():
         assert detect_jar_java_version(jar_path) == 8
 
 
+def test_detect_jar_skips_multi_release_jar_versions():
+    """Test that META-INF/versions/* classes are skipped (Multi-Release JARs)."""
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        jar_path = Path(tmp_dir) / "mrjar.jar"
+
+        # Create a Multi-Release JAR with base classes (Java 8) and
+        # version-specific optimizations (Java 11, 17, 21)
+        with zipfile.ZipFile(jar_path, "w") as jar:
+            # Base classes - these determine minimum Java version
+            jar.writestr("com/example/Foo.class", create_fake_class_file(52))  # Java 8
+            jar.writestr("com/example/Bar.class", create_fake_class_file(52))  # Java 8
+
+            # Multi-release version-specific classes (should be ignored)
+            jar.writestr(
+                "META-INF/versions/11/com/example/Foo.class",
+                create_fake_class_file(55),  # Java 11
+            )
+            jar.writestr(
+                "META-INF/versions/17/com/example/Foo.class",
+                create_fake_class_file(61),  # Java 17
+            )
+            jar.writestr(
+                "META-INF/versions/21/com/example/Bar.class",
+                create_fake_class_file(65),  # Java 21
+            )
+
+        # Should detect Java 8 from base classes, ignoring META-INF/versions
+        assert detect_jar_java_version(jar_path) == 8
+
+
 def test_detect_environment_java_version():
     """Test detecting Java version from environment directory."""
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -228,6 +258,7 @@ if __name__ == "__main__":
     test_round_to_lts()
     test_detect_jar_java_version()
     test_detect_jar_skips_metadata_classes()
+    test_detect_jar_skips_multi_release_jar_versions()
     test_detect_environment_java_version()
     test_bytecode_mapping_completeness()
     test_detect_jar_handles_corrupt_classes()

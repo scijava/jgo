@@ -81,7 +81,7 @@ def demo_java_source_selection():
     # runner_cjdk = JavaRunner(
     #     java_source=JavaSource.CJDK,
     #     java_version=17,
-    #     java_vendor="adoptium"
+    #     java_vendor="zulu"  # Default is "zulu" (widest version support)
     # )
 
     # Strategy 3: AUTO (default - prefer cjdk, fallback to system)
