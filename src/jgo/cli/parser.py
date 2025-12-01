@@ -145,7 +145,7 @@ Examples:
 
         # Classpath options
         parser.add_argument(
-            "--classpath-append",
+            "--add-classpath",
             action="append",
             metavar="PATH",
             dest="classpath_append",
@@ -173,7 +173,7 @@ Examples:
             action="append",
             metavar="JAR",
             dest="classpath_append",
-            help="(Deprecated: use --classpath-append) Add JARs to classpath",
+            help="(Deprecated: use --add-classpath) Add JARs to classpath",
         )
         parser.add_argument(
             "--additional-endpoints",

@@ -157,7 +157,7 @@ jgo -r scijava=https://maven.scijava.org/content/groups/public org.scijava:parsi
 jgo --offline org.python:jython-standalone
 
 # Append additional JARs to classpath
-jgo --classpath-append /path/to/lib.jar org.scijava:parsington
+jgo --add-classpath /path/to/lib.jar org.scijava:parsington
 ```
 
 ## Project Mode with jgo.toml

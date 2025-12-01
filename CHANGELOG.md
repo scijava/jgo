@@ -70,7 +70,7 @@ jgo 2.0 is a complete architectural redesign around three clean, independently u
   - `--ignore-jgorc`: Ignore ~/.jgorc configuration
   - `-f FILE, --file FILE`: Use specific jgo.toml file
   - `--entrypoint NAME`: Run specific entry point from jgo.toml
-  - `--classpath-append PATH`: Append to classpath (replaces `--additional-jars`)
+  - `--add-classpath PATH`: Append to classpath (replaces `--additional-jars`)
 
 - **Improved verbosity**: `-v` (INFO), `-vv` (DEBUG), `-vvv` (TRACE)
 
@@ -105,7 +105,7 @@ All deprecated APIs still work but show deprecation warnings. They will be remov
 
 #### CLI Flags
 - `-U, --force-update` → Use `-u, --update` (now checks remote by default)
-- `--additional-jars JAR` → Use `--classpath-append PATH`
+- `--additional-jars JAR` → Use `--add-classpath PATH`
 - `--additional-endpoints EP` → Use `+` syntax in endpoint (e.g., `G1:A1+G2:A2`)
 - `--link-type TYPE` → Use `--link TYPE`
 - `--log-level LEVEL` → Use `-v`, `-vv`, `-vvv` instead

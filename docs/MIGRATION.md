@@ -58,7 +58,7 @@ These short flags are **permanent aliases** and will not be removed:
 | Old Flag | New Replacement | Notes |
 |----------|-----------------|-------|
 | `-U`, `--force-update` | `-u`, `--update` | Both now check remote repos |
-| `-a JAR`, `--additional-jars JAR` | `--classpath-append PATH` | New name is more general (handles directories too) |
+| `-a JAR`, `--additional-jars JAR` | `--add-classpath PATH` | New name is more general (handles directories too) |
 | `--additional-endpoints EP` | Use `+` syntax | See examples below |
 | `--link-type TYPE` | `--link TYPE` | Just renamed |
 | `--log-level LEVEL` | `-v`, `-vv`, `-vvv` | Use verbose flags instead |
@@ -67,7 +67,7 @@ These short flags are **permanent aliases** and will not be removed:
 
 | Flag | Description |
 |------|-------------|
-| `--classpath-append PATH` | Append JARs, directories, or other classpath elements |
+| `--add-classpath PATH` | Append JARs, directories, or other classpath elements |
 | `--ignore-jgorc` | Ignore ~/.jgorc configuration file |
 | `--offline` | Work offline (don't download) |
 | `--no-cache` | Skip cache entirely |
@@ -100,7 +100,7 @@ jgo -a /path/to/lib.jar -a /path/to/other.jar org.scijava:parsington
 
 **New:**
 ```bash
-jgo --classpath-append /path/to/lib.jar --classpath-append /path/to/other.jar org.scijava:parsington
+jgo --add-classpath /path/to/lib.jar --add-classpath /path/to/other.jar org.scijava:parsington
 ```
 
 ### Update Cache
@@ -266,7 +266,7 @@ jgo -v -u \
 **Option 1: Direct CLI migration**
 ```bash
 jgo -v -u \
-  --classpath-append /path/to/custom.jar \
+  --add-classpath /path/to/custom.jar \
   org.example:myapp:1.0.0+org.slf4j:slf4j-simple \
   -- -- --app-flag value
 ```
