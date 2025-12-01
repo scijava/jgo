@@ -4,10 +4,13 @@ Maven dependency model and resolution.
 
 import logging
 from re import findall
-from typing import Dict, Iterable, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set, Tuple
 
 from .core import Dependency, Project
 from .pom import POM
+
+if TYPE_CHECKING:
+    from .core import Component
 
 _log = logging.getLogger(__name__)
 
@@ -20,11 +23,14 @@ class Model:
     A minimal Maven metadata model, tracking only dependencies and properties.
     """
 
-    def __init__(self, pom: POM):
+    def __init__(
+        self, pom: POM, managed_components: Optional[List["Component"]] = None
+    ):
         """
         Build a Maven metadata model from the given POM.
 
         :param pom: A source POM from which to extract metadata (e.g. dependencies).
+        :param managed_components: If provided, import these components as BOMs in dependencyManagement.
         """
         self.maven_context = pom.maven_context
         self.gav = f"{pom.groupId}:{pom.artifactId}:{pom.version}"
@@ -36,6 +42,28 @@ class Model:
         self.dep_mgmt: Dict[GACT, Dependency] = {}
         self.props: Dict[str, str] = {}
         self._merge(pom)
+
+        # If managed mode is enabled, inject the components as BOMs in dependencyManagement
+        if managed_components:
+            from .core import Dependency
+
+            for managed_component in managed_components:
+                managed_dep = Dependency(
+                    artifact=managed_component.artifact(packaging="pom"),
+                    scope="import",
+                    optional=False,
+                )
+                managed_dep.set_version(managed_component.version)
+                k = (
+                    managed_component.groupId,
+                    managed_component.artifactId,
+                    None,  # classifier
+                    "pom",  # type
+                )
+                self.dep_mgmt[k] = managed_dep
+                _log.debug(
+                    f"{self.gav}: added {managed_component.groupId}:{managed_component.artifactId} to dependencyManagement"
+                )
 
         # The following steps are adapted from the maven-model-builder:
         # https://maven.apache.org/ref/3.3.9/maven-model-builder/

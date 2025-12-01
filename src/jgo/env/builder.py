@@ -29,9 +29,11 @@ class EnvironmentBuilder:
         maven_context: MavenContext,
         cache_dir: Optional[Path] = None,
         link_strategy: LinkStrategy = LinkStrategy.AUTO,
+        managed: bool = False,
     ):
         self.maven_context = maven_context
         self.link_strategy = link_strategy
+        self.managed = managed
 
         # Auto-detect cache directory if not specified
         if cache_dir is None:
@@ -61,10 +63,29 @@ class EnvironmentBuilder:
         """
         Build an environment from an endpoint string.
 
-        Endpoint format: G:A[:V][:C][:mainClass][+G:A:V...]
+        Endpoint format: G:A[:V][:C][:mainClass][!][+G:A:V...]
+        Components with ! suffix are used as managed BOMs.
         """
         # Parse endpoint
-        components, parsed_main_class = self._parse_endpoint(endpoint)
+        components, managed_flags, parsed_main_class = self._parse_endpoint(endpoint)
+
+        # Apply -m flag: if self.managed is True, mark all components as managed
+        # Otherwise, use the per-component managed flags from ! markers
+        if self.managed:
+            # -m flag forces all components to be managed (backward compatibility)
+            managed_components = components
+        else:
+            # Use explicit ! markers to determine which components are managed
+            managed_components = [
+                comp
+                for comp, is_managed in zip(components, managed_flags)
+                if is_managed
+            ]
+
+        # Temporarily store managed_components for use in from_components
+        self._current_managed_components = (
+            managed_components if managed_components else None
+        )
 
         # Use parsed main class if caller didn't provide one
         if main_class is None:
@@ -222,8 +243,19 @@ class EnvironmentBuilder:
 
         # Then resolve and link their dependencies
         # Use the resolver from maven_context to respect --resolver flag
+        # Use managed components from endpoint parsing (stored in _current_managed_components)
+        # or fall back to old behavior for backward compatibility
+        managed_components = getattr(self, "_current_managed_components", None)
+        if managed_components is None and self.managed:
+            # Backward compatibility: if -m flag is set but no explicit markers, manage all
+            managed_components = components
+
         for component in components:
-            deps = component.maven_context.resolver.dependencies(component)
+            deps = component.maven_context.resolver.dependencies(
+                component,
+                managed=bool(managed_components),
+                managed_components=managed_components,
+            )
             all_deps.extend(deps)
 
         # Link/copy dependency JARs
@@ -262,22 +294,35 @@ class EnvironmentBuilder:
         # Return dependencies for lock file generation
         return all_deps
 
-    def _parse_endpoint(self, endpoint: str) -> Tuple[List[Component], Optional[str]]:
+    def _parse_endpoint(
+        self, endpoint: str
+    ) -> Tuple[List[Component], List[bool], Optional[str]]:
         """
         Parse endpoint string into components and main class.
 
         Returns:
-            Tuple of (components_list, main_class)
-            Only the first endpoint part can specify a main class.
+            Tuple of (components_list, managed_flags, main_class)
+            - components_list: List of Component objects
+            - managed_flags: List of booleans indicating if each component should be managed (has ! suffix)
+            - main_class: Main class to run (only from first endpoint part)
         """
         import re
 
         # Split on + for multiple components
         parts = endpoint.split("+")
         components = []
+        managed_flags = []
         main_class = None
 
         for i, part in enumerate(parts):
+            # Check for ! suffix indicating managed dependency
+            # Handle both ! and \! (shell escaped)
+            is_managed = part.endswith("!") or part.endswith("\\!")
+            if part.endswith("\\!"):
+                part = part[:-2]  # Strip the \! suffix
+            elif part.endswith("!"):
+                part = part[:-1]  # Strip the ! suffix
+
             # Parse G:A[:V][:C][:mainClass]
             tokens = part.split(":")
 
@@ -331,5 +376,6 @@ class EnvironmentBuilder:
             )
             # TODO: Handle classifier when Component supports it
             components.append(component)
+            managed_flags.append(is_managed)
 
-        return components, main_class
+        return components, managed_flags, main_class

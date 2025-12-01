@@ -276,9 +276,21 @@ class JgoCommands:
 
         # If --print-dependency-tree or --print-dependency-list, parse endpoint and print without building
         if self.args.print_dependency_tree or self.args.print_dependency_list:
-            components, _ = builder._parse_endpoint(self.args.endpoint)
+            components, managed_flags, _ = builder._parse_endpoint(self.args.endpoint)
+            # Apply -m flag or use explicit ! markers
+            if self.args.managed:
+                managed_components = components
+            else:
+                managed_components = [
+                    comp
+                    for comp, is_managed in zip(components, managed_flags)
+                    if is_managed
+                ]
             self._print_dependencies(
-                components, maven_context, list_mode=self.args.print_dependency_list
+                components,
+                maven_context,
+                managed_components=managed_components,
+                list_mode=self.args.print_dependency_list,
             )
             return 0
 
@@ -389,6 +401,7 @@ class JgoCommands:
             maven_context=maven_context,
             cache_dir=cache_dir,
             link_strategy=link_strategy,
+            managed=self.args.managed,
         )
 
     def _create_java_runner(self) -> JavaRunner:
@@ -429,7 +442,11 @@ class JgoCommands:
         print(classpath_str)
 
     def _print_dependencies(
-        self, components, maven_context, list_mode: bool = False
+        self,
+        components,
+        maven_context,
+        managed_components=None,
+        list_mode: bool = False,
     ) -> None:
         """
         Print dependencies for the given components.
@@ -437,15 +454,24 @@ class JgoCommands:
         Args:
             components: List of components to print dependencies for
             maven_context: Maven context containing the resolver
+            managed_components: List of components to use as managed BOMs (None = none managed)
             list_mode: If True, print flat list (like mvn dependency:list).
                       If False, print tree (like mvn dependency:tree).
         """
         # Print dependencies for the primary component
         primary = components[0]
         if list_mode:
-            output = maven_context.resolver.print_dependency_list(primary)
+            output = maven_context.resolver.print_dependency_list(
+                primary,
+                managed=bool(managed_components),
+                managed_components=managed_components,
+            )
         else:
-            output = maven_context.resolver.print_dependency_tree(primary)
+            output = maven_context.resolver.print_dependency_tree(
+                primary,
+                managed=bool(managed_components),
+                managed_components=managed_components,
+            )
         print(output)
 
     def _print_java_info(self, environment) -> None:
