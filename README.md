@@ -107,45 +107,47 @@ The `jgo` project began life as a shell script, but was later translated into
 Python, so that tools such as [scyjava](https://github.com/scijava/scyjava)
 could leverage its environment-building capabilities.
 
-### Prerequisites
+<details><summary><strong>Installing jgo with uv</strong></summary>
 
-`jgo` uses `mvn` and `java` for the heavy lifting.
+```shell
+uv tool install jgo
+```
 
-There is a `jgo` console script, as well as a `jgo` module
-for programmatically creating endpoints.
-
-<details><summary><strong>Installing with pip</strong></summary>
+</details>
+<details><summary><strong>Installing jgo with pip</strong></summary>
 
 ```shell
 pip install jgo
 ```
 
 </details>
-<details><summary><strong>Installing with conda</strong></summary>
+<details><summary><strong>Installing jgo with conda</strong></summary>
 
 ```shell
 conda install -c conda-forge jgo
 ```
 
 </details>
-<details><summary><strong>Installing from source</strong></summary>
+<details><summary><strong>Installing jgo from source</strong></summary>
 
 ```shell
 git clone https://github.com/scijava/jgo
-cd jgo
-
-# install globally (not recommended unless using a virtual environment)
-pip install .
-
-# install into ~/.local (see pip install --help for details)
-pip install --user .
-
-# install into $PREFIX
-pip install --prefix=$PREFIX .
-
-# install globally in developer mode (hot linked to working copy folder)
-pip install -e .
+uv tool install --with-editable jgo jgo
 ```
+
+When installed in this fashion, changes to the jgo source code will be immediately reflected when running `jgo` from the command line.
+
+</details>
+<details><summary><strong>Using jgo as a dependency</strong></summary>
+
+```shell
+uv add jgo
+```
+or
+```shell
+pixi add jgo
+```
+Not sure which to use? [Read this](https://jacobtomlinson.dev/posts/2025/python-package-managers-uv-vs-pixi/#so-what-do-i-use).
 
 </details>
 
