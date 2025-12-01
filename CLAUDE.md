@@ -85,8 +85,10 @@ bin/clean.sh
 
 **Endpoint String Format:**
 - Endpoints use `+` to concatenate multiple artifacts (adds all to classpath)
-- Main class auto-completion: prefix with `@` for partial match (e.g., `@ScriptREPL`)
-- Only the first endpoint should specify a main class
+- Main class specification: use `@` separator after coordinates (e.g., `coord1+coord2@MainClass`)
+- Auto-completion: Simple class names without dots are auto-completed (e.g., `ScriptREPL` → `org.scijava.script.ScriptREPL`)
+- Fully qualified names (with dots) are used as-is (e.g., `org.example.Main`)
+- Old format (`coord:@MainClass` or `coord:MainClass`) is deprecated but still supported
 
 **Configuration:**
 - `~/.jgorc`: INI file with `[settings]`, `[repositories]`, and `[shortcuts]` sections

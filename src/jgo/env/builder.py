@@ -279,6 +279,13 @@ class EnvironmentBuilder:
 
         # Detect/set main class
         if main_class:
+            # Auto-complete main class if needed
+            from .jar_util import autocomplete_main_class
+
+            primary_component = components[0]
+            main_class = autocomplete_main_class(
+                main_class, primary_component.artifactId, jars_dir
+            )
             environment.set_main_class(main_class)
         else:
             # Auto-detect from primary component JAR
@@ -300,6 +307,9 @@ class EnvironmentBuilder:
         """
         Parse endpoint string into components and main class.
 
+        New format: coord1+coord2+...+coordN@mainClass
+        Old format: coord1:coord2:@mainClass or coord1:coord2:mainClass (deprecated)
+
         Returns:
             Tuple of (components_list, managed_flags, main_class)
             - components_list: List of Component objects
@@ -307,12 +317,105 @@ class EnvironmentBuilder:
             - main_class: Main class to run (only from first endpoint part)
         """
         import re
+        import warnings
+
+        main_class = None
+        coordinates_part = endpoint
+        old_format_detected = False
+
+        # Check for new @ separator format
+        if "@" in endpoint:
+            # Find the @ that separates coordinates from main class
+            # New format: coord1+coord2@MainClass (@ after all coordinates)
+            # Old format: coord:@MainClass (@ comes right after :)
+
+            # Check if @ appears after a + (which means it's in the middle of coords)
+            # Split by + first to see if @ is in any part
+            plus_parts = endpoint.split("+")
+
+            # Find which part contains @
+            at_part_index = -1
+            for i, part in enumerate(plus_parts):
+                if "@" in part:
+                    at_part_index = i
+                    break
+
+            if at_part_index == 0 and len(plus_parts) > 1:
+                # @ is in the first part, before other coordinates
+                # This could be new format: coord@Main+coord2
+                # Split on @ in the first part only
+                first_part = plus_parts[0]
+                at_index = first_part.rfind("@")
+                before_at = first_part[:at_index]
+                after_at = first_part[at_index + 1:]
+
+                if before_at.endswith(":"):
+                    # Old format: coord:@MainClass
+                    old_format_detected = True
+                    warnings.warn(
+                        "The ':@mainClass' syntax is deprecated. "
+                        "Use 'coord1+coord2@mainClass' instead.",
+                        DeprecationWarning,
+                        stacklevel=3,
+                    )
+                    main_class = "@" + after_at if after_at else None
+                    # Don't modify coordinates_part for old format
+                else:
+                    # New format: coord@MainClass+coord2
+                    main_class = after_at if after_at else None
+                    # Reconstruct coordinates_part without the @MainClass
+                    plus_parts[0] = before_at
+                    coordinates_part = "+".join(plus_parts)
+            elif at_part_index == len(plus_parts) - 1:
+                # @ is in the last part, after all coordinates (typical new format)
+                last_part = plus_parts[-1]
+                at_index = last_part.rfind("@")
+                before_at = last_part[:at_index]
+                after_at = last_part[at_index + 1:]
+
+                if before_at.endswith(":"):
+                    # Old format: coord:@MainClass
+                    old_format_detected = True
+                    warnings.warn(
+                        "The ':@mainClass' syntax is deprecated. "
+                        "Use 'coord1+coord2@mainClass' instead.",
+                        DeprecationWarning,
+                        stacklevel=3,
+                    )
+                    main_class = "@" + after_at if after_at else None
+                else:
+                    # New format: coord1+coord2@MainClass
+                    main_class = after_at if after_at else None
+                    # Reconstruct coordinates_part without the @MainClass
+                    plus_parts[-1] = before_at
+                    coordinates_part = "+".join(plus_parts)
+            elif at_part_index >= 0:
+                # @ is in a middle part (unusual, but handle it)
+                part_with_at = plus_parts[at_part_index]
+                at_index = part_with_at.rfind("@")
+                before_at = part_with_at[:at_index]
+                after_at = part_with_at[at_index + 1:]
+
+                if before_at.endswith(":"):
+                    # Old format
+                    old_format_detected = True
+                    warnings.warn(
+                        "The ':@mainClass' syntax is deprecated. "
+                        "Use 'coord1+coord2@mainClass' instead.",
+                        DeprecationWarning,
+                        stacklevel=3,
+                    )
+                    main_class = "@" + after_at if after_at else None
+                else:
+                    # New format in middle (weird but valid)
+                    main_class = after_at if after_at else None
+                    plus_parts[at_part_index] = before_at
+                    coordinates_part = "+".join(plus_parts)
 
         # Split on + for multiple components
-        parts = endpoint.split("+")
+        parts = coordinates_part.split("+")
         components = []
         managed_flags = []
-        main_class = None
 
         for i, part in enumerate(parts):
             # Check for ! suffix indicating managed dependency
@@ -349,14 +452,34 @@ class EnvironmentBuilder:
                 if re.match(r"([0-9].*|RELEASE|LATEST|MANAGED)", tokens[2]):
                     version = tokens[2]
                 else:
-                    part_main_class = tokens[2]
+                    # Old format: main class in colon-separated tokens
+                    if i == 0:  # Only first component can have main class
+                        # Only warn if we didn't already detect old format with @
+                        if not old_format_detected:
+                            warnings.warn(
+                                "The ':mainClass' syntax is deprecated. "
+                                "Use 'coord1+coord2@mainClass' instead.",
+                                DeprecationWarning,
+                                stacklevel=3,
+                            )
+                        part_main_class = tokens[2]
 
             elif len(tokens) == 4:
                 # G:A:V:C or G:A:V:mainClass
                 # If tokens[3] contains a dot, it's likely a main class
                 version = tokens[2]
                 if "." in tokens[3] or tokens[3][0].isupper():
-                    part_main_class = tokens[3]
+                    # Old format: main class in colon-separated tokens
+                    if i == 0:  # Only first component can have main class
+                        # Only warn if we didn't already detect old format with @
+                        if not old_format_detected:
+                            warnings.warn(
+                                "The ':mainClass' syntax is deprecated. "
+                                "Use 'coord1+coord2@mainClass' instead.",
+                                DeprecationWarning,
+                                stacklevel=3,
+                            )
+                        part_main_class = tokens[3]
                 else:
                     classifier = tokens[3]  # noqa: F841 - TODO: Use when Component supports classifiers
 
@@ -364,10 +487,21 @@ class EnvironmentBuilder:
                 # G:A:V:C:mainClass
                 version = tokens[2]
                 classifier = tokens[3]  # noqa: F841 - TODO: Use when Component supports classifiers
-                part_main_class = tokens[4]
+                # Old format: main class in colon-separated tokens
+                if i == 0:  # Only first component can have main class
+                    # Only warn if we didn't already detect old format with @
+                    if not old_format_detected:
+                        warnings.warn(
+                            "The ':mainClass' syntax is deprecated. "
+                            "Use 'coord1+coord2@mainClass' instead.",
+                            DeprecationWarning,
+                            stacklevel=3,
+                        )
+                    part_main_class = tokens[4]
 
-            # Only the first endpoint can specify main class
-            if i == 0 and part_main_class:
+            # Only the first component can specify main class via old format
+            # If main_class was already set from @ separator, don't override
+            if i == 0 and part_main_class and main_class is None:
                 main_class = part_main_class
 
             # Create component

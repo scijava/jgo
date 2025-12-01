@@ -42,8 +42,8 @@ jgo org.python:jython-standalone
 # Run with arguments
 jgo org.python:jython-standalone -- -- script.py --verbose
 
-# Multiple artifacts (combine with +)
-jgo org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-jython
+# Multiple artifacts with main class (use @ separator)
+jgo org.scijava:scijava-common+org.scijava:scripting-jython@ScriptREPL
 
 # Force update from remote repos
 jgo -u org.python:jython-standalone
@@ -164,10 +164,11 @@ Common Options:
   -f FILE                 Use jgo.toml file
 
 Endpoint Format:
-  groupId:artifactId[:version][:classifier][:mainClass]
+  groupId:artifactId[:version][:classifier][@mainClass]
 
   Multiple artifacts: org.python:jython-standalone+org.slf4j:slf4j-simple
-  Main class auto-complete: org.scijava:scijava-common:@ScriptREPL
+  Specify main class: org.scijava:scijava-common@ScriptREPL
+  Auto-completion: Use simple class name (e.g., @ScriptREPL) and it will be auto-completed
 
 Full documentation: jgo --help
 ```
@@ -177,8 +178,8 @@ Full documentation: jgo --help
 | Program                      | Command                                                                             |
 |-----------------------------:|:------------------------------------------------------------------------------------|
 | Jython REPL                  | `jgo org.python:jython-standalone`                                                  |
-| JRuby eval                   | `echo "puts 'Hello Ruby'" \| jgo org.jruby:jruby-complete:@jruby.Main`              |
-| Groovy REPL                  | `jgo org.codehaus.groovy:groovy-groovysh:@shell.Main+commons-cli:commons-cli:1.3.1` |
+| JRuby eval                   | `echo "puts 'Hello Ruby'" \| jgo org.jruby:jruby-complete@jruby.Main`              |
+| Groovy REPL                  | `jgo org.codehaus.groovy:groovy-groovysh+commons-cli:commons-cli:1.3.1@shell.Main` |
 
 Note the usage of the `+` syntax as needed to append elements to the classpath.
 
@@ -191,11 +192,11 @@ you can also try:
 
 | Program                      | Command                                                                             |
 |-----------------------------:|:------------------------------------------------------------------------------------|
-| SciJava REPL with JRuby      | `jgo org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-jruby`            |
-| SciJava REPL with Jython     | `jgo org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-jython`           |
-| SciJava REPL with Groovy     | `jgo org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-groovy`           |
-| SciJava REPL with Clojure    | `jgo org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-clojure`          |
-| SciJava REPL with JavaScript | `jgo org.scijava:scijava-common:@ScriptREPL+org.scijava:scripting-javascript`       |
+| SciJava REPL with JRuby      | `jgo org.scijava:scijava-common+org.scijava:scripting-jruby@ScriptREPL`            |
+| SciJava REPL with Jython     | `jgo org.scijava:scijava-common+org.scijava:scripting-jython@ScriptREPL`           |
+| SciJava REPL with Groovy     | `jgo org.scijava:scijava-common+org.scijava:scripting-groovy@ScriptREPL`           |
+| SciJava REPL with Clojure    | `jgo org.scijava:scijava-common+org.scijava:scripting-clojure@ScriptREPL`          |
+| SciJava REPL with JavaScript | `jgo org.scijava:scijava-common+org.scijava:scripting-javascript@ScriptREPL`       |
 
 ### FAQ
 
