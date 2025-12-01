@@ -729,6 +729,23 @@ class MavenResolver(Resolver):
         # Use the primary component's resolved version
         resolved_version = component.resolved_version
 
+        # Generate repositories section if remote repos are configured
+        repos_entries = []
+        for repo_id, repo_url in component.maven_context.remote_repos.items():
+            repos_entries.append(
+                f"""        <repository>
+            <id>{repo_id}</id>
+            <url>{repo_url}</url>
+        </repository>"""
+            )
+
+        repos_section = "\n".join(repos_entries) if repos_entries else ""
+        repositories_block = f"""
+    <repositories>
+{repos_section}
+    </repositories>
+""" if repos_section else ""
+
         # Generate POM content
         pom_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -754,7 +771,7 @@ class MavenResolver(Resolver):
             <type>pom</type>
         </dependency>
     </dependencies>
-</project>
+{repositories_block}</project>
 """
 
         # Write POM to file
