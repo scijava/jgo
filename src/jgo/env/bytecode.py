@@ -4,8 +4,9 @@ Bytecode version detection for Java class files.
 Reads class file headers from JARs to determine minimum required Java version.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Optional
 import struct
 import zipfile
 
@@ -43,7 +44,7 @@ BYTECODE_TO_JAVA = {
 LTS_VERSIONS = [8, 11, 17, 21]
 
 
-def read_class_version(class_bytes: bytes) -> Optional[int]:
+def read_class_version(class_bytes: bytes) -> int | None:
     """
     Read the major version from a Java class file.
 
@@ -115,7 +116,7 @@ def round_to_lts(java_version: int) -> int:
 
 def detect_jar_java_version(
     jar_path: Path, round_to_lts_version: bool = True
-) -> Optional[int]:
+) -> int | None:
     """
     Detect the minimum Java version required by a JAR file.
 
@@ -180,7 +181,7 @@ def detect_jar_java_version(
     return java_version
 
 
-def detect_environment_java_version(jars_dir: Path) -> Optional[int]:
+def detect_environment_java_version(jars_dir: Path) -> int | None:
     """
     Detect the minimum Java version for an environment directory.
 

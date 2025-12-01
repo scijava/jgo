@@ -2,9 +2,10 @@
 CLI argument parser for jgo 2.0.
 """
 
+from __future__ import annotations
+
 import argparse
 from pathlib import Path
-from typing import List, Optional, Tuple
 
 
 class JgoArgumentParser:
@@ -286,7 +287,7 @@ Examples:
 
         return parser
 
-    def parse_args(self, args: Optional[List[str]] = None) -> "ParsedArgs":
+    def parse_args(self, args: list[str] | None = None) -> "ParsedArgs":
         """
         Parse command line arguments.
 
@@ -362,8 +363,8 @@ Examples:
         )
 
     def _split_remaining_args(
-        self, remaining: List[str]
-    ) -> Tuple[List[str], List[str]]:
+        self, remaining: list[str]
+    ) -> tuple[list[str], list[str]]:
         """
         Split remaining args on -- separators.
 
@@ -396,7 +397,7 @@ Examples:
         app_args = remaining[second_sep + 1 :]
         return jvm_args, app_args
 
-    def _parse_repositories(self, repositories: Optional[List[str]]) -> Optional[dict]:
+    def _parse_repositories(self, repositories: list[str] | None) -> dict | None:
         """
         Parse repository arguments in NAME=URL format.
 
@@ -439,18 +440,18 @@ class ParsedArgs:
         resolver: str = "auto",
         link: str = "auto",
         # Paths
-        cache_dir: Optional[Path] = None,
-        repo_cache: Optional[Path] = None,
-        repositories: Optional[dict] = None,
+        cache_dir: Path | None = None,
+        repo_cache: Path | None = None,
+        repositories: dict | None = None,
         # Dependency management
         managed: bool = False,
-        main_class: Optional[str] = None,
+        main_class: str | None = None,
         # Classpath
-        classpath_append: Optional[List[str]] = None,
+        classpath_append: list[str] | None = None,
         # Backward compatibility
         ignore_jgorc: bool = False,
-        additional_endpoints: Optional[List[str]] = None,
-        log_level: Optional[str] = None,
+        additional_endpoints: list[str] | None = None,
+        log_level: str | None = None,
         # Information commands
         list_versions: bool = False,
         print_classpath: bool = False,
@@ -459,18 +460,18 @@ class ParsedArgs:
         print_dependency_list: bool = False,
         dry_run: bool = False,
         # Spec file
-        file: Optional[Path] = None,
-        entrypoint: Optional[str] = None,
-        init: Optional[str] = None,
+        file: Path | None = None,
+        entrypoint: str | None = None,
+        init: str | None = None,
         list_entrypoints: bool = False,
         # Java
-        java_version: Optional[int] = None,
-        java_vendor: Optional[str] = None,
+        java_version: int | None = None,
+        java_vendor: str | None = None,
         java_source: str = "cjdk",
         # Endpoint and args
-        endpoint: Optional[str] = None,
-        jvm_args: Optional[List[str]] = None,
-        app_args: Optional[List[str]] = None,
+        endpoint: str | None = None,
+        jvm_args: list[str] | None = None,
+        app_args: list[str] | None = None,
     ):
         # General
         self.verbose = verbose

@@ -2,11 +2,13 @@
 Maven metadata handling (maven-metadata.xml files).
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from datetime import datetime
 from itertools import combinations
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import Iterable
 
 from .core import XML, MavenContext
 from .util import ts2dt
@@ -17,31 +19,31 @@ class Metadata(ABC):
 
     @property
     @abstractmethod
-    def groupId(self) -> Optional[str]: ...
+    def groupId(self) -> str | None: ...
 
     @property
     @abstractmethod
-    def artifactId(self) -> Optional[str]: ...
+    def artifactId(self) -> str | None: ...
 
     @property
     @abstractmethod
-    def lastUpdated(self) -> Optional[datetime]: ...
+    def lastUpdated(self) -> datetime | None: ...
 
     @property
     @abstractmethod
-    def latest(self) -> Optional[str]: ...
+    def latest(self) -> str | None: ...
 
     @property
     @abstractmethod
-    def versions(self) -> List[str]: ...
+    def versions(self) -> list[str]: ...
 
     @property
     @abstractmethod
-    def lastVersion(self) -> Optional[str]: ...
+    def lastVersion(self) -> str | None: ...
 
     @property
     @abstractmethod
-    def release(self) -> Optional[str]: ...
+    def release(self) -> str | None: ...
 
 
 class MetadataXML(XML, Metadata):
@@ -49,41 +51,39 @@ class MetadataXML(XML, Metadata):
     Convenience wrapper around a maven-metadata.xml document.
     """
 
-    def __init__(
-        self, source: Path | str, maven_context: Optional[MavenContext] = None
-    ):
+    def __init__(self, source: Path | str, maven_context: MavenContext | None = None):
         super().__init__(source, maven_context)
 
     @property
-    def groupId(self) -> Optional[str]:
+    def groupId(self) -> str | None:
         return self.value("groupId")
 
     @property
-    def artifactId(self) -> Optional[str]:
+    def artifactId(self) -> str | None:
         return self.value("artifactId")
 
     @property
-    def lastUpdated(self) -> Optional[datetime]:
+    def lastUpdated(self) -> datetime | None:
         value = self.value("versioning/lastUpdated")
         return ts2dt(value) if value else None
 
     @property
-    def latest(self) -> Optional[str]:
+    def latest(self) -> str | None:
         # WARNING: The <latest> value is often wrong, for reasons I don't know.
         # However, the last <version> under <versions> has the correct value.
         # Consider using lastVersion instead of latest.
         return self.value("versioning/latest")
 
     @property
-    def versions(self) -> List[str]:
+    def versions(self) -> list[str]:
         return self.values("versioning/versions/version")
 
     @property
-    def lastVersion(self) -> Optional[str]:
+    def lastVersion(self) -> str | None:
         return vs[-1] if (vs := self.versions) else None
 
     @property
-    def release(self) -> Optional[str]:
+    def release(self) -> str | None:
         return self.value("versioning/release")
 
 
@@ -95,36 +95,36 @@ class Metadatas(Metadata):
     """
 
     def __init__(self, metadatas: Iterable[Metadata]):
-        self.metadatas: List[Metadata] = sorted(
+        self.metadatas: list[Metadata] = sorted(
             metadatas, key=lambda m: m.lastUpdated or datetime.min
         )
         for a, b in combinations(self.metadatas, 2):
             assert a.groupId == b.groupId and a.artifactId == b.artifactId
 
     @property
-    def groupId(self) -> Optional[str]:
+    def groupId(self) -> str | None:
         return self.metadatas[0].groupId if self.metadatas else None
 
     @property
-    def artifactId(self) -> Optional[str]:
+    def artifactId(self) -> str | None:
         return self.metadatas[0].artifactId if self.metadatas else None
 
     @property
-    def lastUpdated(self) -> Optional[datetime]:
+    def lastUpdated(self) -> datetime | None:
         return self.metadatas[-1].lastUpdated if self.metadatas else None
 
     @property
-    def latest(self) -> Optional[str]:
+    def latest(self) -> str | None:
         return next((m.latest for m in reversed(self.metadatas) if m.latest), None)
 
     @property
-    def versions(self) -> List[str]:
+    def versions(self) -> list[str]:
         return [v for m in self.metadatas for v in m.versions]
 
     @property
-    def lastVersion(self) -> Optional[str]:
+    def lastVersion(self) -> str | None:
         return versions[-1] if (versions := self.versions) else None
 
     @property
-    def release(self) -> Optional[str]:
+    def release(self) -> str | None:
         return next((m.release for m in reversed(self.metadatas) if m.release), None)

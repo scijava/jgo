@@ -26,7 +26,7 @@ run(endpoint, app_args=None, jvm_args=None, **kwargs)
 build(endpoint, update=False, cache_dir=None, **kwargs) -> Environment
     Build an environment from an endpoint without running it.
 
-resolve(endpoint, repositories=None) -> List[Component]
+resolve(endpoint, repositories=None) -> list[Component]
     Resolve dependencies for a Maven endpoint to Component objects.
 
 Layered API (Advanced)
@@ -101,8 +101,9 @@ See Also
 - GitHub: https://github.com/apposed/jgo
 """
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import List, Optional, Dict
 import subprocess
 
 # New 2.0 API
@@ -132,15 +133,15 @@ from .util import (
 
 def run(
     endpoint: str,
-    app_args: Optional[List[str]] = None,
-    jvm_args: Optional[List[str]] = None,
-    main_class: Optional[str] = None,
+    app_args: list[str] | None = None,
+    jvm_args: list[str] | None = None,
+    main_class: str | None = None,
     update: bool = False,
     verbose: bool = False,
-    cache_dir: Optional[Path] = None,
-    repositories: Optional[Dict[str, str]] = None,
-    java_version: Optional[int] = None,
-    java_vendor: Optional[str] = None,
+    cache_dir: Path | None = None,
+    repositories: dict[str, str] | None = None,
+    java_version: int | None = None,
+    java_vendor: str | None = None,
     java_source: str = "cjdk",
 ) -> subprocess.CompletedProcess:
     """
@@ -225,8 +226,8 @@ def run(
 def build(
     endpoint: str,
     update: bool = False,
-    cache_dir: Optional[Path] = None,
-    repositories: Optional[Dict[str, str]] = None,
+    cache_dir: Path | None = None,
+    repositories: dict[str, str] | None = None,
 ) -> Environment:
     """
     Build an environment from a Maven endpoint without running it.
@@ -272,8 +273,8 @@ def build(
 
 def resolve(
     endpoint: str,
-    repositories: Optional[Dict[str, str]] = None,
-) -> List[Component]:
+    repositories: dict[str, str] | None = None,
+) -> list[Component]:
     """
     Resolve dependencies for a Maven endpoint.
 

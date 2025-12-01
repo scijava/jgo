@@ -4,14 +4,19 @@ EnvironmentBuilder for jgo 2.0.
 Builds Environment instances from Maven components or endpoint strings.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import TYPE_CHECKING
 import hashlib
-from jgo.maven import MavenContext, Component
 from .environment import Environment
-from .linking import LinkStrategy, link_file
-from .spec import EnvironmentSpec
+from .linking import link_file, LinkStrategy
 from .lockfile import LockFile
+
+if TYPE_CHECKING:
+    from ..maven import MavenContext, Component
+    from ..maven.core import Dependency
+    from .spec import EnvironmentSpec
 
 
 class EnvironmentBuilder:
@@ -27,7 +32,7 @@ class EnvironmentBuilder:
     def __init__(
         self,
         maven_context: MavenContext,
-        cache_dir: Optional[Path] = None,
+        cache_dir: Path | None = None,
         link_strategy: LinkStrategy = LinkStrategy.AUTO,
         managed: bool = False,
     ):
@@ -58,7 +63,7 @@ class EnvironmentBuilder:
         return Path.home() / ".cache" / "jgo"
 
     def from_endpoint(
-        self, endpoint: str, update: bool = False, main_class: Optional[str] = None
+        self, endpoint: str, update: bool = False, main_class: str | None = None
     ) -> Environment:
         """
         Build an environment from an endpoint string.
@@ -96,9 +101,9 @@ class EnvironmentBuilder:
 
     def from_components(
         self,
-        components: List[Component],
+        components: list[Component],
         update: bool = False,
-        main_class: Optional[str] = None,
+        main_class: str | None = None,
     ) -> Environment:
         """
         Build an environment from a list of components.
@@ -130,7 +135,7 @@ class EnvironmentBuilder:
         self,
         spec: EnvironmentSpec,
         update: bool = False,
-        entrypoint: Optional[str] = None,
+        entrypoint: str | None = None,
     ) -> Environment:
         """
         Build an environment from an EnvironmentSpec (jgo.toml).
@@ -202,7 +207,7 @@ class EnvironmentBuilder:
 
         return environment
 
-    def _cache_key(self, components: List[Component]) -> str:
+    def _cache_key(self, components: list[Component]) -> str:
         """Generate a stable hash for a set of components."""
         # Sort to ensure stable ordering
         # Use resolved_version to ensure RELEASE/LATEST resolve to consistent cache keys
@@ -215,9 +220,9 @@ class EnvironmentBuilder:
     def _build_environment(
         self,
         environment: Environment,
-        components: List[Component],
-        main_class: Optional[str],
-    ) -> List:
+        components: list[Component],
+        main_class: str | None,
+    ) -> list[Dependency]:
         """
         Actually build the environment by resolving and linking JARs.
 
@@ -303,7 +308,7 @@ class EnvironmentBuilder:
 
     def _parse_endpoint(
         self, endpoint: str
-    ) -> Tuple[List[Component], List[bool], Optional[str]]:
+    ) -> tuple[list[Component], list[bool], str | None]:
         """
         Parse endpoint string into components and main class.
 
@@ -347,7 +352,7 @@ class EnvironmentBuilder:
                 first_part = plus_parts[0]
                 at_index = first_part.rfind("@")
                 before_at = first_part[:at_index]
-                after_at = first_part[at_index + 1:]
+                after_at = first_part[at_index + 1 :]
 
                 if before_at.endswith(":"):
                     # Old format: coord:@MainClass
@@ -371,7 +376,7 @@ class EnvironmentBuilder:
                 last_part = plus_parts[-1]
                 at_index = last_part.rfind("@")
                 before_at = last_part[:at_index]
-                after_at = last_part[at_index + 1:]
+                after_at = last_part[at_index + 1 :]
 
                 if before_at.endswith(":"):
                     # Old format: coord:@MainClass
@@ -394,7 +399,7 @@ class EnvironmentBuilder:
                 part_with_at = plus_parts[at_part_index]
                 at_index = part_with_at.rfind("@")
                 before_at = part_with_at[:at_index]
-                after_at = part_with_at[at_index + 1:]
+                after_at = part_with_at[at_index + 1 :]
 
                 if before_at.endswith(":"):
                     # Old format

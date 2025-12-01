@@ -69,7 +69,7 @@ print(env.main_class) # org.python.util.jython
 
 **Methods:**
 - `from_endpoint(endpoint: str)` - Build from endpoint string (e.g., "G:A:V")
-- `from_components(components: List[Component])` - Build from Component objects
+- `from_components(components: list[Component])` - Build from Component objects
 
 **Usage:**
 ```python

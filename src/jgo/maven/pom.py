@@ -2,8 +2,10 @@
 Maven POM (Project Object Model) parsing and handling.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .core import XML, Artifact, Dependency, MavenContext
 
@@ -13,9 +15,7 @@ class POM(XML):
     Convenience wrapper around a Maven POM XML document.
     """
 
-    def __init__(
-        self, source: Path | str, maven_context: Optional[MavenContext] = None
-    ):
+    def __init__(self, source: Path | str, maven_context: MavenContext | None = None):
         super().__init__(source, maven_context)
 
     def artifact(self) -> Artifact:
@@ -25,7 +25,7 @@ class POM(XML):
         project = self.maven_context.project(self.groupId, self.artifactId)
         return project.at_version(self.version).artifact(packaging="pom")
 
-    def parent(self) -> Optional["POM"]:
+    def parent(self) -> "POM" | None:
         """
         Get POM data for this POM's parent POM, or None if no parent is declared.
         """
@@ -58,59 +58,59 @@ class POM(XML):
         return POM(pom_artifact.resolve(), self.maven_context)
 
     @property
-    def groupId(self) -> Optional[str]:
+    def groupId(self) -> str | None:
         """The POM's <groupId> (or <parent><groupId>) value."""
         return self.value("groupId") or self.value("parent/groupId")
 
     @property
-    def artifactId(self) -> Optional[str]:
+    def artifactId(self) -> str | None:
         """The POM's <artifactId> value."""
         return self.value("artifactId")
 
     @property
-    def version(self) -> Optional[str]:
+    def version(self) -> str | None:
         """The POM's <version> (or <parent><version>) value."""
         return self.value("version") or self.value("parent/version")
 
     @property
-    def name(self) -> Optional[str]:
+    def name(self) -> str | None:
         """The POM's <name> value."""
         return self.value("name")
 
     @property
-    def description(self) -> Optional[str]:
+    def description(self) -> str | None:
         """The POM's <description> value."""
         return self.value("description")
 
     @property
-    def scmURL(self) -> Optional[str]:
+    def scmURL(self) -> str | None:
         """The POM's <scm><url> value."""
         return self.value("scm/url")
 
     @property
-    def issuesURL(self) -> Optional[str]:
+    def issuesURL(self) -> str | None:
         """The POM's <issueManagement><url> value."""
         return self.value("issueManagement/url")
 
     @property
-    def ciURL(self) -> Optional[str]:
+    def ciURL(self) -> str | None:
         """The POM's <ciManagement><url> value."""
         return self.value("ciManagement/url")
 
     @property
-    def developers(self) -> List[Dict[str, Any]]:
+    def developers(self) -> list[dict[str, Any]]:
         """Dictionary of the POM's <developer> entries."""
         return self._people("developers/developer")
 
     @property
-    def contributors(self) -> List[Dict[str, Any]]:
+    def contributors(self) -> list[dict[str, Any]]:
         """Dictionary of the POM's <contributor> entries."""
         return self._people("contributors/contributor")
 
-    def _people(self, path: str) -> List[Dict[str, Any]]:
+    def _people(self, path: str) -> list[dict[str, Any]]:
         people = []
         for el in self.elements(path):
-            person: Dict[str, Any] = {}
+            person: dict[str, Any] = {}
             for child in el:
                 if len(child) == 0:
                     person[child.tag] = child.text
@@ -124,11 +124,11 @@ class POM(XML):
         return people
 
     @property
-    def properties(self) -> Dict[str, str]:
+    def properties(self) -> dict[str, str]:
         """Dictionary of key/value pairs from the POM's <properties>."""
         return {el.tag: el.text for el in self.elements("properties/*")}
 
-    def dependencies(self, managed: bool = False) -> List[Dependency]:
+    def dependencies(self, managed: bool = False) -> list[Dependency]:
         """
         Gets a list of the POM's <dependency> entries,
         represented as Dependency objects.

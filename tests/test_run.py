@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 import os
 import pathlib
 import subprocess
 import sys
 import unittest
-from typing import Dict, Tuple
 from unittest.mock import MagicMock, patch
 
 from jgo.jgo import (
@@ -21,7 +22,7 @@ from jgo.jgo import (
 from jgo.util import main_from_endpoint
 
 
-def _call_args(mock: MagicMock) -> Tuple[Tuple, Dict]:
+def _call_args(mock: MagicMock) -> tuple[tuple, dict]:
     """
     Returns the arguments and keyword arguments passed in a mock call.
     :param mock: The mock that was called

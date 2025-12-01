@@ -4,8 +4,9 @@ Java runner for jgo 2.0.
 Executes Java programs with constructed environments.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import List, Optional
 import subprocess
 import sys
 
@@ -20,10 +21,10 @@ class JavaRunner:
 
     def __init__(
         self,
-        jvm_config: Optional[JVMConfig] = None,
+        jvm_config: JVMConfig | None = None,
         java_source: JavaSource = JavaSource.CJDK,
-        java_version: Optional[int] = None,
-        java_vendor: Optional[str] = None,
+        java_version: int | None = None,
+        java_vendor: str | None = None,
         verbose: bool = False,
     ):
         """
@@ -45,10 +46,10 @@ class JavaRunner:
     def run(
         self,
         environment,  # Type hint would be circular: jgo.env.Environment
-        main_class: Optional[str] = None,
-        app_args: Optional[List[str]] = None,
-        additional_jvm_args: Optional[List[str]] = None,
-        additional_classpath: Optional[List[str]] = None,
+        main_class: str | None = None,
+        app_args: list[str] | None = None,
+        additional_jvm_args: list[str] | None = None,
+        additional_classpath: list[str] | None = None,
         print_command: bool = False,
     ) -> subprocess.CompletedProcess:
         """
@@ -138,9 +139,9 @@ class JavaRunner:
     def run_and_capture(
         self,
         environment,  # Type hint would be circular: jgo.env.Environment
-        main_class: Optional[str] = None,
-        app_args: Optional[List[str]] = None,
-        additional_jvm_args: Optional[List[str]] = None,
+        main_class: str | None = None,
+        app_args: list[str] | None = None,
+        additional_jvm_args: list[str] | None = None,
         print_command: bool = False,
     ) -> subprocess.CompletedProcess:
         """
@@ -205,7 +206,7 @@ class JavaRunner:
         except Exception as e:
             raise RuntimeError(f"Failed to execute Java program: {e}")
 
-    def _build_classpath(self, jar_paths: List[Path]) -> str:
+    def _build_classpath(self, jar_paths: list[Path]) -> str:
         """
         Build classpath string from JAR paths.
 

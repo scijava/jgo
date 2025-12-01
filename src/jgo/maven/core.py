@@ -2,10 +2,12 @@
 Core Maven data structures and configuration.
 """
 
+from __future__ import annotations
+
 from hashlib import md5, sha1
 from os import environ
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple
+from typing import TYPE_CHECKING, Iterable
 from xml.etree import ElementTree
 
 from .util import coord2str, text, binary
@@ -34,10 +36,10 @@ class MavenContext:
 
     def __init__(
         self,
-        repo_cache: Optional[Path] = None,
-        local_repos: Optional[List[Path]] = None,
-        remote_repos: Optional[Dict[str, str]] = None,
-        resolver: Optional["Resolver"] = None,
+        repo_cache: Path | None = None,
+        local_repos: list[Path] | None = None,
+        remote_repos: dict[str, str] | None = None,
+        resolver: Resolver | None = None,
     ):
         """
         Create a Maven context.
@@ -66,10 +68,10 @@ class MavenContext:
         self.repo_cache: Path = repo_cache or Path(
             environ.get("M2_REPO", str(Path("~").expanduser() / ".m2" / "repository"))
         )
-        self.local_repos: List[Path] = (
+        self.local_repos: list[Path] = (
             DEFAULT_LOCAL_REPOS if local_repos is None else local_repos
         ).copy()
-        self.remote_repos: Dict[str, str] = (
+        self.remote_repos: dict[str, str] = (
             DEFAULT_REMOTE_REPOS if remote_repos is None else remote_repos
         ).copy()
         # Import here to avoid circular dependency
@@ -121,7 +123,7 @@ class Project:
         self.maven_context = maven_context
         self.groupId = groupId
         self.artifactId = artifactId
-        self._metadata: Optional["Metadata"] = None
+        self._metadata: "Metadata" | None = None
 
     def __eq__(self, other):
         return (
@@ -209,7 +211,7 @@ class Project:
 
     def versions(
         self, releases: bool = True, snapshots: bool = False, locked: bool = False
-    ) -> List["Component"]:
+    ) -> list["Component"]:
         """
         Get a list of all known versions of this project.
 
@@ -406,7 +408,7 @@ class Artifact:
         return f"{self.artifactId}-{self.component.resolved_version}{classifier_suffix}.{self.packaging}"
 
     @property
-    def cached_path(self) -> Optional[Path]:
+    def cached_path(self) -> Path | None:
         """
         Path to the artifact in the linked context's local repository cache.
         Might not actually exist! This just returns where it *would be* if present.
@@ -474,7 +476,7 @@ class Dependency:
         self.artifact = artifact
         self.scope = scope
         self.optional = optional
-        self.exclusions: Tuple[Project] = (
+        self.exclusions: tuple[Project] = (
             tuple() if exclusions is None else tuple(exclusions)
         )
 
@@ -531,9 +533,7 @@ class Dependency:
 class XML:
     """Base class for XML document wrappers."""
 
-    def __init__(
-        self, source: Path | str, maven_context: Optional[MavenContext] = None
-    ):
+    def __init__(self, source: Path | str, maven_context: MavenContext | None = None):
         self.source = source
         self.maven_context: MavenContext = maven_context or MavenContext()
         self.tree: ElementTree.ElementTree = (
@@ -554,18 +554,18 @@ class XML:
             el = self.tree.getroot()
         return ElementTree.tostring(el).decode()
 
-    def elements(self, path: str) -> List[ElementTree.Element]:
+    def elements(self, path: str) -> list[ElementTree.Element]:
         return self.tree.findall(path)
 
-    def element(self, path: str) -> Optional[ElementTree.Element]:
+    def element(self, path: str) -> ElementTree.Element | None:
         els = self.elements(path)
         assert len(els) <= 1
         return els[0] if els else None
 
-    def values(self, path: str) -> List[str]:
+    def values(self, path: str) -> list[str]:
         return [el.text for el in self.elements(path)]
 
-    def value(self, path: str) -> Optional[str]:
+    def value(self, path: str) -> str | None:
         el = self.element(path)
         # NB: Be careful: childless ElementTree.Element objects are falsy!
         return None if el is None else el.text

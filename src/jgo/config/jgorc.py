@@ -4,10 +4,11 @@ Configuration file parsing for jgo 2.0.
 Supports ~/.jgorc configuration files with backward compatibility to jgo 1.x.
 """
 
+from __future__ import annotations
+
 import configparser
 import os
 from pathlib import Path
-from typing import Dict, Optional
 
 
 class JgoConfig:
@@ -22,11 +23,11 @@ class JgoConfig:
 
     def __init__(
         self,
-        cache_dir: Optional[Path] = None,
-        repo_cache: Optional[Path] = None,
+        cache_dir: Path | None = None,
+        repo_cache: Path | None = None,
         links: str = "auto",
-        repositories: Optional[Dict[str, str]] = None,
-        shortcuts: Optional[Dict[str, str]] = None,
+        repositories: dict[str, str] | None = None,
+        shortcuts: dict[str, str] | None = None,
     ):
         """
         Initialize configuration.
@@ -45,7 +46,7 @@ class JgoConfig:
         self.shortcuts = shortcuts or {}
 
     @classmethod
-    def load(cls, config_file: Optional[Path] = None) -> "JgoConfig":
+    def load(cls, config_file: Path | None = None) -> "JgoConfig":
         """
         Load configuration from file and environment variables.
 

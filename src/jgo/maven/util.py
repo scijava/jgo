@@ -2,10 +2,11 @@
 Utility functions for Maven operations.
 """
 
+from __future__ import annotations
+
 from datetime import datetime
 from pathlib import Path
 from re import match
-from typing import Optional, Union
 
 
 def ts2dt(ts: str) -> datetime:
@@ -25,10 +26,10 @@ def ts2dt(ts: str) -> datetime:
 def coord2str(
     groupId: str,
     artifactId: str,
-    version: Optional[str] = None,
-    classifier: Optional[str] = None,
-    packaging: Optional[str] = None,
-    scope: Optional[str] = None,
+    version: str | None = None,
+    classifier: str | None = None,
+    packaging: str | None = None,
+    scope: str | None = None,
     optional: bool = False,
 ) -> str:
     """
@@ -63,17 +64,13 @@ def coord2str(
     return s
 
 
-def read(p: Path, mode: str) -> Union[str, bytes]:
-    """Read a file in the specified mode."""
-    with open(p, mode) as f:
-        return f.read()
-
-
 def text(p: Path) -> str:
     """Read a text file."""
-    return read(p, "r")
+    with open(p, "r") as f:
+        return f.read()
 
 
 def binary(p: Path) -> bytes:
     """Read a binary file."""
-    return read(p, "rb")
+    with open(p, "rb") as f:
+        return f.read()

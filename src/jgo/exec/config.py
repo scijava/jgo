@@ -4,7 +4,8 @@ JVM configuration for jgo 2.0.
 Handles JVM arguments like heap size, GC options, and system properties.
 """
 
-from typing import List, Optional, Dict
+from __future__ import annotations
+
 import psutil
 
 
@@ -17,11 +18,11 @@ class JVMConfig:
 
     def __init__(
         self,
-        max_heap: Optional[str] = None,
-        min_heap: Optional[str] = None,
-        gc_options: Optional[List[str]] = None,
-        system_properties: Optional[Dict[str, str]] = None,
-        extra_args: Optional[List[str]] = None,
+        max_heap: str | None = None,
+        min_heap: str | None = None,
+        gc_options: list[str] | None = None,
+        system_properties: dict[str, str] | None = None,
+        extra_args: list[str] | None = None,
         auto_heap: bool = True,
         default_gc: str = "-XX:+UseG1GC",
     ):
@@ -46,7 +47,7 @@ class JVMConfig:
         self.auto_heap = auto_heap
         self.default_gc = default_gc
 
-    def to_jvm_args(self) -> List[str]:
+    def to_jvm_args(self) -> list[str]:
         """
         Convert configuration to JVM arguments list.
 

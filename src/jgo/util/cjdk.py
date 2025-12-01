@@ -5,11 +5,12 @@ This module provides functions to automatically download
 and cache Maven when it's not available on the system.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import shutil
 from pathlib import Path
-from typing import Union
 
 import cjdk
 
@@ -94,7 +95,7 @@ def fetch_maven(url: str = "", sha: str = "") -> Path:
         )
 
 
-def _add_to_path(path: Union[Path, str], front: bool = False) -> None:
+def _add_to_path(path: Path | str, front: bool = False) -> None:
     """
     Add a path to the PATH environment variable.
 

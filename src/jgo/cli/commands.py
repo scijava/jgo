@@ -2,10 +2,11 @@
 CLI command implementations for jgo 2.0.
 """
 
+from __future__ import annotations
+
 import sys
 import warnings
 from pathlib import Path
-from typing import Optional
 
 from jgo.maven import MavenContext, SimpleResolver, MavenResolver
 from jgo.env import EnvironmentBuilder, LinkStrategy, EnvironmentSpec
@@ -18,7 +19,7 @@ class JgoCommands:
     Implementation of jgo CLI commands.
     """
 
-    def __init__(self, args: ParsedArgs, config: Optional[dict] = None):
+    def __init__(self, args: ParsedArgs, config: dict | None = None):
         """
         Initialize commands with parsed arguments and configuration.
 

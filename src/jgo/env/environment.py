@@ -5,8 +5,9 @@ An environment is a materialized directory containing JAR files ready for
 execution.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import List, Optional
 import json
 
 from .bytecode import detect_environment_java_version
@@ -38,7 +39,7 @@ class Environment:
         return self.path / "manifest.json"
 
     @property
-    def spec(self) -> Optional[EnvironmentSpec]:
+    def spec(self) -> EnvironmentSpec | None:
         """
         Load the environment specification (jgo.toml) if it exists.
 
@@ -50,7 +51,7 @@ class Environment:
         return None
 
     @property
-    def lockfile(self) -> Optional[LockFile]:
+    def lockfile(self) -> LockFile | None:
         """
         Load the lock file (jgo.lock.toml) if it exists.
 
@@ -78,7 +79,7 @@ class Environment:
             json.dump(self._manifest, f, indent=2)
 
     @property
-    def classpath(self) -> List[Path]:
+    def classpath(self) -> list[Path]:
         """List of JAR files in this environment."""
         jars_dir = self.path / "jars"
         if not jars_dir.exists():
@@ -86,7 +87,7 @@ class Environment:
         return sorted(jars_dir.glob("*.jar"))
 
     @property
-    def main_class(self) -> Optional[str]:
+    def main_class(self) -> str | None:
         """Main class for this environment (if detected/specified)."""
         return self.manifest.get("main_class")
 
@@ -101,7 +102,7 @@ class Environment:
         self.save_manifest()
 
     @property
-    def min_java_version(self) -> Optional[int]:
+    def min_java_version(self) -> int | None:
         """
         Minimum Java version required by this environment.
 

@@ -2,14 +2,15 @@
 Utilities for working with JAR files.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Optional
 import re
 import zipfile
 import warnings
 
 
-def detect_main_class_from_jar(jar_path: Path) -> Optional[str]:
+def detect_main_class_from_jar(jar_path: Path) -> str | None:
     """
     Detect the Main-Class from a JAR file's MANIFEST.MF.
 
@@ -38,9 +39,7 @@ def detect_main_class_from_jar(jar_path: Path) -> Optional[str]:
         return None
 
 
-def autocomplete_main_class(
-    main_class: str, artifact_id: str, jars_dir: Path
-) -> str:
+def autocomplete_main_class(main_class: str, artifact_id: str, jars_dir: Path) -> str:
     """
     Auto-complete a main class name by searching in JARs.
 

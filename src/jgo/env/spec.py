@@ -5,9 +5,10 @@ This module handles reading and writing jgo.toml files which define
 reproducible Java environments.
 """
 
+from __future__ import annotations
+
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
 
 # Use tomllib (Python 3.11+) or tomli (backport for older versions)
 if sys.version_info >= (3, 11):
@@ -60,17 +61,17 @@ class EnvironmentSpec:
 
     def __init__(
         self,
-        name: Optional[str] = None,
-        description: Optional[str] = None,
+        name: str | None = None,
+        description: str | None = None,
         java_version: str = "auto",
-        java_vendor: Optional[str] = None,
-        repositories: Optional[Dict[str, str]] = None,
-        coordinates: Optional[List[str]] = None,
-        exclusions: Optional[List[str]] = None,
-        entrypoints: Optional[Dict[str, str]] = None,
-        default_entrypoint: Optional[str] = None,
-        link_strategy: Optional[str] = None,
-        cache_dir: Optional[str] = None,
+        java_vendor: str | None = None,
+        repositories: dict[str, str] | None = None,
+        coordinates: list[str] | None = None,
+        exclusions: list[str] | None = None,
+        entrypoints: dict[str, str] | None = None,
+        default_entrypoint: str | None = None,
+        link_strategy: str | None = None,
+        cache_dir: str | None = None,
     ):
         self.name = name
         self.description = description
@@ -290,7 +291,7 @@ class EnvironmentSpec:
 
         return data
 
-    def get_main_class(self, entrypoint_name: Optional[str] = None) -> Optional[str]:
+    def get_main_class(self, entrypoint_name: str | None = None) -> str | None:
         """
         Get the main class for a given entrypoint.
 

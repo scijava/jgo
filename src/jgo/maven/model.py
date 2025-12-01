@@ -2,9 +2,11 @@
 Maven dependency model and resolution.
 """
 
+from __future__ import annotations
+
 import logging
 from re import findall
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Iterable
 
 from .core import Dependency, Project
 from .pom import POM
@@ -15,7 +17,7 @@ if TYPE_CHECKING:
 _log = logging.getLogger(__name__)
 
 # (groupId, artifactId, classifier, type)
-GACT = Tuple[str, str, str, str]
+GACT = tuple[str, str, str, str]
 
 
 class Model:
@@ -23,9 +25,7 @@ class Model:
     A minimal Maven metadata model, tracking only dependencies and properties.
     """
 
-    def __init__(
-        self, pom: POM, managed_components: Optional[List["Component"]] = None
-    ):
+    def __init__(self, pom: POM, managed_components: list[Component] | None = None):
         """
         Build a Maven metadata model from the given POM.
 
@@ -38,15 +38,13 @@ class Model:
 
         # Transfer raw metadata from POM source to target model.
         # For now, we handle only dependencies, dependencyManagement, and properties.
-        self.deps: Dict[GACT, Dependency] = {}
-        self.dep_mgmt: Dict[GACT, Dependency] = {}
-        self.props: Dict[str, str] = {}
+        self.deps: dict[GACT, Dependency] = {}
+        self.dep_mgmt: dict[GACT, Dependency] = {}
+        self.props: dict[str, str] = {}
         self._merge(pom)
 
         # If managed mode is enabled, inject the components as BOMs in dependencyManagement
         if managed_components:
-            from .core import Dependency
-
             for managed_component in managed_components:
                 managed_dep = Dependency(
                     artifact=managed_component.artifact(packaging="pom"),
@@ -165,9 +163,9 @@ class Model:
 
     def dependencies(
         self,
-        resolved: Dict[GACT, Dependency] = None,
-        root_dep_mgmt: Dict[GACT, Dependency] = None,
-    ) -> List[Dependency]:
+        resolved: dict[GACT, Dependency] | None = None,
+        root_dep_mgmt: dict[GACT, Dependency] | None = None,
+    ) -> list[Dependency]:
         """
         Compute the component's list of dependencies, including transitive dependencies.
 
@@ -180,7 +178,7 @@ class Model:
             This will be used to override versions of transitive dependencies.
         :return: The list of Dependency objects.
         """
-        deps: Dict[GACT, Dependency] = {}
+        deps: dict[GACT, Dependency] = {}
 
         # Determine whether we are currently diving into transitive dependencies.
         recursing: bool = resolved is not None
@@ -190,7 +188,7 @@ class Model:
             root_dep_mgmt = self.dep_mgmt
 
         # Process direct dependencies.
-        direct_deps: Dict[GACT, Dependency] = {}
+        direct_deps: dict[GACT, Dependency] = {}
         for gact, dep in self.deps.items():
             if gact in resolved:
                 continue  # Dependency has already been processed.
@@ -246,7 +244,7 @@ class Model:
 
         return list(deps.values())
 
-    def _import_boms(self, candidates: Dict[GACT, Dependency]) -> None:
+    def _import_boms(self, candidates: dict[GACT, Dependency]) -> None:
         """
         Scan the candidates for dependencies of type pom with scope import.
         For each such dependency found, import its dependencyManagement section
@@ -277,7 +275,7 @@ class Model:
             if k not in target:
                 target[k] = dep
 
-    def _merge_props(self, source: Dict[str, str]) -> None:
+    def _merge_props(self, source: dict[str, str]) -> None:
         for k, v in source.items():
             if v is not None and k not in self.props:
                 self.props[k] = v
@@ -303,7 +301,7 @@ class Model:
             }
         )
 
-    def _interpolate_deps(self, deps: Dict[GACT, Dependency]) -> Dict[GACT, Dependency]:
+    def _interpolate_deps(self, deps: dict[GACT, Dependency]) -> dict[GACT, Dependency]:
         """
         Interpolate ${...} expressions in dependency coordinates.
 
@@ -409,7 +407,7 @@ class Model:
 
     @staticmethod
     def _evaluate(
-        expression: str, props: Dict[str, str], visited: Optional[Set[str]] = None
+        expression: str, props: dict[str, str], visited: set[str] | None = None
     ) -> str:
         props_referenced = set(findall(r"\${([^}]*)}", expression))
         if not props_referenced:
@@ -429,8 +427,8 @@ class Model:
 
     @staticmethod
     def _propvalue(
-        propname: str, props: Dict[str, str], visited: Optional[Set[str]] = None
-    ) -> Optional[str]:
+        propname: str, props: dict[str, str], visited: set[str] | None = None
+    ) -> str | None:
         if visited is None:
             visited = set()
         if propname in visited:

@@ -4,9 +4,10 @@ Java source and locator for jgo 2.0.
 Handles finding or downloading the appropriate Java executable.
 """
 
+from __future__ import annotations
+
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 import subprocess
 import sys
 
@@ -32,8 +33,8 @@ class JavaLocator:
     def __init__(
         self,
         java_source: JavaSource = JavaSource.CJDK,
-        java_version: Optional[int] = None,
-        java_vendor: Optional[str] = None,
+        java_version: int | None = None,
+        java_vendor: str | None = None,
         verbose: bool = False,
     ):
         """
@@ -52,7 +53,7 @@ class JavaLocator:
         self.java_vendor = java_vendor or "zulu"
         self.verbose = verbose
 
-    def locate(self, min_version: Optional[int] = None) -> Path:
+    def locate(self, min_version: int | None = None) -> Path:
         """
         Locate or download appropriate Java executable.
 
@@ -76,7 +77,7 @@ class JavaLocator:
         else:
             raise ValueError(f"Unknown JavaSource: {self.java_source}")
 
-    def _locate_system_java(self, required_version: Optional[int] = None) -> Path:
+    def _locate_system_java(self, required_version: int | None = None) -> Path:
         """
         Locate system Java executable.
 
@@ -112,7 +113,7 @@ class JavaLocator:
 
         return java_path
 
-    def _locate_cjdk_java(self, required_version: Optional[int] = None) -> Path:
+    def _locate_cjdk_java(self, required_version: int | None = None) -> Path:
         """
         Locate Java using cjdk.
 
@@ -153,7 +154,7 @@ class JavaLocator:
         except Exception as e:
             raise RuntimeError(f"Failed to obtain Java via cjdk: {e}")
 
-    def _find_java_in_path(self) -> Optional[Path]:
+    def _find_java_in_path(self) -> Path | None:
         """
         Find java executable in PATH or JAVA_HOME.
 

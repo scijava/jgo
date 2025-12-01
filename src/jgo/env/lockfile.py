@@ -5,11 +5,12 @@ Lock files record exact resolved versions for reproducibility,
 including SNAPSHOT timestamps and SHA256 checksums.
 """
 
+from __future__ import annotations
+
 import hashlib
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional
 
 # Use tomllib (Python 3.11+) or tomli (backport for older versions)
 if sys.version_info >= (3, 11):
@@ -33,8 +34,8 @@ class LockedDependency:
         artifactId: str,
         version: str,
         packaging: str = "jar",
-        classifier: Optional[str] = None,
-        sha256: Optional[str] = None,
+        classifier: str | None = None,
+        sha256: str | None = None,
     ):
         self.groupId = groupId
         self.artifactId = artifactId
@@ -112,11 +113,11 @@ class LockFile:
 
     def __init__(
         self,
-        dependencies: List[LockedDependency],
-        environment_name: Optional[str] = None,
-        min_java_version: Optional[int] = None,
-        entrypoints: Optional[Dict[str, str]] = None,
-        default_entrypoint: Optional[str] = None,
+        dependencies: list[LockedDependency],
+        environment_name: str | None = None,
+        min_java_version: int | None = None,
+        entrypoints: dict[str, str] | None = None,
+        default_entrypoint: str | None = None,
         jgo_version: str = "2.0.0",
     ):
         self.dependencies = dependencies
@@ -130,11 +131,11 @@ class LockFile:
     @classmethod
     def from_resolved_dependencies(
         cls,
-        dependencies: List[Dependency],
-        environment_name: Optional[str] = None,
-        min_java_version: Optional[int] = None,
-        entrypoints: Optional[Dict[str, str]] = None,
-        default_entrypoint: Optional[str] = None,
+        dependencies: list[Dependency],
+        environment_name: str | None = None,
+        min_java_version: int | None = None,
+        entrypoints: dict[str, str] | None = None,
+        default_entrypoint: str | None = None,
     ) -> "LockFile":
         """
         Create a lock file from resolved dependencies.
@@ -260,7 +261,7 @@ class LockFile:
 
         return data
 
-    def verify_checksums(self, maven_repo: Path) -> List[str]:
+    def verify_checksums(self, maven_repo: Path) -> list[str]:
         """
         Verify that all locked dependencies still match their checksums.
 

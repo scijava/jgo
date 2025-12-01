@@ -5,8 +5,9 @@ Provides common data structures and formatting logic for dependency lists and tr
 used by both SimpleResolver and MavenResolver to ensure consistent output.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
-from typing import List, Optional
 
 
 @dataclass
@@ -22,10 +23,10 @@ class DependencyNode:
     artifactId: str
     version: str
     packaging: str = "jar"
-    classifier: Optional[str] = None
-    scope: Optional[str] = None
+    classifier: str | None = None
+    scope: str | None = None
     optional: bool = False
-    children: List["DependencyNode"] = field(default_factory=list)
+    children: list["DependencyNode"] = field(default_factory=list)
 
     def coordinate_string(self, include_scope: bool = True) -> str:
         """
@@ -60,7 +61,7 @@ class DependencyNode:
 
 
 def format_dependency_list(
-    root: DependencyNode, dependencies: List[DependencyNode]
+    root: DependencyNode, dependencies: list[DependencyNode]
 ) -> str:
     """
     Format a flat list of resolved dependencies (like mvn dependency:list).
@@ -106,7 +107,7 @@ def format_dependency_tree(root: DependencyNode) -> str:
     lines.append(f"{root.groupId}:{root.artifactId}:{root.version}")
 
     def add_children(
-        nodes: List[DependencyNode], prefix: str = "", is_last: bool = True
+        nodes: list[DependencyNode], prefix: str = "", is_last: bool = True
     ):
         """Recursively add child nodes to the tree."""
         for i, node in enumerate(nodes):

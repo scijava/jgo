@@ -3,9 +3,7 @@
 Unit tests for endpoint parsing with @ separator.
 """
 
-import tempfile
 import warnings
-from pathlib import Path
 
 import pytest
 
