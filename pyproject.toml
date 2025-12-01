@@ -57,11 +57,11 @@ dev = [
 jgo = "jgo.__main__:main"
 
 [project.urls]
-homepage = "https://github.com/scijava/jgo"
-documentation = "https://github.com/scijava/jgo/blob/main/README.md"
-source = "https://github.com/scijava/jgo"
+homepage = "https://github.com/apposed/jgo"
+documentation = "https://github.com/apposed/jgo/blob/main/README.md"
+source = "https://github.com/apposed/jgo"
 download = "https://pypi.org/project/jgo/"
-tracker = "https://github.com/scijava/jgo/issues"
+tracker = "https://github.com/apposed/jgo/issues"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

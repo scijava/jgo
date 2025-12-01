@@ -98,7 +98,7 @@ See Also
 - User Guide: docs/user-guide.md
 - Architecture: docs/architecture.md
 - Migration Guide: docs/MIGRATION.md (for upgrading from jgo 1.x)
-- GitHub: https://github.com/scijava/jgo
+- GitHub: https://github.com/apposed/jgo
 """
 
 from pathlib import Path

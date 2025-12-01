@@ -1,9 +1,9 @@
-[![build status](https://github.com/scijava/jgo/actions/workflows/build.yml/badge.svg)](https://github.com/scijava/jgo/actions/workflows/build.yml)
+[![build status](https://github.com/apposed/jgo/actions/workflows/build.yml/badge.svg)](https://github.com/apposed/jgo/actions/workflows/build.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 # jgo: painless Java component execution
 
-![](https://raw.githubusercontent.com/scijava/jgo/main/jgo.png)
+![](https://raw.githubusercontent.com/apposed/jgo/main/jgo.png)
 
 ## Summary
 
@@ -131,7 +131,7 @@ conda install -c conda-forge jgo
 <details><summary><strong>Installing jgo from source</strong></summary>
 
 ```shell
-git clone https://github.com/scijava/jgo
+git clone https://github.com/apposed/jgo
 uv tool install --with-editable jgo jgo
 ```
 
@@ -296,7 +296,7 @@ project should more precisely match those of each endpoint itself—although in
 the case of multiple endpoints concatenated via the `+` operator with
 conflicting dependency management, the earlier endpoints will win because they
 will be declared earlier in the POM. See also
-[issue #9](https://github.com/scijava/jgo/issues/9) in the jgo issue tracker.
+[issue #9](https://github.com/apposed/jgo/issues/9) in the jgo issue tracker.
 
 ## Documentation
 

@@ -179,6 +179,6 @@ Plan to migrate away from deprecated APIs before jgo 3.0 (which will remove them
 
 ---
 
-[Unreleased]: https://github.com/scijava/jgo/compare/v1.1.0...HEAD
-[2.0.0]: https://github.com/scijava/jgo/compare/v1.1.0...v2.0.0
-[1.1.0]: https://github.com/scijava/jgo/releases/tag/v1.1.0
+[Unreleased]: https://github.com/apposed/jgo/compare/v1.1.0...HEAD
+[2.0.0]: https://github.com/apposed/jgo/compare/v1.1.0...v2.0.0
+[1.1.0]: https://github.com/apposed/jgo/releases/tag/v1.1.0

@@ -466,6 +466,6 @@ jgo net.imagej:imagej  # Downloads Java 17 automatically!
 
 ## Getting Help
 
-- **GitHub Issues**: https://github.com/scijava/jgo/issues
-- **Documentation**: https://github.com/scijava/jgo
-- **SciJava Forum**: https://forum.image.sc/tag/jgo
+- **GitHub Issues**: https://github.com/apposed/jgo/issues
+- **Documentation**: https://github.com/apposed/jgo
+- **Image.sc Forum**: https://forum.image.sc/tag/jgo

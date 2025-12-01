@@ -321,5 +321,5 @@ jgo -v -- -- --app-flag value
 
 - **User Guide**: See [user-guide.md](user-guide.md) for comprehensive documentation
 - **Architecture**: See [architecture.md](architecture.md) to understand the new design
-- **GitHub Issues**: https://github.com/scijava/jgo/issues
+- **GitHub Issues**: https://github.com/apposed/jgo/issues
 - **API Reference**: Use `help(jgo)` in Python for detailed documentation
