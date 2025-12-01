@@ -39,7 +39,7 @@ def test_environment_spec_save_and_load():
                 "net.imagej:imagej:2.15.0",
                 "org.scijava:scripting-jython:1.0.0",
             ],
-            exclusions={"net.imagej:imagej": ["org.scijava:scijava-common"]},
+            exclusions=["org.scijava:scijava-common"],
             entrypoints={
                 "imagej": "net.imagej.Main",
                 "repl": "org.scijava.script.ScriptREPL",
@@ -65,10 +65,8 @@ def test_environment_spec_save_and_load():
         )
         assert len(loaded_spec.coordinates) == 2
         assert "net.imagej:imagej:2.15.0" in loaded_spec.coordinates
-        assert len(loaded_spec.exclusions["net.imagej:imagej"]) == 1
-        assert (
-            "org.scijava:scijava-common" in loaded_spec.exclusions["net.imagej:imagej"]
-        )
+        assert len(loaded_spec.exclusions) == 1
+        assert loaded_spec.exclusions[0] == "org.scijava:scijava-common"
         assert loaded_spec.entrypoints["imagej"] == "net.imagej.Main"
         assert loaded_spec.default_entrypoint == "imagej"
         assert loaded_spec.link_strategy == "hard"
@@ -140,9 +138,7 @@ def test_environment_spec_validation_invalid_exclusion():
         spec_path.write_text("""
 [dependencies]
 coordinates = ["org.example:artifact:1.0.0"]
-
-[dependencies.exclusions]
-"org.example:artifact" = ["org.bad:excluded:1.0.0"]  # Should be G:A only
+exclusions = ["org.bad:excluded:1.0.0"]  # Should be G:A only
 """)
 
         # Should raise ValueError

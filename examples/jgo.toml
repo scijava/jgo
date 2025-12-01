@@ -25,8 +25,7 @@ coordinates = [
 ]
 
 # Maven-style exclusions (G:A only, no version)
-[dependencies.exclusions]
-"net.imagej:imagej" = ["org.scijava:scijava-common"]
+exclusions = ["org.scijava:scijava-common"]
 
 # Entry points - different ways to run the environment
 [entrypoints]

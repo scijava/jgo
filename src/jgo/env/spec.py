@@ -37,13 +37,16 @@ class EnvironmentSpec:
 
         [dependencies]
         coordinates = [
-            "net.imagej:imagej:2.15.0",
-            "org.scijava:scripting-jython:1.0.0",
+            "net.imagej:imagej:2.17.0",
+            "org.scijava:scripting-python:0.4.2",
         ]
 
         # Maven-style exclusions (G:A only, not G:A:V)
-        [dependencies.exclusions]
-        "net.imagej:imagej" = ["org.scijava:scijava-common"]
+        [dependencies]
+        exclusions = [
+            "org.scijava:scripting-jruby",
+            "org.scijava:scripting-jython"
+        ]
 
         [entrypoints]
         imagej = "net.imagej.Main"
@@ -63,7 +66,7 @@ class EnvironmentSpec:
         java_vendor: Optional[str] = None,
         repositories: Optional[Dict[str, str]] = None,
         coordinates: Optional[List[str]] = None,
-        exclusions: Optional[Dict[str, List[str]]] = None,
+        exclusions: Optional[List[str]] = None,
         entrypoints: Optional[Dict[str, str]] = None,
         default_entrypoint: Optional[str] = None,
         link_strategy: Optional[str] = None,
@@ -75,7 +78,7 @@ class EnvironmentSpec:
         self.java_vendor = java_vendor
         self.repositories = repositories or {}
         self.coordinates = coordinates or []
-        self.exclusions = exclusions or {}
+        self.exclusions = exclusions or []
         self.entrypoints = entrypoints or {}
         self.default_entrypoint = default_entrypoint
         self.link_strategy = link_strategy
@@ -158,26 +161,21 @@ class EnvironmentSpec:
                 )
 
         # [dependencies.exclusions] (optional)
-        exclusions = deps_section.get("exclusions", {})
-        if exclusions and not isinstance(exclusions, dict):
-            raise ValueError("'exclusions' must be a dict mapping coordinates to lists")
+        exclusions = deps_section.get("exclusions", [])
+        if exclusions and not isinstance(exclusions, list):
+            raise ValueError("'exclusions' must be a list of strings")
 
         # Validate exclusions format
-        for coord, excluded_list in exclusions.items():
-            if not isinstance(excluded_list, list):
+        for exclusion in exclusions:
+            if not isinstance(exclusion, str):
+                raise ValueError(f"Invalid exclusion (must be string): {exclusion}")
+            # Exclusions should be G:A only (Maven spec)
+            parts = exclusion.split(":")
+            if len(parts) != 2:
                 raise ValueError(
-                    f"Exclusions for '{coord}' must be a list, got {type(excluded_list)}"
+                    f"Invalid exclusion format '{exclusion}': "
+                    "expected 'groupId:artifactId' (no version)"
                 )
-            for excluded in excluded_list:
-                if not isinstance(excluded, str):
-                    raise ValueError(f"Invalid exclusion (must be string): {excluded}")
-                # Exclusions should be G:A only (Maven spec)
-                parts = excluded.split(":")
-                if len(parts) != 2:
-                    raise ValueError(
-                        f"Invalid exclusion format '{excluded}': "
-                        "expected 'groupId:artifactId' (no version)"
-                    )
 
         # [entrypoints] section (optional)
         entrypoints_section = data.get("entrypoints", {})
