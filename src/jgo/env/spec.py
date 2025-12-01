@@ -29,7 +29,7 @@ class EnvironmentSpec:
 
         [java]
         version = "17"  # Or ">=11", "11-17", or "auto" (default)
-        vendor = "zulu"  # Optional (default is "zulu")
+        vendor = "corretto"  # Optional (default is "zulu")
 
         [repositories]
         central = "https://repo.maven.apache.org/maven2"
