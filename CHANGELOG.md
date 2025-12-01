@@ -14,7 +14,7 @@ jgo 2.0 is a complete architectural redesign around three clean, independently u
 ### Added
 
 #### Zero-Configuration Execution
-- **Automatic Java management**: Integration with [cjdk](https://github.com/scijava/cjdk) to automatically download and manage Java versions
+- **Automatic Java management**: Integration with [cjdk](https://github.com/cachedjdk/cjdk) to automatically download and manage Java versions
 - **Bytecode detection**: Automatically detect minimum Java version from JAR files
 - **Auto-download Java**: Install `jgo[cjdk]` to automatically download the correct Java version (no pre-installed Java required!)
 

@@ -34,7 +34,7 @@ For zero-configuration execution with automatic Java download:
 pip install jgo[cjdk]
 ```
 
-This adds [cjdk](https://github.com/scijava/cjdk) integration, allowing jgo to automatically download the correct Java version for each program.
+This adds [cjdk](https://github.com/cachedjdk/cjdk) integration, allowing jgo to automatically download the correct Java version for each program.
 
 ### Prerequisites
 
