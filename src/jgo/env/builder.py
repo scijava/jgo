@@ -80,19 +80,17 @@ class EnvironmentBuilder:
         # Otherwise, use the per-component managed flags from ! markers
         if self.managed:
             # -m flag forces all components to be managed (backward compatibility)
-            managed_components = components
+            boms = components
         else:
             # Use explicit ! markers to determine which components are managed
-            managed_components = [
+            boms = [
                 comp
                 for comp, is_managed in zip(components, managed_flags)
                 if is_managed
             ]
 
-        # Temporarily store managed_components for use in from_components
-        self._current_managed_components = (
-            managed_components if managed_components else None
-        )
+        # Temporarily store managed components for use in from_components
+        self._current_boms = boms if boms else None
 
         # Use parsed main class if caller didn't provide one
         if main_class is None:
@@ -250,18 +248,18 @@ class EnvironmentBuilder:
 
         # Then resolve and link their dependencies
         # Use the resolver from maven_context to respect --resolver flag
-        # Use managed components from endpoint parsing (stored in _current_managed_components)
+        # Use managed components from endpoint parsing (stored in _current_boms)
         # or fall back to old behavior for backward compatibility
-        managed_components = getattr(self, "_current_managed_components", None)
-        if managed_components is None and self.managed:
+        boms = getattr(self, "_current_boms", None)
+        if boms is None and self.managed:
             # Backward compatibility: if -m flag is set but no explicit markers, manage all
-            managed_components = components
+            boms = components
 
         for component in components:
             deps = component.maven_context.resolver.dependencies(
                 component,
-                managed=bool(managed_components),
-                managed_components=managed_components,
+                managed=bool(boms),
+                boms=boms,
             )
             all_deps.extend(deps)
 

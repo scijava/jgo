@@ -280,9 +280,9 @@ class JgoCommands:
             components, managed_flags, _ = builder._parse_endpoint(self.args.endpoint)
             # Apply -m flag or use explicit ! markers
             if self.args.managed:
-                managed_components = components
+                boms = components
             else:
-                managed_components = [
+                boms = [
                     comp
                     for comp, is_managed in zip(components, managed_flags)
                     if is_managed
@@ -290,7 +290,7 @@ class JgoCommands:
             self._print_dependencies(
                 components,
                 maven_context,
-                managed_components=managed_components,
+                boms=boms,
                 list_mode=self.args.print_dependency_list,
             )
             return 0
@@ -446,7 +446,7 @@ class JgoCommands:
         self,
         components,
         maven_context,
-        managed_components=None,
+        boms=None,
         list_mode: bool = False,
     ) -> None:
         """
@@ -455,7 +455,7 @@ class JgoCommands:
         Args:
             components: List of components to print dependencies for
             maven_context: Maven context containing the resolver
-            managed_components: List of components to use as managed BOMs (None = none managed)
+            boms: List of components to use as managed BOMs (None = none managed)
             list_mode: If True, print flat list (like mvn dependency:list).
                       If False, print tree (like mvn dependency:tree).
         """
@@ -464,14 +464,14 @@ class JgoCommands:
         if list_mode:
             output = maven_context.resolver.print_dependency_list(
                 primary,
-                managed=bool(managed_components),
-                managed_components=managed_components,
+                managed=bool(boms),
+                boms=boms,
             )
         else:
             output = maven_context.resolver.print_dependency_tree(
                 primary,
-                managed=bool(managed_components),
-                managed_components=managed_components,
+                managed=bool(boms),
+                boms=boms,
             )
         print(output)
 

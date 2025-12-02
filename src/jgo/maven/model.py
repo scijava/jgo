@@ -25,12 +25,12 @@ class Model:
     A minimal Maven metadata model, tracking only dependencies and properties.
     """
 
-    def __init__(self, pom: POM, managed_components: list[Component] | None = None):
+    def __init__(self, pom: POM, boms: list[Component] | None = None):
         """
         Build a Maven metadata model from the given POM.
 
         :param pom: A source POM from which to extract metadata (e.g. dependencies).
-        :param managed_components: If provided, import these components as BOMs in dependencyManagement.
+        :param boms: If provided, import these components as BOMs in dependencyManagement.
         """
         self.maven_context = pom.maven_context
         self.gav = f"{pom.groupId}:{pom.artifactId}:{pom.version}"
@@ -44,23 +44,23 @@ class Model:
         self._merge(pom)
 
         # If managed mode is enabled, inject the components as BOMs in dependencyManagement
-        if managed_components:
-            for managed_component in managed_components:
+        if boms:
+            for bom in boms:
                 managed_dep = Dependency(
-                    artifact=managed_component.artifact(packaging="pom"),
+                    artifact=bom.artifact(packaging="pom"),
                     scope="import",
                     optional=False,
                 )
-                managed_dep.set_version(managed_component.version)
+                managed_dep.set_version(bom.version)
                 k = (
-                    managed_component.groupId,
-                    managed_component.artifactId,
+                    bom.groupId,
+                    bom.artifactId,
                     None,  # classifier
                     "pom",  # type
                 )
                 self.dep_mgmt[k] = managed_dep
                 _log.debug(
-                    f"{self.gav}: added {managed_component.groupId}:{managed_component.artifactId} to dependencyManagement"
+                    f"{self.gav}: added {bom.groupId}:{bom.artifactId} to dependencyManagement"
                 )
 
         # The following steps are adapted from the maven-model-builder:
