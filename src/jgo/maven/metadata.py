@@ -8,10 +8,13 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from itertools import combinations
 from pathlib import Path
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
 
-from .core import XML, MavenContext
+from .core import XML
 from .util import ts2dt
+
+if TYPE_CHECKING:
+    from .core import MavenContext
 
 
 class Metadata(ABC):

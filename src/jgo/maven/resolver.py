@@ -35,7 +35,7 @@ class Resolver(ABC):
     """
 
     @abstractmethod
-    def download(self, artifact: "Artifact") -> Path | None:
+    def download(self, artifact: Artifact) -> Path | None:
         """
         Download an artifact file from a remote repository.
         :param artifact: The artifact for which a local path should be resolved.
@@ -46,10 +46,10 @@ class Resolver(ABC):
     @abstractmethod
     def dependencies(
         self,
-        component: "Component",
+        component: Component,
         managed: bool = False,
-        managed_components: list["Component"] | None = None,
-    ) -> list["Dependency"]:
+        managed_components: list[Component] | None = None,
+    ) -> list[Dependency]:
         """
         Determine dependencies for the given Maven component.
         :param component: The component for which to determine the dependencies.
@@ -62,8 +62,8 @@ class Resolver(ABC):
 
     @abstractmethod
     def get_dependency_list(
-        self, component: "Component"
-    ) -> tuple["DependencyNode", list["DependencyNode"]]:
+        self, component: Component
+    ) -> tuple[DependencyNode, list[DependencyNode]]:
         """
         Get the flat list of resolved dependencies as data structures.
 
@@ -78,7 +78,7 @@ class Resolver(ABC):
         ...
 
     @abstractmethod
-    def get_dependency_tree(self, component: "Component") -> "DependencyNode":
+    def get_dependency_tree(self, component: Component) -> DependencyNode:
         """
         Get the full dependency tree as a data structure.
 
@@ -98,7 +98,7 @@ class SimpleResolver(Resolver):
     Low overhead, but less feature complete than mvn.
     """
 
-    def download(self, artifact: "Artifact") -> Path | None:
+    def download(self, artifact: Artifact) -> Path | None:
         if artifact.version.endswith("-SNAPSHOT"):
             raise RuntimeError("Downloading of snapshots is not yet implemented.")
 
@@ -125,10 +125,10 @@ class SimpleResolver(Resolver):
 
     def dependencies(
         self,
-        component: "Component",
+        component: Component,
         managed: bool = False,
-        managed_components: list["Component"] | None = None,
-    ) -> list["Dependency"]:
+        managed_components: list[Component] | None = None,
+    ) -> list[Dependency]:
         # Default to using the component itself if managed=True
         if managed and managed_components is None:
             managed_components = [component]
@@ -138,10 +138,10 @@ class SimpleResolver(Resolver):
 
     def get_dependency_list(
         self,
-        component: "Component",
+        component: Component,
         managed: bool = False,
-        managed_components: list["Component"] | None = None,
-    ) -> tuple["DependencyNode", list["DependencyNode"]]:
+        managed_components: list[Component] | None = None,
+    ) -> tuple[DependencyNode, list[DependencyNode]]:
         """
         Get the flat list of resolved dependencies as data structures.
         """
@@ -181,10 +181,10 @@ class SimpleResolver(Resolver):
 
     def get_dependency_tree(
         self,
-        component: "Component",
+        component: Component,
         managed: bool = False,
-        managed_components: list["Component"] | None = None,
-    ) -> "DependencyNode":
+        managed_components: list[Component] | None = None,
+    ) -> DependencyNode:
         """
         Get the full dependency tree as a data structure.
         """
@@ -205,7 +205,7 @@ class SimpleResolver(Resolver):
         # Track which G:A:C:T we've already processed (version not included for mediation)
         processed = set()
 
-        def build_tree(deps: list["Dependency"]) -> list[DependencyNode]:
+        def build_tree(deps: list[Dependency]) -> list[DependencyNode]:
             """Recursively build dependency tree."""
             nodes = []
             for dep in deps:
@@ -251,9 +251,9 @@ class SimpleResolver(Resolver):
 
     def print_dependency_list(
         self,
-        component: "Component",
+        component: Component,
         managed: bool = False,
-        managed_components: list["Component"] | None = None,
+        managed_components: list[Component] | None = None,
     ) -> str:
         """
         Print a flat list of resolved dependencies (like mvn dependency:list).
@@ -271,9 +271,9 @@ class SimpleResolver(Resolver):
 
     def print_dependency_tree(
         self,
-        component: "Component",
+        component: Component,
         managed: bool = False,
-        managed_components: list["Component"] | None = None,
+        managed_components: list[Component] | None = None,
     ) -> str:
         """
         Print the full dependency tree for the given component (like mvn dependency:tree).
@@ -302,7 +302,7 @@ class MavenResolver(Resolver):
         if update:
             self.mvn_flags.append("-U")
 
-    def download(self, artifact: "Artifact") -> Path | None:
+    def download(self, artifact: Artifact) -> Path | None:
         _log.info(f"Downloading artifact: {artifact}")
         assert artifact.maven_context.repo_cache
         assert artifact.groupId
@@ -333,10 +333,10 @@ class MavenResolver(Resolver):
 
     def dependencies(
         self,
-        component: "Component",
+        component: Component,
         managed: bool = False,
-        managed_components: list["Component"] | None = None,
-    ) -> list["Dependency"]:
+        managed_components: list[Component] | None = None,
+    ) -> list[Dependency]:
         # Invoke the dependency:list goal, including all transitive dependencies.
         pom_artifact = component.artifact(packaging="pom")
         assert pom_artifact.maven_context.repo_cache
@@ -430,10 +430,10 @@ class MavenResolver(Resolver):
 
     def get_dependency_list(
         self,
-        component: "Component",
+        component: Component,
         managed: bool = False,
-        managed_components: list["Component"] | None = None,
-    ) -> tuple["DependencyNode", list["DependencyNode"]]:
+        managed_components: list[Component] | None = None,
+    ) -> tuple[DependencyNode, list[DependencyNode]]:
         """
         Get the flat list of resolved dependencies as data structures.
         """
@@ -472,10 +472,10 @@ class MavenResolver(Resolver):
 
     def get_dependency_tree(
         self,
-        component: "Component",
+        component: Component,
         managed: bool = False,
-        managed_components: list["Component"] | None = None,
-    ) -> "DependencyNode":
+        managed_components: list[Component] | None = None,
+    ) -> DependencyNode:
         """
         Get the full dependency tree as a data structure.
 
@@ -652,9 +652,9 @@ class MavenResolver(Resolver):
 
     def print_dependency_list(
         self,
-        component: "Component",
+        component: Component,
         managed: bool = False,
-        managed_components: list["Component"] | None = None,
+        managed_components: list[Component] | None = None,
     ) -> str:
         """
         Print a flat list of resolved dependencies (like mvn dependency:list).
@@ -672,9 +672,9 @@ class MavenResolver(Resolver):
 
     def print_dependency_tree(
         self,
-        component: "Component",
+        component: Component,
         managed: bool = False,
-        managed_components: list["Component"] | None = None,
+        managed_components: list[Component] | None = None,
     ) -> str:
         """
         Print the full dependency tree for the given component.
@@ -693,7 +693,7 @@ class MavenResolver(Resolver):
         return MavenResolver._run(self.mvn_command, *self.mvn_flags, *args)
 
     def _create_managed_pom(
-        self, component: "Component", managed_components: list["Component"]
+        self, component: Component, managed_components: list[Component]
     ) -> Path:
         """
         Create a synthetic POM that imports components as BOMs.

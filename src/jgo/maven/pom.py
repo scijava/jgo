@@ -5,9 +5,12 @@ Maven POM (Project Object Model) parsing and handling.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from .core import XML, Artifact, Dependency, MavenContext
+from .core import XML
+
+if TYPE_CHECKING:
+    from .core import Artifact, Dependency, MavenContext
 
 
 class POM(XML):

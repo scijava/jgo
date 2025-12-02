@@ -79,7 +79,7 @@ class MavenContext:
             from .resolver import SimpleResolver
 
             resolver = SimpleResolver()
-        self.resolver: "Resolver" = resolver
+        self.resolver: Resolver = resolver
 
     def project(self, groupId: str, artifactId: str) -> "Project":
         """
@@ -123,7 +123,7 @@ class Project:
         self.maven_context = maven_context
         self.groupId = groupId
         self.artifactId = artifactId
-        self._metadata: "Metadata" | None = None
+        self._metadata: Metadata | None = None
 
     def __eq__(self, other):
         return (
@@ -155,7 +155,7 @@ class Project:
         return Component(self, version)
 
     @property
-    def metadata(self) -> "Metadata":
+    def metadata(self) -> Metadata:
         """Maven metadata about this project, encompassing all known sources."""
         if self._metadata is None:
             from .metadata import Metadatas, MetadataXML
@@ -333,7 +333,7 @@ class Component:
         """
         return Artifact(self, classifier, packaging)
 
-    def pom(self) -> "POM":
+    def pom(self) -> POM:
         """
         Get a data structure with the contents of the POM.
 
