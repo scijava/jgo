@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from .environment import Environment
+from .jar_util import autocomplete_main_class, detect_main_class_from_jar
 from .linking import LinkStrategy, link_file
 from .lockfile import LockFile
 
@@ -286,8 +287,6 @@ class EnvironmentBuilder:
         # Detect/set main class
         if main_class:
             # Auto-complete main class if needed
-            from .jar_util import autocomplete_main_class
-
             primary_component = components[0]
             main_class = autocomplete_main_class(
                 main_class, primary_component.artifactId, jars_dir
@@ -295,8 +294,6 @@ class EnvironmentBuilder:
             environment.set_main_class(main_class)
         else:
             # Auto-detect from primary component JAR
-            from .jar_util import detect_main_class_from_jar
-
             primary_component = components[0]
             primary_jar = jars_dir / primary_component.artifact().filename
             if primary_jar.exists():

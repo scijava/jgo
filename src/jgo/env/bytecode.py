@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import struct
 import zipfile
+from collections import Counter
 from pathlib import Path
 
 # Map class file major version to Java version
@@ -229,8 +230,6 @@ def analyze_jar_bytecode(jar_path: Path) -> dict:
             'high_version_classes': [('ij/plugin/MacAdapter.class', 52)],  # top classes
         }
     """
-    from collections import Counter
-
     if not jar_path.exists():
         return {}
 

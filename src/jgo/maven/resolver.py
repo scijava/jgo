@@ -12,6 +12,14 @@ from typing import TYPE_CHECKING
 
 import requests
 
+from .core import Dependency
+from .dependency_printer import (
+    DependencyNode,
+    format_dependency_list,
+    format_dependency_tree,
+)
+from .model import Model
+
 if TYPE_CHECKING:
     from .core import Artifact, Component, Dependency
     from .dependency_printer import DependencyNode
@@ -121,8 +129,6 @@ class SimpleResolver(Resolver):
         managed: bool = False,
         managed_components: list["Component"] | None = None,
     ) -> list["Dependency"]:
-        from .model import Model
-
         # Default to using the component itself if managed=True
         if managed and managed_components is None:
             managed_components = [component]
@@ -139,8 +145,6 @@ class SimpleResolver(Resolver):
         """
         Get the flat list of resolved dependencies as data structures.
         """
-        from .dependency_printer import DependencyNode
-        from .model import Model
 
         # Create root node
         root = DependencyNode(
@@ -184,8 +188,6 @@ class SimpleResolver(Resolver):
         """
         Get the full dependency tree as a data structure.
         """
-        from .dependency_printer import DependencyNode
-        from .model import Model
 
         # Create root node
         root = DependencyNode(
@@ -261,7 +263,6 @@ class SimpleResolver(Resolver):
         :param managed_components: List of components to import as BOMs. Defaults to [component].
         :return: The dependency list as a string.
         """
-        from .dependency_printer import format_dependency_list
 
         root, deps = self.get_dependency_list(
             component, managed=managed, managed_components=managed_components
@@ -282,7 +283,6 @@ class SimpleResolver(Resolver):
         :param managed_components: List of components to import as BOMs. Defaults to [component].
         :return: The dependency tree as a string.
         """
-        from .dependency_printer import format_dependency_tree
 
         root = self.get_dependency_tree(
             component, managed=managed, managed_components=managed_components
@@ -413,8 +413,6 @@ class MavenResolver(Resolver):
                 continue
 
             # Create dependency object
-            from .core import Dependency
-
             dep_component = component.maven_context.project(
                 groupId, artifactId
             ).at_version(version)
@@ -439,7 +437,6 @@ class MavenResolver(Resolver):
         """
         Get the flat list of resolved dependencies as data structures.
         """
-        from .dependency_printer import DependencyNode
 
         # Create root node
         root = DependencyNode(
@@ -484,7 +481,6 @@ class MavenResolver(Resolver):
 
         Parses Maven's dependency:tree output and converts it to DependencyNode structure.
         """
-        from .dependency_printer import DependencyNode
 
         pom_artifact = component.artifact(packaging="pom")
         assert pom_artifact.maven_context.repo_cache
@@ -668,7 +664,6 @@ class MavenResolver(Resolver):
         :param managed_components: List of components to import as BOMs. Defaults to [component].
         :return: The dependency list as a string.
         """
-        from .dependency_printer import format_dependency_list
 
         root, deps = self.get_dependency_list(
             component, managed=managed, managed_components=managed_components
@@ -688,7 +683,6 @@ class MavenResolver(Resolver):
         :param managed_components: List of components to import as BOMs. Defaults to [component].
         :return: The dependency tree as a string.
         """
-        from .dependency_printer import format_dependency_tree
 
         root = self.get_dependency_tree(
             component, managed=managed, managed_components=managed_components
