@@ -300,7 +300,7 @@ model = component.model()
 
 # Layer 2: Environment - Materialize JARs
 builder = EnvironmentBuilder(
-    maven_context=maven,
+    context=maven,
     link_strategy=LinkStrategy.HARD
 )
 environment = builder.from_endpoint("org.python:jython-standalone:2.7.3")
@@ -322,7 +322,7 @@ spec = EnvironmentSpec.load("jgo.toml")
 
 # Build environment
 maven = MavenContext()
-builder = EnvironmentBuilder(maven_context=maven)
+builder = EnvironmentBuilder(context=maven)
 environment = builder.from_spec(spec)
 
 # Run specific entrypoint

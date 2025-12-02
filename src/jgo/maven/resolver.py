@@ -102,7 +102,7 @@ class SimpleResolver(Resolver):
         if artifact.version.endswith("-SNAPSHOT"):
             raise RuntimeError("Downloading of snapshots is not yet implemented.")
 
-        for remote_repo in artifact.maven_context.remote_repos.values():
+        for remote_repo in artifact.context.remote_repos.values():
             url = f"{remote_repo}/{artifact.component.path_prefix}/{artifact.filename}"
             response: requests.Response = requests.get(url)
             if response.status_code == 200:
@@ -120,7 +120,7 @@ class SimpleResolver(Resolver):
 
         raise RuntimeError(
             f"Artifact {artifact} not found in remote repositories "
-            f"{artifact.maven_context.remote_repos}"
+            f"{artifact.context.remote_repos}"
         )
 
     def dependencies(
@@ -300,13 +300,13 @@ class MavenResolver(Resolver):
 
     def download(self, artifact: Artifact) -> Path | None:
         _log.info(f"Downloading artifact: {artifact}")
-        assert artifact.maven_context.repo_cache
+        assert artifact.context.repo_cache
         assert artifact.groupId
         assert artifact.artifactId
         assert artifact.version
         assert artifact.packaging
         args = [
-            f"-Dmaven.repo.local={artifact.maven_context.repo_cache}",
+            f"-Dmaven.repo.local={artifact.context.repo_cache}",
             f"-DgroupId={artifact.groupId}",
             f"-DartifactId={artifact.artifactId}",
             f"-Dversion={artifact.version}",
@@ -314,10 +314,10 @@ class MavenResolver(Resolver):
         ]
         if artifact.classifier:
             args.append(f"-Dclassifier={artifact.classifier}")
-        if artifact.maven_context.remote_repos:
+        if artifact.context.remote_repos:
             remote_repos = ",".join(
                 f"{name}::::{url}"
-                for name, url in artifact.maven_context.remote_repos.items()
+                for name, url in artifact.context.remote_repos.items()
             )
             args.append(f"-DremoteRepositories={remote_repos}")
 
@@ -335,7 +335,7 @@ class MavenResolver(Resolver):
     ) -> list[Dependency]:
         # Invoke the dependency:list goal, including all transitive dependencies.
         pom_artifact = component.artifact(packaging="pom")
-        assert pom_artifact.maven_context.repo_cache
+        assert pom_artifact.context.repo_cache
 
         # If managed mode, create a synthetic POM that imports components as BOMs
         if managed:
@@ -350,7 +350,7 @@ class MavenResolver(Resolver):
             "dependency:list",
             "-f",
             pom_path,
-            f"-Dmaven.repo.local={pom_artifact.maven_context.repo_cache}",
+            f"-Dmaven.repo.local={pom_artifact.context.repo_cache}",
         )
 
         # Parse Maven's dependency:list output format:
@@ -409,7 +409,7 @@ class MavenResolver(Resolver):
                 continue
 
             # Create dependency object
-            dep_component = component.maven_context.project(
+            dep_component = component.context.project(
                 groupId, artifactId
             ).at_version(version)
             dep_artifact = dep_component.artifact(
@@ -477,7 +477,7 @@ class MavenResolver(Resolver):
         """
 
         pom_artifact = component.artifact(packaging="pom")
-        assert pom_artifact.maven_context.repo_cache
+        assert pom_artifact.context.repo_cache
 
         # If managed mode, create a synthetic POM that imports components as BOMs
         if managed:
@@ -494,7 +494,7 @@ class MavenResolver(Resolver):
             "dependency:tree",
             "-f",
             pom_path,
-            f"-Dmaven.repo.local={pom_artifact.maven_context.repo_cache}",
+            f"-Dmaven.repo.local={pom_artifact.context.repo_cache}",
         )
 
         # Parse the tree output
@@ -715,7 +715,7 @@ class MavenResolver(Resolver):
 
         # Generate repositories section if remote repos are configured
         repos_entries = []
-        for repo_id, repo_url in component.maven_context.remote_repos.items():
+        for repo_id, repo_url in component.context.remote_repos.items():
             repos_entries.append(
                 f"""        <repository>
             <id>{repo_id}</id>

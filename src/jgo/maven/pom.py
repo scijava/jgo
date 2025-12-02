@@ -18,14 +18,14 @@ class POM(XML):
     Convenience wrapper around a Maven POM XML document.
     """
 
-    def __init__(self, source: Path | str, maven_context: MavenContext | None = None):
-        super().__init__(source, maven_context)
+    def __init__(self, source: Path | str, context: MavenContext | None = None):
+        super().__init__(source, context)
 
     def artifact(self) -> Artifact:
         """
         Get an Artifact object representing this POM.
         """
-        project = self.maven_context.project(self.groupId, self.artifactId)
+        project = self.context.project(self.groupId, self.artifactId)
         return project.at_version(self.version).artifact(packaging="pom")
 
     def parent(self) -> "POM" | None:
@@ -47,7 +47,7 @@ class POM(XML):
             and (parent_path := self.source / relativePath).exists()
         ):
             # Use locally available parent POM file.
-            parent_pom = POM(parent_path, self.maven_context)
+            parent_pom = POM(parent_path, self.context)
             if (
                 g == parent_pom.groupId
                 and a == parent_pom.artifactId
@@ -56,9 +56,9 @@ class POM(XML):
                 return parent_pom
 
         pom_artifact = (
-            self.maven_context.project(g, a).at_version(v).artifact(packaging="pom")
+            self.context.project(g, a).at_version(v).artifact(packaging="pom")
         )
-        return POM(pom_artifact.resolve(), self.maven_context)
+        return POM(pom_artifact.resolve(), self.context)
 
     @property
     def groupId(self) -> str | None:
@@ -144,4 +144,4 @@ class POM(XML):
         xpath = "dependencies/dependency"
         if managed:
             xpath = f"dependencyManagement/{xpath}"
-        return [self.maven_context.dependency(el) for el in self.elements(xpath)]
+        return [self.context.dependency(el) for el in self.elements(xpath)]

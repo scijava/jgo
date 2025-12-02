@@ -33,12 +33,12 @@ class EnvironmentBuilder:
 
     def __init__(
         self,
-        maven_context: MavenContext,
+        context: MavenContext,
         cache_dir: Path | None = None,
         link_strategy: LinkStrategy = LinkStrategy.AUTO,
         managed: bool = False,
     ):
-        self.maven_context = maven_context
+        self.context = context
         self.link_strategy = link_strategy
         self.managed = managed
 
@@ -157,7 +157,7 @@ class EnvironmentBuilder:
             version = parts[2] if len(parts) >= 3 else "RELEASE"
             # TODO: Handle classifier (parts[3]) when Component supports it
 
-            component = self.maven_context.project(groupId, artifactId).at_version(
+            component = self.context.project(groupId, artifactId).at_version(
                 version
             )
             components.append(component)
@@ -247,7 +247,7 @@ class EnvironmentBuilder:
                 link_file(source_path, dest_path, self.link_strategy)
 
         # Then resolve and link their dependencies
-        # Use the resolver from maven_context to respect --resolver flag
+        # Use the resolver from context to respect --resolver flag
         # Use managed components from endpoint parsing (stored in _current_boms)
         # or fall back to old behavior for backward compatibility
         boms = getattr(self, "_current_boms", None)
@@ -256,7 +256,7 @@ class EnvironmentBuilder:
             boms = components
 
         for component in components:
-            deps = component.maven_context.resolver.dependencies(
+            deps = component.context.resolver.dependencies(
                 component,
                 managed=bool(boms),
                 boms=boms,
@@ -506,7 +506,7 @@ class EnvironmentBuilder:
                 main_class = part_main_class
 
             # Create component
-            component = self.maven_context.project(groupId, artifactId).at_version(
+            component = self.context.project(groupId, artifactId).at_version(
                 version
             )
             # TODO: Handle classifier when Component supports it

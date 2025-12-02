@@ -14,7 +14,7 @@ from jgo.maven import MavenContext
 def test_parse_endpoint_new_format_simple():
     """Test new @ separator format with simple artifact."""
     maven = MavenContext()
-    builder = EnvironmentBuilder(maven_context=maven)
+    builder = EnvironmentBuilder(context=maven)
 
     # New format: G:A@MainClass
     components, managed_flags, main_class = builder._parse_endpoint(
@@ -31,7 +31,7 @@ def test_parse_endpoint_new_format_simple():
 def test_parse_endpoint_new_format_with_version():
     """Test new @ separator format with version."""
     maven = MavenContext()
-    builder = EnvironmentBuilder(maven_context=maven)
+    builder = EnvironmentBuilder(context=maven)
 
     # New format: G:A:V@MainClass
     components, managed_flags, main_class = builder._parse_endpoint(
@@ -48,7 +48,7 @@ def test_parse_endpoint_new_format_with_version():
 def test_parse_endpoint_new_format_multiple_artifacts():
     """Test new @ separator format with multiple artifacts."""
     maven = MavenContext()
-    builder = EnvironmentBuilder(maven_context=maven)
+    builder = EnvironmentBuilder(context=maven)
 
     # New format: G:A+G:A@MainClass
     components, managed_flags, main_class = builder._parse_endpoint(
@@ -66,7 +66,7 @@ def test_parse_endpoint_new_format_multiple_artifacts():
 def test_parse_endpoint_new_format_with_managed():
     """Test new @ separator format with managed dependency."""
     maven = MavenContext()
-    builder = EnvironmentBuilder(maven_context=maven)
+    builder = EnvironmentBuilder(context=maven)
 
     # New format with managed flag: G:A!@MainClass
     components, managed_flags, main_class = builder._parse_endpoint(
@@ -81,7 +81,7 @@ def test_parse_endpoint_new_format_with_managed():
 def test_parse_endpoint_old_format_deprecated():
     """Test old :@MainClass format triggers deprecation warning."""
     maven = MavenContext()
-    builder = EnvironmentBuilder(maven_context=maven)
+    builder = EnvironmentBuilder(context=maven)
 
     # Old format: G:A:@MainClass (should trigger warning)
     with warnings.catch_warnings(record=True) as w:
@@ -100,7 +100,7 @@ def test_parse_endpoint_old_format_deprecated():
 def test_parse_endpoint_old_format_colon_mainclass():
     """Test old :mainClass format triggers deprecation warning."""
     maven = MavenContext()
-    builder = EnvironmentBuilder(maven_context=maven)
+    builder = EnvironmentBuilder(context=maven)
 
     # Old format: G:A:mainClass (should trigger warning)
     with warnings.catch_warnings(record=True) as w:
@@ -119,7 +119,7 @@ def test_parse_endpoint_old_format_colon_mainclass():
 def test_parse_endpoint_no_main_class():
     """Test parsing without main class."""
     maven = MavenContext()
-    builder = EnvironmentBuilder(maven_context=maven)
+    builder = EnvironmentBuilder(context=maven)
 
     # No main class specified
     components, managed_flags, main_class = builder._parse_endpoint(
@@ -133,7 +133,7 @@ def test_parse_endpoint_no_main_class():
 def test_parse_endpoint_only_second_component_ignored():
     """Test that main class on second component is ignored."""
     maven = MavenContext()
-    builder = EnvironmentBuilder(maven_context=maven)
+    builder = EnvironmentBuilder(context=maven)
 
     # Main class only on first component should be used
     components, managed_flags, main_class = builder._parse_endpoint(

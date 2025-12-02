@@ -63,9 +63,9 @@ def test_environment_builder_creation():
     maven = MavenContext()
     with tempfile.TemporaryDirectory() as tmp_dir:
         cache_dir = Path(tmp_dir) / "cache"
-        builder = EnvironmentBuilder(maven_context=maven, cache_dir=cache_dir)
+        builder = EnvironmentBuilder(context=maven, cache_dir=cache_dir)
         assert builder is not None
-        assert builder.maven_context == maven
+        assert builder.context == maven
         assert builder.cache_dir == cache_dir
         assert builder.link_strategy == LinkStrategy.AUTO
 
@@ -75,7 +75,7 @@ def test_cache_key_generation():
     maven = MavenContext()
     with tempfile.TemporaryDirectory() as tmp_dir:
         cache_dir = Path(tmp_dir) / "cache"
-        builder = EnvironmentBuilder(maven_context=maven, cache_dir=cache_dir)
+        builder = EnvironmentBuilder(context=maven, cache_dir=cache_dir)
 
         # Create some test components
         project1 = maven.project("org.example", "artifact1")

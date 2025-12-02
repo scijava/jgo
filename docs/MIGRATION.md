@@ -222,7 +222,7 @@ maven = MavenContext(resolver=SimpleResolver())
 component = maven.project("org.python", "jython-standalone").at_version("2.7.3")
 
 # Layer 2: Environment materialization
-builder = EnvironmentBuilder(maven_context=maven)
+builder = EnvironmentBuilder(context=maven)
 env = builder.from_components([component])
 
 # Layer 3: Execution

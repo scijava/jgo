@@ -164,10 +164,10 @@ class JgoCommands:
         artifactId = parts[1]
 
         # Create Maven context
-        maven_context = self._create_maven_context()
+        context = self._create_maven_context()
 
         # Get project and fetch versions
-        project = maven_context.project(groupId, artifactId)
+        project = context.project(groupId, artifactId)
 
         try:
             # Update metadata from remote
@@ -208,8 +208,8 @@ class JgoCommands:
         spec = EnvironmentSpec.load(spec_file)
 
         # Create Maven context and environment builder
-        maven_context = self._create_maven_context()
-        builder = self._create_environment_builder(maven_context)
+        context = self._create_maven_context()
+        builder = self._create_environment_builder(context)
 
         # If --print-dependency-tree or --print-dependency-list, parse coordinates and print without building
         if self.args.print_dependency_tree or self.args.print_dependency_list:
@@ -220,12 +220,12 @@ class JgoCommands:
                 groupId = parts[0]
                 artifactId = parts[1]
                 version = parts[2] if len(parts) >= 3 else "RELEASE"
-                component = maven_context.project(groupId, artifactId).at_version(
+                component = context.project(groupId, artifactId).at_version(
                     version
                 )
                 components.append(component)
             self._print_dependencies(
-                components, maven_context, list_mode=self.args.print_dependency_list
+                components, context, list_mode=self.args.print_dependency_list
             )
             return 0
 
@@ -272,8 +272,8 @@ class JgoCommands:
             return 1
 
         # Create Maven context and environment builder
-        maven_context = self._create_maven_context()
-        builder = self._create_environment_builder(maven_context)
+        context = self._create_maven_context()
+        builder = self._create_environment_builder(context)
 
         # If --print-dependency-tree or --print-dependency-list, parse endpoint and print without building
         if self.args.print_dependency_tree or self.args.print_dependency_list:
@@ -289,7 +289,7 @@ class JgoCommands:
                 ]
             self._print_dependencies(
                 components,
-                maven_context,
+                context,
                 boms=boms,
                 list_mode=self.args.print_dependency_list,
             )
@@ -377,7 +377,7 @@ class JgoCommands:
         )
 
     def _create_environment_builder(
-        self, maven_context: MavenContext
+        self, context: MavenContext
     ) -> EnvironmentBuilder:
         """
         Create environment builder from arguments and configuration.
@@ -399,7 +399,7 @@ class JgoCommands:
         # If still None, EnvironmentBuilder will auto-detect
 
         return EnvironmentBuilder(
-            maven_context=maven_context,
+            context=context,
             cache_dir=cache_dir,
             link_strategy=link_strategy,
             managed=self.args.managed,
@@ -445,7 +445,7 @@ class JgoCommands:
     def _print_dependencies(
         self,
         components,
-        maven_context,
+        context,
         boms=None,
         list_mode: bool = False,
     ) -> None:
@@ -454,7 +454,7 @@ class JgoCommands:
 
         Args:
             components: List of components to print dependencies for
-            maven_context: Maven context containing the resolver
+            context: Maven context containing the resolver
             boms: List of components to use as managed BOMs (None = none managed)
             list_mode: If True, print flat list (like mvn dependency:list).
                       If False, print tree (like mvn dependency:tree).
@@ -462,13 +462,13 @@ class JgoCommands:
         # Print dependencies for the primary component
         primary = components[0]
         if list_mode:
-            output = maven_context.resolver.print_dependency_list(
+            output = context.resolver.print_dependency_list(
                 primary,
                 managed=bool(boms),
                 boms=boms,
             )
         else:
-            output = maven_context.resolver.print_dependency_tree(
+            output = context.resolver.print_dependency_tree(
                 primary,
                 managed=bool(boms),
                 boms=boms,

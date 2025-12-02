@@ -59,7 +59,7 @@ Example - Full Control
 >>> component = maven.project("org.python", "jython-standalone").at_version("2.7.3")
 >>>
 >>> # Layer 2: Environment materialization
->>> builder = EnvironmentBuilder(maven_context=maven, link_strategy=LinkStrategy.HARD)
+>>> builder = EnvironmentBuilder(context=maven, link_strategy=LinkStrategy.HARD)
 >>> environment = builder.from_components([component])
 >>>
 >>> # Layer 3: Execution
@@ -174,7 +174,7 @@ def run(
     if repositories:
         remote_repos.update(repositories)
 
-    maven_context = MavenContext(
+    context = MavenContext(
         repo_cache=config.repo_cache,
         remote_repos=remote_repos,
         resolver=SimpleResolver(),
@@ -182,7 +182,7 @@ def run(
 
     # Create environment builder
     builder = EnvironmentBuilder(
-        maven_context=maven_context,
+        context=context,
         cache_dir=cache_dir or config.cache_dir,
         link_strategy=LinkStrategy.AUTO,
     )
@@ -251,7 +251,7 @@ def build(
     if repositories:
         remote_repos.update(repositories)
 
-    maven_context = MavenContext(
+    context = MavenContext(
         repo_cache=config.repo_cache,
         remote_repos=remote_repos,
         resolver=SimpleResolver(),
@@ -259,7 +259,7 @@ def build(
 
     # Create environment builder
     builder = EnvironmentBuilder(
-        maven_context=maven_context,
+        context=context,
         cache_dir=cache_dir or config.cache_dir,
         link_strategy=LinkStrategy.AUTO,
     )
@@ -296,7 +296,7 @@ def resolve(
     if repositories:
         remote_repos.update(repositories)
 
-    maven_context = MavenContext(
+    context = MavenContext(
         repo_cache=config.repo_cache,
         remote_repos=remote_repos,
         resolver=SimpleResolver(),
@@ -315,7 +315,7 @@ def resolve(
         artifactId = tokens[1]
         version = tokens[2] if len(tokens) >= 3 else "RELEASE"
 
-        component = maven_context.project(groupId, artifactId).at_version(version)
+        component = context.project(groupId, artifactId).at_version(version)
         components.append(component)
 
     return components

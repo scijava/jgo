@@ -21,7 +21,7 @@ def demo_basic_execution():
 
     # Build environment for a simple Java application
     # (Using Jython as example - it has a main class)
-    builder = EnvironmentBuilder(maven_context=maven)
+    builder = EnvironmentBuilder(context=maven)
 
     print("Building environment for org.python:jython-standalone...")
     environment = builder.from_endpoint(
@@ -90,7 +90,7 @@ def demo_bytecode_detection():
     print("\n=== Demo: Bytecode Version Detection ===")
 
     maven = MavenContext()
-    builder = EnvironmentBuilder(maven_context=maven)
+    builder = EnvironmentBuilder(context=maven)
 
     print("\nBuilding environment to detect Java version...")
     # Use a known library (you can substitute with any Maven coordinate)

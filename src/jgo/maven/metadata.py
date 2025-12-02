@@ -54,8 +54,8 @@ class MetadataXML(XML, Metadata):
     Convenience wrapper around a maven-metadata.xml document.
     """
 
-    def __init__(self, source: Path | str, maven_context: MavenContext | None = None):
-        super().__init__(source, maven_context)
+    def __init__(self, source: Path | str, context: MavenContext | None = None):
+        super().__init__(source, context)
 
     @property
     def groupId(self) -> str | None:

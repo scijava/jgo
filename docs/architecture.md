@@ -97,7 +97,7 @@ from jgo.env import Environment, EnvironmentBuilder, LinkStrategy
 
 # Build environment
 builder = EnvironmentBuilder(
-    maven_context=maven,
+    context=maven,
     link_strategy=LinkStrategy.HARD
 )
 
@@ -144,7 +144,7 @@ An environment is a directory containing:
 **Ad-hoc Mode** (default):
 ```python
 # Uses ~/.cache/jgo/<hash>/ for one-off executions
-builder = EnvironmentBuilder(maven_context=maven)
+builder = EnvironmentBuilder(context=maven)
 env = builder.from_endpoint("org.python:jython-standalone")
 ```
 
@@ -152,7 +152,7 @@ env = builder.from_endpoint("org.python:jython-standalone")
 ```python
 # Uses .jgo/ in current directory
 spec = EnvironmentSpec.load("jgo.toml")
-builder = EnvironmentBuilder(maven_context=maven, cache_dir=Path(".jgo"))
+builder = EnvironmentBuilder(context=maven, cache_dir=Path(".jgo"))
 env = builder.from_spec(spec)
 ```
 
@@ -320,7 +320,7 @@ maven = MavenContext(
 
 # Layer 2: Build environment
 builder = EnvironmentBuilder(
-    maven_context=maven,
+    context=maven,
     link_strategy=LinkStrategy.HARD,
     cache_dir=Path(".jgo")  # Project-local
 )
@@ -477,7 +477,7 @@ maven = MavenContext(resolver=CondaResolver())
 ```python
 from jgo.env import DockerBuilder  # New builder
 
-builder = DockerBuilder(maven_context=maven)
+builder = DockerBuilder(context=maven)
 docker_image = builder.from_spec(spec)
 # Generates Dockerfile and builds image
 ```

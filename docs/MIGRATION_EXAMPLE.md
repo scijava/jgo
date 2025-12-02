@@ -32,7 +32,7 @@ from jgo.exec import JavaRunner
 maven = MavenContext()
 component = maven.project('org.python', 'jython-standalone').at_version('RELEASE')
 
-builder = EnvironmentBuilder(maven_context=maven)
+builder = EnvironmentBuilder(context=maven)
 environment = builder.from_components([component])
 
 runner = JavaRunner()
@@ -103,7 +103,7 @@ from jgo.env import EnvironmentBuilder
 from jgo.maven import MavenContext
 
 builder = EnvironmentBuilder(
-    maven_context=MavenContext(),
+    context=MavenContext(),
     cache_dir=Path('~/.jgo'),
     link_strategy='auto'
 )

@@ -32,7 +32,7 @@ class Model:
         :param pom: A source POM from which to extract metadata (e.g. dependencies).
         :param boms: If provided, import these components as BOMs in dependencyManagement.
         """
-        self.maven_context = pom.maven_context
+        self.context = pom.context
         self.gav = f"{pom.groupId}:{pom.artifactId}:{pom.version}"
         _log.debug(f"{self.gav}: begin model initialization")
 
@@ -79,14 +79,14 @@ class Model:
         # Merge values from the active profiles into the model.
         for profile in active_profiles:
             profile_dep_els = profile.findall("dependencies/dependency")
-            profile_deps = [self.maven_context.dependency(el) for el in profile_dep_els]
+            profile_deps = [self.context.dependency(el) for el in profile_dep_els]
             self._merge_deps(profile_deps)
 
             profile_dep_mgmt_els = profile.findall(
                 "dependencyManagement/dependencies/dependency"
             )
             profile_dep_mgmt = [
-                self.maven_context.dependency(el) for el in profile_dep_mgmt_els
+                self.context.dependency(el) for el in profile_dep_mgmt_els
             ]
             self._merge_deps(profile_dep_mgmt, managed=True)
 
@@ -256,7 +256,7 @@ class Model:
                 continue
 
             # Load the POM to import.
-            bom_project = self.maven_context.project(dep.groupId, dep.artifactId)
+            bom_project = self.context.project(dep.groupId, dep.artifactId)
             bom_pom = bom_project.at_version(dep.version).pom()
 
             # Fully build the BOM's model, agnostic of this one.

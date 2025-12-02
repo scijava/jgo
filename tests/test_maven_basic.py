@@ -6,7 +6,7 @@ Basic tests for the Maven layer to verify the port was successful.
 from jgo.maven import MavenContext, SimpleResolver
 
 
-def test_maven_context_creation():
+def test_context_creation():
     """Test that MavenContext can be created."""
     maven = MavenContext()
     assert maven is not None
@@ -72,7 +72,7 @@ def main():
     print()
 
     try:
-        test_maven_context_creation()
+        test_context_creation()
         test_project_creation()
         test_component_creation()
         test_artifact_creation()

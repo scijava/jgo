@@ -50,7 +50,7 @@ project = maven.project("org.python", "jython-standalone")
 ```python
 from jgo.env import EnvironmentBuilder
 
-builder = EnvironmentBuilder(maven_context=maven)
+builder = EnvironmentBuilder(context=maven)
 env = builder.from_endpoint("org.python:jython-standalone:2.7.3")
 
 print(env.path)       # /home/user/.jgo/org/python/jython-standalone/abc123
@@ -76,7 +76,7 @@ print(env.main_class) # org.python.util.jython
 from jgo.env import EnvironmentBuilder, LinkStrategy
 
 builder = EnvironmentBuilder(
-    maven_context=maven,
+    context=maven,
     cache_dir=Path("~/.jgo"),
     link_strategy=LinkStrategy.HARD
 )
@@ -155,7 +155,7 @@ These terms should **NOT** be used in jgo 2.0:
 maven = MavenContext()
 
 # Layer 2: Build environment
-builder = EnvironmentBuilder(maven_context=maven)
+builder = EnvironmentBuilder(context=maven)
 env = builder.from_endpoint("G:A:V")
 
 # Layer 3: Run program

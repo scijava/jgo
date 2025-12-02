@@ -119,8 +119,8 @@ class Project:
     This is a Maven project: i.e. a groupId+artifactId (G:A) pair.
     """
 
-    def __init__(self, maven_context: MavenContext, groupId: str, artifactId: str):
-        self.maven_context = maven_context
+    def __init__(self, context: MavenContext, groupId: str, artifactId: str):
+        self.context = context
         self.groupId = groupId
         self.artifactId = artifactId
         self._metadata: Metadata | None = None
@@ -161,10 +161,10 @@ class Project:
             from .metadata import Metadatas, MetadataXML
 
             # Aggregate all locally available project maven-metadata.xml sources.
-            repo_cache_dir = self.maven_context.repo_cache / self.path_prefix
+            repo_cache_dir = self.context.repo_cache / self.path_prefix
             paths = [p for p in repo_cache_dir.glob("maven-metadata*.xml")] + [
                 r / self.path_prefix / "maven-metadata.xml"
-                for r in self.maven_context.local_repos
+                for r in self.context.local_repos
             ]
             self._metadata = Metadatas([MetadataXML(p) for p in paths if p.exists()])
         return self._metadata
@@ -173,11 +173,11 @@ class Project:
         """Update metadata from remote sources."""
         import requests
 
-        repo_cache_dir = self.maven_context.repo_cache / self.path_prefix
+        repo_cache_dir = self.context.repo_cache / self.path_prefix
         repo_cache_dir.mkdir(parents=True, exist_ok=True)
 
         # Try to fetch maven-metadata.xml from each remote repository
-        for repo_name, repo_url in self.maven_context.remote_repos.items():
+        for repo_name, repo_url in self.context.remote_repos.items():
             metadata_url = f"{repo_url}/{self.path_prefix}/maven-metadata.xml"
             try:
                 response = requests.get(metadata_url)
@@ -265,9 +265,9 @@ class Component:
         return coord2str(self.groupId, self.artifactId, self.resolved_version)
 
     @property
-    def maven_context(self) -> MavenContext:
+    def context(self) -> MavenContext:
         """The component's Maven context."""
-        return self.project.maven_context
+        return self.project.context
 
     @property
     def groupId(self) -> str:
@@ -342,7 +342,7 @@ class Component:
         from .pom import POM
 
         pom_artifact = self.artifact(packaging="pom")
-        return POM(pom_artifact.resolve(), self.maven_context)
+        return POM(pom_artifact.resolve(), self.context)
 
 
 class Artifact:
@@ -378,8 +378,8 @@ class Artifact:
         )
 
     @property
-    def maven_context(self) -> MavenContext:
-        return self.component.maven_context
+    def context(self) -> MavenContext:
+        return self.component.context
 
     @property
     def groupId(self) -> str:
@@ -414,8 +414,8 @@ class Artifact:
         Might not actually exist! This just returns where it *would be* if present.
         """
         return (
-            self.maven_context.repo_cache / self.component.path_prefix / self.filename
-            if self.maven_context.repo_cache
+            self.context.repo_cache / self.component.path_prefix / self.filename
+            if self.context.repo_cache
             else None
         )
 
@@ -435,7 +435,7 @@ class Artifact:
             return cached_file
 
         # Check any locally available Maven repository storage directories.
-        for base in self.maven_context.local_repos:
+        for base in self.context.local_repos:
             # TODO: Be smarter than this when version is a SNAPSHOT,
             # because local repo storage has timestamped SNAPSHOT filenames.
             p = base / self.component.path_prefix / self.filename
@@ -443,7 +443,7 @@ class Artifact:
                 return p
 
         # Artifact was not found locally; need to download it.
-        return self.maven_context.resolver.download(self)
+        return self.context.resolver.download(self)
 
     def md5(self) -> str:
         """Compute the MD5 hash of the artifact."""
@@ -492,9 +492,9 @@ class Dependency:
         )
 
     @property
-    def maven_context(self) -> MavenContext:
+    def context(self) -> MavenContext:
         """The dependency's Maven context."""
-        return self.artifact.maven_context
+        return self.artifact.context
 
     @property
     def groupId(self) -> str:
@@ -533,9 +533,9 @@ class Dependency:
 class XML:
     """Base class for XML document wrappers."""
 
-    def __init__(self, source: Path | str, maven_context: MavenContext | None = None):
+    def __init__(self, source: Path | str, context: MavenContext | None = None):
         self.source = source
-        self.maven_context: MavenContext = maven_context or MavenContext()
+        self.context: MavenContext = context or MavenContext()
         self.tree: ElementTree.ElementTree = (
             ElementTree.ElementTree(ElementTree.fromstring(source))
             if isinstance(source, str)
