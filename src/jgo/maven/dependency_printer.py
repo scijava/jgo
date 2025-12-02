@@ -24,6 +24,10 @@ class DependencyNode:
     dep: Dependency
     children: list["DependencyNode"] = field(default_factory=list)
 
+    def __str__(self):
+        return str(self.dep)
+        # return self.coordinate_string()
+
     def coordinate_string(self, include_scope: bool = True) -> str:
         # FIXME: Reconcile with Dependency __str__
         """

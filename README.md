@@ -274,29 +274,36 @@ variable. The precedence of reading the cache dir, from highest to lowest:
   - `cacheDir` in `settings` sections in `~/.jgorc`
   - default to `~/.jgo`
 
-### Pitfalls
+### Dependency management
 
-#### Dependency management
+#### How jgo handles dependency versions (important!)
 
 Maven has a feature whereby a project can override the versions of transitive
 (a.k.a. inherited) dependencies, via a `<dependencyManagement>` configuration.
-The problem is: a library may then believe it depends on components at
-particular versions as defined by its `<dependencyManagement>`, but downstream
-projects which depend on that library will resolve to different versions.
+The problem is: a library may believe it depends on components at particular
+versions as defined by its `<dependencyManagement>`, but downstream projects
+which depend on that library will resolve to **different versions**. This means
+the library's actual dependencies differ from what it was built against!
 See [this SO thread](https://stackoverflow.com/q/45041888/1207769) and
 [this gist](https://gist.github.com/ctrueden/d058330c8a3687317806ce8cc18332c3)
 for full details.
 
-To work around this issue, you can pass `-m` to jgo, which
-causes it to add all endpoints to the synthesized POM's
-`<dependencyManagement>` section using
+**By default, jgo works around this Maven limitation** by adding all endpoints to
+the synthesized POM's `<dependencyManagement>` section using
 [import scope](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Importing_Dependencies).
-By doing this, the versions of transitive dependencies used in the synthesized
-project should more precisely match those of each endpoint itself—although in
-the case of multiple endpoints concatenated via the `+` operator with
-conflicting dependency management, the earlier endpoints will win because they
-will be declared earlier in the POM. See also
-[issue #9](https://github.com/apposed/jgo/issues/9) in the jgo issue tracker.
+This ensures that the versions of transitive dependencies match those that each
+endpoint was actually built with, giving you the behavior you'd expect. In cases
+where multiple endpoints are concatenated via the `+` operator with conflicting
+dependency management, the earlier endpoints will win because they are declared
+earlier in the POM.
+
+If you need to disable this behavior (rare), you can use `--no-managed` to get
+raw Maven transitive dependency resolution without the dependencyManagement
+workaround. The `-m`/`--managed` flags are still supported for compatibility,
+but managed mode is now the default.
+
+See also [issue #9](https://github.com/apposed/jgo/issues/9) in the jgo issue
+tracker for more discussion of this issue.
 
 ## Documentation
 

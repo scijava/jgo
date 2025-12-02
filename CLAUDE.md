@@ -105,10 +105,12 @@ bin/clean.sh
 - Configured via `links` setting in `~/.jgorc` or `--link-type` flag
 - "auto" mode tries hard link, falls back to soft link, then copy
 
-**Dependency Management Mode (`-m` flag):**
-- When enabled, adds endpoints to POM's `<dependencyManagement>` section using import scope
-- Ensures transitive dependency versions match those of the endpoint itself
-- See README.md "Pitfalls" section for details on Maven dependency management
+**Dependency Management Mode (enabled by default):**
+- By default, jgo adds endpoints to POM's `<dependencyManagement>` section using import scope
+- This ensures transitive dependency versions match those of the endpoint itself
+- Use `--no-managed` flag to disable this behavior (rare)
+- See README.md "Dependency management" section for details on Maven dependency management
+- The `-m`/`--managed` flags still work for backward compatibility but are now the default
 
 ## Testing
 

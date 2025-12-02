@@ -157,9 +157,7 @@ class EnvironmentBuilder:
             version = parts[2] if len(parts) >= 3 else "RELEASE"
             # TODO: Handle classifier (parts[3]) when Component supports it
 
-            component = self.context.project(groupId, artifactId).at_version(
-                version
-            )
+            component = self.context.project(groupId, artifactId).at_version(version)
             components.append(component)
 
         # Get main class from entrypoint
@@ -234,9 +232,6 @@ class EnvironmentBuilder:
         jars_dir = environment.path / "jars"
         jars_dir.mkdir(exist_ok=True)
 
-        # Resolve dependencies
-        all_deps = []
-
         # First, link the components themselves
         for component in components:
             artifact = component.artifact()
@@ -246,8 +241,7 @@ class EnvironmentBuilder:
             if not dest_path.exists():
                 link_file(source_path, dest_path, self.link_strategy)
 
-        # Then resolve and link their dependencies
-        # Use the resolver from context to respect --resolver flag
+        # Resolve all dependencies in one shot using wrapper POM
         # Use managed components from endpoint parsing (stored in _current_boms)
         # or fall back to old behavior for backward compatibility
         boms = getattr(self, "_current_boms", None)
@@ -255,13 +249,13 @@ class EnvironmentBuilder:
             # Backward compatibility: if -m flag is set but no explicit markers, manage all
             boms = components
 
-        for component in components:
-            deps = component.context.resolver.dependencies(
-                component,
-                managed=bool(boms),
-                boms=boms,
-            )
-            all_deps.extend(deps)
+        # Resolve all components together (not separately!)
+        # This ensures Maven handles version conflicts across all components
+        all_deps = components[0].context.resolver.dependencies(
+            components,
+            managed=bool(boms),
+            boms=boms,
+        )
 
         # Link/copy dependency JARs
         for dep in all_deps:
@@ -506,9 +500,7 @@ class EnvironmentBuilder:
                 main_class = part_main_class
 
             # Create component
-            component = self.context.project(groupId, artifactId).at_version(
-                version
-            )
+            component = self.context.project(groupId, artifactId).at_version(version)
             # TODO: Handle classifier when Component supports it
             components.append(component)
             managed_flags.append(is_managed)

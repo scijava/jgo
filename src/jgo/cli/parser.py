@@ -132,11 +132,19 @@ Examples:
         )
 
         # Dependency management
-        parser.add_argument(
+        managed_group = parser.add_mutually_exclusive_group()
+        managed_group.add_argument(
             "-m",
             "--managed",
             action="store_true",
-            help="Use dependency management (import scope)",
+            default=True,
+            help="Use dependency management (import scope) - DEFAULT",
+        )
+        managed_group.add_argument(
+            "--no-managed",
+            dest="managed",
+            action="store_false",
+            help="Disable dependency management (use raw transitive dependencies)",
         )
         parser.add_argument(
             "--main-class",
@@ -444,7 +452,7 @@ class ParsedArgs:
         repo_cache: Path | None = None,
         repositories: dict | None = None,
         # Dependency management
-        managed: bool = False,
+        managed: bool = True,
         main_class: str | None = None,
         # Classpath
         classpath_append: list[str] | None = None,

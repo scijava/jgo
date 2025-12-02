@@ -12,7 +12,7 @@ from .core import Dependency, Project
 from .pom import POM
 
 if TYPE_CHECKING:
-    from .core import Component
+    pass
 
 _log = logging.getLogger(__name__)
 
@@ -25,12 +25,11 @@ class Model:
     A minimal Maven metadata model, tracking only dependencies and properties.
     """
 
-    def __init__(self, pom: POM, boms: list[Component] | None = None):
+    def __init__(self, pom: POM):
         """
         Build a Maven metadata model from the given POM.
 
         :param pom: A source POM from which to extract metadata (e.g. dependencies).
-        :param boms: If provided, import these components as BOMs in dependencyManagement.
         """
         self.context = pom.context
         self.gav = f"{pom.groupId}:{pom.artifactId}:{pom.version}"
@@ -42,26 +41,6 @@ class Model:
         self.dep_mgmt: dict[GACT, Dependency] = {}
         self.props: dict[str, str] = {}
         self._merge(pom)
-
-        # If managed mode is enabled, inject the components as BOMs in dependencyManagement
-        if boms:
-            for bom in boms:
-                managed_dep = Dependency(
-                    artifact=bom.artifact(packaging="pom"),
-                    scope="import",
-                    optional=False,
-                )
-                managed_dep.set_version(bom.version)
-                k = (
-                    bom.groupId,
-                    bom.artifactId,
-                    None,  # classifier
-                    "pom",  # type
-                )
-                self.dep_mgmt[k] = managed_dep
-                _log.debug(
-                    f"{self.gav}: added {bom.groupId}:{bom.artifactId} to dependencyManagement"
-                )
 
         # The following steps are adapted from the maven-model-builder:
         # https://maven.apache.org/ref/3.3.9/maven-model-builder/

@@ -7,11 +7,15 @@ from __future__ import annotations
 import sys
 import warnings
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ..env import EnvironmentBuilder, EnvironmentSpec, LinkStrategy
 from ..exec import JavaRunner, JavaSource, JVMConfig
 from ..maven import MavenContext, MavenResolver, SimpleResolver
 from .parser import ParsedArgs
+
+if TYPE_CHECKING:
+    from ..maven.core import Component
 
 
 class JgoCommands:
@@ -220,9 +224,7 @@ class JgoCommands:
                 groupId = parts[0]
                 artifactId = parts[1]
                 version = parts[2] if len(parts) >= 3 else "RELEASE"
-                component = context.project(groupId, artifactId).at_version(
-                    version
-                )
+                component = context.project(groupId, artifactId).at_version(version)
                 components.append(component)
             self._print_dependencies(
                 components, context, list_mode=self.args.print_dependency_list
@@ -342,7 +344,9 @@ class JgoCommands:
             from jgo.util import ensure_maven_available
 
             mvn_command = ensure_maven_available()
-            resolver = MavenResolver(mvn_command, update=self.args.update)
+            resolver = MavenResolver(
+                mvn_command, update=self.args.update, debug=self.args.verbose >= 2
+            )
         else:  # auto
             resolver = SimpleResolver()  # Default to pure Python
 
@@ -376,9 +380,7 @@ class JgoCommands:
             resolver=resolver,
         )
 
-    def _create_environment_builder(
-        self, context: MavenContext
-    ) -> EnvironmentBuilder:
+    def _create_environment_builder(self, context: MavenContext) -> EnvironmentBuilder:
         """
         Create environment builder from arguments and configuration.
         """
@@ -444,9 +446,9 @@ class JgoCommands:
 
     def _print_dependencies(
         self,
-        components,
-        context,
-        boms=None,
+        components: list[Component],
+        context: MavenContext,
+        boms: list[Component] | None = None,
         list_mode: bool = False,
     ) -> None:
         """
@@ -459,17 +461,16 @@ class JgoCommands:
             list_mode: If True, print flat list (like mvn dependency:list).
                       If False, print tree (like mvn dependency:tree).
         """
-        # Print dependencies for the primary component
-        primary = components[0]
+        # Print dependencies for the components
         if list_mode:
             output = context.resolver.print_dependency_list(
-                primary,
+                components,
                 managed=bool(boms),
                 boms=boms,
             )
         else:
             output = context.resolver.print_dependency_tree(
-                primary,
+                components,
                 managed=bool(boms),
                 boms=boms,
             )
