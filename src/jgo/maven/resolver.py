@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 import requests
 
+from . import DEFAULT_CLASSIFIER
 from .core import Dependency
 from .dependency_printer import (
     DependencyNode,
@@ -21,8 +22,7 @@ from .dependency_printer import (
 from .model import Model
 
 if TYPE_CHECKING:
-    from .core import Artifact, Component, Dependency
-    from .dependency_printer import DependencyNode
+    from .core import Artifact, Component
 
 _log = logging.getLogger(__name__)
 
@@ -147,12 +147,7 @@ class SimpleResolver(Resolver):
         """
 
         # Create root node
-        root = DependencyNode(
-            groupId=component.groupId,
-            artifactId=component.artifactId,
-            version=component.version,
-            packaging="jar",
-        )
+        root = DependencyNode(Dependency(component.artifact()))
 
         # Build the model and get mediated dependencies
         if managed and boms is None:
@@ -166,16 +161,7 @@ class SimpleResolver(Resolver):
         # Convert to DependencyNode list
         dep_nodes = []
         for dep in deps:
-            node = DependencyNode(
-                groupId=dep.groupId,
-                artifactId=dep.artifactId,
-                version=dep.version,
-                packaging=dep.type,
-                classifier=dep.classifier if dep.classifier else None,
-                scope=dep.scope,
-                optional=dep.optional,
-            )
-            dep_nodes.append(node)
+            dep_nodes.append(DependencyNode(dep))
 
         return root, dep_nodes
 
@@ -190,12 +176,7 @@ class SimpleResolver(Resolver):
         """
 
         # Create root node
-        root = DependencyNode(
-            groupId=component.groupId,
-            artifactId=component.artifactId,
-            version=component.version,
-            packaging="jar",
-        )
+        root = DependencyNode(Dependency(component.artifact()))
 
         # Build the model to get dependencies
         if managed and boms is None:
@@ -213,15 +194,7 @@ class SimpleResolver(Resolver):
                 dep_key = (dep.groupId, dep.artifactId, dep.classifier, dep.type)
 
                 # Create node
-                node = DependencyNode(
-                    groupId=dep.groupId,
-                    artifactId=dep.artifactId,
-                    version=dep.version,
-                    packaging=dep.type,
-                    classifier=dep.classifier if dep.classifier else None,
-                    scope=dep.scope,
-                    optional=dep.optional,
-                )
+                node = DependencyNode(dep)
 
                 # Recursively process children if not already seen
                 if dep_key not in processed:
@@ -400,7 +373,7 @@ class MavenResolver(Resolver):
             if len(parts) == 5:
                 # G:A:P:V:S
                 groupId, artifactId, packaging, version, scope = parts
-                classifier = None
+                classifier = DEFAULT_CLASSIFIER
             elif len(parts) == 6:
                 # G:A:P:C:V:S
                 groupId, artifactId, packaging, classifier, version, scope = parts
@@ -409,11 +382,10 @@ class MavenResolver(Resolver):
                 continue
 
             # Create dependency object
-            dep_component = component.context.project(
-                groupId, artifactId
-            ).at_version(version)
-            dep_artifact = dep_component.artifact(
-                packaging=packaging, classifier=classifier if classifier else None
+            dep_artifact = (
+                component.context.project(groupId, artifactId)
+                .at_version(version)
+                .artifact(packaging=packaging, classifier=classifier)
             )
             dep = Dependency(
                 artifact=dep_artifact,
@@ -435,12 +407,7 @@ class MavenResolver(Resolver):
         """
 
         # Create root node
-        root = DependencyNode(
-            groupId=component.groupId,
-            artifactId=component.artifactId,
-            version=component.version,
-            packaging="jar",
-        )
+        root = DependencyNode(Dependency(component.artifact()))
 
         # Get dependencies using existing method
         deps = self.dependencies(component, managed=managed, boms=boms)
@@ -451,16 +418,7 @@ class MavenResolver(Resolver):
         # Convert to DependencyNode list
         dep_nodes = []
         for dep in deps:
-            node = DependencyNode(
-                groupId=dep.groupId,
-                artifactId=dep.artifactId,
-                version=dep.version,
-                packaging=dep.type,
-                classifier=dep.classifier if dep.classifier else None,
-                scope=dep.scope,
-                optional=dep.optional,
-            )
-            dep_nodes.append(node)
+            dep_nodes.append(DependencyNode(dep))
 
         return root, dep_nodes
 
@@ -608,15 +566,13 @@ class MavenResolver(Resolver):
                 continue
 
             # Create node
-            node = DependencyNode(
-                groupId=groupId,
-                artifactId=artifactId,
-                version=version,
-                packaging=packaging,
-                classifier=classifier if classifier else None,
-                scope=scope if scope and scope != "compile" else None,
-                optional=optional,
+            artifact = (
+                component.context.project(groupId, artifactId)
+                .at_version(version)
+                .artifact(classifier, packaging)
             )
+            dep = Dependency(artifact, scope, optional)
+            node = DependencyNode(dep)
 
             # Handle root node (no indent)
             if indent == 0 or root is None:
@@ -636,12 +592,7 @@ class MavenResolver(Resolver):
         return (
             root
             if root
-            else DependencyNode(
-                groupId=component.groupId,
-                artifactId=component.artifactId,
-                version=component.version,
-                packaging="jar",
-            )
+            else DependencyNode(Dependency(component.artifact()))
         )
 
     def print_dependency_list(

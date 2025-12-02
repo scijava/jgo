@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from . import Dependency
+
 
 @dataclass
 class DependencyNode:
@@ -19,16 +21,11 @@ class DependencyNode:
     allowing for consistent formatting regardless of the resolution mechanism.
     """
 
-    groupId: str
-    artifactId: str
-    version: str
-    packaging: str = "jar"
-    classifier: str | None = None
-    scope: str | None = None
-    optional: bool = False
+    dep: Dependency
     children: list["DependencyNode"] = field(default_factory=list)
 
     def coordinate_string(self, include_scope: bool = True) -> str:
+        # FIXME: Reconcile with Dependency __str__
         """
         Format this node as a Maven coordinate string.
 
@@ -38,23 +35,23 @@ class DependencyNode:
         Returns:
             Formatted coordinate string like "groupId:artifactId:packaging[:classifier]:version[:scope]"
         """
-        parts = [self.groupId, self.artifactId, self.packaging]
+        parts = [self.dep.groupId, self.dep.artifactId, self.dep.artifact.packaging]
 
         # Add classifier if present
-        if self.classifier:
-            parts.append(self.classifier)
+        if self.dep.classifier:
+            parts.append(self.dep.classifier)
 
         # Add version
-        parts.append(self.version)
+        parts.append(self.dep.version)
 
         coord = ":".join(parts)
 
         # Add scope suffix if requested and scope is not compile (default)
-        if include_scope and self.scope and self.scope != "compile":
-            coord += f":{self.scope}"
+        if include_scope and self.dep.scope and self.dep.scope != "compile":
+            coord += f":{self.dep.scope}"
 
         # Add optional marker if applicable
-        if self.optional:
+        if self.dep.optional:
             coord += " (optional)"
 
         return coord
@@ -71,15 +68,14 @@ def format_dependency_list(
 
     Args:
         root: The root component
-        dependencies: List of resolved dependencies (should be sorted)
+        dependencies: List of resolved dependencies
 
     Returns:
         Formatted dependency list as a string
     """
-    lines = []
 
     # Print root component
-    lines.append(f"{root.groupId}:{root.artifactId}:{root.version}")
+    lines = [f"{root.dep.groupId}:{root.dep.artifactId}:{root.dep.version}"]
 
     # Print dependencies with indentation
     for dep in dependencies:
@@ -101,14 +97,11 @@ def format_dependency_tree(root: DependencyNode) -> str:
     Returns:
         Formatted dependency tree as a string
     """
-    lines = []
 
     # Print root
-    lines.append(f"{root.groupId}:{root.artifactId}:{root.version}")
+    lines = [f"{root.dep.groupId}:{root.dep.artifactId}:{root.dep.version}"]
 
-    def add_children(
-        nodes: list[DependencyNode], prefix: str = "", is_last: bool = True
-    ):
+    def add_children(nodes: list[DependencyNode], prefix: str = ""):
         """Recursively add child nodes to the tree."""
         for i, node in enumerate(nodes):
             is_last_child = i == len(nodes) - 1
@@ -121,11 +114,11 @@ def format_dependency_tree(root: DependencyNode) -> str:
             coord = node.coordinate_string(include_scope=False)
 
             # Add scope if not compile
-            if node.scope and node.scope != "compile":
-                coord += f":{node.scope}"
+            if node.dep.scope and node.dep.scope != "compile":
+                coord += f":{node.dep.scope}"
 
             # Add optional marker
-            if node.optional:
+            if node.dep.optional:
                 coord += " (optional)"
 
             line = f"{prefix}{connector}{coord}"
@@ -133,7 +126,7 @@ def format_dependency_tree(root: DependencyNode) -> str:
 
             # Recursively add children
             if node.children:
-                add_children(node.children, prefix + extension, is_last_child)
+                add_children(node.children, prefix + extension)
 
     # Add children of root
     if root.children:
