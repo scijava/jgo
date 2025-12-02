@@ -11,7 +11,6 @@ Ported from db-xml-maven/tests/test_maven.py
 
 from re import match
 
-
 from jgo.maven import MavenContext, MavenResolver
 from jgo.maven.model import Model
 

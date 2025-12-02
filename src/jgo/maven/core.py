@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Iterable
 from xml.etree import ElementTree
 
-from .util import coord2str, text, binary
+from .util import binary, coord2str, text
 
 if TYPE_CHECKING:
     from .metadata import Metadata

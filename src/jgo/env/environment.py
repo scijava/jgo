@@ -7,12 +7,12 @@ execution.
 
 from __future__ import annotations
 
-from pathlib import Path
 import json
+from pathlib import Path
 
 from .bytecode import detect_environment_java_version
-from .spec import EnvironmentSpec
 from .lockfile import LockFile
+from .spec import EnvironmentSpec
 
 
 class Environment:

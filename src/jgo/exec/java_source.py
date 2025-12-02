@@ -6,10 +6,10 @@ Handles finding or downloading the appropriate Java executable.
 
 from __future__ import annotations
 
-from enum import Enum
-from pathlib import Path
 import subprocess
 import sys
+from enum import Enum
+from pathlib import Path
 
 import cjdk
 

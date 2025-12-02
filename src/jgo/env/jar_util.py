@@ -4,10 +4,10 @@ Utilities for working with JAR files.
 
 from __future__ import annotations
 
-from pathlib import Path
 import re
-import zipfile
 import warnings
+import zipfile
+from pathlib import Path
 
 
 def detect_main_class_from_jar(jar_path: Path) -> str | None:

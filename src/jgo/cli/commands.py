@@ -8,9 +8,9 @@ import sys
 import warnings
 from pathlib import Path
 
-from jgo.maven import MavenContext, SimpleResolver, MavenResolver
-from jgo.env import EnvironmentBuilder, LinkStrategy, EnvironmentSpec
-from jgo.exec import JavaRunner, JVMConfig, JavaSource
+from ..env import EnvironmentBuilder, EnvironmentSpec, LinkStrategy
+from ..exec import JavaRunner, JavaSource, JVMConfig
+from ..maven import MavenContext, MavenResolver, SimpleResolver
 from .parser import ParsedArgs
 
 
@@ -481,8 +481,8 @@ class JgoCommands:
         """
         from jgo.env.bytecode import (
             analyze_jar_bytecode,
-            round_to_lts,
             bytecode_to_java_version,
+            round_to_lts,
         )
 
         jars_dir = environment.path / "jars"

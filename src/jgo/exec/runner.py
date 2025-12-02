@@ -6,12 +6,12 @@ Executes Java programs with constructed environments.
 
 from __future__ import annotations
 
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 from .config import JVMConfig
-from .java_source import JavaSource, JavaLocator
+from .java_source import JavaLocator, JavaSource
 
 
 class JavaRunner:

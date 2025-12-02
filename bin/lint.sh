@@ -14,6 +14,8 @@ uv run ruff format --check >/dev/null 2>&1
 code=$?; test $code -eq 0 || exitCode=$code
 
 # Do actual code reformatting.
+uv run ruff check --select I --fix
+code=$?; test $code -eq 0 || exitCode=$code
 uv run ruff check --fix
 code=$?; test $code -eq 0 || exitCode=$code
 uv run ruff format

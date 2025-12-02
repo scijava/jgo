@@ -2,13 +2,14 @@
 Tests for the execution layer (jgo.exec).
 """
 
-import sys
 import subprocess
+import sys
 from pathlib import Path
+
 import pytest
 
-from jgo.exec import JVMConfig, JavaSource, JavaLocator, JavaRunner
 from jgo.env import Environment
+from jgo.exec import JavaLocator, JavaRunner, JavaSource, JVMConfig
 
 
 class TestJVMConfig:

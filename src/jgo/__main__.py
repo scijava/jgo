@@ -6,10 +6,10 @@ This module implements the command-line interface for jgo 2.0.
 
 import sys
 
-from jgo.cli.parser import JgoArgumentParser
-from jgo.cli.commands import JgoCommands
-from jgo.config.jgorc import JgoConfig
-from jgo.util.logging import setup_logging
+from .cli.commands import JgoCommands
+from .cli.parser import JgoArgumentParser
+from .config.jgorc import JgoConfig
+from .util.logging import setup_logging
 
 
 def main():

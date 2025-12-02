@@ -4,11 +4,11 @@ Linking strategies for jgo 2.0.
 Defines how to link JAR files from Maven repository to jgo cache.
 """
 
-from enum import Enum
-from pathlib import Path
 import errno
 import os
 import shutil
+from enum import Enum
+from pathlib import Path
 
 
 class LinkStrategy(Enum):

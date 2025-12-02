@@ -9,16 +9,16 @@ This module provides pure-Python Maven functionality including:
 """
 
 from .core import (
+    DEFAULT_CLASSIFIER,
+    DEFAULT_PACKAGING,
+    XML,
     Artifact,
     Component,
     Dependency,
     MavenContext,
     Project,
-    XML,
-    DEFAULT_CLASSIFIER,
-    DEFAULT_PACKAGING,
 )
-from .metadata import Metadata, MetadataXML, Metadatas
+from .metadata import Metadata, Metadatas, MetadataXML
 from .model import Model
 from .pom import POM
 from .resolver import MavenResolver, Resolver, SimpleResolver

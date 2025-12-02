@@ -2,13 +2,13 @@
 Utility modules for jgo 2.0.
 """
 
-from .logging import setup_logging, get_logger
+from .cjdk import ensure_maven_available, fetch_maven
 from .compat import (
     add_jvm_args_as_necessary,
-    maven_scijava_repository,
     main_from_endpoint,
+    maven_scijava_repository,
 )
-from .cjdk import ensure_maven_available, fetch_maven
+from .logging import get_logger, setup_logging
 
 __all__ = [
     "setup_logging",

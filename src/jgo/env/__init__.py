@@ -5,11 +5,11 @@ This module provides the environment materialization functionality,
 including Environment class, EnvironmentBuilder, and spec file handling.
 """
 
-from .environment import Environment
 from .builder import EnvironmentBuilder
+from .environment import Environment
 from .linking import LinkStrategy
+from .lockfile import LockedDependency, LockFile
 from .spec import EnvironmentSpec
-from .lockfile import LockFile, LockedDependency
 
 __all__ = [
     "Environment",

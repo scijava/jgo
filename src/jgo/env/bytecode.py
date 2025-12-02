@@ -6,10 +6,9 @@ Reads class file headers from JARs to determine minimum required Java version.
 
 from __future__ import annotations
 
-from pathlib import Path
 import struct
 import zipfile
-
+from pathlib import Path
 
 # Map class file major version to Java version
 # Source: https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-4.html

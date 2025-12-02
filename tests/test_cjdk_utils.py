@@ -4,6 +4,7 @@ Tests for the cjdk utility functions (jgo.util.cjdk).
 
 import shutil
 from pathlib import Path
+
 import pytest
 
 from jgo.util.cjdk import ensure_maven_available, fetch_maven

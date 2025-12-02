@@ -103,27 +103,24 @@ See Also
 
 from __future__ import annotations
 
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
-# New 2.0 API
-from jgo.maven import MavenContext, SimpleResolver, Component
-from jgo.env import EnvironmentBuilder, LinkStrategy, Environment
-from jgo.exec import JavaRunner, JVMConfig, JavaSource
-from jgo.config.jgorc import JgoConfig
-
-# Old 1.x compatibility API
-from .jgo import _jgo_main as main
-from .jgo import resolve_dependencies
+from .config.jgorc import JgoConfig
+from .env import Environment, EnvironmentBuilder, LinkStrategy
+from .exec import JavaRunner, JavaSource, JVMConfig
 from .jgo import (
     Endpoint,
-    NoMainClassInManifest,
     ExecutableNotFound,
-    InvalidEndpoint,
-    UnableToAutoComplete,
     HelpRequested,
+    InvalidEndpoint,
     NoEndpointProvided,
+    NoMainClassInManifest,
+    UnableToAutoComplete,
+    resolve_dependencies,
 )
+from .jgo import _jgo_main as main
+from .maven import Component, MavenContext, SimpleResolver
 from .util import (
     add_jvm_args_as_necessary,
     main_from_endpoint,

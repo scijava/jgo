@@ -109,7 +109,7 @@ def test_link_file():
 
         # Test hard link
         try:
-            from jgo.env.linking import link_file, LinkStrategy
+            from jgo.env.linking import LinkStrategy, link_file
 
             link_file(source_file, target_file, LinkStrategy.HARD)
             assert target_file.exists()

@@ -6,15 +6,16 @@ Builds Environment instances from Maven components or endpoint strings.
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 from typing import TYPE_CHECKING
-import hashlib
+
 from .environment import Environment
-from .linking import link_file, LinkStrategy
+from .linking import LinkStrategy, link_file
 from .lockfile import LockFile
 
 if TYPE_CHECKING:
-    from ..maven import MavenContext, Component
+    from ..maven import Component, MavenContext
     from ..maven.core import Dependency
     from .spec import EnvironmentSpec
 

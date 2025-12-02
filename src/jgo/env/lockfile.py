@@ -20,7 +20,7 @@ else:
 
 import tomli_w
 
-from jgo.maven import Dependency
+from ..maven import Dependency
 
 
 class LockedDependency:

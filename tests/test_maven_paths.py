@@ -1,6 +1,7 @@
 import unittest
 from pathlib import Path
-from jgo.jgo import m2_home, m2_repo, m2_path
+
+from jgo.jgo import m2_home, m2_path, m2_repo
 
 
 class TestMavenPaths(unittest.TestCase):

@@ -5,9 +5,10 @@ Unit tests for EnvironmentSpec and LockFile functionality.
 
 import tempfile
 from pathlib import Path
+
 import pytest
 
-from jgo.env import EnvironmentSpec, LockFile, LockedDependency
+from jgo.env import EnvironmentSpec, LockedDependency, LockFile
 
 
 def test_environment_spec_creation():
