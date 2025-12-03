@@ -28,6 +28,46 @@ if TYPE_CHECKING:
 _log = logging.getLogger(__name__)
 
 
+def _ensure_component_list(components: list[Component] | Component) -> list[Component]:
+    """Convert single component to list for uniform handling."""
+    return components if isinstance(components, list) else [components]
+
+
+def _resolve_boms(
+    components: list[Component], managed: bool, boms: list[Component] | None
+) -> list[Component] | None:
+    """Determine which components to use as BOMs."""
+    if boms is None and managed:
+        return components
+    return boms
+
+
+def _filter_component_deps(
+    deps: list[Dependency], components: list[Component]
+) -> list[Dependency]:
+    """Remove components themselves from dependency list."""
+    component_coords = {
+        (comp.groupId, comp.artifactId, comp.resolved_version) for comp in components
+    }
+    return [
+        dep
+        for dep in deps
+        if (dep.groupId, dep.artifactId, dep.version) not in component_coords
+    ]
+
+
+def _create_root(components: list[Component]) -> DependencyNode:
+    """Create a synthetic root node for multi-component resolution."""
+    return DependencyNode(
+        Dependency(
+            components[0]
+            .context.project("org.apposed.jgo", "INTERNAL-WRAPPER")
+            .at_version("0-SNAPSHOT")
+            .artifact(packaging="pom")
+        )
+    )
+
+
 class Resolver(ABC):
     """
     Logic for doing non-trivial Maven-related things, including:
@@ -92,6 +132,40 @@ class Resolver(ABC):
         """
         ...
 
+    def print_dependency_list(
+        self,
+        components: list[Component] | Component,
+        managed: bool = False,
+        boms: list[Component] | None = None,
+    ) -> str:
+        """
+        Print a flat list of resolved dependencies (like mvn dependency:list).
+        This shows what will actually be used when building the environment.
+        :param components: The component(s) for which to print dependencies.
+        :param managed: If True, use dependency management (import components as BOMs).
+        :param boms: List of components to import as BOMs. Defaults to [component].
+        :return: The dependency list as a string.
+        """
+        root, deps = self.get_dependency_list(components, managed=managed, boms=boms)
+        return format_dependency_list(root, deps)
+
+    def print_dependency_tree(
+        self,
+        components: list[Component] | Component,
+        managed: bool = False,
+        boms: list[Component] | None = None,
+    ) -> str:
+        """
+        Print the full dependency tree for the given component (like mvn dependency:tree).
+        Uses proper dependency mediation - only one version per artifact.
+        :param components: The component(s) for which to print dependencies.
+        :param managed: If True, use dependency management (import components as BOMs).
+        :param boms: List of components to import as BOMs. Defaults to [component].
+        :return: The dependency tree as a string.
+        """
+        root = self.get_dependency_tree(components, managed=managed, boms=boms)
+        return format_dependency_tree(root)
+
 
 class SimpleResolver(Resolver):
     """
@@ -141,31 +215,18 @@ class SimpleResolver(Resolver):
         Returns:
             Flat list of all transitive dependencies
         """
-        # Allow single component for backward compatibility
-        if not isinstance(components, list):
-            components = [components]
+        components = _ensure_component_list(components)
 
         if not components:
             raise ValueError("At least one component is required")
 
-        # Default to using the component(s) as BOMs if managed=True
-        if managed and boms is None:
-            boms = components
+        boms = _resolve_boms(components, managed, boms)
 
         pom = create_pom(components, boms)
         model = Model(pom)
         deps = model.dependencies()
 
-        # Filter out the components themselves from the dependency list
-        component_coords = {
-            (comp.groupId, comp.artifactId, comp.resolved_version)
-            for comp in components
-        }
-        deps = [
-            dep
-            for dep in deps
-            if (dep.groupId, dep.artifactId, dep.version) not in component_coords
-        ]
+        deps = _filter_component_deps(deps, components)
 
         # Filter out test scope dependencies (they're not needed for running the application)
         return [dep for dep in deps if dep.scope not in ("test",)]
@@ -187,15 +248,9 @@ class SimpleResolver(Resolver):
         Returns:
             Tuple of (root_node, flat_list_of_dependencies)
         """
-        # Allow single component for backward compatibility
-        if not isinstance(components, list):
-            components = [components]
-
+        components = _ensure_component_list(components)
         root = _create_root(components)
-
-        # Default to using the component(s) as BOMs if managed=True
-        if managed and boms is None:
-            boms = components
+        boms = _resolve_boms(components, managed, boms)
 
         # Synthesize a wrapper POM
         pom = create_pom(components, boms)
@@ -204,16 +259,7 @@ class SimpleResolver(Resolver):
         model = Model(pom)
         deps = model.dependencies()
 
-        # Filter out the components themselves from the dependency list
-        component_coords = {
-            (comp.groupId, comp.artifactId, comp.resolved_version)
-            for comp in components
-        }
-        deps = [
-            dep
-            for dep in deps
-            if (dep.groupId, dep.artifactId, dep.version) not in component_coords
-        ]
+        deps = _filter_component_deps(deps, components)
 
         # Filter out test scope dependencies
         deps = [dep for dep in deps if dep.scope not in ("test",)]
@@ -222,9 +268,7 @@ class SimpleResolver(Resolver):
         deps.sort(key=lambda d: (d.groupId, d.artifactId, d.version))
 
         # Convert to DependencyNode list
-        dep_nodes = []
-        for dep in deps:
-            dep_nodes.append(DependencyNode(dep))
+        dep_nodes = [DependencyNode(dep) for dep in deps]
 
         return root, dep_nodes
 
@@ -245,16 +289,9 @@ class SimpleResolver(Resolver):
         Returns:
             Root DependencyNode with full tree structure
         """
-        # Allow single component for backward compatibility
-        if not isinstance(components, list):
-            components = [components]
-
-        # Create root node
+        components = _ensure_component_list(components)
         root = _create_root(components)
-
-        # Default to using the component(s) as BOMs if managed=True
-        if managed and boms is None:
-            boms = components
+        boms = _resolve_boms(components, managed, boms)
 
         # Synthesize a wrapper POM
         pom = create_pom(components, boms)
@@ -300,42 +337,6 @@ class SimpleResolver(Resolver):
         root.children = build_tree(direct_deps)
 
         return root
-
-    def print_dependency_list(
-        self,
-        components: list[Component],
-        managed: bool = False,
-        boms: list[Component] | None = None,
-    ) -> str:
-        """
-        Print a flat list of resolved dependencies (like mvn dependency:list).
-        This shows what will actually be used when building the environment.
-        :param components: The components for which to print dependencies.
-        :param managed: If True, use dependency management (import components as BOMs).
-        :param boms: List of components to import as BOMs. Defaults to [component].
-        :return: The dependency list as a string.
-        """
-
-        root, deps = self.get_dependency_list(components, managed=managed, boms=boms)
-        return format_dependency_list(root, deps)
-
-    def print_dependency_tree(
-        self,
-        components: list[Component],
-        managed: bool = False,
-        boms: list[Component] | None = None,
-    ) -> str:
-        """
-        Print the full dependency tree for the given component (like mvn dependency:tree).
-        Uses proper dependency mediation - only one version per artifact.
-        :param components: The components for which to print dependencies.
-        :param managed: If True, use dependency management (import components as BOMs).
-        :param boms: List of components to import as BOMs. Defaults to [component].
-        :return: The dependency tree as a string.
-        """
-
-        root = self.get_dependency_tree(components, managed=managed, boms=boms)
-        return format_dependency_tree(root)
 
 
 class MavenResolver(Resolver):
@@ -398,9 +399,7 @@ class MavenResolver(Resolver):
         Returns:
             Flat list of all transitive dependencies
         """
-        # Allow single component for backward compatibility
-        if not isinstance(components, list):
-            components = [components]
+        components = _ensure_component_list(components)
 
         if not components:
             raise ValueError("At least one component is required")
@@ -409,9 +408,7 @@ class MavenResolver(Resolver):
         context = components[0].context
         assert context.repo_cache
 
-        if boms is None:
-            # Default to using the components themselves as BOMs if managed
-            boms = components if managed else []
+        boms = _resolve_boms(components, managed, boms) or []
 
         # Write to temporary file (MavenResolver needs a file for mvn command)
         pom = create_pom(components, boms)
@@ -502,19 +499,7 @@ class MavenResolver(Resolver):
             )
             dependencies.append(dep)
 
-        # Filter out the components themselves from the dependency list
-        # They appear because we added them to the wrapper POM's dependencies section
-        component_coords = {
-            (comp.groupId, comp.artifactId, comp.resolved_version)
-            for comp in components
-        }
-        dependencies = [
-            dep
-            for dep in dependencies
-            if (dep.groupId, dep.artifactId, dep.version) not in component_coords
-        ]
-
-        return dependencies
+        return _filter_component_deps(dependencies, components)
 
     def get_dependency_list(
         self,
@@ -533,12 +518,7 @@ class MavenResolver(Resolver):
         Returns:
             Tuple of (root_node, flat_list_of_dependencies)
         """
-
-        # Allow single component for backward compatibility
-        if not isinstance(components, list):
-            components = [components]
-
-        # Create root node
+        components = _ensure_component_list(components)
         root = _create_root(components)
 
         # Get dependencies using existing method
@@ -548,9 +528,7 @@ class MavenResolver(Resolver):
         deps.sort(key=lambda d: (d.groupId, d.artifactId, d.version))
 
         # Convert to DependencyNode list
-        dep_nodes = []
-        for dep in deps:
-            dep_nodes.append(DependencyNode(dep))
+        dep_nodes = [DependencyNode(dep) for dep in deps]
 
         return root, dep_nodes
 
@@ -571,10 +549,7 @@ class MavenResolver(Resolver):
         Returns:
             Root DependencyNode with full tree structure
         """
-
-        # Allow single component for backward compatibility
-        if not isinstance(components, list):
-            components = [components]
+        components = _ensure_component_list(components)
 
         if not components:
             raise ValueError("At least one component is required")
@@ -582,15 +557,14 @@ class MavenResolver(Resolver):
         context = components[0].context
         assert context.repo_cache
 
-        if boms is None:
-            # Default to using components as BOMs if managed
-            boms = components if managed else []
+        boms = _resolve_boms(components, managed, boms) or []
 
         # Write to temporary file (MavenResolver needs a file for mvn command)
         pom = create_pom(components, boms)
         temp_pom = write_temp_pom(pom)
         _log.debug(
-            f"Created wrapper POM at {temp_pom} with {len(components)} component(s) and {len(boms)} BOM(s)")
+            f"Created wrapper POM at {temp_pom} with {len(components)} component(s) and {len(boms)} BOM(s)"
+        )
 
         output = self._mvn(
             "dependency:tree",
@@ -733,44 +707,8 @@ class MavenResolver(Resolver):
 
         return root if root else DependencyNode(Dependency(components[0].artifact()))
 
-    def print_dependency_list(
-        self,
-        components: list[Component],
-        managed: bool = False,
-        boms: list[Component] | None = None,
-    ) -> str:
-        """
-        Print a flat list of resolved dependencies (like mvn dependency:list).
-        This shows what will actually be used when building the environment.
-        :param components: The component for which to print dependencies.
-        :param managed: If True, use dependency management (import components as BOMs).
-        :param boms: List of components to import as BOMs. Defaults to [component].
-        :return: The dependency list as a string.
-        """
-
-        root, deps = self.get_dependency_list(components, managed=managed, boms=boms)
-        return format_dependency_list(root, deps)
-
-    def print_dependency_tree(
-        self,
-        components: list[Component],
-        managed: bool = False,
-        boms: list[Component] | None = None,
-    ) -> str:
-        """
-        Print the full dependency tree for the given component.
-        :param components: The component for which to print dependencies.
-        :param managed: If True, use dependency management (import components as BOMs).
-        :param boms: List of components to import as BOMs. Defaults to [component].
-        :return: The dependency tree as a string.
-        """
-
-        root = self.get_dependency_tree(components, managed=managed, boms=boms)
-        return format_dependency_tree(root)
-
     def _mvn(self, *args) -> str:
         return MavenResolver._run(self.mvn_command, *self.mvn_flags, *args)
-
 
     @staticmethod
     def _run(command, *args) -> str:
@@ -788,8 +726,3 @@ class MavenResolver(Resolver):
         if result.stderr:
             error_message += f"\n\n[stderr]\n{result.stderr.decode()}"
         raise RuntimeError(error_message)
-
-
-def _create_root(components: list[Component]) -> DependencyNode:
-    return DependencyNode(Dependency(components[0].context.project("org.apposed.jgo", "INTERNAL-WRAPPER").at_version("0-SNAPSHOT").artifact(
-        packaging="pom")))
