@@ -45,11 +45,9 @@ dependencies = [
 [dependency-groups]
 dev = [
     "build",
-    "ruff",
-    "pre-commit",
-    "pyflakes",
+    "mypy",
     "pytest",
-    "pytest-cov",
+    "ruff",
     "validate-pyproject[all]",
 ]
 
