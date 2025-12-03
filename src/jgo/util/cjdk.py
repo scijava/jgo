@@ -57,7 +57,7 @@ def fetch_maven(url: str = "", sha: str = "") -> Path:
     # Maven 3.9.9 is a stable LTS version
     if not url:
         url = "https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz"
-        sha = "e02cf0481a652a46ff4acbe52ad965e9d5659fa9e64d2fef2e8e8c78587848b558fe8a1ee5b8f0e9f7b04f61dc50e9b47c3b40f36e0e0f2f7ff14c849b8e2b89"
+        sha = "a555254d6b53d267965a3404ecb14e53c3827c09c3b94b5678835887ab404556bfaf78dcfe03ba76fa2508649dca8531c74bca4d5846513522404d48e8c4ac8b"
 
     # Fix URLs to have proper prefix for cjdk
     if url.startswith("http"):
