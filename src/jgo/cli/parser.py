@@ -317,7 +317,7 @@ Examples:
             args = list(args)  # Make a copy
         
         # List of known commands
-        known_commands = ['run']
+        known_commands = ['run', 'init', 'info', 'list', 'tree', 'versions']
         
         # Check if first arg is a known command
         command = None
@@ -396,6 +396,8 @@ Examples:
             endpoint=endpoint,
             jvm_args=jvm_args,
             app_args=app_args,
+            # Command (for new command-based interface)
+            command=command,
         )
 
     def _split_remaining_args(
@@ -508,6 +510,8 @@ class ParsedArgs:
         endpoint: str | None = None,
         jvm_args: list[str] | None = None,
         app_args: list[str] | None = None,
+        # Command (for new command-based interface)
+        command: str | None = None,
     ):
         # General
         self.verbose = verbose
@@ -552,6 +556,8 @@ class ParsedArgs:
         self.endpoint = endpoint
         self.jvm_args = jvm_args or []
         self.app_args = app_args or []
+        # Command (for new command-based interface)
+        self.command = command
 
     def is_spec_mode(self) -> bool:
         """Check if running in spec file mode (jgo.toml)."""

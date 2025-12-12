@@ -45,10 +45,20 @@ def main():
     # Execute command or use legacy path
     if hasattr(args, 'command') and args.command:
         # Dispatch to subcommand
-        from .cli.subcommands import run
+        from .cli.subcommands import run, init, info, list as list_cmd, tree, versions
         
         if args.command == 'run':
             exit_code = run.execute(args, config.to_dict())
+        elif args.command == 'init':
+            exit_code = init.execute(args, config.to_dict())
+        elif args.command == 'info':
+            exit_code = info.execute(args, config.to_dict())
+        elif args.command == 'list':
+            exit_code = list_cmd.execute(args, config.to_dict())
+        elif args.command == 'tree':
+            exit_code = tree.execute(args, config.to_dict())
+        elif args.command == 'versions':
+            exit_code = versions.execute(args, config.to_dict())
         else:
             print(f"Error: Unknown command: {args.command}", file=sys.stderr)
             exit_code = 1
