@@ -47,14 +47,19 @@ def execute(args: ParsedArgs, config: dict) -> int:
         print("Error: init requires an endpoint", file=sys.stderr)
         return 1
 
+    # Use current directory name as environment name (like pixi and uv do)
+    current_dir = Path.cwd()
+    env_name = current_dir.name
+
     # Parse endpoint to extract coordinates
     # For now, create a simple spec
     spec = EnvironmentSpec(
-        name="jgo-environment",
+        name=env_name,
         description=f"Generated from {endpoint}",
         coordinates=[endpoint],
         entrypoints={},
         default_entrypoint=None,
+        cache_dir=".jgo",
     )
 
     output_file = args.file or Path("jgo.toml")
