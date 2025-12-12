@@ -187,24 +187,33 @@ jgo config [OPTIONS] [key] [value]
   - `jgo config --global repositories.central https://repo.maven.apache.org/maven2`
 
 ```bash
-jgo alias [OPTIONS] <name> [main-class]
+jgo config shortcut [OPTIONS] [name] [endpoint]
 ```
-- Manage main class aliases (shortcuts for entry points)
-- Without args: list all aliases
-- With name only: show the main class for that alias
-- With name and main-class: register or update an alias
-- Replaces/enhances: `~/.jgorc` shortcuts functionality
+- Manage global endpoint shortcuts (saved in `~/.config/jgo/config`)
+- Shortcuts are quick aliases that expand to full Maven endpoint strings
+- Support composition with `+`: shortcuts can be combined (e.g., `jgo run repl+groovy`)
+- Without args: list all shortcuts
+- With name only: show what the shortcut expands to
+- With name and endpoint: add/update a shortcut
 - Options:
-  - `--global` - modify global aliases (~/.jgorc)
-  - `--local` - modify project aliases (jgo.toml)
-  - `--remove NAME` - remove an alias
+  - `--remove NAME` (or `-r`) - remove a shortcut
+  - `--list` (or `-l`) - list all shortcuts (same as no args)
 - Examples:
-  - `jgo alias` - list all aliases
-  - `jgo alias repl` - show what 'repl' maps to
-  - `jgo alias repl org.scijava.script.ScriptREPL` - register alias
-  - `jgo alias --remove repl` - remove alias
-- Usage with run:
-  - `jgo run org.scijava:scijava-common@repl` - use alias
+  - `jgo config shortcut` - list all shortcuts
+  - `jgo config shortcut repl` - show what 'repl' expands to
+  - `jgo config shortcut repl org.scijava:scijava-common@ScriptREPL` - add/update shortcut
+  - `jgo config shortcut imagej net.imagej:imagej` - add shortcut without main class
+  - `jgo config shortcut --remove repl` - remove shortcut
+- Usage:
+  - `jgo run repl` - expands shortcut and runs
+  - `jgo run repl+groovy` - combines multiple shortcuts
+  - `jgo init repl+groovy` - creates jgo.toml with multiple entrypoints
+  - `jgo list repl` - expands shortcut for any command
+- Name Resolution: When `jgo run NAME` is used in a directory with `jgo.toml`:
+  1. First checks for entrypoint named `NAME` in jgo.toml (project-local)
+  2. Then checks for shortcut named `NAME` in config (global)
+  3. Finally tries to parse `NAME` as a Maven coordinate
+  - This means project entrypoints take precedence over global shortcuts
 
 ### Utility Commands
 
