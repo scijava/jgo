@@ -1,5 +1,5 @@
 """
-Logging utilities for jgo 2.0.
+Logging utilities for jgo.
 
 Provides structured logging with verbosity levels.
 """

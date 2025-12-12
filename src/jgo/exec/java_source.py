@@ -1,5 +1,5 @@
 """
-Java source and locator for jgo 2.0.
+Java source and locator for jgo.
 
 Handles finding or downloading the appropriate Java executable.
 """

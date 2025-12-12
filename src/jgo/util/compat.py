@@ -78,7 +78,7 @@ def main_from_endpoint(
     :return: None
     """
     warnings.warn(
-        "jgo.main_from_endpoint() is deprecated. Use the new jgo 2.0 API: jgo.run()",
+        "jgo.main_from_endpoint() is deprecated. Use the new jgo API: jgo.run()",
         DeprecationWarning,
         stacklevel=2,
     )

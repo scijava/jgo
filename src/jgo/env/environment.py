@@ -1,5 +1,5 @@
 """
-Environment class for jgo 2.0.
+Environment class for jgo.
 
 An environment is a materialized directory containing JAR files ready for
 execution.

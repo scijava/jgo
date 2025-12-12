@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Demo script showing how to use the jgo 2.0 Execution Layer.
+Demo script showing how to use the jgo Execution Layer.
 
 This demonstrates using JVMConfig, JavaSource, and JavaRunner
 to execute Java programs from materialized environments.

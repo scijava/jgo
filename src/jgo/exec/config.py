@@ -1,5 +1,5 @@
 """
-JVM configuration for jgo 2.0.
+JVM configuration for jgo.
 
 Handles JVM arguments like heap size, GC options, and system properties.
 """

@@ -1,5 +1,5 @@
 """
-CLI command implementations for jgo 2.0.
+CLI command implementations for jgo.
 """
 
 from __future__ import annotations

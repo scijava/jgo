@@ -1,5 +1,5 @@
 """
-Utility modules for jgo 2.0.
+Utility modules for jgo.
 """
 
 from .cjdk import ensure_maven_available, fetch_maven

@@ -1,5 +1,5 @@
 """
-CLI module for jgo 2.0.
+CLI module for jgo.
 
 Provides argument parsing and command execution for the jgo command-line interface.
 """

@@ -1,4 +1,4 @@
-# Example jgo.toml - Environment specification for jgo 2.0
+# Example jgo.toml - Environment specification for jgo
 #
 # This file defines a reproducible Java environment that can be
 # committed to version control. Run `jgo` in this directory to

@@ -1,5 +1,5 @@
 """
-Linking strategies for jgo 2.0.
+Linking strategies for jgo.
 
 Defines how to link JAR files from Maven repository to jgo cache.
 """

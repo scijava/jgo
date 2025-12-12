@@ -1,5 +1,5 @@
 """
-Configuration module for jgo 2.0.
+Configuration module for jgo.
 
 Provides configuration file parsing and defaults management.
 """

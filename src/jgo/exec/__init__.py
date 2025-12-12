@@ -1,8 +1,8 @@
 """
-Execution layer for jgo 2.0.
+Execution layer for jgo.
 
-This module provides the Java execution functionality, including JVM configuration,
-Java locator (with cjdk integration), and the JavaRunner.
+This module provides the Java execution functionality, including JVM
+configuration, Java locator (with cjdk integration), and the JavaRunner.
 """
 
 from .config import JVMConfig

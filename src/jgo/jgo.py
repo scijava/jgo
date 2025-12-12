@@ -415,7 +415,7 @@ and it will be auto-completed.
 
 def _jgo_main(argv=sys.argv[1:], stdout=None, stderr=None):
     warnings.warn(
-        "jgo.main() is deprecated. Use the new jgo 2.0 API: jgo.run()",
+        "jgo.main() is deprecated. Use the new jgo API: jgo.run()",
         DeprecationWarning,
         stacklevel=2,
     )
@@ -573,7 +573,7 @@ def resolve_dependencies(
 ):
     warnings.warn(
         "jgo.resolve_dependencies() is deprecated. "
-        "Use the new jgo 2.0 API: jgo.build() or jgo.resolve()",
+        "Use the new jgo API: jgo.build() or jgo.resolve()",
         DeprecationWarning,
         stacklevel=2,
     )

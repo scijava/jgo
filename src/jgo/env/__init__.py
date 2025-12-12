@@ -1,5 +1,5 @@
 """
-Environment layer for jgo 2.0.
+Environment layer for jgo.
 
 This module provides the environment materialization functionality,
 including Environment class, EnvironmentBuilder, and spec file handling.

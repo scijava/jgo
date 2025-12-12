@@ -1,5 +1,5 @@
 """
-Java runner for jgo 2.0.
+Java runner for jgo.
 
 Executes Java programs with constructed environments.
 """

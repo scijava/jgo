@@ -1,7 +1,7 @@
 """
-Configuration file parsing for jgo 2.0.
+Configuration file parsing for jgo.
 
-Supports ~/.jgorc configuration files with backward compatibility to jgo 1.x.
+Supports jgo configuration files with backward compatibility to jgo 1.x.
 """
 
 from __future__ import annotations

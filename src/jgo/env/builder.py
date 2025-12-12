@@ -1,5 +1,5 @@
 """
-EnvironmentBuilder for jgo 2.0.
+EnvironmentBuilder for jgo.
 
 Builds Environment instances from Maven components or endpoint strings.
 """
