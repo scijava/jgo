@@ -279,18 +279,6 @@ def global_options(f):
         help="How to link JARs: hard, soft, copy, or auto (default)",
     )(f)
     f = click.option(
-        "--main-class", metavar="CLASS", help="Specify main class explicitly"
-    )(f)
-    f = click.option(
-        "--add-classpath",
-        multiple=True,
-        metavar="PATH",
-        help="Append to classpath (JARs, directories, etc.)",
-    )(f)
-    f = click.option(
-        "--entrypoint", metavar="NAME", help="Run specific entry point from jgo.toml"
-    )(f)
-    f = click.option(
         "--ignore-jgorc", is_flag=True, help="Ignore ~/.jgorc configuration file"
     )(f)
 
@@ -337,10 +325,21 @@ def cli(ctx, **kwargs):
     metavar="CLASS",
     help="Main class to run (supports auto-completion for simple names)",
 )
+@click.option(
+    "--entrypoint",
+    metavar="NAME",
+    help="Run specific entrypoint from jgo.toml",
+)
+@click.option(
+    "--add-classpath",
+    multiple=True,
+    metavar="PATH",
+    help="Append to classpath (JARs, directories, etc.)",
+)
 @click.argument("endpoint", required=False)
 @click.argument("remaining", nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
-def run(ctx, main_class, endpoint, remaining):
+def run(ctx, main_class, entrypoint, add_classpath, endpoint, remaining):
     """
     Run a Java application from Maven coordinates or jgo.toml.
 
@@ -371,9 +370,13 @@ def run(ctx, main_class, endpoint, remaining):
     # Get global options from context
     opts = ctx.obj
 
-    # Add run-specific main-class option
+    # Add run-specific options
     if main_class:
         opts["main_class"] = main_class
+    if entrypoint:
+        opts["entrypoint"] = entrypoint
+    if add_classpath:
+        opts["add_classpath"] = add_classpath
 
     # Parse remaining args for JVM/app args
     jvm_args, app_args = _parse_remaining(remaining)

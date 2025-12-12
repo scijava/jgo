@@ -45,8 +45,8 @@ This document categorizes existing jgo flags for the command-based CLI redesign.
 | `--resolver {auto,pure,maven}` | **Keep** | Global flag - affects all dependency resolution |
 | `--link {hard,soft,copy,auto}` | **Keep** | Global flag - affects environment building |
 | `--no-managed` | **Keep** | Global flag - inverse of `-m`, affects resolution |
-| `--main-class CLASS` | **Move** | Move to `jgo run` only |
-| `--add-classpath PATH` | **Move** | Move to `jgo run` only |
+| `--main-class CLASS` | **Move** | ✅ Moved to `jgo run` only |
+| `--add-classpath PATH` | **Move** | ✅ Moved to `jgo run` only |
 
 ### Information Commands (become subcommands)
 | Flag | Category | New Command | Notes |
@@ -84,9 +84,9 @@ This document categorizes existing jgo flags for the command-based CLI redesign.
 
 ### Phase 2: Move Command-Specific Flags
 Move these flags from global to specific subcommands:
-- `--main-class` → `jgo run --main-class`
-- `--entrypoint` → `jgo run --entrypoint`
-- Keep them at global level for backwards compat, but mark deprecated
+- ✅ `--main-class` → `jgo run --main-class` (COMPLETED)
+- ✅ `--add-classpath` → `jgo run --add-classpath` (COMPLETED)
+- ✅ `--entrypoint` → `jgo run --entrypoint` (COMPLETED)
 - **Target**: Before 2.0.0 release
 
 ### Phase 3: Deprecation Warnings (Post 2.0.0)
