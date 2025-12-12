@@ -604,6 +604,134 @@ def version():
     click.echo(f"jgo {parser._get_version()}")
 
 
+@cli.command(help="Add dependencies to jgo.toml")
+@click.argument("coordinates", nargs=-1, required=True)
+@click.option(
+    "--no-sync",
+    is_flag=True,
+    help="Don't automatically sync after adding dependencies",
+)
+@click.pass_context
+def add(ctx, coordinates, no_sync):
+    """
+    Add one or more dependencies to jgo.toml.
+
+    Automatically runs 'jgo sync' unless --no-sync is specified.
+
+    EXAMPLES:
+      jgo add org.python:jython-standalone:2.7.3
+      jgo add org.scijava:scijava-common org.scijava:parsington
+      jgo add --no-sync net.imagej:imagej:2.15.0
+    """
+    from ..cli.subcommands import add as add_cmd
+    from ..config.jgorc import JgoConfig
+
+    opts = ctx.obj
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, command="add")
+    args.coordinates = list(coordinates)
+    args.no_sync = no_sync
+
+    exit_code = add_cmd.execute(args, config.to_dict())
+    ctx.exit(exit_code)
+
+
+@cli.command(help="Remove dependencies from jgo.toml")
+@click.argument("coordinates", nargs=-1, required=True)
+@click.option(
+    "--no-sync",
+    is_flag=True,
+    help="Don't automatically sync after removing dependencies",
+)
+@click.pass_context
+def remove(ctx, coordinates, no_sync):
+    """
+    Remove one or more dependencies from jgo.toml.
+
+    Coordinates can be specified as groupId:artifactId (version ignored).
+    Automatically runs 'jgo sync' unless --no-sync is specified.
+
+    EXAMPLES:
+      jgo remove org.python:jython-standalone
+      jgo remove org.scijava:scijava-common org.scijava:parsington
+      jgo remove --no-sync net.imagej:imagej
+    """
+    from ..cli.subcommands import remove as remove_cmd
+    from ..config.jgorc import JgoConfig
+
+    opts = ctx.obj
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, command="remove")
+    args.coordinates = list(coordinates)
+    args.no_sync = no_sync
+
+    exit_code = remove_cmd.execute(args, config.to_dict())
+    ctx.exit(exit_code)
+
+
+@cli.command(help="Resolve dependencies and build environment")
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Force rebuild even if cached",
+)
+@click.pass_context
+def sync(ctx, force):
+    """
+    Resolve dependencies and build environment in .jgo/ directory.
+
+    Reads jgo.toml, resolves all dependencies using Maven, and creates
+    the local environment directory with all JARs linked.
+
+    EXAMPLES:
+      jgo sync
+      jgo sync --force
+      jgo sync --offline
+      jgo sync -u  # Update to latest versions
+    """
+    from ..cli.subcommands import sync as sync_cmd
+    from ..config.jgorc import JgoConfig
+
+    opts = ctx.obj
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, command="sync")
+    args.force = force
+
+    exit_code = sync_cmd.execute(args, config.to_dict())
+    ctx.exit(exit_code)
+
+
+@cli.command(help="Update jgo.lock.toml without building environment")
+@click.option(
+    "--check",
+    is_flag=True,
+    help="Check if lock file is up to date",
+)
+@click.pass_context
+def lock(ctx, check):
+    """
+    Update jgo.lock.toml without building the environment.
+
+    Useful for updating the lock file when RELEASE versions are involved,
+    or to verify the lock file is up to date.
+
+    EXAMPLES:
+      jgo lock
+      jgo lock --check
+      jgo lock --update
+    """
+    from ..cli.subcommands import lock as lock_cmd
+    from ..config.jgorc import JgoConfig
+
+    opts = ctx.obj
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, command="lock")
+    args.check = check
+
+    exit_code = lock_cmd.execute(args, config.to_dict())
+    ctx.exit(exit_code)
+
+
 def _parse_remaining(remaining):
     """
     Parse remaining args for JVM and app arguments.

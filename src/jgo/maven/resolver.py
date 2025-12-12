@@ -344,12 +344,14 @@ class SimpleResolver(Resolver):
             comp_artifact = comp.artifact()
             comp_dep = Dependency(comp_artifact)
             comp_node = DependencyNode(comp_dep)
-            
+
             # Build tree from component's dependencies (exclude test scope)
             comp_model = Model(comp.pom())
-            direct_deps = [dep for dep in comp_model.deps.values() if dep.scope not in ("test",)]
+            direct_deps = [
+                dep for dep in comp_model.deps.values() if dep.scope not in ("test",)
+            ]
             comp_node.children = build_tree(direct_deps)
-            
+
             root.children.append(comp_node)
 
         return root

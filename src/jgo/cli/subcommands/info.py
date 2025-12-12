@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 def add_parser(subparsers) -> argparse.ArgumentParser:
     """Add the 'info' subcommand parser.
-    
+
     Note: This function is deprecated and kept for backward compatibility.
     The new Click-based CLI uses subcommands instead (e.g., 'jgo info classpath').
     """
@@ -92,10 +92,21 @@ def execute(args: ParsedArgs, config: dict) -> int:
     ):
         print("Use 'jgo info' with a subcommand:", file=sys.stderr)
         print("  jgo info classpath <endpoint>     Show classpath", file=sys.stderr)
-        print("  jgo info deptree <endpoint>       Show dependency tree", file=sys.stderr)
-        print("  jgo info deplist <endpoint>       Show flat dependency list", file=sys.stderr)
-        print("  jgo info javainfo <endpoint>      Show Java version requirements", file=sys.stderr)
-        print("  jgo info entrypoints              Show entrypoints from jgo.toml", file=sys.stderr)
+        print(
+            "  jgo info deptree <endpoint>       Show dependency tree", file=sys.stderr
+        )
+        print(
+            "  jgo info deplist <endpoint>       Show flat dependency list",
+            file=sys.stderr,
+        )
+        print(
+            "  jgo info javainfo <endpoint>      Show Java version requirements",
+            file=sys.stderr,
+        )
+        print(
+            "  jgo info entrypoints              Show entrypoints from jgo.toml",
+            file=sys.stderr,
+        )
         print("\nExamples:", file=sys.stderr)
         print("  jgo info classpath org.python:jython-standalone", file=sys.stderr)
         print("  jgo info javainfo org.scijava:scijava-common", file=sys.stderr)

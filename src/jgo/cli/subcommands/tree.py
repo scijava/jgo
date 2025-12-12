@@ -23,7 +23,7 @@ All global options apply. Use 'jgo --help' to see global options.""",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    # TODO: Add tree-specific options in Phase 3
+    # TODO: Add tree-specific options in Phase 5
     # parser.add_argument('--depth', type=int, help='Limit tree depth')
     # parser.add_argument('--format', choices=['simple', 'json'], help='Output format')
 

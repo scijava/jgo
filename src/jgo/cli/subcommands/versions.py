@@ -25,7 +25,7 @@ All global options apply. Use 'jgo --help' to see global options.""",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    # TODO: Add versions-specific options in Phase 3
+    # TODO: Add versions-specific options in Phase 5
     # parser.add_argument('--limit', type=int, help='Limit number of results')
     # parser.add_argument('--filter', help='Filter versions by pattern')
 

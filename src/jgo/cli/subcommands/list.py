@@ -23,8 +23,7 @@ All global options apply. Use 'jgo --help' to see global options.""",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    # TODO: Add list-specific options in Phase 3
-    # parser.add_argument('--tree', action='store_true', help='Show as tree (alias for jgo tree)')
+    # TODO: Add list-specific options in Phase 5
     # parser.add_argument('--format', choices=['simple', 'json', 'table'], help='Output format')
 
     return parser
