@@ -129,12 +129,14 @@ class JgoCommands:
         if self.args.print_dependency_tree or self.args.print_dependency_list:
             # Parse coordinates into components
             components = []
-            for coord in spec.coordinates:
-                parts = coord.split(":")
-                groupId = parts[0]
-                artifactId = parts[1]
-                version = parts[2] if len(parts) >= 3 else "RELEASE"
-                component = context.project(groupId, artifactId).at_version(version)
+            for coord_str in spec.coordinates:
+                from ..maven.endpoint import Coordinate
+
+                coord = Coordinate.parse(coord_str)
+                version = coord.version or "RELEASE"
+                component = context.project(coord.groupId, coord.artifactId).at_version(
+                    version
+                )
                 components.append(component)
             self._print_dependencies(
                 components, context, list_mode=self.args.print_dependency_list

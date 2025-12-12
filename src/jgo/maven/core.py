@@ -113,6 +113,40 @@ class MavenContext:
         artifact = project.at_version(version).artifact(classifier, packaging)
         return Dependency(artifact, scope, optional, exclusions)
 
+    def from_coordinate(self, coordinate: str) -> "Dependency":
+        """
+        Create a Dependency object from a Maven coordinate string.
+
+        This method parses coordinate strings in various formats:
+        - G:A (minimal)
+        - G:A:V (basic)
+        - G:A:P (with packaging)
+        - G:A:C (with classifier, for latest version with classifier)
+        - G:A:V:C (with classifier)
+        - G:A:P:V (with packaging)
+        - G:A:P:V:S (mvn dependency:list format)
+        - G:A:P:C:V (with packaging and classifier)
+        - G:A:P:C:V:S (full mvn dependency:list format)
+
+        :param coordinate: The Maven coordinate string to parse.
+        :return: The Dependency object.
+        """
+        from .util import str2coord
+
+        parsed = str2coord(coordinate)
+        groupId = parsed["groupId"]
+        artifactId = parsed["artifactId"]
+        version = parsed["version"]
+        classifier = parsed["classifier"] or DEFAULT_CLASSIFIER
+        packaging = parsed["packaging"] or DEFAULT_PACKAGING
+        scope = parsed["scope"]
+        optional = parsed["optional"] or False
+
+        project = self.project(groupId, artifactId)
+        component = project.at_version(version) if version else project.at_version("")
+        artifact = component.artifact(classifier, packaging)
+        return Dependency(artifact, scope, optional, [])
+
 
 class Project:
     """

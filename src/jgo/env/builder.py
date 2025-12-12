@@ -158,14 +158,15 @@ class EnvironmentBuilder:
         """
         # Parse coordinates into components
         components = []
-        for coord in spec.coordinates:
-            parts = coord.split(":")
-            groupId = parts[0]
-            artifactId = parts[1]
-            version = parts[2] if len(parts) >= 3 else "RELEASE"
-            # TODO: Handle classifier (parts[3]) -- use Artifact instead?
+        for coord_str in spec.coordinates:
+            from ..maven.endpoint import Coordinate
 
-            component = self.context.project(groupId, artifactId).at_version(version)
+            coord = Coordinate.parse(coord_str)
+            version = coord.version or "RELEASE"
+
+            component = self.context.project(
+                coord.groupId, coord.artifactId
+            ).at_version(version)
             components.append(component)
 
         # Get main class from entrypoint
