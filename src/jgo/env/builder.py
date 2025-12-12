@@ -163,7 +163,7 @@ class EnvironmentBuilder:
             groupId = parts[0]
             artifactId = parts[1]
             version = parts[2] if len(parts) >= 3 else "RELEASE"
-            # TODO: Handle classifier (parts[3]) when Component supports it
+            # TODO: Handle classifier (parts[3]) -- use Artifact instead?
 
             component = self.context.project(groupId, artifactId).at_version(version)
             components.append(component)

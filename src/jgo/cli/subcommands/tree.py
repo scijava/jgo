@@ -2,32 +2,10 @@
 
 from __future__ import annotations
 
-import argparse
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
-
-
-def add_parser(subparsers) -> argparse.ArgumentParser:
-    """Add the 'tree' subcommand parser."""
-    parser = subparsers.add_parser(
-        "tree",
-        help="Show dependency tree",
-        description="""Show the dependency tree for an endpoint or jgo.toml.
-
-Displays dependencies in a tree structure showing the relationship between
-artifacts and their transitive dependencies.
-
-All global options apply. Use 'jgo --help' to see global options.""",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-
-    # TODO: Add tree-specific options in Phase 5
-    # parser.add_argument('--depth', type=int, help='Limit tree depth')
-    # parser.add_argument('--format', choices=['simple', 'json'], help='Output format')
-
-    return parser
 
 
 def execute(args: ParsedArgs, config: dict) -> int:

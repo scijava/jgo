@@ -13,7 +13,6 @@ import click
 class ParsedArgs:
     """
     Container for parsed CLI arguments.
-    Compatible with the old argparse-based system.
     """
 
     def __init__(

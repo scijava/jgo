@@ -2,34 +2,10 @@
 
 from __future__ import annotations
 
-import argparse
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
-
-
-def add_parser(subparsers) -> argparse.ArgumentParser:
-    """Add the 'versions' subcommand parser."""
-    parser = subparsers.add_parser(
-        "versions",
-        help="List available versions of an artifact",
-        description="""List available versions of a Maven artifact.
-
-Queries Maven repositories for all published versions of the specified artifact.
-
-Example:
-  jgo versions org.scijava:scijava-common
-
-All global options apply. Use 'jgo --help' to see global options.""",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-
-    # TODO: Add versions-specific options in Phase 5
-    # parser.add_argument('--limit', type=int, help='Limit number of results')
-    # parser.add_argument('--filter', help='Filter versions by pattern')
-
-    return parser
 
 
 def execute(args: ParsedArgs, config: dict) -> int:

@@ -2,42 +2,10 @@
 
 from __future__ import annotations
 
-import argparse
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
-
-
-def add_parser(subparsers) -> argparse.ArgumentParser:
-    """Add the 'info' subcommand parser.
-
-    Note: This function is deprecated and kept for backward compatibility.
-    The new Click-based CLI uses subcommands instead (e.g., 'jgo info classpath').
-    """
-    parser = subparsers.add_parser(
-        "info",
-        help="Show information about environment or artifact",
-        description="""Show information about a jgo environment or Maven artifact.
-
-Use subcommands to specify what information to show:
-  classpath    - Show classpath
-  deptree      - Show dependency tree
-  deplist      - Show flat list of dependencies
-  javainfo     - Show Java version requirements
-  entrypoints  - Show entrypoints from jgo.toml
-
-Examples:
-  jgo info classpath org.python:jython-standalone
-  jgo info javainfo org.scijava:scijava-common
-  jgo info deptree org.scijava:scijava-common
-  jgo info entrypoints
-
-All global options apply. Use 'jgo --help' to see global options.""",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-
-    return parser
 
 
 def execute(args: ParsedArgs, config: dict) -> int:
@@ -107,9 +75,14 @@ def execute(args: ParsedArgs, config: dict) -> int:
             "  jgo info entrypoints              Show entrypoints from jgo.toml",
             file=sys.stderr,
         )
+        print(
+            "  jgo info versions <coordinate>    List available versions",
+            file=sys.stderr,
+        )
         print("\nExamples:", file=sys.stderr)
         print("  jgo info classpath org.python:jython-standalone", file=sys.stderr)
         print("  jgo info javainfo org.scijava:scijava-common", file=sys.stderr)
+        print("  jgo info versions org.python:jython-standalone", file=sys.stderr)
         return 1
 
     # Handle spec file mode vs endpoint mode

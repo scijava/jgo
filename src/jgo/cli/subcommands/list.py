@@ -2,31 +2,10 @@
 
 from __future__ import annotations
 
-import argparse
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
-
-
-def add_parser(subparsers) -> argparse.ArgumentParser:
-    """Add the 'list' subcommand parser."""
-    parser = subparsers.add_parser(
-        "list",
-        help="List resolved dependencies",
-        description="""List resolved dependencies as a flat list.
-
-Shows all dependencies that would be included in the classpath,
-without the tree structure.
-
-All global options apply. Use 'jgo --help' to see global options.""",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-
-    # TODO: Add list-specific options in Phase 5
-    # parser.add_argument('--format', choices=['simple', 'json', 'table'], help='Output format')
-
-    return parser
 
 
 def execute(args: ParsedArgs, config: dict) -> int:

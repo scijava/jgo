@@ -1,8 +1,7 @@
 """
 Subcommands for jgo CLI.
 
-Each subcommand is implemented in its own module following the pattern:
-- add_parser(subparsers) -> ArgumentParser
+Each subcommand is implemented in its own module with:
 - execute(args, config) -> int
 """
 
