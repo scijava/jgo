@@ -233,13 +233,26 @@ class TestIntegration:
         if not java_source.exists():
             pytest.skip("Test Java source not found")
 
+        # Use JavaLocator to find Java consistently with how tests run
+        locator = JavaLocator(java_source=JavaSource.SYSTEM)
+        java_path = locator._find_java_in_path()
+        if java_path is None:
+            pytest.skip("Java not found")
+
+        javac_path = java_path.parent / "javac"
+        jar_path_tool = java_path.parent / "jar"
+        if not javac_path.exists():
+            pytest.skip(f"javac not found at {javac_path}")
+        if not jar_path_tool.exists():
+            pytest.skip(f"jar tool not found at {jar_path_tool}")
+
         # Create compilation directory
         build_dir = tmp_path / "build"
         build_dir.mkdir()
 
         # Compile the Java source
         compile_result = subprocess.run(
-            ["javac", "-d", str(build_dir), str(java_source)],
+            [str(javac_path), "-d", str(build_dir), str(java_source)],
             capture_output=True,
             text=True,
         )
@@ -251,7 +264,7 @@ class TestIntegration:
         jar_path = tmp_path / "hello-world.jar"
         jar_result = subprocess.run(
             [
-                "jar",
+                str(jar_path_tool),
                 "cfm",
                 str(jar_path),
                 str(manifest_file),
