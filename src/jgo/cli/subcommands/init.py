@@ -51,14 +51,24 @@ def execute(args: ParsedArgs, config: dict) -> int:
     current_dir = Path.cwd()
     env_name = current_dir.name
 
-    # Parse endpoint to extract coordinates
-    # For now, create a simple spec
+    # Parse endpoint to extract coordinates and main class
+    coordinate, main_class = _parse_endpoint_for_init(endpoint)
+
+    # Create spec with separated coordinate and entrypoint
+    entrypoints = {}
+    default_entrypoint = None
+    if main_class:
+        # Use a meaningful entrypoint name
+        entrypoint_name = "main"
+        entrypoints[entrypoint_name] = main_class
+        default_entrypoint = entrypoint_name
+
     spec = EnvironmentSpec(
         name=env_name,
         description=f"Generated from {endpoint}",
-        coordinates=[endpoint],
-        entrypoints={},
-        default_entrypoint=None,
+        coordinates=[coordinate],
+        entrypoints=entrypoints,
+        default_entrypoint=default_entrypoint,
         cache_dir=".jgo",
     )
 
@@ -69,3 +79,38 @@ def execute(args: ParsedArgs, config: dict) -> int:
         print(f"Generated {output_file}")
 
     return 0
+
+
+def _parse_endpoint_for_init(endpoint: str) -> tuple[str, str | None]:
+    """
+    Parse an endpoint string to extract the Maven coordinate and main class.
+
+    Args:
+        endpoint: Endpoint string (e.g., "org.scijava:scijava-common@ScriptREPL")
+
+    Returns:
+        Tuple of (coordinate, main_class)
+        - coordinate: Maven coordinate without main class (e.g., "org.scijava:scijava-common")
+        - main_class: Main class if specified, otherwise None
+    """
+    # Check for @ separator (new format)
+    if "@" in endpoint:
+        # Split on the last @ to separate coordinate from main class
+        at_index = endpoint.rfind("@")
+        before_at = endpoint[:at_index]
+        after_at = endpoint[at_index + 1 :]
+
+        # Check for old format (coord:@MainClass)
+        if before_at.endswith(":"):
+            # Old format - main class has @ prefix
+            coordinate = before_at.rstrip(":")
+            main_class = "@" + after_at if after_at else None
+        else:
+            # New format - main class after @
+            coordinate = before_at
+            main_class = after_at if after_at else None
+
+        return coordinate, main_class
+
+    # No @ separator - endpoint is just the coordinate
+    return endpoint, None

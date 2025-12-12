@@ -188,7 +188,14 @@ class EnvironmentBuilder:
         if workspace_path.exists() and not update:
             # Validate environment has JARs
             if environment.classpath:
-                # Environment is valid, use it
+                # Environment is valid, but we still need to set main class from entrypoint
+                if main_class:
+                    # Auto-complete and set main class
+                    jars_dir = workspace_path / "jars"
+                    main_class = autocomplete_main_class(
+                        main_class, primary.artifactId, jars_dir
+                    )
+                    environment.set_main_class(main_class)
                 return environment
             # Otherwise fall through to rebuild
 
