@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
 
-@click.command(help="Manage jgo configuration")
+@click.group(help="Manage jgo configuration", invoke_without_command=True)
 @click.option(
     "--list",
     "list_all",
@@ -63,6 +63,10 @@ def config(ctx, list_all, global_config, local_config, unset, key, value):
     """
     from ...config.jgorc import JgoConfig
     from ..parser import _build_parsed_args
+
+    # If a subcommand was invoked, don't execute the default behavior
+    if ctx.invoked_subcommand is not None:
+        return
 
     opts = ctx.obj
     jgorc = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
@@ -498,3 +502,9 @@ def _parse_value(value: str) -> str | int | float | bool:
 
     # Return as string
     return value
+
+
+# Import and register shortcut subcommand
+from .config_shortcut import shortcut  # noqa: E402
+
+config.add_command(shortcut)
