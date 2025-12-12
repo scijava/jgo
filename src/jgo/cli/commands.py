@@ -39,7 +39,7 @@ class JgoCommands:
     def execute(self) -> int:
         """
         Execute the appropriate command based on parsed arguments (legacy path).
-        
+
         This method handles the old flag-based interface for backwards compatibility.
         New command-based interface is dispatched from __main__.py.
 
@@ -53,6 +53,7 @@ class JgoCommands:
             # Handle legacy --init flag
             if self.args.init:
                 from .subcommands import init
+
                 # Create a copy of args with endpoint set to init value
                 self.args.endpoint = self.args.init
                 return init.execute(self.args, self.config)
@@ -60,11 +61,13 @@ class JgoCommands:
             # Handle legacy --list-entrypoints flag
             if self.args.list_entrypoints:
                 from .subcommands import info
+
                 return info.execute(self.args, self.config)
 
             # Handle legacy --list-versions flag
             if self.args.list_versions:
                 from .subcommands import versions
+
                 return versions.execute(self.args, self.config)
 
             # Handle spec file mode vs endpoint mode

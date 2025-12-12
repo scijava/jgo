@@ -44,8 +44,9 @@ def execute(args: ParsedArgs, config: dict) -> int:
         Exit code (0 for success, non-zero for failure)
     """
     import sys
+
     from ..commands import JgoCommands
-    
+
     if not args.endpoint:
         print("Error: versions command requires a coordinate", file=sys.stderr)
         print("Usage: jgo versions <groupId:artifactId>", file=sys.stderr)

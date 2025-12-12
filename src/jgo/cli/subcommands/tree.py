@@ -46,10 +46,10 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     # Set the flag to print dependency tree
     args.print_dependency_tree = True
-    
+
     # Delegate to existing JgoCommands implementation
     commands = JgoCommands(args, config)
-    
+
     # Handle spec file mode vs endpoint mode
     if args.is_spec_mode():
         return commands._cmd_run_spec()

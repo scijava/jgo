@@ -39,8 +39,9 @@ def execute(args: ParsedArgs, config: dict) -> int:
     """
     import sys
     from pathlib import Path
+
     from ...env import EnvironmentSpec
-    
+
     endpoint = args.endpoint
     if not endpoint:
         print("Error: init requires an endpoint", file=sys.stderr)

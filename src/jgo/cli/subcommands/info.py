@@ -46,6 +46,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
     """
     import sys
     from pathlib import Path
+
     from ...env import EnvironmentSpec
     from ..commands import JgoCommands
 
@@ -70,10 +71,10 @@ def execute(args: ParsedArgs, config: dict) -> int:
             print(f"  {name}: {main_class}{marker}")
 
         return 0
-    
+
     # For other info types (classpath, java-info), delegate to commands
     commands = JgoCommands(args, config)
-    
+
     # Handle spec file mode vs endpoint mode for other info types
     if args.is_spec_mode():
         return commands._cmd_run_spec()

@@ -1,468 +1,19 @@
 """
-CLI argument parser for jgo 2.0.
+CLI argument parser for jgo 2.0 using Click.
 """
 
 from __future__ import annotations
 
-import argparse
+import sys
 from pathlib import Path
 
-
-class JgoArgumentParser:
-    """
-    Parser for jgo CLI arguments.
-
-    Supports the format:
-        jgo [JGO_OPTIONS] [endpoint] [-- JVM_OPTIONS] [-- APP_ARGS]
-
-    Or spec file mode:
-        jgo [JGO_OPTIONS] [-f FILE] [--entrypoint NAME]
-    """
-
-    def __init__(self):
-        self.parser = self._build_parser()
-
-    def _build_parser(self) -> argparse.ArgumentParser:
-        """Build the argument parser."""
-        parser = argparse.ArgumentParser(
-            prog="jgo",
-            usage="jgo [OPTIONS] [endpoint] [-- JVM_ARGS] [-- APP_ARGS]",
-            description="""Launch Java applications from Maven coordinates with dependency resolution.
-
-Build reproducible environments, manage Java versions, resolve dependencies,
-and run JVM applications -- all without manual installation.""",
-            formatter_class=argparse.RawDescriptionHelpFormatter,
-            epilog="""
-Endpoint Format:
-  groupId:artifactId[:version][:classifier][:mainClass]
-
-  Multiple Maven coordinates can be combined with '+':
-    org.scijava:scijava-common:2.96.0+org.scijava:parsington:3.1.0
-
-  Use '@' for main class auto-completion:
-    org.scijava:scijava-common:@ScriptREPL
-
-Examples:
-  # Run Jython REPL
-  jgo org.python:jython-standalone
-
-  # Run with specific version and JVM options
-  jgo org.python:jython-standalone:2.7.3 -- -Xmx2G -- script.py --verbose
-
-  # Build environment without running
-  jgo --print-classpath org.python:jython-standalone
-
-  # Show Java version requirements
-  jgo --print-java-info org.python:jython-standalone
-
-  # Force update and use pure Python resolver
-  jgo --update --resolver=pure org.python:jython-standalone
-
-  # List available versions
-  jgo --list-versions org.scijava:scijava-common
-
-  # Run from jgo.toml in current directory
-  jgo
-
-  # Run specific entrypoint from jgo.toml
-  jgo --entrypoint repl
-""",
-        )
-
-        # General options
-        parser.add_argument(
-            "-v",
-            "--verbose",
-            action="count",
-            default=0,
-            help="Verbose output (can be repeated: -vv, -vvv)",
-        )
-        parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Suppress all output"
-        )
-
-        # Cache and update options
-        parser.add_argument(
-            "-u",
-            "--update",
-            action="store_true",
-            help="Update cached environment",
-        )
-        parser.add_argument(
-            "--offline",
-            action="store_true",
-            help="Work offline (don't download)",
-        )
-        parser.add_argument(
-            "--no-cache",
-            action="store_true",
-            help="Skip cache entirely, always rebuild",
-        )
-
-        # Resolver and linking options
-        parser.add_argument(
-            "--resolver",
-            choices=["auto", "pure", "maven"],
-            default="auto",
-            help="Dependency resolver to use (default: auto)",
-        )
-        parser.add_argument(
-            "--link",
-            choices=["hard", "soft", "copy", "auto"],
-            default="auto",
-            help="How to link JARs into environment (default: auto)",
-        )
-
-        # Path options
-        parser.add_argument(
-            "--cache-dir",
-            type=Path,
-            metavar="PATH",
-            help="Override cache directory (default: ~/.cache/jgo)",
-        )
-        parser.add_argument(
-            "--repo-cache",
-            type=Path,
-            metavar="PATH",
-            help="Override Maven repo cache (default: ~/.m2/repository)",
-        )
-        parser.add_argument(
-            "-r",
-            "--repository",
-            action="append",
-            metavar="NAME=URL",
-            dest="repositories",
-            help="Add remote Maven repository",
-        )
-
-        # Dependency management
-        managed_group = parser.add_mutually_exclusive_group()
-        managed_group.add_argument(
-            "-m",
-            "--managed",
-            action="store_true",
-            default=True,
-            help="Use dependency management (import scope) - DEFAULT",
-        )
-        managed_group.add_argument(
-            "--no-managed",
-            dest="managed",
-            action="store_false",
-            help="Disable dependency management (use raw transitive dependencies)",
-        )
-        parser.add_argument(
-            "--main-class",
-            metavar="CLASS",
-            help="Specify main class explicitly",
-        )
-
-        # Classpath options
-        parser.add_argument(
-            "--add-classpath",
-            action="append",
-            metavar="PATH",
-            dest="classpath_append",
-            help="Append to classpath (JARs, directories, etc.)",
-        )
-
-        # Backward compatibility options
-        parser.add_argument(
-            "--ignore-jgorc",
-            action="store_true",
-            help="Ignore ~/.jgorc configuration file",
-        )
-
-        # Deprecated aliases (jgo 1.x compatibility)
-        parser.add_argument(
-            "-U",
-            "--force-update",
-            dest="update",
-            action="store_true",
-            help="(Deprecated: use -u/--update) Force update from remote",
-        )
-        parser.add_argument(
-            "-a",
-            "--additional-jars",
-            action="append",
-            metavar="JAR",
-            dest="classpath_append",
-            help="(Deprecated: use --add-classpath) Add JARs to classpath",
-        )
-        parser.add_argument(
-            "--additional-endpoints",
-            nargs="+",
-            metavar="ENDPOINT",
-            dest="additional_endpoints",
-            help="(Deprecated: use '+' syntax) Add additional endpoints",
-        )
-        parser.add_argument(
-            "--link-type",
-            dest="link",
-            choices=["hard", "soft", "copy", "auto"],
-            help="(Deprecated: use --link) How to link JARs",
-        )
-        parser.add_argument(
-            "--log-level",
-            help="(Deprecated: use -v/-vv/-vvv) Set log level",
-        )
-
-        # Information commands
-        parser.add_argument(
-            "--list-versions",
-            action="store_true",
-            help="List available versions and exit",
-        )
-        parser.add_argument(
-            "--print-classpath",
-            action="store_true",
-            help="Print classpath and exit (don't run)",
-        )
-        parser.add_argument(
-            "--print-java-info",
-            action="store_true",
-            help="Print Java version requirements and exit",
-        )
-        parser.add_argument(
-            "--print-dependency-tree",
-            action="store_true",
-            help="Print dependency tree and exit",
-        )
-        parser.add_argument(
-            "--print-dependency-list",
-            action="store_true",
-            help="Print flat list of resolved dependencies and exit",
-        )
-        parser.add_argument(
-            "--dry-run",
-            action="store_true",
-            help="Show what would be done, but don't do it",
-        )
-
-        # Spec file options (jgo.toml)
-        parser.add_argument(
-            "-f",
-            "--file",
-            type=Path,
-            metavar="FILE",
-            help="Run from specific environment file (default: jgo.toml)",
-        )
-        parser.add_argument(
-            "--entrypoint",
-            metavar="NAME",
-            help="Run specific entry point from jgo.toml",
-        )
-        parser.add_argument(
-            "--init",
-            metavar="ENDPOINT",
-            help="Generate jgo.toml from endpoint",
-        )
-        parser.add_argument(
-            "--list-entrypoints",
-            action="store_true",
-            help="Show available entry points in jgo.toml",
-        )
-
-        # Java options
-        parser.add_argument(
-            "--java-version",
-            type=int,
-            metavar="VERSION",
-            help="Force specific Java version (e.g., 17)",
-        )
-        parser.add_argument(
-            "--java-vendor",
-            metavar="VENDOR",
-            help="Prefer specific Java vendor (e.g., 'adoptium', 'zulu')",
-        )
-        parser.add_argument(
-            "--java-source",
-            choices=["cjdk", "system"],
-            default="cjdk",
-            help="Java source strategy (default: auto)",
-        )
-
-        # Positional: endpoint (optional - can be from jgo.toml)
-        parser.add_argument(
-            "endpoint",
-            nargs="?",
-            help=(
-                "Maven endpoint (groupId:artifactId[:version][:classifier][:mainClass])"
-            ),
-        )
-
-        # Remaining arguments after -- separators
-        parser.add_argument(
-            "remaining",
-            nargs=argparse.REMAINDER,
-            help="JVM options and app arguments (use -- to separate)",
-        )
-
-        return parser
-
-    def parse_args(self, args: list[str] | None = None) -> "ParsedArgs":
-        """
-        Parse command line arguments.
-
-        Args:
-            args: Arguments to parse (defaults to sys.argv[1:])
-
-        Returns:
-            ParsedArgs object with parsed arguments
-        """
-        # Handle command detection for new command-based interface
-        if args is None:
-            import sys
-            args = sys.argv[1:]
-        else:
-            args = list(args)  # Make a copy
-        
-        # List of known commands
-        known_commands = ['run', 'init', 'info', 'list', 'tree', 'versions']
-        
-        # Check if first arg is a known command
-        command = None
-        if args and args[0] in known_commands:
-            command = args[0]
-            args = args[1:]  # Remove command from args
-        elif args and not args[0].startswith('-') and ':' in args[0]:
-            # Legacy endpoint syntax - treat as 'run' command
-            command = 'run'
-            # Keep args as-is, endpoint will be parsed normally
-        
-        # Parse with the standard parser (without subcommands for now)
-        parsed = self.parser.parse_args(args)
-        
-        # Add command attribute
-        parsed.command = command
-
-        # Split remaining args on --
-        jvm_args, app_args = self._split_remaining_args(parsed.remaining)
-
-        # Handle additional-endpoints by merging into endpoint with + syntax
-        # Note: additional_endpoints is a list if specified, None otherwise
-        endpoint = parsed.endpoint
-        if parsed.additional_endpoints:
-            additional_eps = (
-                parsed.additional_endpoints
-                if isinstance(parsed.additional_endpoints, list)
-                else [parsed.additional_endpoints]
-            )
-            if endpoint:
-                endpoint = "+".join([endpoint] + additional_eps)
-            else:
-                endpoint = "+".join(additional_eps)
-
-        return ParsedArgs(
-            # General
-            verbose=parsed.verbose,
-            quiet=parsed.quiet,
-            # Cache and update
-            update=parsed.update,
-            offline=parsed.offline,
-            no_cache=parsed.no_cache,
-            # Resolver and linking
-            resolver=parsed.resolver,
-            link=parsed.link,
-            # Paths
-            cache_dir=parsed.cache_dir,
-            repo_cache=parsed.repo_cache,
-            repositories=self._parse_repositories(parsed.repositories),
-            # Dependency management
-            managed=parsed.managed,
-            main_class=parsed.main_class,
-            # Classpath
-            classpath_append=parsed.classpath_append,
-            # Backward compatibility
-            ignore_jgorc=parsed.ignore_jgorc,
-            additional_endpoints=parsed.additional_endpoints,
-            log_level=parsed.log_level,
-            # Information commands
-            list_versions=parsed.list_versions,
-            print_classpath=parsed.print_classpath,
-            print_java_info=parsed.print_java_info,
-            print_dependency_tree=parsed.print_dependency_tree,
-            print_dependency_list=parsed.print_dependency_list,
-            dry_run=parsed.dry_run,
-            # Spec file
-            file=parsed.file,
-            entrypoint=parsed.entrypoint,
-            init=parsed.init,
-            list_entrypoints=parsed.list_entrypoints,
-            # Java
-            java_version=parsed.java_version,
-            java_vendor=parsed.java_vendor,
-            java_source=parsed.java_source,
-            # Endpoint and args
-            endpoint=endpoint,
-            jvm_args=jvm_args,
-            app_args=app_args,
-            # Command (for new command-based interface)
-            command=command,
-        )
-
-    def _split_remaining_args(
-        self, remaining: list[str]
-    ) -> tuple[list[str], list[str]]:
-        """
-        Split remaining args on -- separators.
-
-        Format: [-- JVM_ARGS] [-- APP_ARGS]
-
-        Returns:
-            Tuple of (jvm_args, app_args)
-        """
-        if not remaining:
-            return [], []
-
-        # Find -- separators
-        separators = [i for i, arg in enumerate(remaining) if arg == "--"]
-
-        if not separators:
-            # No separators - everything is app args
-            return [], remaining
-
-        if len(separators) == 1:
-            # One separator - everything before is JVM args, after is app args
-            sep_idx = separators[0]
-            jvm_args = remaining[:sep_idx]
-            app_args = remaining[sep_idx + 1 :]
-            return jvm_args, app_args
-
-        # Two or more separators
-        first_sep = separators[0]
-        second_sep = separators[1]
-        jvm_args = remaining[:first_sep]
-        app_args = remaining[second_sep + 1 :]
-        return jvm_args, app_args
-
-    def _parse_repositories(self, repositories: list[str] | None) -> dict | None:
-        """
-        Parse repository arguments in NAME=URL format.
-
-        Args:
-            repositories: List of "NAME=URL" strings
-
-        Returns:
-            Dictionary mapping names to URLs, or None if no repositories
-        """
-        if not repositories:
-            return None
-
-        result = {}
-        for repo in repositories:
-            if "=" not in repo:
-                raise ValueError(
-                    f"Invalid repository format '{repo}': expected NAME=URL"
-                )
-            name, url = repo.split("=", 1)
-            result[name] = url
-
-        return result
+import click
 
 
 class ParsedArgs:
     """
     Container for parsed CLI arguments.
+    Compatible with the old argparse-based system.
     """
 
     def __init__(
@@ -572,3 +123,438 @@ class ParsedArgs:
     def get_spec_file(self) -> Path:
         """Get the spec file path (defaults to jgo.toml)."""
         return self.file or Path("jgo.toml")
+
+
+class JgoArgumentParser:
+    """Compatibility shim for version lookup."""
+
+    def _get_version(self) -> str:
+        """Get jgo version from package metadata."""
+        try:
+            # Try importlib.metadata (Python 3.8+)
+            from importlib.metadata import version
+
+            return version("jgo")
+        except Exception:
+            # Fallback: read from pyproject.toml
+            try:
+                from pathlib import Path
+
+                if sys.version_info < (3, 11):
+                    import tomli
+                else:
+                    import tomllib
+
+                pyproject = (
+                    Path(__file__).parent.parent.parent.parent / "pyproject.toml"
+                )
+                if pyproject.exists():
+                    with open(pyproject, "rb") as f:
+                        if sys.version_info < (3, 11):
+                            data = tomli.load(f)
+                        else:
+                            data = tomllib.load(f)
+                        return data.get("project", {}).get("version", "unknown")
+            except Exception:
+                pass
+            return "unknown"
+
+
+# Custom Click group that handles legacy endpoint syntax
+class JgoGroup(click.Group):
+    """Custom group that auto-detects legacy endpoint syntax."""
+
+    def invoke(self, ctx):
+        """Override to handle legacy endpoint detection."""
+        # If we have args and first arg contains ':', inject 'run' command
+        if ctx.protected_args and ":" in ctx.protected_args[0]:
+            # Legacy endpoint syntax - inject 'run'
+            ctx.protected_args.insert(0, "run")
+
+        return super().invoke(ctx)
+
+
+# Global options (available to all commands)
+def global_options(f):
+    """Decorator to add global options to commands."""
+    # General options
+    f = click.option(
+        "-v",
+        "--verbose",
+        count=True,
+        help="Verbose output (can be repeated: -vv, -vvv)",
+    )(f)
+    f = click.option("-q", "--quiet", is_flag=True, help="Suppress all output")(f)
+    f = click.option(
+        "-f",
+        "--file",
+        type=click.Path(path_type=Path),
+        metavar="FILE",
+        help="Use specific environment file (default: jgo.toml)",
+    )(f)
+    f = click.option(
+        "--dry-run", is_flag=True, help="Show what would be done without doing it"
+    )(f)
+
+    # Cache options
+    f = click.option(
+        "-u",
+        "--update",
+        is_flag=True,
+        help="Update cached environment [env: JGO_UPDATE]",
+        envvar="JGO_UPDATE",
+    )(f)
+    f = click.option(
+        "--offline",
+        is_flag=True,
+        help="Work offline, don't download [env: JGO_OFFLINE]",
+        envvar="JGO_OFFLINE",
+    )(f)
+    f = click.option(
+        "--no-cache",
+        is_flag=True,
+        help="Skip cache entirely, always rebuild [env: JGO_NO_CACHE]",
+        envvar="JGO_NO_CACHE",
+    )(f)
+    f = click.option(
+        "--cache-dir",
+        type=click.Path(path_type=Path),
+        metavar="PATH",
+        help="Override cache directory [env: JGO_CACHE_DIR]",
+        envvar="JGO_CACHE_DIR",
+    )(f)
+    f = click.option(
+        "--repo-cache",
+        type=click.Path(path_type=Path),
+        metavar="PATH",
+        help="Override Maven repo cache [env: M2_REPO]",
+        envvar="M2_REPO",
+    )(f)
+
+    # Maven options
+    f = click.option(
+        "--resolver",
+        type=click.Choice(["auto", "pure", "maven"]),
+        default="auto",
+        help="Dependency resolver: auto (default), pure, or maven",
+    )(f)
+    f = click.option(
+        "-r",
+        "--repository",
+        multiple=True,
+        metavar="NAME=URL",
+        help="Add remote Maven repository",
+    )(f)
+    f = click.option(
+        "-m",
+        "--managed/--no-managed",
+        default=True,
+        help="Use dependency management (import scope) - DEFAULT",
+    )(f)
+
+    # Java options
+    f = click.option(
+        "--java-version",
+        type=int,
+        metavar="VERSION",
+        help="Force specific Java version (e.g., 17) [env: JAVA_VERSION]",
+        envvar="JAVA_VERSION",
+    )(f)
+    f = click.option(
+        "--java-vendor",
+        metavar="VENDOR",
+        help="Prefer specific Java vendor (e.g., 'adoptium', 'zulu')",
+    )(f)
+    f = click.option(
+        "--java-source",
+        type=click.Choice(["cjdk", "system"]),
+        default="cjdk",
+        help="Java source: cjdk (default) or system",
+    )(f)
+
+    # Advanced options
+    f = click.option(
+        "--link",
+        type=click.Choice(["hard", "soft", "copy", "auto"]),
+        default="auto",
+        help="How to link JARs: hard, soft, copy, or auto (default)",
+    )(f)
+    f = click.option(
+        "--main-class", metavar="CLASS", help="Specify main class explicitly"
+    )(f)
+    f = click.option(
+        "--add-classpath",
+        multiple=True,
+        metavar="PATH",
+        help="Append to classpath (JARs, directories, etc.)",
+    )(f)
+    f = click.option(
+        "--entrypoint", metavar="NAME", help="Run specific entry point from jgo.toml"
+    )(f)
+    f = click.option(
+        "--ignore-jgorc", is_flag=True, help="Ignore ~/.jgorc configuration file"
+    )(f)
+
+    # Legacy flags (hidden)
+    f = click.option("--init", metavar="ENDPOINT", hidden=True)(f)
+    f = click.option("--list-versions", is_flag=True, hidden=True)(f)
+    f = click.option("--print-classpath", is_flag=True, hidden=True)(f)
+    f = click.option("--print-java-info", is_flag=True, hidden=True)(f)
+    f = click.option("--print-dependency-tree", is_flag=True, hidden=True)(f)
+    f = click.option("--print-dependency-list", is_flag=True, hidden=True)(f)
+    f = click.option("--list-entrypoints", is_flag=True, hidden=True)(f)
+
+    return f
+
+
+@click.group(
+    cls=JgoGroup,
+    invoke_without_command=True,
+    help="Launch Java applications from Maven coordinates without manual installation.",
+)
+@global_options
+@click.pass_context
+def cli(ctx, **kwargs):
+    """
+    Main CLI entry point.
+
+    Handles both:
+    - Command mode: jgo <command> [options]
+    - Legacy endpoint mode: jgo <endpoint> [options]
+    """
+    # Store global options in context for subcommands
+    ctx.ensure_object(dict)
+    ctx.obj.update(kwargs)
+
+    # If no subcommand, show help
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+        ctx.exit(0)
+
+
+@cli.command(help="Run a Java application from Maven coordinates or jgo.toml")
+@click.argument("endpoint", required=False)
+@click.argument("remaining", nargs=-1, type=click.UNPROCESSED)
+@click.pass_context
+def run(ctx, endpoint, remaining):
+    """
+    Run a Java application.
+
+    If an endpoint is provided, resolves dependencies and executes the main class.
+    If no endpoint is provided, runs the default entrypoint from jgo.toml.
+    """
+    from ..cli.commands import JgoCommands
+    from ..config.jgorc import JgoConfig
+
+    # Get global options from context
+    opts = ctx.obj
+
+    # Parse remaining args for JVM/app args
+    jvm_args, app_args = _parse_remaining(remaining)
+
+    # Load config
+    if opts.get("ignore_jgorc"):
+        config = JgoConfig()
+    else:
+        config = JgoConfig.load()
+
+    # Build ParsedArgs for backwards compat with existing code
+    args = _build_parsed_args(
+        opts, endpoint=endpoint, jvm_args=jvm_args, app_args=app_args, command="run"
+    )
+
+    # Execute
+    commands = JgoCommands(args, config.to_dict())
+    if args.is_spec_mode():
+        exit_code = commands._cmd_run_spec()
+    else:
+        exit_code = commands._cmd_run_endpoint()
+
+    ctx.exit(exit_code)
+
+
+@cli.command(help="Create a new jgo.toml environment file")
+@click.argument("endpoint", required=False)
+@click.pass_context
+def init(ctx, endpoint):
+    """Create a new jgo.toml file."""
+    from ..cli.subcommands import init as init_cmd
+    from ..config.jgorc import JgoConfig
+
+    opts = ctx.obj
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, endpoint=endpoint, command="init")
+
+    exit_code = init_cmd.execute(args, config.to_dict())
+    ctx.exit(exit_code)
+
+
+@cli.command(help="Show information about environment or artifact")
+@click.argument("endpoint", required=False)
+@click.pass_context
+def info(ctx, endpoint):
+    """Show information about a jgo environment or Maven artifact."""
+    from ..cli.subcommands import info as info_cmd
+    from ..config.jgorc import JgoConfig
+
+    opts = ctx.obj
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+
+    exit_code = info_cmd.execute(args, config.to_dict())
+    ctx.exit(exit_code)
+
+
+@cli.command(name="list", help="List resolved dependencies (flat list)")
+@click.argument("endpoint", required=False)
+@click.pass_context
+def list_cmd(ctx, endpoint):
+    """List resolved dependencies as a flat list."""
+    from ..cli.subcommands import list as list_cmd
+    from ..config.jgorc import JgoConfig
+
+    opts = ctx.obj
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, endpoint=endpoint, command="list")
+
+    exit_code = list_cmd.execute(args, config.to_dict())
+    ctx.exit(exit_code)
+
+
+@cli.command(help="Show dependency tree")
+@click.argument("endpoint", required=False)
+@click.pass_context
+def tree(ctx, endpoint):
+    """Show the dependency tree for an endpoint or jgo.toml."""
+    from ..cli.subcommands import tree as tree_cmd
+    from ..config.jgorc import JgoConfig
+
+    opts = ctx.obj
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, endpoint=endpoint, command="tree")
+
+    exit_code = tree_cmd.execute(args, config.to_dict())
+    ctx.exit(exit_code)
+
+
+@cli.command(help="List available versions of an artifact")
+@click.argument("coordinate", required=True)
+@click.pass_context
+def versions(ctx, coordinate):
+    """List available versions of a Maven artifact."""
+    from ..cli.subcommands import versions as versions_cmd
+    from ..config.jgorc import JgoConfig
+
+    opts = ctx.obj
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, endpoint=coordinate, command="versions")
+
+    exit_code = versions_cmd.execute(args, config.to_dict())
+    ctx.exit(exit_code)
+
+
+@cli.command(help="Display jgo's version")
+def version():
+    """Display jgo's version."""
+    parser = JgoArgumentParser()
+    click.echo(f"jgo {parser._get_version()}")
+
+
+def _parse_remaining(remaining):
+    """
+    Parse remaining args for JVM and app arguments.
+
+    Format: [-- JVM_ARGS] [-- APP_ARGS]
+
+    Returns:
+        Tuple of (jvm_args, app_args)
+    """
+    if not remaining:
+        return [], []
+
+    # Convert to list
+    remaining = list(remaining)
+
+    # Find -- separators
+    separators = [i for i, arg in enumerate(remaining) if arg == "--"]
+
+    if not separators:
+        # No separators - everything is app args
+        return [], remaining
+
+    if len(separators) == 1:
+        # One separator
+        sep_idx = separators[0]
+        jvm_args = remaining[:sep_idx]
+        app_args = remaining[sep_idx + 1 :]
+        return jvm_args, app_args
+
+    # Two or more separators
+    first_sep = separators[0]
+    second_sep = separators[1]
+    jvm_args = remaining[:first_sep]
+    app_args = remaining[second_sep + 1 :]
+    return jvm_args, app_args
+
+
+def _build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, command=None):
+    """Build a ParsedArgs object from Click options for backwards compatibility."""
+    # Parse repositories from NAME=URL format
+    repositories = {}
+    if opts.get("repository"):
+        for repo in opts["repository"]:
+            if "=" in repo:
+                name, url = repo.split("=", 1)
+                repositories[name] = url
+
+    return ParsedArgs(
+        # General
+        verbose=opts.get("verbose", 0),
+        quiet=opts.get("quiet", False),
+        # Cache and update
+        update=opts.get("update", False),
+        offline=opts.get("offline", False),
+        no_cache=opts.get("no_cache", False),
+        # Resolver and linking
+        resolver=opts.get("resolver", "auto"),
+        link=opts.get("link", "auto"),
+        # Paths
+        cache_dir=opts.get("cache_dir"),
+        repo_cache=opts.get("repo_cache"),
+        repositories=repositories,
+        # Dependency management
+        managed=opts.get("managed", True),
+        main_class=opts.get("main_class"),
+        # Classpath
+        classpath_append=list(opts.get("add_classpath", [])),
+        # Backward compatibility
+        ignore_jgorc=opts.get("ignore_jgorc", False),
+        additional_endpoints=None,
+        log_level=None,
+        # Information commands (legacy)
+        list_versions=opts.get("list_versions", False),
+        print_classpath=opts.get("print_classpath", False),
+        print_java_info=opts.get("print_java_info", False),
+        print_dependency_tree=opts.get("print_dependency_tree", False),
+        print_dependency_list=opts.get("print_dependency_list", False),
+        dry_run=opts.get("dry_run", False),
+        # Spec file
+        file=opts.get("file"),
+        entrypoint=opts.get("entrypoint"),
+        init=opts.get("init"),
+        list_entrypoints=opts.get("list_entrypoints", False),
+        # Java
+        java_version=opts.get("java_version"),
+        java_vendor=opts.get("java_vendor"),
+        java_source=opts.get("java_source", "cjdk"),
+        # Endpoint and args
+        endpoint=endpoint,
+        jvm_args=jvm_args or [],
+        app_args=app_args or [],
+        # Command
+        command=command,
+    )
+
+
+if __name__ == "__main__":
+    cli()

@@ -7,7 +7,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from .core import Component, XML
+from .core import XML, Component
 
 if TYPE_CHECKING:
     from .core import Artifact, Dependency, MavenContext

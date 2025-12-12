@@ -36,6 +36,7 @@ classifiers = [
 requires-python = ">=3.9"
 dependencies = [
   "cjdk>=0.4.0",
+  "click>=8.0",
   "psutil",
   "requests",
   "tomli>=2.0.0; python_version<'3.11'",
