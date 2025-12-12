@@ -185,6 +185,26 @@ jgo config [OPTIONS] [key] [value]
   - `jgo config cache_dir ~/.local/share/jgo` - set cache directory
   - `jgo config --global repositories.central https://repo.maven.apache.org/maven2`
 
+```bash
+jgo alias [OPTIONS] <name> [main-class]
+```
+- Manage main class aliases (shortcuts for entry points)
+- Without args: list all aliases
+- With name only: show the main class for that alias
+- With name and main-class: register or update an alias
+- Replaces/enhances: `~/.jgorc` shortcuts functionality
+- Options:
+  - `--global` - modify global aliases (~/.jgorc)
+  - `--local` - modify project aliases (jgo.toml)
+  - `--remove NAME` - remove an alias
+- Examples:
+  - `jgo alias` - list all aliases
+  - `jgo alias repl` - show what 'repl' maps to
+  - `jgo alias repl org.scijava.script.ScriptREPL` - register alias
+  - `jgo alias --remove repl` - remove alias
+- Usage with run:
+  - `jgo run org.scijava:scijava-common@repl` - use alias
+
 ### Utility Commands
 
 ```bash
