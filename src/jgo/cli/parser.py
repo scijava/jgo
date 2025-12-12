@@ -734,6 +734,168 @@ def lock(ctx, check):
     ctx.exit(exit_code)
 
 
+@cli.command(help="Update dependencies to latest versions")
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Force rebuild even if cached",
+)
+@click.pass_context
+def update(ctx, force):
+    """
+    Update dependencies to latest versions within constraints.
+
+    This is a convenience alias for 'jgo sync --update'.
+    It resolves dependencies and updates them to their latest available versions
+    while respecting version constraints in jgo.toml.
+
+    EXAMPLES:
+      jgo update
+      jgo update --force
+    """
+    from ..cli.subcommands import sync as sync_cmd
+    from ..config.jgorc import JgoConfig
+
+    opts = ctx.obj
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+
+    # Force update flag to be set
+    opts["update"] = True
+
+    args = _build_parsed_args(opts, command="update")
+    args.force = force
+
+    exit_code = sync_cmd.execute(args, config.to_dict())
+    ctx.exit(exit_code)
+
+
+@cli.command(help="Manage jgo configuration")
+@click.option(
+    "--list",
+    "list_all",
+    is_flag=True,
+    help="List all configuration values",
+)
+@click.option(
+    "--global",
+    "global_config",
+    is_flag=True,
+    help="Use global configuration (~/.jgorc)",
+)
+@click.option(
+    "--local",
+    "local_config",
+    is_flag=True,
+    help="Use local configuration (jgo.toml)",
+)
+@click.option(
+    "--unset",
+    metavar="KEY",
+    help="Remove a configuration value",
+)
+@click.argument("key", required=False)
+@click.argument("value", required=False)
+@click.pass_context
+def config(ctx, list_all, global_config, local_config, unset, key, value):
+    """
+    Manage jgo configuration.
+
+    Without arguments: show all configuration
+    With KEY only: show value for that key
+    With KEY and VALUE: set the value for that key
+
+    Keys can be specified as 'section.key' or just 'key' (defaults to settings section).
+
+    EXAMPLES:
+      jgo config                              # Show all config
+      jgo config --list                       # Show all config
+      jgo config cache_dir                    # Show cache_dir value
+      jgo config settings.cache_dir           # Show cache_dir from settings section
+      jgo config cache_dir ~/.jgo             # Set cache_dir
+      jgo config repositories.central URL     # Set repository URL
+      jgo config --unset cache_dir            # Remove cache_dir setting
+      jgo config --global cache_dir ~/.jgo    # Set in global config
+      jgo config --local cache_dir .jgo       # Set in local config
+    """
+    from ..cli.subcommands import config as config_cmd
+    from ..config.jgorc import JgoConfig
+
+    opts = ctx.obj
+    jgorc = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, command="config")
+
+    exit_code = config_cmd.execute(
+        args,
+        jgorc.to_dict(),
+        key=key,
+        value=value,
+        unset=unset,
+        list_all=list_all,
+        global_config=global_config,
+        local_config=local_config,
+    )
+    ctx.exit(exit_code)
+
+
+@cli.command(help="Search for artifacts in Maven repositories")
+@click.option(
+    "--limit",
+    type=int,
+    default=20,
+    metavar="N",
+    help="Limit number of results (default: 20)",
+)
+@click.option(
+    "--repository",
+    metavar="NAME",
+    help="Search specific repository (default: central)",
+)
+@click.argument("query", nargs=-1, required=True)
+@click.pass_context
+def search(ctx, limit, repository, query):
+    """
+    Search for artifacts in Maven repositories.
+
+    The query can be a simple text search or use Maven Central's advanced query syntax.
+
+    EXAMPLES:
+      jgo search apache commons          # Search for "apache commons"
+      jgo search junit                   # Search for "junit"
+      jgo search g:org.apache.commons    # Search by groupId
+      jgo search a:commons-lang3         # Search by artifactId
+      jgo search --limit 10 jackson      # Limit to 10 results
+      jgo search --repository central gson  # Search specific repository
+
+    ADVANCED QUERY SYNTAX:
+      g:groupId              Search by group ID
+      a:artifactId           Search by artifact ID
+      v:version              Search by version
+      p:packaging            Search by packaging (jar, pom, etc.)
+      c:classifier           Search by classifier
+
+    Multiple terms can be combined:
+      jgo search g:org.apache.commons a:commons-lang3
+    """
+    from ..cli.subcommands import search as search_cmd
+    from ..config.jgorc import JgoConfig
+
+    opts = ctx.obj
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, command="search")
+
+    # Join query parts into a single string
+    query_str = " ".join(query)
+
+    exit_code = search_cmd.execute(
+        args,
+        config.to_dict(),
+        query=query_str,
+        limit=limit,
+        repository=repository,
+    )
+    ctx.exit(exit_code)
+
+
 def _parse_remaining(remaining):
     """
     Parse remaining args for JVM and app arguments.

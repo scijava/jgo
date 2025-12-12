@@ -2,10 +2,11 @@
 
 ## Status
 
-✅ **Phase 1 Complete** - Subcommand infrastructure with `jgo run`  
-✅ **Phase 2 Complete** - Core information commands (`info`, `list`, `tree`, `versions`, `init`)  
-✅ **Migration to Click** - Replaced argparse with Click for cleaner, more maintainable code  
-✅ **Phase 3 Complete** - Project management commands (`add`, `remove`, `sync`, `lock`)  
+✅ **Phase 1 Complete** - Subcommand infrastructure with `jgo run`
+✅ **Phase 2 Complete** - Core information commands (`info`, `list`, `tree`, `versions`, `init`)
+✅ **Migration to Click** - Replaced argparse with Click for cleaner, more maintainable code
+✅ **Phase 3 Complete** - Project management commands (`add`, `remove`, `sync`, `lock`)
+✅ **Phase 4 Complete** - Advanced commands (`search`, `config`, `update`)  
 
 ## Overview
 
