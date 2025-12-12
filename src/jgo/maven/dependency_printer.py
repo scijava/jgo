@@ -151,7 +151,6 @@ def format_dependency_tree(root: DependencyNode) -> str:
     ):
         # Treat children as roots (no prefix, no connector)
         for i, child in enumerate(root.children):
-            is_last = i == len(root.children) - 1
             lines.append(
                 f"{child.dep.groupId}:{child.dep.artifactId}:{child.dep.version}"
             )

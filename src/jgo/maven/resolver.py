@@ -300,12 +300,6 @@ class SimpleResolver(Resolver):
         root = _create_root(components)
         boms = _resolve_boms(components, managed, boms)
 
-        # Synthesize a wrapper POM
-        pom = create_pom(components, boms)
-
-        # Build the model to get dependencies
-        model = Model(pom)
-
         # Track which G:A:C:T we've already processed (version not included for mediation)
         processed = set()
 
