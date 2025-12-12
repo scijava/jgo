@@ -44,15 +44,35 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    # Import here to avoid circular dependency
+    import sys
+    from pathlib import Path
+    from ...env import EnvironmentSpec
     from ..commands import JgoCommands
 
-    # Delegate to existing JgoCommands implementation
-    commands = JgoCommands(args, config)
-    
     # Check which info was requested
     if args.list_entrypoints:
-        return commands._cmd_list_entrypoints()
+        # List entrypoints from jgo.toml
+        spec_file = args.file or Path("jgo.toml")
+
+        if not spec_file.exists():
+            print(f"Error: {spec_file} not found", file=sys.stderr)
+            return 1
+
+        spec = EnvironmentSpec.load(spec_file)
+
+        if not spec.entrypoints:
+            print("No entrypoints defined")
+            return 0
+
+        print("Available entrypoints:")
+        for name, main_class in spec.entrypoints.items():
+            marker = " (default)" if name == spec.default_entrypoint else ""
+            print(f"  {name}: {main_class}{marker}")
+
+        return 0
+    
+    # For other info types (classpath, java-info), delegate to commands
+    commands = JgoCommands(args, config)
     
     # Handle spec file mode vs endpoint mode for other info types
     if args.is_spec_mode():

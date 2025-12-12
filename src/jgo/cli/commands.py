@@ -38,7 +38,10 @@ class JgoCommands:
 
     def execute(self) -> int:
         """
-        Execute the appropriate command based on parsed arguments.
+        Execute the appropriate command based on parsed arguments (legacy path).
+        
+        This method handles the old flag-based interface for backwards compatibility.
+        New command-based interface is dispatched from __main__.py.
 
         Returns:
             Exit code (0 for success, non-zero for failure)
@@ -47,17 +50,22 @@ class JgoCommands:
         self._check_deprecated_flags()
 
         try:
-            # Handle --init (generate jgo.toml)
+            # Handle legacy --init flag
             if self.args.init:
-                return self._cmd_init()
+                from .subcommands import init
+                # Create a copy of args with endpoint set to init value
+                self.args.endpoint = self.args.init
+                return init.execute(self.args, self.config)
 
-            # Handle --list-entrypoints
+            # Handle legacy --list-entrypoints flag
             if self.args.list_entrypoints:
-                return self._cmd_list_entrypoints()
+                from .subcommands import info
+                return info.execute(self.args, self.config)
 
-            # Handle --list-versions
+            # Handle legacy --list-versions flag
             if self.args.list_versions:
-                return self._cmd_list_versions()
+                from .subcommands import versions
+                return versions.execute(self.args, self.config)
 
             # Handle spec file mode vs endpoint mode
             if self.args.is_spec_mode():
@@ -96,107 +104,6 @@ class JgoCommands:
                 DeprecationWarning,
                 stacklevel=3,
             )
-
-    def _cmd_init(self) -> int:
-        """
-        Generate jgo.toml from endpoint.
-        """
-        endpoint = self.args.init
-        if not endpoint:
-            print("Error: --init requires an endpoint", file=sys.stderr)
-            return 1
-
-        # Parse endpoint to extract coordinates
-        # For now, create a simple spec
-        spec = EnvironmentSpec(
-            name="jgo-environment",
-            description=f"Generated from {endpoint}",
-            coordinates=[endpoint],
-            entrypoints={},
-            default_entrypoint=None,
-        )
-
-        output_file = self.args.file or Path("jgo.toml")
-        spec.save(output_file)
-
-        if self.verbose:
-            print(f"Generated {output_file}")
-
-        return 0
-
-    def _cmd_list_entrypoints(self) -> int:
-        """
-        List available entrypoints from jgo.toml.
-        """
-        spec_file = self.args.get_spec_file()
-
-        if not spec_file.exists():
-            print(f"Error: {spec_file} not found", file=sys.stderr)
-            return 1
-
-        spec = EnvironmentSpec.load(spec_file)
-
-        if not spec.entrypoints:
-            print("No entrypoints defined")
-            return 0
-
-        print("Available entrypoints:")
-        for name, main_class in spec.entrypoints.items():
-            marker = " (default)" if name == spec.default_entrypoint else ""
-            print(f"  {name}: {main_class}{marker}")
-
-        return 0
-
-    def _cmd_list_versions(self) -> int:
-        """
-        List available versions for a Maven artifact.
-        """
-        if not self.args.endpoint:
-            print("Error: --list-versions requires an endpoint", file=sys.stderr)
-            return 1
-
-        # Parse endpoint to get groupId and artifactId
-        parts = self.args.endpoint.split(":")
-        if len(parts) < 2:
-            print(
-                "Error: Invalid endpoint format. Need at least groupId:artifactId",
-                file=sys.stderr,
-            )
-            return 1
-
-        groupId = parts[0]
-        artifactId = parts[1]
-
-        # Create Maven context
-        context = self._create_maven_context()
-
-        # Get project and fetch versions
-        project = context.project(groupId, artifactId)
-
-        try:
-            # Update metadata from remote
-            project.update()
-
-            # Get available versions
-            metadata = project.metadata
-            if not metadata or not metadata.versions:
-                print(f"No versions found for {groupId}:{artifactId}")
-                return 0
-
-            print(f"Available versions for {groupId}:{artifactId}:")
-            for version in metadata.versions:
-                marker = ""
-                if metadata.release and version == metadata.release:
-                    marker = " (release)"
-                elif metadata.latest and version == metadata.latest:
-                    marker = " (latest)"
-                print(f"  {version}{marker}")
-
-        except Exception as e:
-            print(f"Error fetching versions: {e}", file=sys.stderr)
-            return 1
-
-        return 0
 
     def _cmd_run_spec(self) -> int:
         """
