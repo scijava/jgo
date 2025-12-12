@@ -5,8 +5,42 @@ from __future__ import annotations
 import sys
 from typing import TYPE_CHECKING
 
+import click
+
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
+
+
+@click.command(help="Resolve dependencies and build environment")
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Force rebuild even if cached",
+)
+@click.pass_context
+def sync(ctx, force):
+    """
+    Resolve dependencies and build environment in .jgo/ directory.
+
+    Reads jgo.toml, resolves all dependencies using Maven, and creates
+    the local environment directory with all JARs linked.
+
+    EXAMPLES:
+      jgo sync
+      jgo sync --force
+      jgo sync --offline
+      jgo sync -u  # Update to latest versions
+    """
+    from ...config.jgorc import JgoConfig
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, command="sync")
+    args.force = force
+
+    exit_code = execute(args, config.to_dict())
+    ctx.exit(exit_code)
 
 
 def execute(args: ParsedArgs, config: dict) -> int:

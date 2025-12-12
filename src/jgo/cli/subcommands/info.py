@@ -4,8 +4,119 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import click
+
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
+
+
+@click.command(help="Show classpath")
+@click.argument("endpoint", required=False)
+@click.pass_context
+def classpath(ctx, endpoint):
+    """Show the classpath for the given endpoint."""
+    from ...config.jgorc import JgoConfig
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    opts["print_classpath"] = True
+    opts["print_java_info"] = False
+    opts["print_dependency_tree"] = False
+    opts["print_dependency_list"] = False
+    opts["list_entrypoints"] = False
+
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+
+    exit_code = execute(args, config.to_dict())
+    ctx.exit(exit_code)
+
+
+@click.command(help="Show dependency tree")
+@click.argument("endpoint", required=False)
+@click.pass_context
+def deptree(ctx, endpoint):
+    """Show the dependency tree for the given endpoint."""
+    from ...config.jgorc import JgoConfig
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    opts["print_classpath"] = False
+    opts["print_java_info"] = False
+    opts["print_dependency_tree"] = True
+    opts["print_dependency_list"] = False
+    opts["list_entrypoints"] = False
+
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+
+    exit_code = execute(args, config.to_dict())
+    ctx.exit(exit_code)
+
+
+@click.command(help="Show flat list of dependencies")
+@click.argument("endpoint", required=False)
+@click.pass_context
+def deplist(ctx, endpoint):
+    """Show a flat list of all dependencies for the given endpoint."""
+    from ...config.jgorc import JgoConfig
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    opts["print_classpath"] = False
+    opts["print_java_info"] = False
+    opts["print_dependency_tree"] = False
+    opts["print_dependency_list"] = True
+    opts["list_entrypoints"] = False
+
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+
+    exit_code = execute(args, config.to_dict())
+    ctx.exit(exit_code)
+
+
+@click.command(help="Show Java version requirements")
+@click.argument("endpoint", required=False)
+@click.pass_context
+def javainfo(ctx, endpoint):
+    """Show Java version requirements for the given endpoint."""
+    from ...config.jgorc import JgoConfig
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    opts["print_classpath"] = False
+    opts["print_java_info"] = True
+    opts["print_dependency_tree"] = False
+    opts["print_dependency_list"] = False
+    opts["list_entrypoints"] = False
+
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+
+    exit_code = execute(args, config.to_dict())
+    ctx.exit(exit_code)
+
+
+@click.command(help="Show entrypoints from jgo.toml")
+@click.pass_context
+def entrypoints(ctx):
+    """Show available entrypoints defined in jgo.toml."""
+    from ...config.jgorc import JgoConfig
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    opts["print_classpath"] = False
+    opts["print_java_info"] = False
+    opts["print_dependency_tree"] = False
+    opts["print_dependency_list"] = False
+    opts["list_entrypoints"] = True
+
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, endpoint=None, command="info")
+
+    exit_code = execute(args, config.to_dict())
+    ctx.exit(exit_code)
 
 
 def execute(args: ParsedArgs, config: dict) -> int:

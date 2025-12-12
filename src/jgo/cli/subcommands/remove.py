@@ -5,8 +5,43 @@ from __future__ import annotations
 import sys
 from typing import TYPE_CHECKING
 
+import click
+
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
+
+
+@click.command(help="Remove dependencies from jgo.toml")
+@click.argument("coordinates", nargs=-1, required=True)
+@click.option(
+    "--no-sync",
+    is_flag=True,
+    help="Don't automatically sync after removing dependencies",
+)
+@click.pass_context
+def remove(ctx, coordinates, no_sync):
+    """
+    Remove one or more dependencies from jgo.toml.
+
+    Coordinates can be specified as groupId:artifactId (version ignored).
+    Automatically runs 'jgo sync' unless --no-sync is specified.
+
+    EXAMPLES:
+      jgo remove org.python:jython-standalone
+      jgo remove org.scijava:scijava-common org.scijava:parsington
+      jgo remove --no-sync net.imagej:imagej
+    """
+    from ...config.jgorc import JgoConfig
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, command="remove")
+    args.coordinates = list(coordinates)
+    args.no_sync = no_sync
+
+    exit_code = execute(args, config.to_dict())
+    ctx.exit(exit_code)
 
 
 def execute(args: ParsedArgs, config: dict) -> int:

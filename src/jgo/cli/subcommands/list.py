@@ -4,8 +4,26 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import click
+
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
+
+
+@click.command(name="list", help="List resolved dependencies (flat list)")
+@click.argument("endpoint", required=False)
+@click.pass_context
+def list_cmd(ctx, endpoint):
+    """List resolved dependencies as a flat list."""
+    from ...config.jgorc import JgoConfig
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, endpoint=endpoint, command="list")
+
+    exit_code = execute(args, config.to_dict())
+    ctx.exit(exit_code)
 
 
 def execute(args: ParsedArgs, config: dict) -> int:

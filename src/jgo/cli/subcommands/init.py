@@ -4,8 +4,26 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import click
+
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
+
+
+@click.command(help="Create a new jgo.toml environment file")
+@click.argument("endpoint", required=False)
+@click.pass_context
+def init(ctx, endpoint):
+    """Create a new jgo.toml file."""
+    from ...config.jgorc import JgoConfig
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, endpoint=endpoint, command="init")
+
+    exit_code = execute(args, config.to_dict())
+    ctx.exit(exit_code)
 
 
 def execute(args: ParsedArgs, config: dict) -> int:

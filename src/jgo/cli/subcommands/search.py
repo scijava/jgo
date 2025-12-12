@@ -8,8 +8,69 @@ import urllib.parse
 import urllib.request
 from typing import TYPE_CHECKING
 
+import click
+
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
+
+
+@click.command(help="Search for artifacts in Maven repositories")
+@click.option(
+    "--limit",
+    type=int,
+    default=20,
+    metavar="N",
+    help="Limit number of results (default: 20)",
+)
+@click.option(
+    "--repository",
+    metavar="NAME",
+    help="Search specific repository (default: central)",
+)
+@click.argument("query", nargs=-1, required=True)
+@click.pass_context
+def search(ctx, limit, repository, query):
+    """
+    Search for artifacts in Maven repositories.
+
+    The query can be a simple text search or use Maven Central's advanced query syntax.
+
+    EXAMPLES:
+      jgo search apache commons          # Search for "apache commons"
+      jgo search junit                   # Search for "junit"
+      jgo search g:org.apache.commons    # Search by groupId
+      jgo search a:commons-lang3         # Search by artifactId
+      jgo search --limit 10 jackson      # Limit to 10 results
+      jgo search --repository central gson  # Search specific repository
+
+    ADVANCED QUERY SYNTAX:
+      g:groupId              Search by group ID
+      a:artifactId           Search by artifact ID
+      v:version              Search by version
+      p:packaging            Search by packaging (jar, pom, etc.)
+      c:classifier           Search by classifier
+
+    Multiple terms can be combined:
+      jgo search g:org.apache.commons a:commons-lang3
+    """
+    from ...config.jgorc import JgoConfig
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, command="search")
+
+    # Join query parts into a single string
+    query_str = " ".join(query)
+
+    exit_code = execute(
+        args,
+        config.to_dict(),
+        query=query_str,
+        limit=limit,
+        repository=repository,
+    )
+    ctx.exit(exit_code)
 
 
 def execute(

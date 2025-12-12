@@ -9,6 +9,20 @@ from pathlib import Path
 
 import click
 
+from .subcommands.add import add
+from .subcommands.config import config
+from .subcommands.info import classpath, deplist, deptree, entrypoints, javainfo
+from .subcommands.init import init
+from .subcommands.list import list_cmd
+from .subcommands.lock import lock
+from .subcommands.remove import remove
+from .subcommands.run import run
+from .subcommands.search import search
+from .subcommands.sync import sync
+from .subcommands.tree import tree
+from .subcommands.update import update
+from .subcommands.versions import versions
+
 
 class ParsedArgs:
     """
@@ -323,103 +337,18 @@ def cli(ctx, **kwargs):
         ctx.exit(0)
 
 
-@cli.command(help="Run a Java application from Maven coordinates or jgo.toml")
-@click.option(
-    "--main-class",
-    metavar="CLASS",
-    help="Main class to run (supports auto-completion for simple names)",
-)
-@click.option(
-    "--entrypoint",
-    metavar="NAME",
-    help="Run specific entrypoint from jgo.toml",
-)
-@click.option(
-    "--add-classpath",
-    multiple=True,
-    metavar="PATH",
-    help="Append to classpath (JARs, directories, etc.)",
-)
-@click.argument("endpoint", required=False)
-@click.argument("remaining", nargs=-1, type=click.UNPROCESSED)
-@click.pass_context
-def run(ctx, main_class, entrypoint, add_classpath, endpoint, remaining):
-    """
-    Run a Java application from Maven coordinates or jgo.toml.
-
-    ENDPOINT FORMAT:
-      groupId:artifactId[:version][:classifier][@mainClass]
-
-    Multiple coordinates can be combined with '+':
-      org.scijava:scijava-common+org.scijava:parsington
-
-    Main class can be specified in two ways:
-      1. Using @ syntax: org.scijava:scijava-common@ScriptREPL
-      2. Using --main-class: --main-class ScriptREPL
-
-    Simple class names are auto-completed. For example:
-      ScriptREPL → org.scijava.script.ScriptREPL
-
-    If no endpoint is provided, runs the default entrypoint from jgo.toml.
-
-    EXAMPLES:
-      jgo run org.python:jython-standalone
-      jgo run org.scijava:scijava-common@ScriptREPL
-      jgo run --main-class ScriptREPL org.scijava:scijava-common
-      jgo run org.python:jython-standalone:2.7.3 -- -Xmx2G -- script.py
-    """
-    from ..cli.commands import JgoCommands
-    from ..config.jgorc import JgoConfig
-
-    # Get global options from context
-    opts = ctx.obj
-
-    # Add run-specific options
-    if main_class:
-        opts["main_class"] = main_class
-    if entrypoint:
-        opts["entrypoint"] = entrypoint
-    if add_classpath:
-        opts["add_classpath"] = add_classpath
-
-    # Parse remaining args for JVM/app args
-    jvm_args, app_args = _parse_remaining(remaining)
-
-    # Load config
-    if opts.get("ignore_jgorc"):
-        config = JgoConfig()
-    else:
-        config = JgoConfig.load()
-
-    # Build ParsedArgs for backwards compat with existing code
-    args = _build_parsed_args(
-        opts, endpoint=endpoint, jvm_args=jvm_args, app_args=app_args, command="run"
-    )
-
-    # Execute
-    commands = JgoCommands(args, config.to_dict())
-    if args.is_spec_mode():
-        exit_code = commands._cmd_run_spec()
-    else:
-        exit_code = commands._cmd_run_endpoint()
-
-    ctx.exit(exit_code)
-
-
-@cli.command(help="Create a new jgo.toml environment file")
-@click.argument("endpoint", required=False)
-@click.pass_context
-def init(ctx, endpoint):
-    """Create a new jgo.toml file."""
-    from ..cli.subcommands import init as init_cmd
-    from ..config.jgorc import JgoConfig
-
-    opts = ctx.obj
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
-    args = _build_parsed_args(opts, endpoint=endpoint, command="init")
-
-    exit_code = init_cmd.execute(args, config.to_dict())
-    ctx.exit(exit_code)
+# Register top-level commands
+cli.add_command(add)
+cli.add_command(config)
+cli.add_command(init)
+cli.add_command(list_cmd)
+cli.add_command(lock)
+cli.add_command(remove)
+cli.add_command(run)
+cli.add_command(search)
+cli.add_command(sync)
+cli.add_command(tree)
+cli.add_command(update)
 
 
 @cli.group(help="Show information about environment or artifact")
@@ -446,161 +375,13 @@ def info(ctx):
     pass
 
 
-@info.command(help="Show classpath")
-@click.argument("endpoint", required=False)
-@click.pass_context
-def classpath(ctx, endpoint):
-    """Show the classpath for the given endpoint."""
-    from ..cli.subcommands import info as info_cmd
-    from ..config.jgorc import JgoConfig
-
-    opts = ctx.obj
-    opts["print_classpath"] = True
-    opts["print_java_info"] = False
-    opts["print_dependency_tree"] = False
-    opts["print_dependency_list"] = False
-    opts["list_entrypoints"] = False
-
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
-    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
-
-    exit_code = info_cmd.execute(args, config.to_dict())
-    ctx.exit(exit_code)
-
-
-@info.command(help="Show dependency tree")
-@click.argument("endpoint", required=False)
-@click.pass_context
-def deptree(ctx, endpoint):
-    """Show the dependency tree for the given endpoint."""
-    from ..cli.subcommands import info as info_cmd
-    from ..config.jgorc import JgoConfig
-
-    opts = ctx.obj
-    opts["print_classpath"] = False
-    opts["print_java_info"] = False
-    opts["print_dependency_tree"] = True
-    opts["print_dependency_list"] = False
-    opts["list_entrypoints"] = False
-
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
-    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
-
-    exit_code = info_cmd.execute(args, config.to_dict())
-    ctx.exit(exit_code)
-
-
-@info.command(help="Show flat list of dependencies")
-@click.argument("endpoint", required=False)
-@click.pass_context
-def deplist(ctx, endpoint):
-    """Show a flat list of all dependencies for the given endpoint."""
-    from ..cli.subcommands import info as info_cmd
-    from ..config.jgorc import JgoConfig
-
-    opts = ctx.obj
-    opts["print_classpath"] = False
-    opts["print_java_info"] = False
-    opts["print_dependency_tree"] = False
-    opts["print_dependency_list"] = True
-    opts["list_entrypoints"] = False
-
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
-    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
-
-    exit_code = info_cmd.execute(args, config.to_dict())
-    ctx.exit(exit_code)
-
-
-@info.command(help="Show Java version requirements")
-@click.argument("endpoint", required=False)
-@click.pass_context
-def javainfo(ctx, endpoint):
-    """Show Java version requirements for the given endpoint."""
-    from ..cli.subcommands import info as info_cmd
-    from ..config.jgorc import JgoConfig
-
-    opts = ctx.obj
-    opts["print_classpath"] = False
-    opts["print_java_info"] = True
-    opts["print_dependency_tree"] = False
-    opts["print_dependency_list"] = False
-    opts["list_entrypoints"] = False
-
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
-    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
-
-    exit_code = info_cmd.execute(args, config.to_dict())
-    ctx.exit(exit_code)
-
-
-@info.command(help="Show entrypoints from jgo.toml")
-@click.pass_context
-def entrypoints(ctx):
-    """Show available entrypoints defined in jgo.toml."""
-    from ..cli.subcommands import info as info_cmd
-    from ..config.jgorc import JgoConfig
-
-    opts = ctx.obj
-    opts["print_classpath"] = False
-    opts["print_java_info"] = False
-    opts["print_dependency_tree"] = False
-    opts["print_dependency_list"] = False
-    opts["list_entrypoints"] = True
-
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
-    args = _build_parsed_args(opts, endpoint=None, command="info")
-
-    exit_code = info_cmd.execute(args, config.to_dict())
-    ctx.exit(exit_code)
-
-
-@info.command(help="List available versions of an artifact")
-@click.argument("coordinate", required=True)
-@click.pass_context
-def versions(ctx, coordinate):
-    """List available versions of a Maven artifact."""
-    from ..cli.subcommands import versions as versions_cmd
-    from ..config.jgorc import JgoConfig
-
-    opts = ctx.obj
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
-    args = _build_parsed_args(opts, endpoint=coordinate, command="versions")
-
-    exit_code = versions_cmd.execute(args, config.to_dict())
-    ctx.exit(exit_code)
-
-
-@cli.command(name="list", help="List resolved dependencies (flat list)")
-@click.argument("endpoint", required=False)
-@click.pass_context
-def list_cmd(ctx, endpoint):
-    """List resolved dependencies as a flat list."""
-    from ..cli.subcommands import list as list_cmd
-    from ..config.jgorc import JgoConfig
-
-    opts = ctx.obj
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
-    args = _build_parsed_args(opts, endpoint=endpoint, command="list")
-
-    exit_code = list_cmd.execute(args, config.to_dict())
-    ctx.exit(exit_code)
-
-
-@cli.command(help="Show dependency tree")
-@click.argument("endpoint", required=False)
-@click.pass_context
-def tree(ctx, endpoint):
-    """Show the dependency tree for an endpoint or jgo.toml."""
-    from ..cli.subcommands import tree as tree_cmd
-    from ..config.jgorc import JgoConfig
-
-    opts = ctx.obj
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
-    args = _build_parsed_args(opts, endpoint=endpoint, command="tree")
-
-    exit_code = tree_cmd.execute(args, config.to_dict())
-    ctx.exit(exit_code)
+# Register info subcommands
+info.add_command(classpath)
+info.add_command(deplist)
+info.add_command(deptree)
+info.add_command(entrypoints)
+info.add_command(javainfo)
+info.add_command(versions)
 
 
 @cli.command(help="Display jgo's version")
@@ -608,296 +389,6 @@ def version():
     """Display jgo's version."""
     parser = JgoArgumentParser()
     click.echo(f"jgo {parser._get_version()}")
-
-
-@cli.command(help="Add dependencies to jgo.toml")
-@click.argument("coordinates", nargs=-1, required=True)
-@click.option(
-    "--no-sync",
-    is_flag=True,
-    help="Don't automatically sync after adding dependencies",
-)
-@click.pass_context
-def add(ctx, coordinates, no_sync):
-    """
-    Add one or more dependencies to jgo.toml.
-
-    Automatically runs 'jgo sync' unless --no-sync is specified.
-
-    EXAMPLES:
-      jgo add org.python:jython-standalone:2.7.3
-      jgo add org.scijava:scijava-common org.scijava:parsington
-      jgo add --no-sync net.imagej:imagej:2.15.0
-    """
-    from ..cli.subcommands import add as add_cmd
-    from ..config.jgorc import JgoConfig
-
-    opts = ctx.obj
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
-    args = _build_parsed_args(opts, command="add")
-    args.coordinates = list(coordinates)
-    args.no_sync = no_sync
-
-    exit_code = add_cmd.execute(args, config.to_dict())
-    ctx.exit(exit_code)
-
-
-@cli.command(help="Remove dependencies from jgo.toml")
-@click.argument("coordinates", nargs=-1, required=True)
-@click.option(
-    "--no-sync",
-    is_flag=True,
-    help="Don't automatically sync after removing dependencies",
-)
-@click.pass_context
-def remove(ctx, coordinates, no_sync):
-    """
-    Remove one or more dependencies from jgo.toml.
-
-    Coordinates can be specified as groupId:artifactId (version ignored).
-    Automatically runs 'jgo sync' unless --no-sync is specified.
-
-    EXAMPLES:
-      jgo remove org.python:jython-standalone
-      jgo remove org.scijava:scijava-common org.scijava:parsington
-      jgo remove --no-sync net.imagej:imagej
-    """
-    from ..cli.subcommands import remove as remove_cmd
-    from ..config.jgorc import JgoConfig
-
-    opts = ctx.obj
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
-    args = _build_parsed_args(opts, command="remove")
-    args.coordinates = list(coordinates)
-    args.no_sync = no_sync
-
-    exit_code = remove_cmd.execute(args, config.to_dict())
-    ctx.exit(exit_code)
-
-
-@cli.command(help="Resolve dependencies and build environment")
-@click.option(
-    "--force",
-    is_flag=True,
-    help="Force rebuild even if cached",
-)
-@click.pass_context
-def sync(ctx, force):
-    """
-    Resolve dependencies and build environment in .jgo/ directory.
-
-    Reads jgo.toml, resolves all dependencies using Maven, and creates
-    the local environment directory with all JARs linked.
-
-    EXAMPLES:
-      jgo sync
-      jgo sync --force
-      jgo sync --offline
-      jgo sync -u  # Update to latest versions
-    """
-    from ..cli.subcommands import sync as sync_cmd
-    from ..config.jgorc import JgoConfig
-
-    opts = ctx.obj
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
-    args = _build_parsed_args(opts, command="sync")
-    args.force = force
-
-    exit_code = sync_cmd.execute(args, config.to_dict())
-    ctx.exit(exit_code)
-
-
-@cli.command(help="Update jgo.lock.toml without building environment")
-@click.option(
-    "--check",
-    is_flag=True,
-    help="Check if lock file is up to date",
-)
-@click.pass_context
-def lock(ctx, check):
-    """
-    Update jgo.lock.toml without building the environment.
-
-    Useful for updating the lock file when RELEASE versions are involved,
-    or to verify the lock file is up to date.
-
-    EXAMPLES:
-      jgo lock
-      jgo lock --check
-      jgo lock --update
-    """
-    from ..cli.subcommands import lock as lock_cmd
-    from ..config.jgorc import JgoConfig
-
-    opts = ctx.obj
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
-    args = _build_parsed_args(opts, command="lock")
-    args.check = check
-
-    exit_code = lock_cmd.execute(args, config.to_dict())
-    ctx.exit(exit_code)
-
-
-@cli.command(help="Update dependencies to latest versions")
-@click.option(
-    "--force",
-    is_flag=True,
-    help="Force rebuild even if cached",
-)
-@click.pass_context
-def update(ctx, force):
-    """
-    Update dependencies to latest versions within constraints.
-
-    This is a convenience alias for 'jgo sync --update'.
-    It resolves dependencies and updates them to their latest available versions
-    while respecting version constraints in jgo.toml.
-
-    EXAMPLES:
-      jgo update
-      jgo update --force
-    """
-    from ..cli.subcommands import sync as sync_cmd
-    from ..config.jgorc import JgoConfig
-
-    opts = ctx.obj
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
-
-    # Force update flag to be set
-    opts["update"] = True
-
-    args = _build_parsed_args(opts, command="update")
-    args.force = force
-
-    exit_code = sync_cmd.execute(args, config.to_dict())
-    ctx.exit(exit_code)
-
-
-@cli.command(help="Manage jgo configuration")
-@click.option(
-    "--list",
-    "list_all",
-    is_flag=True,
-    help="List all configuration values",
-)
-@click.option(
-    "--global",
-    "global_config",
-    is_flag=True,
-    help="Use global configuration (~/.jgorc)",
-)
-@click.option(
-    "--local",
-    "local_config",
-    is_flag=True,
-    help="Use local configuration (jgo.toml)",
-)
-@click.option(
-    "--unset",
-    metavar="KEY",
-    help="Remove a configuration value",
-)
-@click.argument("key", required=False)
-@click.argument("value", required=False)
-@click.pass_context
-def config(ctx, list_all, global_config, local_config, unset, key, value):
-    """
-    Manage jgo configuration.
-
-    Without arguments: show all configuration
-    With KEY only: show value for that key
-    With KEY and VALUE: set the value for that key
-
-    Keys can be specified as 'section.key' or just 'key' (defaults to settings section).
-
-    EXAMPLES:
-      jgo config                              # Show all config
-      jgo config --list                       # Show all config
-      jgo config cache_dir                    # Show cache_dir value
-      jgo config settings.cache_dir           # Show cache_dir from settings section
-      jgo config cache_dir ~/.jgo             # Set cache_dir
-      jgo config repositories.central URL     # Set repository URL
-      jgo config --unset cache_dir            # Remove cache_dir setting
-      jgo config --global cache_dir ~/.jgo    # Set in global config
-      jgo config --local cache_dir .jgo       # Set in local config
-    """
-    from ..cli.subcommands import config as config_cmd
-    from ..config.jgorc import JgoConfig
-
-    opts = ctx.obj
-    jgorc = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
-    args = _build_parsed_args(opts, command="config")
-
-    exit_code = config_cmd.execute(
-        args,
-        jgorc.to_dict(),
-        key=key,
-        value=value,
-        unset=unset,
-        list_all=list_all,
-        global_config=global_config,
-        local_config=local_config,
-    )
-    ctx.exit(exit_code)
-
-
-@cli.command(help="Search for artifacts in Maven repositories")
-@click.option(
-    "--limit",
-    type=int,
-    default=20,
-    metavar="N",
-    help="Limit number of results (default: 20)",
-)
-@click.option(
-    "--repository",
-    metavar="NAME",
-    help="Search specific repository (default: central)",
-)
-@click.argument("query", nargs=-1, required=True)
-@click.pass_context
-def search(ctx, limit, repository, query):
-    """
-    Search for artifacts in Maven repositories.
-
-    The query can be a simple text search or use Maven Central's advanced query syntax.
-
-    EXAMPLES:
-      jgo search apache commons          # Search for "apache commons"
-      jgo search junit                   # Search for "junit"
-      jgo search g:org.apache.commons    # Search by groupId
-      jgo search a:commons-lang3         # Search by artifactId
-      jgo search --limit 10 jackson      # Limit to 10 results
-      jgo search --repository central gson  # Search specific repository
-
-    ADVANCED QUERY SYNTAX:
-      g:groupId              Search by group ID
-      a:artifactId           Search by artifact ID
-      v:version              Search by version
-      p:packaging            Search by packaging (jar, pom, etc.)
-      c:classifier           Search by classifier
-
-    Multiple terms can be combined:
-      jgo search g:org.apache.commons a:commons-lang3
-    """
-    from ..cli.subcommands import search as search_cmd
-    from ..config.jgorc import JgoConfig
-
-    opts = ctx.obj
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
-    args = _build_parsed_args(opts, command="search")
-
-    # Join query parts into a single string
-    query_str = " ".join(query)
-
-    exit_code = search_cmd.execute(
-        args,
-        config.to_dict(),
-        query=query_str,
-        limit=limit,
-        repository=repository,
-    )
-    ctx.exit(exit_code)
 
 
 def _parse_remaining(remaining):

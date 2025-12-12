@@ -5,8 +5,41 @@ from __future__ import annotations
 import sys
 from typing import TYPE_CHECKING
 
+import click
+
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
+
+
+@click.command(help="Update jgo.lock.toml without building environment")
+@click.option(
+    "--check",
+    is_flag=True,
+    help="Check if lock file is up to date",
+)
+@click.pass_context
+def lock(ctx, check):
+    """
+    Update jgo.lock.toml without building the environment.
+
+    Useful for updating the lock file when RELEASE versions are involved,
+    or to verify the lock file is up to date.
+
+    EXAMPLES:
+      jgo lock
+      jgo lock --check
+      jgo lock --update
+    """
+    from ...config.jgorc import JgoConfig
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, command="lock")
+    args.check = check
+
+    exit_code = execute(args, config.to_dict())
+    ctx.exit(exit_code)
 
 
 def execute(args: ParsedArgs, config: dict) -> int:
