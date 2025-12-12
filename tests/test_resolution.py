@@ -6,72 +6,236 @@ MavenResolver and SimpleResolver, including proper handling of dependency
 management and scope filtering.
 """
 
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+import pytest
+
+from jgo.env import EnvironmentBuilder
 from jgo.maven import MavenContext
+from jgo.maven.core import Component, Dependency
 from jgo.maven.resolver import MavenResolver, SimpleResolver
+from jgo.util.cjdk import ensure_maven_available
 
 
-def test_minimaven_resolution_maven_managed(tmp_path):
-    """
-    Test resolution of org.scijava:minimaven:2.2.2 with Maven resolver and managed=True.
+@dataclass(frozen=True)
+class DiffExpectation:
+    added: tuple[str, ...] = ()
+    removed: tuple[str, ...] = ()
 
-    This should match the output from running `mvn dependency:list` in the actual project.
-    Expected dependencies (excluding test scope):
-    - org.scijava:scijava-common:jar:2.77.0
-    - org.scijava:parsington:jar:1.0.4
-    - org.bushe:eventbus:jar:1.4
-    """
-    from jgo.util.cjdk import ensure_maven_available
+    def added_set(self) -> set[str]:
+        return set(self.added)
 
-    context = MavenContext(repo_cache=tmp_path / "m2_repo")
-    component = context.project("org.scijava", "minimaven").at_version("2.2.2")
-
-    # Use MavenResolver (will download Maven via cjdk if needed)
-    mvn_command = ensure_maven_available()
-    resolver = MavenResolver(mvn_command, update=False)
-
-    deps = resolver.dependencies([component], managed=True)
-
-    # Should have exactly 3 compile/runtime dependencies
-    assert len(deps) == 3, f"Expected 3 dependencies, got {len(deps)}"
-
-    # Check each expected dependency
-    dep_coords = {(d.groupId, d.artifactId, d.version) for d in deps}
-
-    assert ("org.scijava", "scijava-common", "2.77.0") in dep_coords
-    assert ("org.scijava", "parsington", "1.0.4") in dep_coords
-    assert ("org.bushe", "eventbus", "1.4") in dep_coords
-
-    # Ensure no test scope dependencies leaked through
-    for dep in deps:
-        assert dep.scope != "test", f"Test dependency should not be included: {dep}"
+    def removed_set(self) -> set[str]:
+        return set(self.removed)
 
 
-def test_minimaven_resolution_simple_no_managed(tmp_path):
-    """
-    Test resolution of org.scijava:minimaven:2.2.2 with SimpleResolver and managed=False.
+@dataclass(frozen=True)
+class ResolutionScenario:
+    endpoint: str
+    truth: tuple[str, ...]
+    unmanaged: DiffExpectation = DiffExpectation()
 
-    Note: SimpleResolver always respects the component's own dependencyManagement section
-    (this is built into the Model class). The managed flag only controls whether to
-    import components as BOMs in an additional dependencyManagement section.
+    def truth_set(self) -> set[str]:
+        return set(self.truth)
 
-    For minimaven, parsington is 1.0.4 regardless of the managed flag when using
-    SimpleResolver, because minimaven's own POM specifies 1.0.4 in its dependencyManagement.
-    """
-    context = MavenContext(repo_cache=tmp_path / "m2_repo")
-    component = context.project("org.scijava", "minimaven").at_version("2.2.2")
 
-    resolver = SimpleResolver()
-    deps = resolver.dependencies([component], managed=False)
+RESOLUTION_SCENARIOS: tuple[ResolutionScenario, ...] = (
+    ResolutionScenario(
+        endpoint="org.scijava:minimaven:2.2.2",
+        truth=(
+            "org.bushe:eventbus:jar:1.4",
+            "org.scijava:parsington:jar:1.0.4",
+            "org.scijava:scijava-common:jar:2.77.0",
+        ),
+        unmanaged=DiffExpectation(
+            added=("org.scijava:parsington:jar:1.0.3",),
+            removed=("org.scijava:parsington:jar:1.0.4",),
+        ),
+    ),
+    # FIXME: Address differences between pure and maven resolution modes!
+    # ResolutionScenario(
+    #     endpoint="org.scijava:scijava-maven-plugin:3.0.1",
+    #     truth=(
+    #         "com.google.code.findbugs:jsr305:jar:3.0.2",
+    #         "com.google.errorprone:error_prone_annotations:jar:2.32.0",
+    #         "com.google.guava:failureaccess:jar:1.0.2",
+    #         "com.google.guava:guava:jar:33.3.1-jre",
+    #         "com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava",
+    #         "com.google.j2objc:j2objc-annotations:jar:3.0.0",
+    #         "commons-codec:commons-codec:jar:1.17.1",
+    #         "commons-io:commons-io:jar:2.17.0",
+    #         "guru.nidi:jdepend:jar:2.9.5",
+    #         "javax.el:javax.el-api:jar:3.0.0",
+    #         "javax.enterprise:cdi-api:jar:2.0.SP1",
+    #         "javax.inject:javax.inject:jar:1",
+    #         "javax.interceptor:javax.interceptor-api:jar:1.2",
+    #         "net.sf.jgrapht:jgrapht:jar:0.8.3",
+    #         "org.apache.maven:maven-aether-provider:jar:3.0",
+    #         "org.apache.maven:maven-artifact:jar:3.0",
+    #         "org.apache.maven:maven-core:jar:3.0",
+    #         "org.apache.maven:maven-model:jar:3.0",
+    #         "org.apache.maven:maven-model-builder:jar:3.0",
+    #         "org.apache.maven:maven-plugin-api:jar:3.0",
+    #         "org.apache.maven:maven-repository-metadata:jar:3.0",
+    #         "org.apache.maven:maven-settings:jar:3.0",
+    #         "org.apache.maven:maven-settings-builder:jar:3.0",
+    #         "org.apache.maven.enforcer:enforcer-api:jar:3.5.0",
+    #         "org.apache.maven.plugin-tools:maven-plugin-annotations:jar:3.5",
+    #         "org.apache.maven.resolver:maven-resolver-api:jar:1.9.18",
+    #         "org.apache.maven.shared:maven-artifact-transfer:jar:0.9.1",
+    #         "org.apache.maven.shared:maven-common-artifact-filters:jar:3.0.1",
+    #         "org.apache.maven.shared:maven-shared-utils:jar:3.1.0",
+    #         "org.checkerframework:checker-qual:jar:3.48.0",
+    #         "org.codehaus.plexus:plexus-classworlds:jar:2.5.2",
+    #         "org.codehaus.plexus:plexus-component-annotations:jar:2.2.0",
+    #         "org.codehaus.plexus:plexus-interpolation:jar:1.24",
+    #         "org.codehaus.plexus:plexus-utils:jar:3.1.0",
+    #         "org.eclipse.sisu:org.eclipse.sisu.inject:jar:0.3.0",
+    #         "org.eclipse.sisu:org.eclipse.sisu.plexus:jar:0.3.0",
+    #         "org.scijava:parsington:jar:3.1.0",
+    #         "org.scijava:scijava-common:jar:2.99.0",
+    #         "org.slf4j:slf4j-api:jar:1.7.36",
+    #         "org.sonatype.aether:aether-api:jar:1.7",
+    #         "org.sonatype.aether:aether-impl:jar:1.7",
+    #         "org.sonatype.aether:aether-spi:jar:1.7",
+    #         "org.sonatype.aether:aether-util:jar:1.7",
+    #         "org.sonatype.plexus:plexus-cipher:jar:1.4",
+    #         "org.sonatype.plexus:plexus-sec-dispatcher:jar:1.3",
+    #         "org.sonatype.sisu:sisu-guice:jar:no_aop:3.2.5",
+    #         "org.sonatype.sisu:sisu-inject-bean:jar:2.6.0",
+    #         "org.sonatype.sisu:sisu-inject-plexus:jar:2.6.0",
+    #     ),
+    #     unmanaged=DiffExpectation(
+    #         added=(
+    #             "com.google.code.findbugs:jsr305:jar:3.0.2",
+    #             "com.google.errorprone:error_prone_annotations:jar:2.32.0",
+    #             "com.google.guava:failureaccess:jar:1.0.2",
+    #             "com.google.guava:guava:jar:33.3.1-jre",
+    #             "com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava",
+    #             "com.google.j2objc:j2objc-annotations:jar:3.0.0",
+    #             "commons-codec:commons-codec:jar:1.17.1",
+    #             "commons-io:commons-io:jar:2.17.0",
+    #             "javax.el:javax.el-api:jar:3.0.0",
+    #             "javax.enterprise:cdi-api:jar:2.0.SP1",
+    #             "javax.interceptor:javax.interceptor-api:jar:1.2",
+    #             "org.checkerframework:checker-qual:jar:3.48.0",
+    #             "org.codehaus.plexus:plexus-component-annotations:jar:2.2.0",
+    #             "org.slf4j:slf4j-api:jar:1.7.36",
+    #             "org.sonatype.sisu:sisu-guice:jar:no_aop:3.2.5",
+    #             "org.sonatype.sisu:sisu-inject-bean:jar:2.6.0",
+    #             "org.sonatype.sisu:sisu-inject-plexus:jar:2.6.0",
+    #         ),
+    #         removed=(
+    #             "com.google.code.findbugs:jsr305:jar:3.0.2",
+    #             "com.google.errorprone:error_prone_annotations:jar:2.32.0",
+    #             "com.google.guava:failureaccess:jar:1.0.2",
+    #             "com.google.guava:guava:jar:33.3.1-jre",
+    #             "com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava",
+    #             "com.google.j2objc:j2objc-annotations:jar:3.0.0",
+    #             "commons-codec:commons-codec:jar:1.17.1",
+    #             "commons-io:commons-io:jar:2.17.0",
+    #             "javax.el:javax.el-api:jar:3.0.0",
+    #             "javax.enterprise:cdi-api:jar:2.0.SP1",
+    #             "javax.interceptor:javax.interceptor-api:jar:1.2",
+    #             "org.checkerframework:checker-qual:jar:3.48.0",
+    #             "org.codehaus.plexus:plexus-component-annotations:jar:2.2.0",
+    #             "org.slf4j:slf4j-api:jar:1.7.36",
+    #             "org.sonatype.sisu:sisu-guice:jar:no_aop:3.2.5",
+    #             "org.sonatype.sisu:sisu-inject-bean:jar:2.6.0",
+    #             "org.sonatype.sisu:sisu-inject-plexus:jar:2.6.0",
+    #         ),
+    #     ),
+    # ),
+)
 
-    # Should still have 3 dependencies
-    assert len(deps) == 3, f"Expected 3 dependencies, got {len(deps)}"
 
-    # Check dependencies (parsington is 1.0.4 due to minimaven's own dependencyManagement)
-    dep_coords = {(d.groupId, d.artifactId, d.version) for d in deps}
+def dependency_fingerprint(dep: Dependency) -> str:
+    parts = [dep.groupId, dep.artifactId, dep.type]
+    if dep.classifier:
+        parts.append(dep.classifier)
+    parts.append(dep.version)
+    return ":".join(parts)
 
-    assert ("org.scijava", "scijava-common", "2.77.0") in dep_coords
-    assert ("org.scijava", "parsington", "1.0.4") in dep_coords
-    assert ("org.bushe", "eventbus", "1.4") in dep_coords
+
+def resolve_dependency_set(
+    resolver, components: list[Component], *, managed: bool
+) -> set[str]:
+    deps = resolver.dependencies(components, managed=managed)
+    return {dependency_fingerprint(dep) for dep in deps}
+
+
+def components_from_endpoint(context: MavenContext, endpoint: str) -> list[Component]:
+    builder = EnvironmentBuilder(context)
+    components, _, _ = builder._parse_endpoint(endpoint)
+    return components
+
+
+def assert_expected_diff(
+    endpoint: str,
+    truth: set[str],
+    candidate: set[str],
+    expected: DiffExpectation,
+) -> None:
+    removed = truth - candidate
+    added = candidate - truth
+    expected_removed = expected.removed_set()
+    expected_added = expected.added_set()
+    assert removed == expected_removed, (
+        f"Unexpected dependencies missing from unmanaged resolution of {endpoint}: "
+        f"expected {sorted(expected_removed)}, got {sorted(removed)}"
+    )
+    assert added == expected_added, (
+        f"Unexpected dependencies added in unmanaged resolution of {endpoint}: "
+        f"expected {sorted(expected_added)}, got {sorted(added)}"
+    )
+
+
+@pytest.fixture(scope="module")
+def maven_command():
+    return ensure_maven_available()
+
+
+@pytest.fixture(scope="module")
+def maven_resolver(maven_command):
+    return MavenResolver(maven_command, update=False)
+
+
+@pytest.mark.parametrize(
+    "scenario",
+    RESOLUTION_SCENARIOS,
+    ids=lambda case: case.endpoint,
+)
+def test_resolution_modes(tmp_path, scenario, maven_resolver):
+    repo_cache = tmp_path / "m2_repo"
+    repo_cache.mkdir(parents=True, exist_ok=True)
+
+    simple_resolver = SimpleResolver()
+    context = MavenContext(repo_cache=repo_cache, resolver=simple_resolver)
+    components = components_from_endpoint(context, scenario.endpoint)
+
+    truth = resolve_dependency_set(maven_resolver, components, managed=True)
+    assert truth == scenario.truth_set(), (
+        f"Maven resolver managed output for {scenario.endpoint} "
+        "diverged from expected truth"
+    )
+
+    maven_unmanaged = resolve_dependency_set(maven_resolver, components, managed=False)
+    assert_expected_diff(scenario.endpoint, truth, maven_unmanaged, scenario.unmanaged)
+
+    simple_managed = resolve_dependency_set(simple_resolver, components, managed=True)
+    assert simple_managed == truth, (
+        f"SimpleResolver managed output differed from Maven for {scenario.endpoint}"
+    )
+
+    simple_unmanaged = resolve_dependency_set(
+        simple_resolver, components, managed=False
+    )
+    assert simple_unmanaged == maven_unmanaged, (
+        "SimpleResolver --no-managed output differed from Maven for "
+        f"{scenario.endpoint}"
+    )
 
 
 def test_no_test_scope_in_resolution(tmp_path):
