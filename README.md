@@ -198,7 +198,7 @@ Note the usage of the `+` syntax as needed to append elements to the classpath.
 If you add
 `scijava.public = https://maven.scijava.org/content/groups/public`
 to the
-`[repositories]` section of your `.jgorc`
+`[repositories]` section of your [config file](#configuration)
 (see [Repositories](#repositories) below),
 you can also try:
 
@@ -225,7 +225,10 @@ you can also try:
 
 ### Configuration
 
-You can configure the behavior of `jgo` using the `~/.jgorc` file.
+You can configure the behavior of `jgo` using a configuration file. The config file is searched in the following locations (in order of precedence):
+
+1. `~/.config/jgo/config` (XDG Base Directory standard - recommended)
+2. `~/.jgorc` (legacy location for backward compatibility)
 
 #### Repositories
 
@@ -281,8 +284,8 @@ links = soft (options: hard, soft, none; default hard)
 The `jgo` cache dir can also be set via the `JGO_CACHE_DIR` environment
 variable. The precedence of reading the cache dir, from highest to lowest:
   - `JGO_CACHE_DIR` environment variable
-  - `cacheDir` in `settings` sections in `~/.jgorc`
-  - default to `~/.jgo`
+  - `cacheDir` in `settings` section in [config file](#configuration)
+  - default to `~/.cache/jgo`
 
 ### Dependency management
 

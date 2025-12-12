@@ -143,9 +143,15 @@ jgo -vv org.scijava:parsington   # -v (INFO), -vv (DEBUG), -vvv (TRACE)
 
 **Note:** Old cache directories are not migrated automatically. jgo 2.0 will create a new cache.
 
-### ~/.jgorc
+### Config File
 
-The `~/.jgorc` configuration file format remains the same. To ignore it, use `--ignore-jgorc`.
+The configuration file format remains the same (INI format with `[settings]`, `[repositories]`, and `[shortcuts]` sections).
+
+**New in jgo 2.0:** Config files can now be placed at:
+1. `~/.config/jgo/config` (XDG Base Directory standard - recommended)
+2. `~/.jgorc` (legacy location, still supported for backward compatibility)
+
+jgo will check both locations, preferring the XDG location if it exists. Your existing `~/.jgorc` file will continue to work without any changes. To ignore config files, use `--ignore-jgorc`.
 
 ## Breaking Changes (Minimal)
 

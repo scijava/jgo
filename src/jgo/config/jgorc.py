@@ -13,9 +13,13 @@ from pathlib import Path
 
 class JgoConfig:
     """
-    Configuration loaded from ~/.jgorc and environment variables.
+    Configuration loaded from config file and environment variables.
 
-    The .jgorc file is an INI file with sections:
+    Config file locations (in order of precedence):
+    1. ~/.config/jgo/config (XDG Base Directory standard)
+    2. ~/.jgorc (legacy location, for backward compatibility)
+
+    The config file is an INI file with sections:
     - [settings]: General settings (cache_dir, repo_cache, links, etc.)
     - [repositories]: Maven repositories (name = URL)
     - [shortcuts]: Coordinate shortcuts for the CLI
@@ -51,13 +55,19 @@ class JgoConfig:
         Load configuration from file and environment variables.
 
         Args:
-            config_file: Path to config file (defaults to ~/.jgorc)
+            config_file: Path to config file (defaults to ~/.config/jgo/config, then ~/.jgorc)
 
         Returns:
             JgoConfig instance
         """
         if config_file is None:
-            config_file = Path.home() / ".jgorc"
+            # XDG Base Directory standard location
+            xdg_config = Path.home() / ".config" / "jgo" / "config"
+            # Legacy location for backward compatibility
+            legacy_config = Path.home() / ".jgorc"
+
+            # Prefer XDG location, fall back to legacy
+            config_file = xdg_config if xdg_config.exists() else legacy_config
 
         # Start with defaults
         config = cls._default_config()

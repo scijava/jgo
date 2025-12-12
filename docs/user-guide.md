@@ -337,9 +337,14 @@ runner.run(environment, main_class=main_class)
 
 ## Configuration
 
-### ~/.jgorc
+### Config File
 
-Global configuration file in INI format:
+Global configuration file in INI format. Locations (in order of precedence):
+
+1. `~/.config/jgo/config` (XDG Base Directory standard - recommended)
+2. `~/.jgorc` (legacy location for backward compatibility)
+
+Format:
 
 ```ini
 [settings]
@@ -377,7 +382,7 @@ Configuration is merged with this precedence (highest to lowest):
 1. Command-line flags (`--cache-dir`, etc.)
 2. Environment variables (`JGO_CACHE_DIR`)
 3. jgo.toml settings (in project mode)
-4. ~/.jgorc configuration
+4. Config file (`~/.config/jgo/config` or `~/.jgorc`)
 5. Built-in defaults
 
 ## Common Recipes
