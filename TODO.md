@@ -108,15 +108,17 @@ These can be deferred to 2.1.0 or later:
 
 Ideas for future releases (not tracked in this file, move to GitHub issues):
 
-- Conda integration for resolving from conda channels
-- Docker support for building container images from jgo.toml
-- Version ranges with semantic versioning
-- Dependency graph visualization
-- Checksum verification for jgo.lock.toml
-- Parallel downloads for faster cache population
-- Progress bars for downloads
-- Shell completion (bash/zsh)
-- Plugin system for custom resolvers
+- (HIGH) Parallel downloads for faster cache population
+- (HIGH) Progress bars for downloads
+- (HIGH) Dependency graph visualization (add --graphviz or similar output mode to tree/list/info)
+- (HIGH) Shell completion (bash/zsh)
+- (MEDIUM) Version ranges with semantic versioning
+  - E.g. report on dependency divergence in desired scenarios (e.g. two different major versions)
+- (LOW) Checksum verification for jgo.lock.toml
+- (LOW) Plugin system for custom resolvers
+  - Might introduce a potential security risk?
+
+See also [FUTURE.md](docs/FUTURE.md).
 
 ## 📋 Release Checklist
 
