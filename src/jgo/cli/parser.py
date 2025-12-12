@@ -333,21 +333,48 @@ def cli(ctx, **kwargs):
 
 
 @cli.command(help="Run a Java application from Maven coordinates or jgo.toml")
+@click.option(
+    "--main-class",
+    metavar="CLASS",
+    help="Main class to run (supports auto-completion for simple names)",
+)
 @click.argument("endpoint", required=False)
 @click.argument("remaining", nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
-def run(ctx, endpoint, remaining):
+def run(ctx, main_class, endpoint, remaining):
     """
-    Run a Java application.
+    Run a Java application from Maven coordinates or jgo.toml.
 
-    If an endpoint is provided, resolves dependencies and executes the main class.
+    ENDPOINT FORMAT:
+      groupId:artifactId[:version][:classifier][@mainClass]
+
+    Multiple coordinates can be combined with '+':
+      org.scijava:scijava-common+org.scijava:parsington
+
+    Main class can be specified in two ways:
+      1. Using @ syntax: org.scijava:scijava-common@ScriptREPL
+      2. Using --main-class: --main-class ScriptREPL
+
+    Simple class names are auto-completed. For example:
+      ScriptREPL → org.scijava.script.ScriptREPL
+
     If no endpoint is provided, runs the default entrypoint from jgo.toml.
+
+    EXAMPLES:
+      jgo run org.python:jython-standalone
+      jgo run org.scijava:scijava-common@ScriptREPL
+      jgo run --main-class ScriptREPL org.scijava:scijava-common
+      jgo run org.python:jython-standalone:2.7.3 -- -Xmx2G -- script.py
     """
     from ..cli.commands import JgoCommands
     from ..config.jgorc import JgoConfig
 
     # Get global options from context
     opts = ctx.obj
+
+    # Add run-specific main-class option
+    if main_class:
+        opts["main_class"] = main_class
 
     # Parse remaining args for JVM/app args
     jvm_args, app_args = _parse_remaining(remaining)
