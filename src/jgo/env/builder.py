@@ -484,12 +484,12 @@ class EnvironmentBuilder:
                             )
                         part_main_class = tokens[3]
                 else:
-                    classifier = tokens[3]  # noqa: F841 - TODO: Use when Component supports classifiers
+                    classifier = tokens[3]  # noqa: F841 - TODO: Use Artifact instead?
 
             elif len(tokens) == 5:
                 # G:A:V:C:mainClass
                 version = tokens[2]
-                classifier = tokens[3]  # noqa: F841 - TODO: Use when Component supports classifiers
+                classifier = tokens[3]  # noqa: F841 - TODO: Use Artifact instead?
                 # Old format: main class in colon-separated tokens
                 if i == 0:  # Only first component can have main class
                     # Only warn if we didn't already detect old format with @
@@ -509,7 +509,7 @@ class EnvironmentBuilder:
 
             # Create component
             component = self.context.project(groupId, artifactId).at_version(version)
-            # TODO: Handle classifier when Component supports it
+            # TODO: Handle classifier by using Artifact instead?
             components.append(component)
             managed_flags.append(is_managed)
 
