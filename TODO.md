@@ -6,6 +6,7 @@ This document tracks remaining work for the jgo 2.0.0 release.
 
 These items **must** be completed before releasing 2.0.0:
 
+- [ ] **CLI Command-Based Interface**: Finalize command-based CLI design (`jgo run`, `jgo add`, etc.) - see `docs/CLI-REDESIGN.md`
 - [ ] **Dependency Resolution**: `SimpleResolver` and `MavenResolver` must produce the same dependency graphs in both managed and no-managed modes.
 - [ ] **Documentation**: Write user-facing documentation (see Documentation section below)
 - [ ] **CHANGELOG.md**: Create comprehensive changelog documenting all changes from 1.x
@@ -20,7 +21,7 @@ Documentation to write in `docs/`:
 - [ ] **User Guide** (`docs/user-guide.md`)
   - Installation (minimal vs full with cjdk)
   - Quick start examples
-  - CLI reference with all flags
+  - CLI command reference (new command-based interface)
   - jgo.toml specification and usage
   - Common recipes and patterns
 
