@@ -78,8 +78,21 @@ def format_dependency_list(
         Formatted dependency list as a string
     """
 
-    # Print root component
-    lines = [f"{root.dep.groupId}:{root.dep.artifactId}:{root.dep.version}"]
+    lines = []
+
+    # Skip INTERNAL-WRAPPER root and print its children instead
+    if (
+        root.dep.groupId == "org.apposed.jgo"
+        and root.dep.artifactId == "INTERNAL-WRAPPER"
+    ):
+        # Print direct dependencies (the actual components)
+        for child in root.children:
+            lines.append(
+                f"{child.dep.groupId}:{child.dep.artifactId}:{child.dep.version}"
+            )
+    else:
+        # Print root component if it's not INTERNAL-WRAPPER
+        lines.append(f"{root.dep.groupId}:{root.dep.artifactId}:{root.dep.version}")
 
     # Print dependencies with indentation
     for dep in dependencies:
@@ -102,8 +115,7 @@ def format_dependency_tree(root: DependencyNode) -> str:
         Formatted dependency tree as a string
     """
 
-    # Print root
-    lines = [f"{root.dep.groupId}:{root.dep.artifactId}:{root.dep.version}"]
+    lines = []
 
     def add_children(nodes: list[DependencyNode], prefix: str = ""):
         """Recursively add child nodes to the tree."""
@@ -132,8 +144,23 @@ def format_dependency_tree(root: DependencyNode) -> str:
             if node.children:
                 add_children(node.children, prefix + extension)
 
-    # Add children of root
-    if root.children:
-        add_children(root.children)
+    # Skip INTERNAL-WRAPPER root and print its children as top-level instead
+    if (
+        root.dep.groupId == "org.apposed.jgo"
+        and root.dep.artifactId == "INTERNAL-WRAPPER"
+    ):
+        # Treat children as roots (no prefix, no connector)
+        for i, child in enumerate(root.children):
+            is_last = i == len(root.children) - 1
+            lines.append(
+                f"{child.dep.groupId}:{child.dep.artifactId}:{child.dep.version}"
+            )
+            if child.children:
+                add_children(child.children)
+    else:
+        # Print root if it's not INTERNAL-WRAPPER
+        lines.append(f"{root.dep.groupId}:{root.dep.artifactId}:{root.dep.version}")
+        if root.children:
+            add_children(root.children)
 
     return "\n".join(lines)

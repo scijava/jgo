@@ -250,6 +250,13 @@ class SimpleResolver(Resolver):
         """
         components = _ensure_component_list(components)
         root = _create_root(components)
+
+        # Add components as children of root for proper display
+        for comp in components:
+            comp_artifact = comp.artifact()
+            comp_dep = Dependency(comp_artifact)
+            root.children.append(DependencyNode(comp_dep))
+
         boms = _resolve_boms(components, managed, boms)
 
         # Synthesize a wrapper POM
@@ -332,9 +339,18 @@ class SimpleResolver(Resolver):
 
             return nodes
 
-        # Build tree from direct dependencies (exclude test scope)
-        direct_deps = [dep for dep in model.deps.values() if dep.scope not in ("test",)]
-        root.children = build_tree(direct_deps)
+        # Add components as direct children of root
+        for comp in components:
+            comp_artifact = comp.artifact()
+            comp_dep = Dependency(comp_artifact)
+            comp_node = DependencyNode(comp_dep)
+            
+            # Build tree from component's dependencies (exclude test scope)
+            comp_model = Model(comp.pom())
+            direct_deps = [dep for dep in comp_model.deps.values() if dep.scope not in ("test",)]
+            comp_node.children = build_tree(direct_deps)
+            
+            root.children.append(comp_node)
 
         return root
 
@@ -520,6 +536,12 @@ class MavenResolver(Resolver):
         """
         components = _ensure_component_list(components)
         root = _create_root(components)
+
+        # Add components as children of root for proper display
+        for comp in components:
+            comp_artifact = comp.artifact()
+            comp_dep = Dependency(comp_artifact)
+            root.children.append(DependencyNode(comp_dep))
 
         # Get dependencies using existing method
         deps = self.dependencies(components, managed=managed, boms=boms)
