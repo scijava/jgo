@@ -72,10 +72,37 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
         return 0
 
-    # For other info types (classpath, java-info), delegate to commands
+    # For other info types, delegate to commands but ensure proper flags are set
+    # so they print info instead of running
     commands = JgoCommands(args, config)
 
-    # Handle spec file mode vs endpoint mode for other info types
+    # If no specific info flag set, show a helpful message
+    if not (
+        args.print_classpath
+        or args.print_java_info
+        or args.print_dependency_tree
+        or args.print_dependency_list
+    ):
+        print("Use info with one of these flags:", file=sys.stderr)
+        print("  --print-classpath        Show classpath", file=sys.stderr)
+        print(
+            "  --print-java-info        Show Java version requirements", file=sys.stderr
+        )
+        print("  --print-dependency-tree  Show dependency tree", file=sys.stderr)
+        print("  --print-dependency-list  Show flat dependency list", file=sys.stderr)
+        print(
+            "  --list-entrypoints       Show entrypoints from jgo.toml", file=sys.stderr
+        )
+        print("\nExamples:", file=sys.stderr)
+        print(
+            "  jgo --print-classpath info org.python:jython-standalone", file=sys.stderr
+        )
+        print(
+            "  jgo --print-java-info info org.scijava:scijava-common", file=sys.stderr
+        )
+        return 1
+
+    # Handle spec file mode vs endpoint mode
     if args.is_spec_mode():
         return commands._cmd_run_spec()
     else:

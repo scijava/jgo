@@ -393,7 +393,20 @@ def init(ctx, endpoint):
 @click.argument("endpoint", required=False)
 @click.pass_context
 def info(ctx, endpoint):
-    """Show information about a jgo environment or Maven artifact."""
+    """
+    Show information about a jgo environment or Maven artifact.
+
+    Requires one of these global flags:
+      --print-classpath        Show classpath
+      --print-java-info        Show Java version requirements
+      --print-dependency-tree  Show dependency tree
+      --print-dependency-list  Show flat dependency list
+      --list-entrypoints       Show entrypoints from jgo.toml
+
+    Examples:
+      jgo --print-classpath info org.python:jython-standalone
+      jgo --print-java-info info org.scijava:scijava-common
+    """
     from ..cli.subcommands import info as info_cmd
     from ..config.jgorc import JgoConfig
 
