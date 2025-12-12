@@ -39,6 +39,85 @@ def detect_main_class_from_jar(jar_path: Path) -> str | None:
         return None
 
 
+def parse_manifest(jar_path: Path) -> dict[str, str] | None:
+    """
+    Parse JAR manifest into key-value pairs, handling line continuations.
+
+    JAR manifests use a special format where lines starting with a space
+    are continuations of the previous line.
+
+    Args:
+        jar_path: Path to JAR file
+
+    Returns:
+        Dictionary of manifest key-value pairs, or None if no manifest
+    """
+    try:
+        with zipfile.ZipFile(jar_path) as jar_file:
+            try:
+                with jar_file.open("META-INF/MANIFEST.MF") as manifest:
+                    manifest_dict = {}
+                    current_key = None
+                    current_value = []
+
+                    for line in manifest.readlines():
+                        line = line.decode("utf-8").rstrip("\r\n")
+
+                        # Line continuation (starts with space)
+                        if line.startswith(" ") and current_key:
+                            current_value.append(line[1:])  # Strip leading space
+                        # New key-value pair
+                        elif ":" in line:
+                            # Save previous key-value pair
+                            if current_key:
+                                manifest_dict[current_key] = "".join(current_value)
+
+                            # Parse new key-value pair
+                            key, value = line.split(":", 1)
+                            current_key = key.strip()
+                            current_value = [value.strip()]
+                        # Empty line or invalid format
+                        else:
+                            # Save previous key-value pair if any
+                            if current_key:
+                                manifest_dict[current_key] = "".join(current_value)
+                                current_key = None
+                                current_value = []
+
+                    # Save last key-value pair
+                    if current_key:
+                        manifest_dict[current_key] = "".join(current_value)
+
+                    return manifest_dict
+            except KeyError:
+                # No MANIFEST.MF in this JAR
+                return None
+    except (zipfile.BadZipFile, FileNotFoundError):
+        return None
+
+
+def read_raw_manifest(jar_path: Path) -> str | None:
+    """
+    Read raw JAR manifest contents without parsing.
+
+    Args:
+        jar_path: Path to JAR file
+
+    Returns:
+        Raw manifest contents as string, or None if no manifest
+    """
+    try:
+        with zipfile.ZipFile(jar_path) as jar_file:
+            try:
+                with jar_file.open("META-INF/MANIFEST.MF") as manifest:
+                    return manifest.read().decode("utf-8")
+            except KeyError:
+                # No MANIFEST.MF in this JAR
+                return None
+    except (zipfile.BadZipFile, FileNotFoundError):
+        return None
+
+
 def autocomplete_main_class(main_class: str, artifact_id: str, jars_dir: Path) -> str:
     """
     Auto-complete a main class name by searching in JARs.

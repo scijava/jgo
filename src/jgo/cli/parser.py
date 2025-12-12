@@ -11,7 +11,15 @@ import click
 
 from .subcommands.add import add
 from .subcommands.config import config
-from .subcommands.info import classpath, deplist, deptree, entrypoints, javainfo
+from .subcommands.info import (
+    classpath,
+    deplist,
+    deptree,
+    entrypoints,
+    javainfo,
+    manifest,
+    pom,
+)
 from .subcommands.init import init
 from .subcommands.list import list_cmd
 from .subcommands.lock import lock
@@ -381,6 +389,8 @@ info.add_command(deplist)
 info.add_command(deptree)
 info.add_command(entrypoints)
 info.add_command(javainfo)
+info.add_command(manifest)
+info.add_command(pom)
 info.add_command(versions)
 
 

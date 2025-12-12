@@ -119,6 +119,153 @@ def entrypoints(ctx):
     ctx.exit(exit_code)
 
 
+@click.command(help="Show JAR manifest")
+@click.argument("endpoint", required=True)
+@click.option("--raw", is_flag=True, help="Show raw manifest contents")
+@click.pass_context
+def manifest(ctx, endpoint, raw):
+    """Show the JAR manifest for the given endpoint."""
+    import sys
+    import zipfile
+
+    from ...config.jgorc import JgoConfig
+    from ...env.jar_util import parse_manifest, read_raw_manifest
+    from ..commands import JgoCommands
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+
+    try:
+        # Create Maven context
+        commands = JgoCommands(args, config.to_dict())
+        maven_context = commands._create_maven_context()
+
+        # Parse endpoint to get G:A:V
+        parts = endpoint.split(":")
+        if len(parts) < 2:
+            print(
+                f"Error: Invalid endpoint format: {endpoint}",
+                file=sys.stderr,
+            )
+            print("Expected: groupId:artifactId[:version]", file=sys.stderr)
+            ctx.exit(1)
+
+        groupId = parts[0]
+        artifactId = parts[1]
+        version = parts[2] if len(parts) > 2 else "RELEASE"
+
+        # Get component
+        component = maven_context.project(groupId, artifactId).at_version(version)
+
+        # Resolve artifact to get JAR path
+        artifact = component.artifact()
+        jar_path = artifact.resolve()
+
+        if not jar_path:
+            print(f"Error: Could not resolve artifact: {endpoint}", file=sys.stderr)
+            ctx.exit(1)
+
+        # Verify it's a valid JAR file
+        if not zipfile.is_zipfile(jar_path):
+            print(f"Error: Not a valid JAR file: {jar_path}", file=sys.stderr)
+            ctx.exit(1)
+
+        # Read and display manifest
+        if raw:
+            manifest_content = read_raw_manifest(jar_path)
+            if manifest_content is None:
+                print(f"Error: No MANIFEST.MF found in {jar_path}", file=sys.stderr)
+                ctx.exit(1)
+            print(manifest_content, end="")
+        else:
+            manifest_dict = parse_manifest(jar_path)
+            if manifest_dict is None:
+                print(f"Error: No MANIFEST.MF found in {jar_path}", file=sys.stderr)
+                ctx.exit(1)
+
+            # Display parsed manifest
+            for key, value in manifest_dict.items():
+                print(f"{key}: {value}")
+
+    except SystemExit:
+        raise
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        ctx.exit(1)
+
+
+@click.command(help="Show POM information")
+@click.argument("endpoint", required=True)
+@click.pass_context
+def pom(ctx, endpoint):
+    """Show the POM for the given component."""
+    import sys
+    import xml.dom.minidom
+    from pathlib import Path
+
+    from ...config.jgorc import JgoConfig
+    from ..commands import JgoCommands
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+
+    try:
+        # Create Maven context
+        commands = JgoCommands(args, config.to_dict())
+        maven_context = commands._create_maven_context()
+
+        # Parse endpoint to get G:A:V
+        parts = endpoint.split(":")
+        if len(parts) < 2:
+            print(
+                f"Error: Invalid endpoint format: {endpoint}",
+                file=sys.stderr,
+            )
+            print("Expected: groupId:artifactId[:version]", file=sys.stderr)
+            ctx.exit(1)
+
+        groupId = parts[0]
+        artifactId = parts[1]
+        version = parts[2] if len(parts) > 2 else "RELEASE"
+
+        # Get component
+        component = maven_context.project(groupId, artifactId).at_version(version)
+
+        # Get raw POM and pretty-print
+        pom_obj = component.pom()
+
+        if not pom_obj or not pom_obj.source:
+            print(f"Error: Could not resolve POM for: {endpoint}", file=sys.stderr)
+            ctx.exit(1)
+
+        # Read POM content
+        if isinstance(pom_obj.source, Path):
+            pom_content = pom_obj.source.read_text()
+        else:
+            pom_content = str(pom_obj.source)
+
+        # Pretty-print the XML
+        try:
+            dom = xml.dom.minidom.parseString(pom_content)
+            pretty_xml = dom.toprettyxml(indent="  ")
+            # Remove extra blank lines that toprettyxml adds
+            lines = [line for line in pretty_xml.split("\n") if line.strip()]
+            print("\n".join(lines))
+        except Exception:
+            # If pretty-printing fails, just output raw
+            print(pom_content)
+
+    except SystemExit:
+        raise
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        ctx.exit(1)
+
+
 def execute(args: ParsedArgs, config: dict) -> int:
     """
     Execute the info command.
@@ -183,6 +330,14 @@ def execute(args: ParsedArgs, config: dict) -> int:
             file=sys.stderr,
         )
         print(
+            "  jgo info manifest <endpoint>      Show JAR manifest",
+            file=sys.stderr,
+        )
+        print(
+            "  jgo info pom <endpoint>           Show POM information",
+            file=sys.stderr,
+        )
+        print(
             "  jgo info entrypoints              Show entrypoints from jgo.toml",
             file=sys.stderr,
         )
@@ -193,6 +348,8 @@ def execute(args: ParsedArgs, config: dict) -> int:
         print("\nExamples:", file=sys.stderr)
         print("  jgo info classpath org.python:jython-standalone", file=sys.stderr)
         print("  jgo info javainfo org.scijava:scijava-common", file=sys.stderr)
+        print("  jgo info manifest org.python:jython-standalone", file=sys.stderr)
+        print("  jgo info pom org.scijava:scijava-common", file=sys.stderr)
         print("  jgo info versions org.python:jython-standalone", file=sys.stderr)
         return 1
 
