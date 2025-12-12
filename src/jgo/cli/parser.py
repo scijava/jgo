@@ -428,11 +428,13 @@ def info(ctx):
       deplist      - Show flat list of dependencies
       javainfo     - Show Java version requirements
       entrypoints  - Show entrypoints from jgo.toml
+      versions     - List available versions of an artifact
 
     Examples:
       jgo info classpath org.python:jython-standalone
       jgo info javainfo org.scijava:scijava-common
       jgo info deptree org.scijava:scijava-common
+      jgo info versions org.python:jython-standalone
       jgo info entrypoints
     """
     pass
@@ -547,6 +549,22 @@ def entrypoints(ctx):
     ctx.exit(exit_code)
 
 
+@info.command(help="List available versions of an artifact")
+@click.argument("coordinate", required=True)
+@click.pass_context
+def versions(ctx, coordinate):
+    """List available versions of a Maven artifact."""
+    from ..cli.subcommands import versions as versions_cmd
+    from ..config.jgorc import JgoConfig
+
+    opts = ctx.obj
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, endpoint=coordinate, command="versions")
+
+    exit_code = versions_cmd.execute(args, config.to_dict())
+    ctx.exit(exit_code)
+
+
 @cli.command(name="list", help="List resolved dependencies (flat list)")
 @click.argument("endpoint", required=False)
 @click.pass_context
@@ -576,22 +594,6 @@ def tree(ctx, endpoint):
     args = _build_parsed_args(opts, endpoint=endpoint, command="tree")
 
     exit_code = tree_cmd.execute(args, config.to_dict())
-    ctx.exit(exit_code)
-
-
-@cli.command(help="List available versions of an artifact")
-@click.argument("coordinate", required=True)
-@click.pass_context
-def versions(ctx, coordinate):
-    """List available versions of a Maven artifact."""
-    from ..cli.subcommands import versions as versions_cmd
-    from ..config.jgorc import JgoConfig
-
-    opts = ctx.obj
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
-    args = _build_parsed_args(opts, endpoint=coordinate, command="versions")
-
-    exit_code = versions_cmd.execute(args, config.to_dict())
     ctx.exit(exit_code)
 
 

@@ -171,9 +171,9 @@ Commands:
   info deplist            Show flat dependency list
   info javainfo           Show Java version requirements
   info entrypoints        Show entrypoints from jgo.toml
+  info versions           List available artifact versions
   init                    Create new jgo.toml file
   version                 Display jgo version
-  versions                List available artifact versions
 
 Endpoint Format:
   groupId:artifactId[:version][:classifier][@mainClass]
