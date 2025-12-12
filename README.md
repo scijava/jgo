@@ -52,7 +52,7 @@ jgo -u org.python:jython-standalone
 jgo --java-version 17 net.imagej:imagej
 
 # Print classpath without running
-jgo --print-classpath org.python:jython-standalone
+jgo info classpath org.python:jython-standalone
 ```
 
 ### Python API
@@ -162,8 +162,18 @@ Common Options:
   --offline               Work offline (don't download)
   --cache-dir PATH        Override cache directory
   --java-version VERSION  Force specific Java version
-  --print-classpath       Print classpath and exit
   -f FILE                 Use jgo.toml file
+
+Commands:
+  run                     Run a Java application (default)
+  info classpath          Show classpath
+  info deptree            Show dependency tree  
+  info deplist            Show flat dependency list
+  info javainfo           Show Java version requirements
+  info entrypoints        Show entrypoints from jgo.toml
+  init                    Create new jgo.toml file
+  version                 Display jgo version
+  versions                List available artifact versions
 
 Endpoint Format:
   groupId:artifactId[:version][:classifier][@mainClass]

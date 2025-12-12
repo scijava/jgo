@@ -123,9 +123,12 @@ jgo [OPTIONS] <endpoint> [-- JVM_ARGS] [-- APP_ARGS]
 - `--java-source {cjdk,system}` - Java selection strategy
 
 **Output Options:**
-- `--print-classpath` - Print classpath and exit
-- `--print-dependency-tree` - Print dependency tree and exit
-- `--print-java-info` - Print detected Java version requirements and exit
+- Use `jgo info` subcommands to get information without running:
+  - `jgo info classpath <endpoint>` - Show classpath
+  - `jgo info deptree <endpoint>` - Show dependency tree
+  - `jgo info deplist <endpoint>` - Show flat dependency list
+  - `jgo info javainfo <endpoint>` - Show Java version requirements
+  - `jgo info entrypoints` - Show entrypoints from jgo.toml
 - `--main-class CLASS` - Override main class detection
 
 **Project Mode:**
@@ -148,7 +151,7 @@ jgo --java-version 17 net.imagej:imagej
 jgo org.python:jython-standalone -- -Xmx4G -- script.py
 
 # Print classpath without running
-jgo --print-classpath org.python:jython-standalone
+jgo info classpath org.python:jython-standalone
 
 # Add custom repository
 jgo -r scijava=https://maven.scijava.org/content/groups/public org.scijava:parsington
@@ -397,7 +400,7 @@ jgo org.example:myapp -- -Xmx8G -ea -- --app-flag
 
 ```bash
 # Print classpath for IntelliJ/Eclipse
-jgo --print-classpath org.python:jython-standalone > classpath.txt
+jgo info classpath org.python:jython-standalone > classpath.txt
 ```
 
 ### Combining Multiple Artifacts

@@ -10,21 +10,28 @@ if TYPE_CHECKING:
 
 
 def add_parser(subparsers) -> argparse.ArgumentParser:
-    """Add the 'info' subcommand parser."""
+    """Add the 'info' subcommand parser.
+    
+    Note: This function is deprecated and kept for backward compatibility.
+    The new Click-based CLI uses subcommands instead (e.g., 'jgo info classpath').
+    """
     parser = subparsers.add_parser(
         "info",
         help="Show information about environment or artifact",
         description="""Show information about a jgo environment or Maven artifact.
 
-Use global flags to specify what information to show:
-  --print-classpath    Show classpath
-  --print-java-info    Show Java version requirements
-  --list-entrypoints   Show available entrypoints from jgo.toml
+Use subcommands to specify what information to show:
+  classpath    - Show classpath
+  deptree      - Show dependency tree
+  deplist      - Show flat list of dependencies
+  javainfo     - Show Java version requirements
+  entrypoints  - Show entrypoints from jgo.toml
 
 Examples:
-  jgo info --print-classpath org.python:jython-standalone
-  jgo --print-java-info info org.python:jython-standalone
-  jgo --list-entrypoints info
+  jgo info classpath org.python:jython-standalone
+  jgo info javainfo org.scijava:scijava-common
+  jgo info deptree org.scijava:scijava-common
+  jgo info entrypoints
 
 All global options apply. Use 'jgo --help' to see global options.""",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -83,23 +90,15 @@ def execute(args: ParsedArgs, config: dict) -> int:
         or args.print_dependency_tree
         or args.print_dependency_list
     ):
-        print("Use info with one of these flags:", file=sys.stderr)
-        print("  --print-classpath        Show classpath", file=sys.stderr)
-        print(
-            "  --print-java-info        Show Java version requirements", file=sys.stderr
-        )
-        print("  --print-dependency-tree  Show dependency tree", file=sys.stderr)
-        print("  --print-dependency-list  Show flat dependency list", file=sys.stderr)
-        print(
-            "  --list-entrypoints       Show entrypoints from jgo.toml", file=sys.stderr
-        )
+        print("Use 'jgo info' with a subcommand:", file=sys.stderr)
+        print("  jgo info classpath <endpoint>     Show classpath", file=sys.stderr)
+        print("  jgo info deptree <endpoint>       Show dependency tree", file=sys.stderr)
+        print("  jgo info deplist <endpoint>       Show flat dependency list", file=sys.stderr)
+        print("  jgo info javainfo <endpoint>      Show Java version requirements", file=sys.stderr)
+        print("  jgo info entrypoints              Show entrypoints from jgo.toml", file=sys.stderr)
         print("\nExamples:", file=sys.stderr)
-        print(
-            "  jgo info --print-classpath org.python:jython-standalone", file=sys.stderr
-        )
-        print(
-            "  jgo info --print-java-info org.scijava:scijava-common", file=sys.stderr
-        )
+        print("  jgo info classpath org.python:jython-standalone", file=sys.stderr)
+        print("  jgo info javainfo org.scijava:scijava-common", file=sys.stderr)
         return 1
 
     # Handle spec file mode vs endpoint mode

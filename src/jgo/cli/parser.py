@@ -416,50 +416,132 @@ def init(ctx, endpoint):
     ctx.exit(exit_code)
 
 
-@cli.command(help="Show information about environment or artifact")
-@click.option("--print-classpath", is_flag=True, help="Show classpath")
-@click.option("--print-java-info", is_flag=True, help="Show Java version requirements")
-@click.option("--print-dependency-tree", is_flag=True, help="Show dependency tree")
-@click.option(
-    "--print-dependency-list", is_flag=True, help="Show flat list of dependencies"
-)
-@click.option("--list-entrypoints", is_flag=True, help="Show entrypoints from jgo.toml")
-@click.argument("endpoint", required=False)
+@cli.group(help="Show information about environment or artifact")
 @click.pass_context
-def info(
-    ctx,
-    print_classpath,
-    print_java_info,
-    print_dependency_tree,
-    print_dependency_list,
-    list_entrypoints,
-    endpoint,
-):
+def info(ctx):
     """
     Show information about a jgo environment or Maven artifact.
 
-    Requires one of the info flags to specify what to display.
+    Use subcommands to specify what information to display:
+      classpath    - Show classpath
+      deptree      - Show dependency tree
+      deplist      - Show flat list of dependencies
+      javainfo     - Show Java version requirements
+      entrypoints  - Show entrypoints from jgo.toml
 
     Examples:
-      jgo info --print-classpath org.python:jython-standalone
-      jgo info --print-java-info org.scijava:scijava-common
-      jgo info --print-dependency-tree org.scijava:scijava-common
-      jgo info --list-entrypoints
+      jgo info classpath org.python:jython-standalone
+      jgo info javainfo org.scijava:scijava-common
+      jgo info deptree org.scijava:scijava-common
+      jgo info entrypoints
     """
+    pass
+
+
+@info.command(help="Show classpath")
+@click.argument("endpoint", required=False)
+@click.pass_context
+def classpath(ctx, endpoint):
+    """Show the classpath for the given endpoint."""
     from ..cli.subcommands import info as info_cmd
     from ..config.jgorc import JgoConfig
 
     opts = ctx.obj
-
-    # Add info-specific flags to opts
-    opts["print_classpath"] = print_classpath
-    opts["print_java_info"] = print_java_info
-    opts["print_dependency_tree"] = print_dependency_tree
-    opts["print_dependency_list"] = print_dependency_list
-    opts["list_entrypoints"] = list_entrypoints
+    opts["print_classpath"] = True
+    opts["print_java_info"] = False
+    opts["print_dependency_tree"] = False
+    opts["print_dependency_list"] = False
+    opts["list_entrypoints"] = False
 
     config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
     args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+
+    exit_code = info_cmd.execute(args, config.to_dict())
+    ctx.exit(exit_code)
+
+
+@info.command(help="Show dependency tree")
+@click.argument("endpoint", required=False)
+@click.pass_context
+def deptree(ctx, endpoint):
+    """Show the dependency tree for the given endpoint."""
+    from ..cli.subcommands import info as info_cmd
+    from ..config.jgorc import JgoConfig
+
+    opts = ctx.obj
+    opts["print_classpath"] = False
+    opts["print_java_info"] = False
+    opts["print_dependency_tree"] = True
+    opts["print_dependency_list"] = False
+    opts["list_entrypoints"] = False
+
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+
+    exit_code = info_cmd.execute(args, config.to_dict())
+    ctx.exit(exit_code)
+
+
+@info.command(help="Show flat list of dependencies")
+@click.argument("endpoint", required=False)
+@click.pass_context
+def deplist(ctx, endpoint):
+    """Show a flat list of all dependencies for the given endpoint."""
+    from ..cli.subcommands import info as info_cmd
+    from ..config.jgorc import JgoConfig
+
+    opts = ctx.obj
+    opts["print_classpath"] = False
+    opts["print_java_info"] = False
+    opts["print_dependency_tree"] = False
+    opts["print_dependency_list"] = True
+    opts["list_entrypoints"] = False
+
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+
+    exit_code = info_cmd.execute(args, config.to_dict())
+    ctx.exit(exit_code)
+
+
+@info.command(help="Show Java version requirements")
+@click.argument("endpoint", required=False)
+@click.pass_context
+def javainfo(ctx, endpoint):
+    """Show Java version requirements for the given endpoint."""
+    from ..cli.subcommands import info as info_cmd
+    from ..config.jgorc import JgoConfig
+
+    opts = ctx.obj
+    opts["print_classpath"] = False
+    opts["print_java_info"] = True
+    opts["print_dependency_tree"] = False
+    opts["print_dependency_list"] = False
+    opts["list_entrypoints"] = False
+
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+
+    exit_code = info_cmd.execute(args, config.to_dict())
+    ctx.exit(exit_code)
+
+
+@info.command(help="Show entrypoints from jgo.toml")
+@click.pass_context
+def entrypoints(ctx):
+    """Show available entrypoints defined in jgo.toml."""
+    from ..cli.subcommands import info as info_cmd
+    from ..config.jgorc import JgoConfig
+
+    opts = ctx.obj
+    opts["print_classpath"] = False
+    opts["print_java_info"] = False
+    opts["print_dependency_tree"] = False
+    opts["print_dependency_list"] = False
+    opts["list_entrypoints"] = True
+
+    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    args = _build_parsed_args(opts, endpoint=None, command="info")
 
     exit_code = info_cmd.execute(args, config.to_dict())
     ctx.exit(exit_code)
