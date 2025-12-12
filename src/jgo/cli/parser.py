@@ -309,7 +309,31 @@ Examples:
         Returns:
             ParsedArgs object with parsed arguments
         """
+        # Handle command detection for new command-based interface
+        if args is None:
+            import sys
+            args = sys.argv[1:]
+        else:
+            args = list(args)  # Make a copy
+        
+        # List of known commands
+        known_commands = ['run']
+        
+        # Check if first arg is a known command
+        command = None
+        if args and args[0] in known_commands:
+            command = args[0]
+            args = args[1:]  # Remove command from args
+        elif args and not args[0].startswith('-') and ':' in args[0]:
+            # Legacy endpoint syntax - treat as 'run' command
+            command = 'run'
+            # Keep args as-is, endpoint will be parsed normally
+        
+        # Parse with the standard parser (without subcommands for now)
         parsed = self.parser.parse_args(args)
+        
+        # Add command attribute
+        parsed.command = command
 
         # Split remaining args on --
         jvm_args, app_args = self._split_remaining_args(parsed.remaining)

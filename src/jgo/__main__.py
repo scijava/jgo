@@ -20,8 +20,12 @@ def main():
     parser = JgoArgumentParser()
     args = parser.parse_args()
 
-    # Show help if no endpoint and not in spec mode
-    if not args.endpoint and not args.is_spec_mode():
+    # Show help if no command and no endpoint and not in spec mode
+    if hasattr(args, 'command') and args.command:
+        # Subcommand mode - dispatch to subcommand handler
+        pass  # Will handle below
+    elif not args.endpoint and not args.is_spec_mode():
+        # No command, no endpoint, no jgo.toml - show help
         parser.parser.print_help()
         sys.exit(0)
 
@@ -38,9 +42,20 @@ def main():
     if args.endpoint and not args.ignore_jgorc:
         args.endpoint = config.expand_shortcuts(args.endpoint)
 
-    # Execute command
-    commands = JgoCommands(args, config.to_dict())
-    exit_code = commands.execute()
+    # Execute command or use legacy path
+    if hasattr(args, 'command') and args.command:
+        # Dispatch to subcommand
+        from .cli.subcommands import run
+        
+        if args.command == 'run':
+            exit_code = run.execute(args, config.to_dict())
+        else:
+            print(f"Error: Unknown command: {args.command}", file=sys.stderr)
+            exit_code = 1
+    else:
+        # Legacy path: use JgoCommands directly
+        commands = JgoCommands(args, config.to_dict())
+        exit_code = commands.execute()
 
     sys.exit(exit_code)
 
