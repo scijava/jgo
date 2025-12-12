@@ -1,8 +1,17 @@
 # jgo CLI Redesign: Command-Based Interface
 
+## Status
+
+✅ **Phase 1 Complete** - Subcommand infrastructure with `jgo run`  
+✅ **Phase 2 Complete** - Core information commands (`info`, `list`, `tree`, `versions`, `init`)  
+✅ **Migration to Click** - Replaced argparse with Click for cleaner, more maintainable code  
+🚧 **Phase 3 In Progress** - Project management commands  
+
 ## Overview
 
 This document outlines the plan to restructure jgo's CLI from a flat flag-based interface to a modern command-based interface, following the patterns established by `uv`, `pixi`, `npm`, `cargo`, and other contemporary package managers.
+
+**Update**: We switched from argparse to Click (which is already a transitive dependency via cjdk) for much cleaner implementation of the command-based interface.
 
 ## Goals
 
@@ -11,6 +20,33 @@ This document outlines the plan to restructure jgo's CLI from a flat flag-based 
 3. **Room for growth** - Namespaced commands scale better than flat flags
 4. **Backwards compatibility** - Existing `jgo <endpoint>` usage continues to work
 5. **Cleaner architecture** - Each command gets focused parsing and logic
+
+## Implementation Notes
+
+### Why Click?
+
+We migrated from argparse to Click because:
+- Click is designed specifically for command-based CLIs
+- Already a dependency (via cjdk → click)
+- Much simpler to implement global options that work across commands
+- Better help formatting out of the box
+- Environment variable support is trivial
+- Easier to maintain and extend
+
+### Option Ordering
+
+Modern convention: **options must come BEFORE the command/endpoint**
+
+```bash
+# Correct
+jgo --dry-run org.python:jython-standalone
+jgo --dry-run run org.python:jython-standalone
+
+# Incorrect (not supported)
+jgo org.python:jython-standalone --dry-run
+```
+
+This follows the pattern of modern tools like `uv`, `cargo`, `npm`, etc.
 
 ## Command Structure
 
