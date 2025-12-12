@@ -390,27 +390,47 @@ def init(ctx, endpoint):
 
 
 @cli.command(help="Show information about environment or artifact")
+@click.option("--print-classpath", is_flag=True, help="Show classpath")
+@click.option("--print-java-info", is_flag=True, help="Show Java version requirements")
+@click.option("--print-dependency-tree", is_flag=True, help="Show dependency tree")
+@click.option(
+    "--print-dependency-list", is_flag=True, help="Show flat list of dependencies"
+)
+@click.option("--list-entrypoints", is_flag=True, help="Show entrypoints from jgo.toml")
 @click.argument("endpoint", required=False)
 @click.pass_context
-def info(ctx, endpoint):
+def info(
+    ctx,
+    print_classpath,
+    print_java_info,
+    print_dependency_tree,
+    print_dependency_list,
+    list_entrypoints,
+    endpoint,
+):
     """
     Show information about a jgo environment or Maven artifact.
 
-    Requires one of these global flags:
-      --print-classpath        Show classpath
-      --print-java-info        Show Java version requirements
-      --print-dependency-tree  Show dependency tree
-      --print-dependency-list  Show flat dependency list
-      --list-entrypoints       Show entrypoints from jgo.toml
+    Requires one of the info flags to specify what to display.
 
     Examples:
-      jgo --print-classpath info org.python:jython-standalone
-      jgo --print-java-info info org.scijava:scijava-common
+      jgo info --print-classpath org.python:jython-standalone
+      jgo info --print-java-info org.scijava:scijava-common
+      jgo info --print-dependency-tree org.scijava:scijava-common
+      jgo info --list-entrypoints
     """
     from ..cli.subcommands import info as info_cmd
     from ..config.jgorc import JgoConfig
 
     opts = ctx.obj
+
+    # Add info-specific flags to opts
+    opts["print_classpath"] = print_classpath
+    opts["print_java_info"] = print_java_info
+    opts["print_dependency_tree"] = print_dependency_tree
+    opts["print_dependency_list"] = print_dependency_list
+    opts["list_entrypoints"] = list_entrypoints
+
     config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
     args = _build_parsed_args(opts, endpoint=endpoint, command="info")
 

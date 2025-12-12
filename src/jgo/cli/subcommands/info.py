@@ -95,10 +95,10 @@ def execute(args: ParsedArgs, config: dict) -> int:
         )
         print("\nExamples:", file=sys.stderr)
         print(
-            "  jgo --print-classpath info org.python:jython-standalone", file=sys.stderr
+            "  jgo info --print-classpath org.python:jython-standalone", file=sys.stderr
         )
         print(
-            "  jgo --print-java-info info org.scijava:scijava-common", file=sys.stderr
+            "  jgo info --print-java-info org.scijava:scijava-common", file=sys.stderr
         )
         return 1
 
