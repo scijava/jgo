@@ -211,8 +211,13 @@ class JgoConfig:
         """
         Expand shortcuts in a coordinate string.
 
+        Supports composition with '+': shortcuts can be combined.
+        Example: If shortcuts = {"repl": "org.scijava:scijava-common@ScriptREPL",
+                                 "groovy": "org.scijava:scripting-groovy@GroovySh"}
+                 Then "repl+groovy" expands to "org.scijava:scijava-common@ScriptREPL+org.scijava:scripting-groovy@GroovySh"
+
         Args:
-            coordinate: Coordinate string (may contain shortcuts)
+            coordinate: Coordinate string (may contain shortcuts and '+' composition)
 
         Returns:
             Expanded coordinate string
@@ -220,6 +225,27 @@ class JgoConfig:
         if not self.shortcuts:
             return coordinate
 
+        # Split on + for composition support
+        parts = coordinate.split("+")
+        expanded_parts = []
+
+        for part in parts:
+            # Expand each part individually
+            expanded_part = self._expand_single_shortcut(part)
+            expanded_parts.append(expanded_part)
+
+        return "+".join(expanded_parts)
+
+    def _expand_single_shortcut(self, coordinate: str) -> str:
+        """
+        Expand shortcuts in a single coordinate (no '+' composition).
+
+        Args:
+            coordinate: Single coordinate string (may contain shortcuts)
+
+        Returns:
+            Expanded coordinate string
+        """
         # Apply shortcuts iteratively (in case shortcuts reference other shortcuts)
         max_iterations = 10  # Prevent infinite loops
         used_shortcuts = set()
