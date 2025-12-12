@@ -164,8 +164,11 @@ class JgoCommands:
             print(f"Running {spec.name}...")
 
         runner = self._create_java_runner()
+        # Use environment's main class if set, otherwise fall back to args.main_class
+        main_class_to_use = environment.main_class or self.args.main_class
         result = runner.run(
             environment=environment,
+            main_class=main_class_to_use,
             app_args=self.args.app_args,
             additional_jvm_args=self.args.jvm_args,
             additional_classpath=self.args.classpath_append,
