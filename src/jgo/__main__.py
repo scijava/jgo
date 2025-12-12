@@ -20,6 +20,11 @@ def main():
     parser = JgoArgumentParser()
     args = parser.parse_args()
 
+    # Show help if no endpoint and not in spec mode
+    if not args.endpoint and not args.is_spec_mode():
+        parser.parser.print_help()
+        sys.exit(0)
+
     # Setup logging
     setup_logging(verbose=args.verbose, quiet=args.quiet)
 
