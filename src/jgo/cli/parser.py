@@ -1,5 +1,5 @@
 """
-CLI argument parser for jgo 2.0 using Click.
+CLI argument parser for jgo.
 """
 
 from __future__ import annotations
@@ -297,7 +297,11 @@ def global_options(f):
 @click.group(
     cls=JgoGroup,
     invoke_without_command=True,
-    help="Launch Java applications from Maven coordinates without manual installation.",
+    help="""Environment manager for Java programs.
+
+Launch Java applications directly from Maven coordinates,
+build reproducible environments, manage Java versions,
+and resolve dependencies -- without manual installation.""",
 )
 @global_options
 @click.pass_context

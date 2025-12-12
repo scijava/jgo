@@ -1,7 +1,7 @@
 """
 Main entry point for jgo CLI.
 
-This module implements the command-line interface for jgo 2.0 using Click.
+This module implements the command-line interface for jgo.
 """
 
 from .cli.parser import cli
