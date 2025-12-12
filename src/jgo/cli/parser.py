@@ -26,7 +26,11 @@ class JgoArgumentParser:
         """Build the argument parser."""
         parser = argparse.ArgumentParser(
             prog="jgo",
-            description="Launch Java applications from Maven coordinates",
+            usage="jgo [OPTIONS] [endpoint] [-- JVM_ARGS] [-- APP_ARGS]",
+            description="""Launch Java applications from Maven coordinates with dependency resolution.
+
+Build reproducible environments, manage Java versions, resolve dependencies,
+and run JVM applications -- all without manual installation.""",
             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog="""
 Endpoint Format:
