@@ -25,7 +25,7 @@ def classpath(ctx, endpoint):
     opts["print_dependency_list"] = False
     opts["list_entrypoints"] = False
 
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    config = JgoConfig.load_from_opts(opts)
     args = _build_parsed_args(opts, endpoint=endpoint, command="info")
 
     exit_code = execute(args, config.to_dict())
@@ -47,7 +47,7 @@ def deptree(ctx, endpoint):
     opts["print_dependency_list"] = False
     opts["list_entrypoints"] = False
 
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    config = JgoConfig.load_from_opts(opts)
     args = _build_parsed_args(opts, endpoint=endpoint, command="info")
 
     exit_code = execute(args, config.to_dict())
@@ -69,7 +69,7 @@ def deplist(ctx, endpoint):
     opts["print_dependency_list"] = True
     opts["list_entrypoints"] = False
 
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    config = JgoConfig.load_from_opts(opts)
     args = _build_parsed_args(opts, endpoint=endpoint, command="info")
 
     exit_code = execute(args, config.to_dict())
@@ -91,7 +91,7 @@ def javainfo(ctx, endpoint):
     opts["print_dependency_list"] = False
     opts["list_entrypoints"] = False
 
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    config = JgoConfig.load_from_opts(opts)
     args = _build_parsed_args(opts, endpoint=endpoint, command="info")
 
     exit_code = execute(args, config.to_dict())
@@ -112,7 +112,7 @@ def entrypoints(ctx):
     opts["print_dependency_list"] = False
     opts["list_entrypoints"] = True
 
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    config = JgoConfig.load_from_opts(opts)
     args = _build_parsed_args(opts, endpoint=None, command="info")
 
     exit_code = execute(args, config.to_dict())
@@ -134,7 +134,7 @@ def manifest(ctx, endpoint, raw):
     from ..parser import _build_parsed_args
 
     opts = ctx.obj
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    config = JgoConfig.load_from_opts(opts)
     args = _build_parsed_args(opts, endpoint=endpoint, command="info")
 
     try:
@@ -212,7 +212,7 @@ def pom(ctx, endpoint):
     from ..parser import _build_parsed_args
 
     opts = ctx.obj
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    config = JgoConfig.load_from_opts(opts)
     args = _build_parsed_args(opts, endpoint=endpoint, command="info")
 
     try:

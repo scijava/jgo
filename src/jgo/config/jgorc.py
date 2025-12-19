@@ -11,6 +11,18 @@ import os
 from pathlib import Path
 
 
+def config_file_path() -> Path:
+    """
+    Get the config file path using XDG Base Directory standard.
+
+    Returns:
+        Path to config file (~/.config/jgo/config if exists, otherwise ~/.jgorc)
+    """
+    xdg_config = Path.home() / ".config" / "jgo" / "config"
+    legacy_config = Path.home() / ".jgorc"
+    return xdg_config if xdg_config.exists() else legacy_config
+
+
 class JgoConfig:
     """
     Configuration loaded from config file and environment variables.
@@ -43,8 +55,8 @@ class JgoConfig:
             repositories: Maven repositories (name -> URL)
             shortcuts: Coordinate shortcuts
         """
-        self.cache_dir = cache_dir or Path.home() / ".cache" / "jgo"
-        self.repo_cache = repo_cache or Path.home() / ".m2" / "repository"
+        self.cache_dir = cache_dir or (Path.home() / ".cache" / "jgo")
+        self.repo_cache = repo_cache or (Path.home() / ".m2" / "repository")
         self.links = links
         self.repositories = repositories or {}
         self.shortcuts = shortcuts or {}
@@ -61,13 +73,7 @@ class JgoConfig:
             JgoConfig instance
         """
         if config_file is None:
-            # XDG Base Directory standard location
-            xdg_config = Path.home() / ".config" / "jgo" / "config"
-            # Legacy location for backward compatibility
-            legacy_config = Path.home() / ".jgorc"
-
-            # Prefer XDG location, fall back to legacy
-            config_file = xdg_config if xdg_config.exists() else legacy_config
+            config_file = config_file_path()
 
         # Start with defaults
         config = cls._default_config()
@@ -80,6 +86,21 @@ class JgoConfig:
         config = cls._apply_environment_variables(config)
 
         return config
+
+    @classmethod
+    def load_from_opts(cls, opts: dict) -> "JgoConfig":
+        """
+        Load configuration based on command options.
+
+        Args:
+            opts: Options dictionary (e.g., from argparse Namespace.__dict__)
+
+        Returns:
+            JgoConfig instance (empty if ignore_jgorc is set, otherwise loaded)
+        """
+        if opts.get("ignore_jgorc"):
+            return cls()
+        return cls.load()
 
     @classmethod
     def _default_config(cls) -> "JgoConfig":

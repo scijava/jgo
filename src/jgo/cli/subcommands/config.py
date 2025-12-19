@@ -69,7 +69,7 @@ def config(ctx, list_all, global_config, local_config, unset, key, value):
         return
 
     opts = ctx.obj
-    jgorc = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    jgorc = JgoConfig.load_from_opts(opts)
     args = _build_parsed_args(opts, command="config")
 
     exit_code = execute(
@@ -121,7 +121,9 @@ def execute(
         config_type = "local"
     else:
         # Default to global
-        config_file = Path.home() / ".jgorc"
+        from ...config.jgorc import config_file_path
+
+        config_file = config_file_path()
         config_type = "global"
 
     # Handle different operations
@@ -173,12 +175,7 @@ def _list_jgorc(config_file: Path, args: ParsedArgs) -> int:
 
 def _list_toml(config_file: Path, args: ParsedArgs) -> int:
     """List all configuration from jgo.toml file."""
-    import sys
-
-    if sys.version_info >= (3, 11):
-        import tomllib
-    else:
-        import tomli as tomllib
+    from ...util.toml import tomllib
 
     with open(config_file, "rb") as f:
         data = tomllib.load(f)
@@ -246,12 +243,7 @@ def _get_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) -> i
 
 def _get_toml(config_file: Path, section: str, key: str, args: ParsedArgs) -> int:
     """Get value from jgo.toml file."""
-    import sys
-
-    if sys.version_info >= (3, 11):
-        import tomllib
-    else:
-        import tomli as tomllib
+    from ...util.toml import tomllib
 
     with open(config_file, "rb") as f:
         data = tomllib.load(f)
@@ -324,14 +316,9 @@ def _set_toml(
     config_file: Path, section: str, key: str, value: str, args: ParsedArgs
 ) -> int:
     """Set value in jgo.toml file."""
-    import sys
-
-    if sys.version_info >= (3, 11):
-        import tomllib
-    else:
-        import tomli as tomllib
-
     import tomli_w
+
+    from ...util.toml import tomllib
 
     # Read existing file
     if not config_file.exists():
@@ -430,14 +417,9 @@ def _unset_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) ->
 
 def _unset_toml(config_file: Path, section: str, key: str, args: ParsedArgs) -> int:
     """Unset value in jgo.toml file."""
-    import sys
-
-    if sys.version_info >= (3, 11):
-        import tomllib
-    else:
-        import tomli as tomllib
-
     import tomli_w
+
+    from ...util.toml import tomllib
 
     with open(config_file, "rb") as f:
         data = tomllib.load(f)

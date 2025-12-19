@@ -56,7 +56,7 @@ def shortcut(ctx, remove_name, list_all, name, endpoint):
     from ..parser import _build_parsed_args
 
     opts = ctx.obj
-    jgorc = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    jgorc = JgoConfig.load_from_opts(opts)
     args = _build_parsed_args(opts, command="config")
 
     exit_code = execute(
@@ -96,10 +96,9 @@ def execute(
     """
     # Determine config file location (always global for shortcuts)
     if config_file is None:
-        # Check XDG location first, fall back to legacy
-        xdg_config = Path.home() / ".config" / "jgo" / "config"
-        legacy_config = Path.home() / ".jgorc"
-        config_file = xdg_config if xdg_config.exists() else legacy_config
+        from ...config.jgorc import config_file_path
+
+        config_file = config_file_path()
 
     # Handle remove
     if remove_name:

@@ -9,7 +9,9 @@ import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from ..constants import DEFAULT_MAVEN_REPO, MAVEN_CENTRAL_URL
 from ..env import EnvironmentBuilder, EnvironmentSpec, LinkStrategy
+from ..env.builder import filter_managed_components
 from ..exec import JavaRunner, JavaSource, JVMConfig
 from ..maven import MavenContext, MavenResolver, SimpleResolver
 from .parser import ParsedArgs
@@ -195,11 +197,8 @@ class JgoCommands:
         # If --print-dependency-tree or --print-dependency-list, parse endpoint and print without building
         if self.args.print_dependency_tree or self.args.print_dependency_list:
             components, coordinates, _ = builder._parse_endpoint(self.args.endpoint)
-            # Determine which components should be included as BOMs:
-            # coordinates without raw flag are managed.
-            boms = [
-                comp for comp, coord in zip(components, coordinates) if not coord.raw
-            ]
+            # Determine which components should be managed
+            boms = filter_managed_components(components, coordinates)
             self._print_dependencies(
                 components,
                 context,
@@ -268,16 +267,14 @@ class JgoCommands:
         repo_cache = self.args.repo_cache
         if repo_cache is None:
             # Check config, then default
-            repo_cache = self.config.get(
-                "repo_cache", Path.home() / ".m2" / "repository"
-            )
+            repo_cache = self.config.get("repo_cache", DEFAULT_MAVEN_REPO)
         repo_cache = Path(repo_cache).expanduser()
 
         # Get remote repositories
         remote_repos = {}
 
         # Start with Maven Central
-        remote_repos["central"] = "https://repo.maven.apache.org/maven2"
+        remote_repos["central"] = MAVEN_CENTRAL_URL
 
         # Add from config
         if "repositories" in self.config:

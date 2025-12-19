@@ -35,7 +35,7 @@ def sync(ctx, force):
     from ..parser import _build_parsed_args
 
     opts = ctx.obj
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    config = JgoConfig.load_from_opts(opts)
     args = _build_parsed_args(opts, command="sync")
     args.force = force
 

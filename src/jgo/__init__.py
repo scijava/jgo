@@ -107,6 +107,7 @@ import subprocess
 from pathlib import Path
 
 from .config.jgorc import JgoConfig
+from .constants import MAVEN_CENTRAL_URL
 from .env import Environment, EnvironmentBuilder, LinkStrategy
 from .exec import JavaRunner, JavaSource, JVMConfig
 from .jgo import (
@@ -170,7 +171,7 @@ def run(
     config = JgoConfig.load()
 
     # Create Maven context
-    remote_repos = {"central": "https://repo.maven.apache.org/maven2"}
+    remote_repos = {"central": MAVEN_CENTRAL_URL}
     if repositories:
         remote_repos.update(repositories)
 
@@ -247,7 +248,7 @@ def build(
     config = JgoConfig.load()
 
     # Create Maven context
-    remote_repos = {"central": "https://repo.maven.apache.org/maven2"}
+    remote_repos = {"central": MAVEN_CENTRAL_URL}
     if repositories:
         remote_repos.update(repositories)
 
@@ -292,7 +293,7 @@ def resolve(
     config = JgoConfig.load()
 
     # Create Maven context
-    remote_repos = {"central": "https://repo.maven.apache.org/maven2"}
+    remote_repos = {"central": MAVEN_CENTRAL_URL}
     if repositories:
         remote_repos.update(repositories)
 

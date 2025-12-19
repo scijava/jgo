@@ -8,19 +8,13 @@ including SNAPSHOT timestamps and SHA256 checksums.
 from __future__ import annotations
 
 import hashlib
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
-
-# Use tomllib (Python 3.11+) or tomli (backport for older versions)
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib
 
 import tomli_w
 
 from ..maven import Dependency
+from ..util.toml import tomllib
 
 
 class LockedDependency:

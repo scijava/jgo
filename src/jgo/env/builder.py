@@ -10,6 +10,7 @@ import hashlib
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from ..constants import DEFAULT_JGO_CACHE
 from ..parse.coordinate import Coordinate
 from .environment import Environment
 from .jar_util import autocomplete_main_class, detect_main_class_from_jar
@@ -20,6 +21,22 @@ if TYPE_CHECKING:
     from ..maven import Component, MavenContext
     from ..maven.core import Dependency
     from .spec import EnvironmentSpec
+
+
+def filter_managed_components(
+    components: list[Component], coordinates: list[Coordinate]
+) -> list[Component]:
+    """
+    Filter components to those that should be managed (i.e., not marked as raw).
+
+    Args:
+        components: List of Maven components
+        coordinates: List of parsed coordinates (parallel to components)
+
+    Returns:
+        List of components that should be managed (coordinates without raw flag)
+    """
+    return [comp for comp, coord in zip(components, coordinates) if not coord.raw]
 
 
 class EnvironmentBuilder:
@@ -63,7 +80,7 @@ class EnvironmentBuilder:
             return Path(".jgo")
 
         # Default to centralized cache
-        return Path.home() / ".cache" / "jgo"
+        return DEFAULT_JGO_CACHE
 
     def from_endpoint(
         self, endpoint: str, update: bool = False, main_class: str | None = None
@@ -78,9 +95,8 @@ class EnvironmentBuilder:
         # Parse endpoint
         components, coordinates, parsed_main_class = self._parse_endpoint(endpoint)
 
-        # Determine which components should be managed:
-        # Coordinates without raw flag are managed.
-        boms = [comp for comp, coord in zip(components, coordinates) if not coord.raw]
+        # Determine which components should be managed
+        boms = filter_managed_components(components, coordinates)
 
         # Temporarily store managed components for use in from_components
         self._current_boms = boms if boms else None

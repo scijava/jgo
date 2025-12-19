@@ -4,7 +4,6 @@ CLI argument parser for jgo.
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import click
@@ -159,20 +158,14 @@ class JgoArgumentParser:
             try:
                 from pathlib import Path
 
-                if sys.version_info < (3, 11):
-                    import tomli
-                else:
-                    import tomllib
+                from ..util.toml import tomllib
 
                 pyproject = (
                     Path(__file__).parent.parent.parent.parent / "pyproject.toml"
                 )
                 if pyproject.exists():
                     with open(pyproject, "rb") as f:
-                        if sys.version_info < (3, 11):
-                            data = tomli.load(f)
-                        else:
-                            data = tomllib.load(f)
+                        data = tomllib.load(f)
                         return data.get("project", {}).get("version", "unknown")
             except Exception:
                 pass

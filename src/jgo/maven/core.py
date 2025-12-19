@@ -28,6 +28,7 @@ from os import environ
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable
 
+from ..constants import DEFAULT_MAVEN_REPO, MAVEN_CENTRAL_URL
 from ..parse.coordinate import Coordinate, coord2str
 from ..util.io import binary, text
 
@@ -39,7 +40,7 @@ if TYPE_CHECKING:
 # -- Constants --
 
 DEFAULT_LOCAL_REPOS = []
-DEFAULT_REMOTE_REPOS = {"central": "https://repo.maven.apache.org/maven2"}
+DEFAULT_REMOTE_REPOS = {"central": MAVEN_CENTRAL_URL}
 DEFAULT_CLASSIFIER = ""
 DEFAULT_PACKAGING = "jar"
 
@@ -85,7 +86,7 @@ class MavenContext:
             By default, the SimpleResolver will be used.
         """
         self.repo_cache: Path = repo_cache or Path(
-            environ.get("M2_REPO", str(Path("~").expanduser() / ".m2" / "repository"))
+            environ.get("M2_REPO", str(DEFAULT_MAVEN_REPO))
         )
         self.local_repos: list[Path] = (
             DEFAULT_LOCAL_REPOS if local_repos is None else local_repos

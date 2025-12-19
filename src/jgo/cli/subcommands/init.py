@@ -19,7 +19,7 @@ def init(ctx, endpoint):
     from ..parser import _build_parsed_args
 
     opts = ctx.obj
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    config = JgoConfig.load_from_opts(opts)
     args = _build_parsed_args(opts, endpoint=endpoint, command="init")
 
     exit_code = execute(args, config.to_dict())

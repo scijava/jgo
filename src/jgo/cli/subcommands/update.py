@@ -34,7 +34,7 @@ def update(ctx, force):
     from . import sync as sync_cmd
 
     opts = ctx.obj
-    config = JgoConfig() if opts.get("ignore_jgorc") else JgoConfig.load()
+    config = JgoConfig.load_from_opts(opts)
 
     # Force update flag to be set
     opts["update"] = True

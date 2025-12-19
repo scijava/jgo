@@ -7,16 +7,11 @@ reproducible Java environments.
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
-# Use tomllib (Python 3.11+) or tomli (backport for older versions)
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib
-
 import tomli_w
+
+from ..util.toml import tomllib
 
 
 class EnvironmentSpec:
