@@ -1,0 +1,82 @@
+Remove --raw flag
+- Just support ! for raw individual components, that's it.
+
+Fix Sphinx-style :param: docstring syntax -- always use Google-style "Args:"
+
+Finish adding --direct flag (transitive=False) to resolver implementations (see odo).
+
+jgo.cli.subcommands -> jgo.cli.commands (can we really parcel out *all* of commands.py?)
+
+Remove or repurpose obsolete files in docs/
+
+Use consistent capitalization style for Markdown docs (excepting README.md and AGENTS.md, of course).
+
+FIX SimpleResolver bugs!
+- Migrate thicket code from db-xml-maven
+
+Reconcile jgo.toml, jgo.lock.toml, manifest.json in jgo envs -- do we really need manifest.json?
+- Is jgo.toml in `./` always the same as the one in `./.jgo/<groupId>/<artifactId>/<hash>/` ?
+
+Do we really need the `<groupId>/<artifactId>/<hash>` substructure beneath `.jgo` for workspace-based jgo?
+- Nicer would be to mutate the env directly under the `cache_dir`. Do we need a toml flag for controlling this?
+
+Make `jgo help` work:
+* `jgo help` = `jgo --help`
+* `jgo help version` = `jgo version --help`
+* etc.
+
+Make `jgo --version` work. Same as `jgo version`.
+
+Change `jgo --java-source system` to just `jgo --system-java`.
+- "java-source" sounds like something with source code -- but it's not.
+- Keeps cjdk better encapsulated.
+- Will we ever have a third option besides cjdk or system? I don't think so.
+
+Add support for module paths
+
+What's the difference between `jgo --resolver auto` and `jgo --resolver pure` ?
+
+Rename SimpleResolver to PythonResolver? And MavenResolver to MvnResolver?
+
+Shore up "jgorc" references throughout the codebase. `--ignore-jgorc` -> `--ignore-config`
+
+Does `-vvv` (or a sufficient number of v's) pass `-X` to `mvn` when using the MvnResolver?
+
+Fix the `--dry-run` flag to actually not run -- it should print the java launch command.
+
+Fix passing of JVM arguments. E.g. this doesn't currently work:
+  `jgo run ops+org.scijava:app-launcher --add-opens=java.base/java.lang=ALL-UNNAMED`
+nor does this:
+  `jgo run ops+org.scijava:app-launcher -- --add-opens=java.base/java.lang=ALL-UNNAMED`
+
+Fix broken `jgo config` syntax:
+- On the one hand, it works like git: `jgo config mykey myvalue` for setting.
+- But on the other hand, `jgo config shortcut` is supposed to be a subcommand.
+- But the `shortcut` subcommand does not actually work; it's interpreted as a key name.
+- Should `jgo config` with no args do a `--list` by default? `git config` does not do this.
+- Probably we should just deviate from git in favor of consistency with subcommand syntax.
+
+Make verbose flags give more dependency resolution detail:
+- `jgo -v update` gives some info
+- But it does not say what the newest version of each dep is, nor which deps got updated.
+
+No API for managing jgo entrypoints
+
+Terms `endpoint` and `entrypoint` are confusingly similar -- any recourse, or no?
+
+What is the difference between `jgo -u` and `jgo update`? Do we need both?
+- For non-project mode, `jgo -u` seems needed for whether to update hashed env...
+
+`jgo init` does not add an entrypoint for inferred main class of endpoint
+- E.g. `jgo init org.python:jython-slim` followed by `jgo run` will run `org.python.util.jython`.
+- But that entrypoint is not written into the `jgo.toml`
+- What happens after a subsequent `jgo update` if the `jython-slim` main class has changed?
+  - If we write `default = org.python:jython-slim` as the default entrypoint, we can
+    retain the magical inference, updating `manifest.json` after each `-u`.
+  - Or, if we write `default = org.python.util.jython`, we can keep it fixed.
+  - Which behavior is better? I lean toward the former.
+- Similarly, minimum java version is inferred... but at update, is it updated?
+  - Generally speaking: how "hard" should `jgo update` update?
+    - recalculate min java version?
+    - recalculate inferred main classes?
+
