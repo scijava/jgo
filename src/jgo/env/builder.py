@@ -10,6 +10,7 @@ import hashlib
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from ..parse.coordinate import Coordinate
 from .environment import Environment
 from .jar_util import autocomplete_main_class, detect_main_class_from_jar
 from .linking import LinkStrategy, link_file
@@ -36,11 +37,11 @@ class EnvironmentBuilder:
         context: MavenContext,
         cache_dir: Path | None = None,
         link_strategy: LinkStrategy = LinkStrategy.AUTO,
-        managed: bool = False,
+        raw: bool = False,
     ):
         self.context = context
         self.link_strategy = link_strategy
-        self.managed = managed
+        self.raw = raw
 
         # Auto-detect cache directory if not specified
         if cache_dir is None:
@@ -71,23 +72,15 @@ class EnvironmentBuilder:
         Build an environment from an endpoint string.
 
         Endpoint format: G:A[:V][:C][:mainClass][!][+G:A:V...]
-        Components with ! suffix are used as managed BOMs.
+        - Components with ! suffix are always raw/unmanaged
+        - --raw flag enables raw resolution for all components
         """
         # Parse endpoint
-        components, managed_flags, parsed_main_class = self._parse_endpoint(endpoint)
+        components, coordinates, parsed_main_class = self._parse_endpoint(endpoint)
 
-        # Apply -m flag: if self.managed is True, mark all components as managed
-        # Otherwise, use the per-component managed flags from ! markers
-        if self.managed:
-            # -m flag forces all components to be managed (backward compatibility)
-            boms = components
-        else:
-            # Use explicit ! markers to determine which components are managed
-            boms = [
-                comp
-                for comp, is_managed in zip(components, managed_flags)
-                if is_managed
-            ]
+        # Determine which components should be managed:
+        # Coordinates without raw flag are managed.
+        boms = [comp for comp, coord in zip(components, coordinates) if not coord.raw]
 
         # Temporarily store managed components for use in from_components
         self._current_boms = boms if boms else None
@@ -158,14 +151,13 @@ class EnvironmentBuilder:
         """
         # Parse coordinates into components
         components = []
-        for coord in spec.coordinates:
-            parts = coord.split(":")
-            groupId = parts[0]
-            artifactId = parts[1]
-            version = parts[2] if len(parts) >= 3 else "RELEASE"
-            # TODO: Handle classifier (parts[3]) -- use Artifact instead?
+        for coord_str in spec.coordinates:
+            coord = Coordinate.parse(coord_str)
+            version = coord.version or "RELEASE"
 
-            component = self.context.project(groupId, artifactId).at_version(version)
+            component = self.context.project(
+                coord.groupId, coord.artifactId
+            ).at_version(version)
             components.append(component)
 
         # Get main class from entrypoint
@@ -260,8 +252,8 @@ class EnvironmentBuilder:
         # Use managed components from endpoint parsing (stored in _current_boms)
         # or fall back to old behavior for backward compatibility
         boms = getattr(self, "_current_boms", None)
-        if boms is None and self.managed:
-            # Backward compatibility: if -m flag is set but no explicit markers, manage all
+        if boms is None and not self.raw:
+            # Backward compatibility: if not using raw resolution, manage all components
             boms = components
 
         # Resolve all components together (not separately!)
@@ -313,211 +305,32 @@ class EnvironmentBuilder:
 
     def _parse_endpoint(
         self, endpoint: str
-    ) -> tuple[list[Component], list[bool], str | None]:
+    ) -> tuple[list[Component], list[Coordinate], str | None]:
         """
         Parse endpoint string into components and main class.
 
-        New format: coord1+coord2+...+coordN@mainClass
-        Old format: coord1:coord2:@mainClass or coord1:coord2:mainClass (deprecated)
+        Now uses Endpoint.parse() from jgo.parse.endpoint for consistency.
 
         Returns:
-            Tuple of (components_list, managed_flags, main_class)
-            - components_list: List of Component objects
-            - managed_flags: List of booleans indicating if each component should be managed (has ! suffix)
-            - main_class: Main class to run (only from first endpoint part)
+            Tuple of (components_list, coordinates_list, main_class)
+            - components_list: List of Component objects for Maven resolution
+            - coordinates_list: List of Coordinate objects (containing raw flags)
+            - main_class: Main class to run
         """
-        import re
-        import warnings
+        from ..parse.endpoint import Endpoint
 
-        main_class = None
-        coordinates_part = endpoint
-        old_format_detected = False
+        # Use the unified parsing logic from jgo.parse.endpoint
+        parsed = Endpoint.parse(endpoint)
 
-        # Check for new @ separator format
-        if "@" in endpoint:
-            # Find the @ that separates coordinates from main class
-            # New format: coord1+coord2@MainClass (@ after all coordinates)
-            # Old format: coord:@MainClass (@ comes right after :)
-
-            # Check if @ appears after a + (which means it's in the middle of coords)
-            # Split by + first to see if @ is in any part
-            plus_parts = endpoint.split("+")
-
-            # Find which part contains @
-            at_part_index = -1
-            for i, part in enumerate(plus_parts):
-                if "@" in part:
-                    at_part_index = i
-                    break
-
-            if at_part_index == 0 and len(plus_parts) > 1:
-                # @ is in the first part, before other coordinates
-                # This could be new format: coord@Main+coord2
-                # Split on @ in the first part only
-                first_part = plus_parts[0]
-                at_index = first_part.rfind("@")
-                before_at = first_part[:at_index]
-                after_at = first_part[at_index + 1 :]
-
-                if before_at.endswith(":"):
-                    # Old format: coord:@MainClass
-                    old_format_detected = True
-                    warnings.warn(
-                        "The ':@mainClass' syntax is deprecated. "
-                        "Use 'coord1+coord2@mainClass' instead.",
-                        DeprecationWarning,
-                        stacklevel=3,
-                    )
-                    main_class = "@" + after_at if after_at else None
-                    # Don't modify coordinates_part for old format
-                else:
-                    # New format: coord@MainClass+coord2
-                    main_class = after_at if after_at else None
-                    # Reconstruct coordinates_part without the @MainClass
-                    plus_parts[0] = before_at
-                    coordinates_part = "+".join(plus_parts)
-            elif at_part_index == len(plus_parts) - 1:
-                # @ is in the last part, after all coordinates (typical new format)
-                last_part = plus_parts[-1]
-                at_index = last_part.rfind("@")
-                before_at = last_part[:at_index]
-                after_at = last_part[at_index + 1 :]
-
-                if before_at.endswith(":"):
-                    # Old format: coord:@MainClass
-                    old_format_detected = True
-                    warnings.warn(
-                        "The ':@mainClass' syntax is deprecated. "
-                        "Use 'coord1+coord2@mainClass' instead.",
-                        DeprecationWarning,
-                        stacklevel=3,
-                    )
-                    main_class = "@" + after_at if after_at else None
-                else:
-                    # New format: coord1+coord2@MainClass
-                    main_class = after_at if after_at else None
-                    # Reconstruct coordinates_part without the @MainClass
-                    plus_parts[-1] = before_at
-                    coordinates_part = "+".join(plus_parts)
-            elif at_part_index >= 0:
-                # @ is in a middle part (unusual, but handle it)
-                part_with_at = plus_parts[at_part_index]
-                at_index = part_with_at.rfind("@")
-                before_at = part_with_at[:at_index]
-                after_at = part_with_at[at_index + 1 :]
-
-                if before_at.endswith(":"):
-                    # Old format
-                    old_format_detected = True
-                    warnings.warn(
-                        "The ':@mainClass' syntax is deprecated. "
-                        "Use 'coord1+coord2@mainClass' instead.",
-                        DeprecationWarning,
-                        stacklevel=3,
-                    )
-                    main_class = "@" + after_at if after_at else None
-                else:
-                    # New format in middle (weird but valid)
-                    main_class = after_at if after_at else None
-                    plus_parts[at_part_index] = before_at
-                    coordinates_part = "+".join(plus_parts)
-
-        # Split on + for multiple components
-        parts = coordinates_part.split("+")
+        # Convert coordinates to Maven Component objects
         components = []
-        managed_flags = []
-
-        for i, part in enumerate(parts):
-            # Check for ! suffix indicating managed dependency
-            # Handle both ! and \! (shell escaped)
-            is_managed = part.endswith("!") or part.endswith("\\!")
-            if part.endswith("\\!"):
-                part = part[:-2]  # Strip the \! suffix
-            elif part.endswith("!"):
-                part = part[:-1]  # Strip the ! suffix
-
-            # Parse G:A[:V][:C][:mainClass]
-            tokens = part.split(":")
-
-            if len(tokens) < 2:
-                raise ValueError(
-                    f"Invalid endpoint format '{part}': need at least groupId:artifactId"
-                )
-
-            if len(tokens) > 5:
-                raise ValueError(
-                    f"Invalid endpoint format '{part}': too many elements (max 5)"
-                )
-
-            groupId = tokens[0]
-            artifactId = tokens[1]
-            version = "RELEASE"
-            classifier = None
-            part_main_class = None
-
-            # Parse remaining tokens based on count
-            if len(tokens) == 3:
-                # Could be G:A:V or G:A:mainClass
-                # Check if it looks like a version
-                if re.match(r"([0-9].*|RELEASE|LATEST|MANAGED)", tokens[2]):
-                    version = tokens[2]
-                else:
-                    # Old format: main class in colon-separated tokens
-                    if i == 0:  # Only first component can have main class
-                        # Only warn if we didn't already detect old format with @
-                        if not old_format_detected:
-                            warnings.warn(
-                                "The ':mainClass' syntax is deprecated. "
-                                "Use 'coord1+coord2@mainClass' instead.",
-                                DeprecationWarning,
-                                stacklevel=3,
-                            )
-                        part_main_class = tokens[2]
-
-            elif len(tokens) == 4:
-                # G:A:V:C or G:A:V:mainClass
-                # If tokens[3] contains a dot, it's likely a main class
-                version = tokens[2]
-                if "." in tokens[3] or tokens[3][0].isupper():
-                    # Old format: main class in colon-separated tokens
-                    if i == 0:  # Only first component can have main class
-                        # Only warn if we didn't already detect old format with @
-                        if not old_format_detected:
-                            warnings.warn(
-                                "The ':mainClass' syntax is deprecated. "
-                                "Use 'coord1+coord2@mainClass' instead.",
-                                DeprecationWarning,
-                                stacklevel=3,
-                            )
-                        part_main_class = tokens[3]
-                else:
-                    classifier = tokens[3]  # noqa: F841 - TODO: Use Artifact instead?
-
-            elif len(tokens) == 5:
-                # G:A:V:C:mainClass
-                version = tokens[2]
-                classifier = tokens[3]  # noqa: F841 - TODO: Use Artifact instead?
-                # Old format: main class in colon-separated tokens
-                if i == 0:  # Only first component can have main class
-                    # Only warn if we didn't already detect old format with @
-                    if not old_format_detected:
-                        warnings.warn(
-                            "The ':mainClass' syntax is deprecated. "
-                            "Use 'coord1+coord2@mainClass' instead.",
-                            DeprecationWarning,
-                            stacklevel=3,
-                        )
-                    part_main_class = tokens[4]
-
-            # Only the first component can specify main class via old format
-            # If main_class was already set from @ separator, don't override
-            if i == 0 and part_main_class and main_class is None:
-                main_class = part_main_class
-
-            # Create component
-            component = self.context.project(groupId, artifactId).at_version(version)
-            # TODO: Handle classifier by using Artifact instead?
+        for coord in parsed.coordinates:
+            # Use version if specified, otherwise default to RELEASE
+            version = coord.version or "RELEASE"
+            component = self.context.project(
+                coord.groupId, coord.artifactId
+            ).at_version(version)
+            # TODO: Handle classifier and packaging by using Artifact instead?
             components.append(component)
-            managed_flags.append(is_managed)
 
-        return components, managed_flags, main_class
+        return components, parsed.coordinates, parsed.main_class

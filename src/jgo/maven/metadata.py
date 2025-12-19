@@ -8,13 +8,13 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from itertools import combinations
 from pathlib import Path
+from re import match
 from typing import TYPE_CHECKING, Iterable
 
-from .core import XML
-from .util import ts2dt
+from .pom import XML
 
 if TYPE_CHECKING:
-    from .core import MavenContext
+    pass
 
 
 class Metadata(ABC):
@@ -54,8 +54,8 @@ class MetadataXML(XML, Metadata):
     Convenience wrapper around a maven-metadata.xml document.
     """
 
-    def __init__(self, source: Path | str, context: MavenContext | None = None):
-        super().__init__(source, context)
+    def __init__(self, source: Path | str):
+        super().__init__(source)
 
     @property
     def groupId(self) -> str | None:
@@ -131,3 +131,17 @@ class Metadatas(Metadata):
     @property
     def release(self) -> str | None:
         return next((m.release for m in reversed(self.metadatas) if m.release), None)
+
+
+def ts2dt(ts: str) -> datetime:
+    """
+    Convert a Maven-style timestamp string into a Python datetime object.
+
+    Valid forms:
+    * 20210702144918 (seen in <lastUpdated> in maven-metadata.xml)
+    * 20210702.144917 (seen in deployed SNAPSHOT filenames and <snapshotVersion><value>)
+    """
+    m = match(r"(\d{4})(\d\d)(\d\d)\.?(\d\d)(\d\d)(\d\d)", ts)
+    if not m:
+        raise ValueError(f"Invalid timestamp: {ts}")
+    return datetime(*map(int, m.groups()))  # noqa

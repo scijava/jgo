@@ -12,15 +12,14 @@ from typing import TYPE_CHECKING
 
 import requests
 
-from . import DEFAULT_CLASSIFIER
-from .core import Dependency
+from .core import Dependency, create_pom
 from .dependency_printer import (
     DependencyNode,
     format_dependency_list,
     format_dependency_tree,
 )
 from .model import Model
-from .pom import create_pom, write_temp_pom
+from .pom import write_temp_pom
 
 if TYPE_CHECKING:
     from .core import Artifact, Component
@@ -223,7 +222,7 @@ class SimpleResolver(Resolver):
         boms = _resolve_boms(components, managed, boms)
 
         pom = create_pom(components, boms)
-        model = Model(pom)
+        model = Model(pom, components[0].context)
         deps = model.dependencies()
 
         deps = _filter_component_deps(deps, components)
@@ -263,7 +262,7 @@ class SimpleResolver(Resolver):
         pom = create_pom(components, boms)
 
         # Build the model and get mediated dependencies
-        model = Model(pom)
+        model = Model(pom, components[0].context)
         deps = model.dependencies()
 
         deps = _filter_component_deps(deps, components)
@@ -317,7 +316,9 @@ class SimpleResolver(Resolver):
                 if dep_key not in processed:
                     processed.add(dep_key)
                     try:
-                        dep_model = Model(dep.artifact.component.pom())
+                        dep_model = Model(
+                            dep.artifact.component.pom(), dep.artifact.component.context
+                        )
                         # Only show compile/runtime dependencies transitively
                         transitive_deps = [
                             d
@@ -340,7 +341,7 @@ class SimpleResolver(Resolver):
             comp_node = DependencyNode(comp_dep)
 
             # Build tree from component's dependencies (exclude test scope)
-            comp_model = Model(comp.pom())
+            comp_model = Model(comp.pom(), comp.context)
             direct_deps = [
                 dep for dep in comp_model.deps.values() if dep.scope not in ("test",)
             ]
@@ -463,19 +464,17 @@ class MavenResolver(Resolver):
             if " -- module " in content:
                 content = content.split(" -- module ")[0].strip()
 
-            # Parse G:A:P[:C]:V:S format
-            parts = content.split(":")
-            if len(parts) < 5:
+            # Parse G:A:P[:C]:V:S format using Coordinate
+            try:
+                from ..parse.coordinate import Coordinate
+
+                coord = Coordinate.parse(content)
+            except ValueError:
+                # Not a valid coordinate format
                 continue
 
-            # Handle optional dependencies (marked with " (optional)") BEFORE scope validation
-            optional = False
-            if parts[-1].endswith(" (optional)"):
-                parts[-1] = parts[-1][:-11]  # Remove " (optional)"
-                optional = True
-
-            # Check if this looks like a dependency (ends with scope like 'compile', 'runtime', etc.)
-            if parts[-1] not in (
+            # Check if this looks like a dependency (has scope)
+            if not coord.scope or coord.scope not in (
                 "compile",
                 "runtime",
                 "provided",
@@ -485,30 +484,8 @@ class MavenResolver(Resolver):
             ):
                 continue
 
-            # Handle both G:A:P:V:S and G:A:P:C:V:S formats
-            if len(parts) == 5:
-                # G:A:P:V:S
-                groupId, artifactId, packaging, version, scope = parts
-                classifier = DEFAULT_CLASSIFIER
-            elif len(parts) == 6:
-                # G:A:P:C:V:S
-                groupId, artifactId, packaging, classifier, version, scope = parts
-            else:
-                # Unknown format, skip
-                _log.warning("Ignoring weird line: {line}")
-                continue
-
-            # Create dependency object
-            dep_artifact = (
-                context.project(groupId, artifactId)
-                .at_version(version)
-                .artifact(packaging=packaging, classifier=classifier)
-            )
-            dep = Dependency(
-                artifact=dep_artifact,
-                scope=scope,
-                optional=optional,
-            )
+            # Create dependency object from coordinate
+            dep = context.create_dependency(coord)
             dependencies.append(dep)
 
         return _filter_component_deps(dependencies, components)
@@ -645,67 +622,17 @@ class MavenResolver(Resolver):
             if " -- module " in clean_content:
                 clean_content = clean_content.split(" -- module ")[0].strip()
 
-            # Additional validation: coordinates should have at least G:A:P:V format
-            colon_count = clean_content.count(":")
-            if colon_count < 3:
+            # Parse G:A:P[:C]:V[:S] format using Coordinate
+            try:
+                from ..parse.coordinate import Coordinate
+
+                coord = Coordinate.parse(clean_content)
+            except ValueError:
+                # Not a valid coordinate format
                 continue
 
-            # Parse G:A:P[:C]:V[:S] format
-            # Can also have " (optional)" suffix
-            parts = clean_content.split(":")
-            if len(parts) < 4:
-                continue
-
-            optional = False
-            if parts[-1].endswith(" (optional)"):
-                parts[-1] = parts[-1][:-11]  # Remove " (optional)"
-                optional = True
-
-            # Parse based on number of parts
-            if len(parts) == 4:
-                # G:A:P:V
-                groupId, artifactId, packaging, version_scope = parts
-                classifier = None
-                # Check if last part has scope
-                if version_scope.count(":") == 0:
-                    version = version_scope
-                    scope = None
-                else:
-                    version, scope = version_scope.split(":", 1)
-            elif len(parts) == 5:
-                # Could be G:A:P:V:S or G:A:P:C:V
-                groupId, artifactId, packaging, part4, part5 = parts
-                # Check if part5 looks like a scope
-                if part5 in (
-                    "compile",
-                    "runtime",
-                    "provided",
-                    "test",
-                    "system",
-                    "import",
-                ):
-                    # G:A:P:C:V:S
-                    classifier = part4
-                    version = part5
-                    scope = None
-                else:
-                    # G:A:P:V:S
-                    classifier = None
-                    version = part4
-                    scope = part5
-            elif len(parts) == 6:
-                # G:A:P:C:V:S
-                groupId, artifactId, packaging, classifier, version, scope = parts
-            else:
-                continue
-
-            # Create node
-            artifact = (
-                context.project(groupId, artifactId)
-                .at_version(version)
-                .artifact(classifier, packaging)
-            )
-            dep = Dependency(artifact, scope, optional)
+            # Create dependency and node
+            dep = context.create_dependency(coord)
             node = DependencyNode(dep)
 
             # Handle root node (no indent)

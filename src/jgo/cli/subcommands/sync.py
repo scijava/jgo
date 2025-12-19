@@ -103,7 +103,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
             context=context,
             cache_dir=args.cache_dir,
             link_strategy=link_strategy,
-            managed=args.managed,
         )
 
         # Build environment from spec

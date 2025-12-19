@@ -53,8 +53,7 @@ class ParsedArgs:
         cache_dir: Path | None = None,
         repo_cache: Path | None = None,
         repositories: dict | None = None,
-        # Dependency management
-        managed: bool = True,
+        # Program to run
         main_class: str | None = None,
         # Classpath
         classpath_append: list[str] | None = None,
@@ -99,8 +98,7 @@ class ParsedArgs:
         self.cache_dir = cache_dir
         self.repo_cache = repo_cache
         self.repositories = repositories or {}
-        # Dependency management
-        self.managed = managed
+        # Program to run
         self.main_class = main_class
         # Classpath
         self.classpath_append = classpath_append or []
@@ -268,9 +266,12 @@ def global_options(f):
     )(f)
     f = click.option(
         "-m",
-        "--managed/--no-managed",
-        default=True,
-        help="Use dependency management (import scope) - DEFAULT",
+        "--managed",
+        "managed",
+        flag_value=False,
+        default=False,
+        hidden=True,
+        help="[DEPRECATED] Enable dependency management - this is now the default and has no effect",
     )(f)
 
     # Java options
@@ -463,8 +464,7 @@ def _build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, comman
         cache_dir=opts.get("cache_dir"),
         repo_cache=opts.get("repo_cache"),
         repositories=repositories,
-        # Dependency management
-        managed=opts.get("managed", True),
+        # Program to run
         main_class=opts.get("main_class"),
         # Classpath
         classpath_append=list(opts.get("add_classpath", [])),

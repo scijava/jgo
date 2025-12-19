@@ -129,12 +129,14 @@ class JgoCommands:
         if self.args.print_dependency_tree or self.args.print_dependency_list:
             # Parse coordinates into components
             components = []
-            for coord in spec.coordinates:
-                parts = coord.split(":")
-                groupId = parts[0]
-                artifactId = parts[1]
-                version = parts[2] if len(parts) >= 3 else "RELEASE"
-                component = context.project(groupId, artifactId).at_version(version)
+            for coord_str in spec.coordinates:
+                from ..parse.coordinate import Coordinate
+
+                coord = Coordinate.parse(coord_str)
+                version = coord.version or "RELEASE"
+                component = context.project(coord.groupId, coord.artifactId).at_version(
+                    version
+                )
                 components.append(component)
             self._print_dependencies(
                 components, context, list_mode=self.args.print_dependency_list
@@ -192,16 +194,12 @@ class JgoCommands:
 
         # If --print-dependency-tree or --print-dependency-list, parse endpoint and print without building
         if self.args.print_dependency_tree or self.args.print_dependency_list:
-            components, managed_flags, _ = builder._parse_endpoint(self.args.endpoint)
-            # Apply -m flag or use explicit ! markers
-            if self.args.managed:
-                boms = components
-            else:
-                boms = [
-                    comp
-                    for comp, is_managed in zip(components, managed_flags)
-                    if is_managed
-                ]
+            components, coordinates, _ = builder._parse_endpoint(self.args.endpoint)
+            # Determine which components should be included as BOMs:
+            # coordinates without raw flag are managed.
+            boms = [
+                comp for comp, coord in zip(components, coordinates) if not coord.raw
+            ]
             self._print_dependencies(
                 components,
                 context,
@@ -320,7 +318,6 @@ class JgoCommands:
             context=context,
             cache_dir=cache_dir,
             link_strategy=link_strategy,
-            managed=self.args.managed,
         )
 
     def _create_java_runner(self) -> JavaRunner:

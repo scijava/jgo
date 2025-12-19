@@ -11,7 +11,6 @@ This module provides pure-Python Maven functionality including:
 from .core import (
     DEFAULT_CLASSIFIER,
     DEFAULT_PACKAGING,
-    XML,
     Artifact,
     Component,
     Dependency,
@@ -20,9 +19,8 @@ from .core import (
 )
 from .metadata import Metadata, Metadatas, MetadataXML
 from .model import Model
-from .pom import POM
+from .pom import POM, XML
 from .resolver import MavenResolver, Resolver, SimpleResolver
-from .util import coord2str, ts2dt
 
 __all__ = [
     # Core classes
@@ -45,7 +43,4 @@ __all__ = [
     # Constants
     "DEFAULT_CLASSIFIER",
     "DEFAULT_PACKAGING",
-    # Utilities
-    "coord2str",
-    "ts2dt",
 ]

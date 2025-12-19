@@ -8,7 +8,7 @@ import logging
 from re import findall
 from typing import TYPE_CHECKING, Iterable
 
-from .core import Dependency, Project
+from .core import Dependency, MavenContext, Project
 from .pom import POM
 
 if TYPE_CHECKING:
@@ -25,13 +25,16 @@ class Model:
     A minimal Maven metadata model, tracking only dependencies and properties.
     """
 
-    def __init__(self, pom: POM):
+    def __init__(self, pom: POM, context: MavenContext | None = None):
         """
         Build a Maven metadata model from the given POM.
 
         :param pom: A source POM from which to extract metadata (e.g. dependencies).
+        :param context: Maven context for dependency resolution. If None, creates a default context.
         """
-        self.context = pom.context
+        from .core import MavenContext
+
+        self.context = context or MavenContext()
         self.gav = f"{pom.groupId}:{pom.artifactId}:{pom.version}"
         _log.debug(f"{self.gav}: begin model initialization")
 
@@ -58,14 +61,16 @@ class Model:
         # Merge values from the active profiles into the model.
         for profile in active_profiles:
             profile_dep_els = profile.findall("dependencies/dependency")
-            profile_deps = [self.context.dependency(el) for el in profile_dep_els]
+            profile_deps = [
+                self.context.parse_dependency_element(el) for el in profile_dep_els
+            ]
             self._merge_deps(profile_deps)
 
             profile_dep_mgmt_els = profile.findall(
                 "dependencyManagement/dependencies/dependency"
             )
             profile_dep_mgmt = [
-                self.context.dependency(el) for el in profile_dep_mgmt_els
+                self.context.parse_dependency_element(el) for el in profile_dep_mgmt_els
             ]
             self._merge_deps(profile_dep_mgmt, managed=True)
 
@@ -77,10 +82,10 @@ class Model:
         _log.debug(f"{self.gav}: parent resolution and inheritance assembly")
 
         # Merge values up the parent chain into the current model.
-        parent = pom.parent()
+        parent = self.context.pom_parent(pom)
         while parent:
             self._merge(parent)
-            parent = parent.parent()
+            parent = self.context.pom_parent(parent)
 
         # -- model interpolation --
         _log.debug(f"{self.gav}: model interpolation")
@@ -116,12 +121,12 @@ class Model:
             managed = self.dep_mgmt.get(gact, None)
             if managed is None:
                 # No managed version available
-                if dep.version is None:
+                if not dep.version:  # Check for None or empty string
                     raise ValueError(f"No version available for dependency {dep}")
                 continue
 
             # Inject version if not set
-            if dep.version is None:
+            if not dep.version:  # Check for None or empty string
                 dep.set_version(managed.version)
 
             # Inject scope if not explicitly set
@@ -182,7 +187,7 @@ class Model:
 
         # Look for transitive dependencies (i.e. dependencies of direct dependencies).
         for dep in direct_deps.values():
-            dep_model = Model(dep.artifact.component.pom())
+            dep_model = Model(dep.artifact.component.pom(), self.context)
             dep_deps = dep_model.dependencies(deps, root_dep_mgmt)
             for dep_dep in dep_deps:
                 if dep_dep.optional:
@@ -239,7 +244,7 @@ class Model:
             bom_pom = bom_project.at_version(dep.version).pom()
 
             # Fully build the BOM's model, agnostic of this one.
-            bom_model = Model(bom_pom)
+            bom_model = Model(bom_pom, self.context)
 
             # Merge the BOM model's <dependencyManagement> into this model.
             self._merge_deps(bom_model.dep_mgmt.values(), managed=True)
@@ -264,8 +269,8 @@ class Model:
         Merge metadata from the given POM source into this model.
         For now, we handle only dependencies, dependencyManagement, and properties.
         """
-        self._merge_deps(pom.dependencies())
-        self._merge_deps(pom.dependencies(managed=True), managed=True)
+        self._merge_deps(self.context.pom_dependencies(pom))
+        self._merge_deps(self.context.pom_dependencies(pom, managed=True), managed=True)
         self._merge_props(pom.properties)
 
         # Make an effort to populate Maven special properties.

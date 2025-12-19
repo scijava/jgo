@@ -143,8 +143,12 @@ def manifest(ctx, endpoint, raw):
         maven_context = commands._create_maven_context()
 
         # Parse endpoint to get G:A:V
-        parts = endpoint.split(":")
-        if len(parts) < 2:
+        try:
+            from ...parse.coordinate import Coordinate
+
+            coord = Coordinate.parse(endpoint)
+            version = coord.version or "RELEASE"
+        except ValueError:
             print(
                 f"Error: Invalid endpoint format: {endpoint}",
                 file=sys.stderr,
@@ -152,12 +156,10 @@ def manifest(ctx, endpoint, raw):
             print("Expected: groupId:artifactId[:version]", file=sys.stderr)
             ctx.exit(1)
 
-        groupId = parts[0]
-        artifactId = parts[1]
-        version = parts[2] if len(parts) > 2 else "RELEASE"
-
         # Get component
-        component = maven_context.project(groupId, artifactId).at_version(version)
+        component = maven_context.project(coord.groupId, coord.artifactId).at_version(
+            version
+        )
 
         # Resolve artifact to get JAR path
         artifact = component.artifact()
@@ -219,8 +221,12 @@ def pom(ctx, endpoint):
         maven_context = commands._create_maven_context()
 
         # Parse endpoint to get G:A:V
-        parts = endpoint.split(":")
-        if len(parts) < 2:
+        try:
+            from ...parse.coordinate import Coordinate
+
+            coord = Coordinate.parse(endpoint)
+            version = coord.version or "RELEASE"
+        except ValueError:
             print(
                 f"Error: Invalid endpoint format: {endpoint}",
                 file=sys.stderr,
@@ -228,12 +234,10 @@ def pom(ctx, endpoint):
             print("Expected: groupId:artifactId[:version]", file=sys.stderr)
             ctx.exit(1)
 
-        groupId = parts[0]
-        artifactId = parts[1]
-        version = parts[2] if len(parts) > 2 else "RELEASE"
-
         # Get component
-        component = maven_context.project(groupId, artifactId).at_version(version)
+        component = maven_context.project(coord.groupId, coord.artifactId).at_version(
+            version
+        )
 
         # Get raw POM and pretty-print
         pom_obj = component.pom()

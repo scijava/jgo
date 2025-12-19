@@ -307,15 +307,12 @@ def resolve(
     components = []
 
     for part in parts:
-        tokens = part.split(":")
-        if len(tokens) < 2:
-            raise ValueError(f"Invalid endpoint format: {part}")
+        from .parse.coordinate import Coordinate
 
-        groupId = tokens[0]
-        artifactId = tokens[1]
-        version = tokens[2] if len(tokens) >= 3 else "RELEASE"
+        coord = Coordinate.parse(part)
+        version = coord.version or "RELEASE"
 
-        component = context.project(groupId, artifactId).at_version(version)
+        component = context.project(coord.groupId, coord.artifactId).at_version(version)
         components.append(component)
 
     return components

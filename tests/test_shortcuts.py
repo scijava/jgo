@@ -372,7 +372,6 @@ class TestRunWithShortcuts:
                     entrypoint=None,
                     resolver="pure",
                     repo_cache=tmp_path / ".m2" / "repository",
-                    managed=True,
                 )
 
                 # This should expand the shortcut

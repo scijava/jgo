@@ -47,23 +47,23 @@ def execute(args: ParsedArgs, config: dict) -> int:
         return 1
 
     # Parse endpoint to get groupId and artifactId
-    parts = args.endpoint.split(":")
-    if len(parts) < 2:
+    try:
+        from ...parse.coordinate import Coordinate
+
+        coord = Coordinate.parse(args.endpoint)
+    except ValueError:
         print(
             "Error: Invalid format. Need at least groupId:artifactId",
             file=sys.stderr,
         )
         return 1
 
-    groupId = parts[0]
-    artifactId = parts[1]
-
     # Create commands instance to access maven context creation
     commands = JgoCommands(args, config)
     context = commands._create_maven_context()
 
     # Get project and fetch versions
-    project = context.project(groupId, artifactId)
+    project = context.project(coord.groupId, coord.artifactId)
 
     try:
         # Update metadata from remote
@@ -72,10 +72,10 @@ def execute(args: ParsedArgs, config: dict) -> int:
         # Get available versions
         metadata = project.metadata
         if not metadata or not metadata.versions:
-            print(f"No versions found for {groupId}:{artifactId}")
+            print(f"No versions found for {coord.groupId}:{coord.artifactId}")
             return 0
 
-        print(f"Available versions for {groupId}:{artifactId}:")
+        print(f"Available versions for {coord.groupId}:{coord.artifactId}:")
         for version in metadata.versions:
             marker = ""
             if metadata.release and version == metadata.release:

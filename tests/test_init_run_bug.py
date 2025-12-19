@@ -97,7 +97,6 @@ def test_run_with_main_class_after_init():
                     entrypoint=None,
                     resolver="pure",
                     repo_cache=tmp_path / ".m2" / "repository",
-                    managed=True,
                 )
 
                 commands = JgoCommands(run_args, {})
@@ -156,7 +155,6 @@ def test_run_endpoint_with_main_class():
             entrypoint=None,
             resolver="pure",
             repo_cache=tmp_path / ".m2" / "repository",
-            managed=True,
         )
 
         commands = JgoCommands(run_args, {})

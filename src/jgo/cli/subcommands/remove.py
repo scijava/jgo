@@ -82,14 +82,14 @@ def execute(args: ParsedArgs, config: dict) -> int:
     removed_count = 0
     for coord in coordinates:
         # Parse coordinate to extract groupId:artifactId
-        parts = coord.split(":")
-        if len(parts) < 2:
+        try:
+            from ...parse.coordinate import Coordinate
+
+            coord_obj = Coordinate.parse(coord)
+            prefix = f"{coord_obj.groupId}:{coord_obj.artifactId}"
+        except ValueError:
             print(f"Invalid coordinate format: {coord}", file=sys.stderr)
             continue
-
-        group_id = parts[0]
-        artifact_id = parts[1]
-        prefix = f"{group_id}:{artifact_id}"
 
         # Find matching coordinates
         matched = False

@@ -1,5 +1,24 @@
 """
 Core Maven data structures and configuration.
+
+This module provides "smart" data structures and logic for Maven concepts.
+Unlike the simple data structures in jgo.parse, these classes actively perform
+Maven operations:
+- Version resolution (RELEASE → newest release version, LATEST → latest snapshot)
+- Metadata fetching and caching
+- Artifact downloading from repositories
+- POM parsing and interpolation
+- Dependency management
+- Repository configuration
+
+The main classes form a hierarchy:
+- MavenContext: Configuration (repositories, cache, resolver)
+- Project [G:A]: A groupId:artifactId (G:A) pair with metadata access
+- Component [G:A:V]: A Project at a specific version (V)
+- Artifact [G:A:P:C:V]: One file of a Component, with classifier (C) and packaging (P)
+- Dependency [G:A:P:C:V:S]: An Artifact with scope, optional flag, and exclusions
+
+For simple/low-level data structures without Maven logic, see the jgo.parse subpackage.
 """
 
 from __future__ import annotations
@@ -8,9 +27,9 @@ from hashlib import md5, sha1
 from os import environ
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable
-from xml.etree import ElementTree
 
-from .util import binary, coord2str, text
+from ..parse.coordinate import Coordinate, coord2str
+from ..util.io import binary, text
 
 if TYPE_CHECKING:
     from .metadata import Metadata
@@ -90,28 +109,112 @@ class MavenContext:
         """
         return Project(self, groupId, artifactId)
 
-    def dependency(self, el: ElementTree.Element) -> "Dependency":
+    def parse_dependency_element(self, el) -> "Dependency":
         """
-        Create a Dependency object from the given XML element.
+        Parse a <dependency> XML element into a Dependency object.
+
+        This delegates to pom.py for XML parsing, then uses create_dependency
+        to build the Dependency object.
+
         :param el: The XML element from which to create the dependency.
         :return: The Dependency object.
         """
-        groupId = el.findtext("groupId")
-        artifactId = el.findtext("artifactId")
-        assert groupId and artifactId
-        version = el.findtext("version")  # NB: Might be None, which means managed.
-        classifier = el.findtext("classifier") or DEFAULT_CLASSIFIER
-        packaging = el.findtext("type") or DEFAULT_PACKAGING
-        # NB: Keep scope as None if not specified, so dependency management can inject it
-        scope = el.findtext("scope")
-        optional = el.findtext("optional") == "true" or False
-        exclusions = [
-            self.project(ex.findtext("groupId"), ex.findtext("artifactId"))
-            for ex in el.findall("exclusions/exclusion")
-        ]
+        from .pom import parse_dependency_element_to_coordinate
+
+        # Parse XML element to Coordinate (pom.py handles ElementTree)
+        coord, exclusion_tuples = parse_dependency_element_to_coordinate(el)
+
+        # Validate required fields
+        assert coord.groupId and coord.artifactId, (
+            f"Invalid dependency: groupId={coord.groupId}, artifactId={coord.artifactId}"
+        )
+
+        # Convert exclusion tuples to Project objects
+        exclusions = [self.project(g, a) for g, a in exclusion_tuples if g and a]
+
+        # Use create_dependency to build the Dependency
+        return self.create_dependency(coord, exclusions)
+
+    def create_dependency(
+        self,
+        coordinate: Coordinate | str,
+        exclusions: Iterable[Project] | None = None,
+    ) -> "Dependency":
+        """
+        Create a Dependency object from a Maven coordinate.
+
+        :param coordinate: The Maven coordinate to convert to a Dependency.
+        :param exclusions: Optional list of Project exclusions.
+        :return: The Dependency object.
+        """
+        coord = Coordinate.parse(coordinate)
+        groupId = coord.groupId
+        artifactId = coord.artifactId
+        version = coord.version
+        classifier = coord.classifier or DEFAULT_CLASSIFIER
+        packaging = coord.packaging or DEFAULT_PACKAGING
+        scope = coord.scope
+        optional = coord.optional or False
+
         project = self.project(groupId, artifactId)
-        artifact = project.at_version(version).artifact(classifier, packaging)
-        return Dependency(artifact, scope, optional, exclusions)
+        component = project.at_version(version) if version else project.at_version("")
+        artifact = component.artifact(classifier, packaging)
+        return Dependency(artifact, scope, optional, exclusions or [])
+
+    def pom_to_artifact(self, pom: POM) -> "Artifact":
+        """
+        Create an Artifact object representing the given POM.
+        :param pom: The POM to convert to an Artifact.
+        :return: The Artifact object.
+        """
+        project = self.project(pom.groupId, pom.artifactId)
+        return project.at_version(pom.version).artifact(packaging="pom")
+
+    def pom_parent(self, pom: POM) -> "POM | None":
+        """
+        Resolve and return the parent POM, or None if no parent is declared.
+        :param pom: The POM whose parent to resolve.
+        :return: The parent POM object, or None if no parent.
+        """
+        from .pom import POM
+
+        if not pom.element("parent"):
+            return None
+
+        g = pom.value("parent/groupId")
+        a = pom.value("parent/artifactId")
+        v = pom.value("parent/version")
+        assert g and a and v
+        relativePath = pom.value("parent/relativePath")
+
+        if (
+            isinstance(pom.source, Path)
+            and relativePath
+            and (parent_path := pom.source / relativePath).exists()
+        ):
+            # Use locally available parent POM file.
+            parent_pom = POM(parent_path)
+            if (
+                g == parent_pom.groupId
+                and a == parent_pom.artifactId
+                and v == parent_pom.version
+            ):
+                return parent_pom
+
+        pom_artifact = self.project(g, a).at_version(v).artifact(packaging="pom")
+        return POM(pom_artifact.resolve())
+
+    def pom_dependencies(self, pom: POM, managed: bool = False) -> list["Dependency"]:
+        """
+        Extract dependencies from POM as Dependency objects.
+        :param pom: The POM from which to extract dependencies.
+        :param managed: If True, extract from dependencyManagement instead of dependencies.
+        :return: List of Dependency objects.
+        """
+        xpath = "dependencies/dependency"
+        if managed:
+            xpath = f"dependencyManagement/{xpath}"
+        return [self.parse_dependency_element(el) for el in pom.elements(xpath)]
 
 
 class Project:
@@ -342,7 +445,7 @@ class Component:
         from .pom import POM
 
         pom_artifact = self.artifact(packaging="pom")
-        return POM(pom_artifact.resolve(), self.context)
+        return POM(pom_artifact.resolve())
 
 
 class Artifact:
@@ -528,60 +631,126 @@ class Dependency:
         """
         assert isinstance(version, str)
         self.artifact.component.version = version
+        self.artifact.component._resolved_version = None
 
 
-class XML:
-    """Base class for XML document wrappers."""
+def create_pom(components: list[Component], boms: list[Component] | None) -> POM:
+    """
+    Create a synthetic wrapper POM for multi-component resolution.
 
-    def __init__(self, source: Path | str, context: MavenContext | None = None):
-        self.source = source
-        self.context: MavenContext = context or MavenContext()
-        self.tree: ElementTree.ElementTree = (
-            ElementTree.ElementTree(ElementTree.fromstring(source))
-            if isinstance(source, str)
-            else ElementTree.parse(source)
+    Args:
+        components: List of components to add as dependencies
+        boms: Optional list of components to import in dependencyManagement
+
+    Returns:
+        POM object created from synthetic XML string
+    """
+    from .pom import POM
+
+    # Generate the POM XML content
+    pom_xml = generate_pom_xml(components, boms)
+
+    # Create POM object from XML string
+    return POM(pom_xml)
+
+
+def generate_pom_xml(
+    components: list[Component], boms: list[Component] | None = None
+) -> str:
+    """
+    Generate a wrapper POM XML string for multi-component resolution.
+
+    This POM includes:
+    - All components as direct dependencies
+    - BOMs in dependencyManagement section (if provided)
+    - Repository configuration from the first component's context
+
+    Args:
+        components: List of components to add as dependencies
+        boms: Optional list of components to import in dependencyManagement
+
+    Returns:
+        Complete POM XML as a string
+    """
+    if not components:
+        raise ValueError("At least one component is required")
+
+    if boms is None:
+        boms = []
+
+    # Generate dependencyManagement section
+    dep_mgmt_entries = []
+    for bom in boms:
+        dep_mgmt_entries.append(
+            f"""        <dependency>
+            <groupId>{bom.groupId}</groupId>
+            <artifactId>{bom.artifactId}</artifactId>
+            <version>{bom.resolved_version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>"""
         )
-        XML._strip_ns(self.tree.getroot())
 
-    def dump(self, el: ElementTree.Element = None) -> str:
-        """
-        Get a string representation of the given XML element.
-        :param el: Element to stringify, or None to stringify the root node.
-        :return: The XML as a string.
-        """
-        # NB: Be careful: childless ElementTree.Element objects are falsy!
-        if el is None:
-            el = self.tree.getroot()
-        return ElementTree.tostring(el).decode()
+    dep_mgmt_section = "\n".join(dep_mgmt_entries) if dep_mgmt_entries else ""
+    dep_mgmt_block = (
+        f"""
+    <dependencyManagement>
+        <dependencies>
+{dep_mgmt_section}
+        </dependencies>
+    </dependencyManagement>
+"""
+        if dep_mgmt_section
+        else ""
+    )
 
-    def elements(self, path: str) -> list[ElementTree.Element]:
-        return self.tree.findall(path)
+    # Generate dependencies section
+    dep_entries = []
+    for component in components:
+        dep_entries.append(
+            f"""        <dependency>
+            <groupId>{component.groupId}</groupId>
+            <artifactId>{component.artifactId}</artifactId>
+            <version>{component.resolved_version}</version>
+        </dependency>"""
+        )
 
-    def element(self, path: str) -> ElementTree.Element | None:
-        els = self.elements(path)
-        assert len(els) <= 1
-        return els[0] if els else None
+    deps_section = "\n".join(dep_entries)
 
-    def values(self, path: str) -> list[str]:
-        return [el.text for el in self.elements(path)]
+    # Generate repositories section
+    repos_entries = []
+    for repo_id, repo_url in components[0].context.remote_repos.items():
+        repos_entries.append(
+            f"""        <repository>
+            <id>{repo_id}</id>
+            <url>{repo_url}</url>
+        </repository>"""
+        )
 
-    def value(self, path: str) -> str | None:
-        el = self.element(path)
-        # NB: Be careful: childless ElementTree.Element objects are falsy!
-        return None if el is None else el.text
+    repos_section = "\n".join(repos_entries) if repos_entries else ""
+    repositories_block = (
+        f"""
+    <repositories>
+{repos_section}
+    </repositories>
+"""
+        if repos_section
+        else ""
+    )
 
-    @staticmethod
-    def _strip_ns(el: ElementTree.Element) -> None:
-        """
-        Remove namespace prefixes from elements and attributes.
-        Credit: https://stackoverflow.com/a/32552776/1207769
-        """
-        if el.tag.startswith("{"):
-            el.tag = el.tag[el.tag.find("}") + 1 :]
-        for k in list(el.attrib.keys()):
-            if k.startswith("{"):
-                k2 = k[k.find("}") + 1 :]
-                el.attrib[k2] = el.attrib[k]
-                del el.attrib[k]
-        for child in el:
-            XML._strip_ns(child)
+    # Generate complete POM XML
+    return f"""<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.apposed.jgo</groupId>
+    <artifactId>INTERNAL-WRAPPER</artifactId>
+    <version>0-SNAPSHOT</version>
+{dep_mgmt_block}
+    <dependencies>
+{deps_section}
+    </dependencies>
+{repositories_block}</project>
+"""
