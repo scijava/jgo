@@ -40,6 +40,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
     import sys
 
     from ..commands import JgoCommands
+    from ..helpers import parse_coordinate_safe
 
     if not args.endpoint:
         print("Error: versions command requires a coordinate", file=sys.stderr)
@@ -47,16 +48,11 @@ def execute(args: ParsedArgs, config: dict) -> int:
         return 1
 
     # Parse endpoint to get groupId and artifactId
-    try:
-        from ...parse.coordinate import Coordinate
-
-        coord = Coordinate.parse(args.endpoint)
-    except ValueError:
-        print(
-            "Error: Invalid format. Need at least groupId:artifactId",
-            file=sys.stderr,
-        )
-        return 1
+    coord, exit_code = parse_coordinate_safe(
+        args.endpoint, "Invalid format. Need at least groupId:artifactId"
+    )
+    if exit_code != 0:
+        return exit_code
 
     # Create commands instance to access maven context creation
     commands = JgoCommands(args, config)

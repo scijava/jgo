@@ -13,20 +13,37 @@ import psutil
 def add_jvm_args_as_necessary(argv, gc_option="-XX:+UseConcMarkSweepGC"):
     """
     Extend existing argv with reasonable default values for garbage collection
-    and max heap size. If -Xmx is not specified in argv, set max heap size
-    to half the system's memory.
+    and max heap size.
+
+    .. deprecated::
+        Use :class:`jgo.exec.config.JVMConfig` instead for new code.
+        This function will be removed in jgo 3.0.
 
     :param argv: argument vector
     :param gc_option: Use this garbage collector settings, if any.
+                     Note: CMS is deprecated; use G1GC for modern JVMs.
     :return: argv with added JVM arguments
     """
-    if gc_option and gc_option not in argv:
-        argv += [gc_option]
+    warnings.warn(
+        "add_jvm_args_as_necessary() is deprecated. "
+        "Use jgo.exec.config.JVMConfig instead. "
+        "This function will be removed in jgo 3.0.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
+    # Add GC option if specified and not already present
+    if gc_option and gc_option not in argv:
+        argv = list(argv) + [gc_option]
+    else:
+        argv = list(argv)
+
+    # Check if -Xmx already specified
     for arg in argv:
         if "-Xmx" in arg:
             return argv
 
+    # Auto-detect heap size using psutil (keeping original logic)
     total_memory = psutil.virtual_memory().total
     exponent = 3 if total_memory > 2 * 1024**3 else 2
     memory_unit = "G" if exponent == 3 else "M"
@@ -34,6 +51,7 @@ def add_jvm_args_as_necessary(argv, gc_option="-XX:+UseConcMarkSweepGC"):
         max(total_memory // (1024**exponent) // 2, 1), memory_unit
     )
 
+    # Prepend heap size
     argv = ["-Xmx{}".format(max_heap_size)] + argv
 
     return argv

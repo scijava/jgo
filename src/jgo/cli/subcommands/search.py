@@ -114,6 +114,8 @@ def execute(
         print(f"Would search Maven Central for '{query}' with limit {limit}")
         return 0
 
+    from ..helpers import print_exception_if_verbose
+
     # Search Maven Central
     try:
         results = _search_maven_central(query, limit, args.verbose > 1)
@@ -129,10 +131,7 @@ def execute(
 
     except Exception as e:
         print(f"Error: Failed to search Maven Central: {e}", file=sys.stderr)
-        if args.verbose > 1:
-            import traceback
-
-            traceback.print_exc()
+        print_exception_if_verbose(args)
         return 1
 
 

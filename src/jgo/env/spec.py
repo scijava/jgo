@@ -9,12 +9,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import tomli_w
-
-from ..util.toml import tomllib
+from ..util.serialization import FieldValidatorMixin, TOMLSerializableMixin
 
 
-class EnvironmentSpec:
+class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
     """
     Specification for a jgo environment from a jgo.toml file.
 
@@ -81,38 +79,7 @@ class EnvironmentSpec:
         self.cache_dir = cache_dir
 
     @classmethod
-    def load(cls, path: Path) -> "EnvironmentSpec":
-        """
-        Load an environment specification from a jgo.toml file.
-
-        Args:
-            path: Path to jgo.toml file
-
-        Returns:
-            EnvironmentSpec instance
-
-        Raises:
-            FileNotFoundError: If the file doesn't exist
-            ValueError: If the file is invalid
-        """
-        path = Path(path)
-        if not path.exists():
-            raise FileNotFoundError(f"Environment spec not found: {path}")
-
-        try:
-            with open(path, "rb") as f:
-                data = tomllib.load(f)
-        except Exception as e:
-            raise ValueError(f"Failed to parse {path}: {e}") from e
-
-        # Validate and extract data
-        try:
-            return cls._from_dict(data, path)
-        except Exception as e:
-            raise ValueError(f"Invalid environment spec in {path}: {e}") from e
-
-    @classmethod
-    def _from_dict(cls, data: dict, path: Path) -> "EnvironmentSpec":
+    def _from_dict(cls, data: dict, path: Path | None = None) -> "EnvironmentSpec":
         """Create EnvironmentSpec from parsed TOML dict."""
         # [environment] section (optional)
         env_section = data.get("environment", {})
@@ -219,22 +186,6 @@ class EnvironmentSpec:
             link_strategy=link_strategy,
             cache_dir=cache_dir,
         )
-
-    def save(self, path: Path):
-        """
-        Save this environment specification to a jgo.toml file.
-
-        Args:
-            path: Path to save jgo.toml file
-        """
-        path = Path(path)
-        data = self._to_dict()
-
-        # Ensure parent directory exists
-        path.parent.mkdir(parents=True, exist_ok=True)
-
-        with open(path, "wb") as f:
-            tomli_w.dump(data, f)
 
     def _to_dict(self) -> dict:
         """Convert EnvironmentSpec to dict for TOML serialization."""

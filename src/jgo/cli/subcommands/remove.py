@@ -55,14 +55,14 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    from ...env import EnvironmentSpec
+    from ..helpers import load_spec_file
 
     # Get the spec file path
-    spec_file = args.get_spec_file()
+    spec, exit_code = load_spec_file(args)
+    if exit_code != 0:
+        return exit_code
 
-    if not spec_file.exists():
-        print(f"Error: {spec_file} does not exist", file=sys.stderr)
-        return 1
+    spec_file = args.get_spec_file()
 
     # Get coordinates to remove
     coordinates = getattr(args, "coordinates", [])
@@ -71,12 +71,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
         print("Usage: jgo remove <coordinate> [<coordinate> ...]", file=sys.stderr)
         return 1
 
-    # Load existing spec
-    try:
-        spec = EnvironmentSpec.load(spec_file)
-    except Exception as e:
-        print(f"Error: Failed to load {spec_file}: {e}", file=sys.stderr)
-        return 1
+    from ..helpers import verbose_print
 
     # Remove coordinates (matching by groupId:artifactId, ignoring version)
     removed_count = 0
@@ -98,20 +93,21 @@ def execute(args: ParsedArgs, config: dict) -> int:
                 spec.coordinates.remove(existing_coord)
                 removed_count += 1
                 matched = True
-                if args.verbose > 0:
-                    print(f"Removed: {existing_coord}")
+                verbose_print(args, f"Removed: {existing_coord}")
 
         if not matched:
-            if args.verbose > 0:
-                print(f"Not found: {coord}")
+            verbose_print(args, f"Not found: {coord}")
 
     if removed_count == 0:
         print("No dependencies removed", file=sys.stderr)
         return 0
 
+    from ..helpers import handle_dry_run
+
     # Save updated spec
-    if args.dry_run:
-        print(f"Would remove {removed_count} dependencies from {spec_file}")
+    if handle_dry_run(
+        args, f"Would remove {removed_count} dependencies from {spec_file}"
+    ):
         return 0
 
     try:
@@ -123,8 +119,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     # Auto-sync unless --no-sync specified
     if not getattr(args, "no_sync", False):
-        if args.verbose > 0:
-            print("\nSyncing environment...")
+        verbose_print(args, "\nSyncing environment...")
         from . import sync as sync_cmd
 
         return sync_cmd.execute(args, config)

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import configparser
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -158,8 +157,9 @@ def _list_config(config_file: Path, config_type: str, args: ParsedArgs) -> int:
 
 def _list_jgorc(config_file: Path, args: ParsedArgs) -> int:
     """List all configuration from .jgorc file."""
-    parser = configparser.ConfigParser()
-    parser.read(config_file)
+    from ..helpers import load_config_parser
+
+    parser = load_config_parser(config_file)
 
     print(f"Configuration from {config_file}:")
     print()
@@ -175,10 +175,11 @@ def _list_jgorc(config_file: Path, args: ParsedArgs) -> int:
 
 def _list_toml(config_file: Path, args: ParsedArgs) -> int:
     """List all configuration from jgo.toml file."""
-    from ...util.toml import tomllib
+    from ..helpers import load_toml_file
 
-    with open(config_file, "rb") as f:
-        data = tomllib.load(f)
+    data = load_toml_file(config_file)
+    if data is None:
+        return 1
 
     print(f"Configuration from {config_file}:")
     print()
@@ -202,6 +203,8 @@ def _list_toml(config_file: Path, args: ParsedArgs) -> int:
 
 def _get_config(config_file: Path, config_type: str, key: str, args: ParsedArgs) -> int:
     """Get a specific configuration value."""
+    from ..helpers import parse_config_key
+
     if not config_file.exists():
         print(
             f"Error: No {config_type} configuration file found at {config_file}",
@@ -210,12 +213,7 @@ def _get_config(config_file: Path, config_type: str, key: str, args: ParsedArgs)
         return 1
 
     # Parse key as section.key or just key
-    if "." in key:
-        section, key_name = key.split(".", 1)
-    else:
-        # Default to settings section
-        section = "settings"
-        key_name = key
+    section, key_name = parse_config_key(key)
 
     if config_type == "global":
         return _get_jgorc(config_file, section, key_name, args)
@@ -225,16 +223,12 @@ def _get_config(config_file: Path, config_type: str, key: str, args: ParsedArgs)
 
 def _get_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) -> int:
     """Get value from .jgorc file."""
-    parser = configparser.ConfigParser()
-    parser.read(config_file)
+    from ..helpers import load_config_parser, validate_config_key
 
-    if not parser.has_section(section):
-        print(f"Error: Section [{section}] not found", file=sys.stderr)
-        return 1
+    parser = load_config_parser(config_file)
 
-    if not parser.has_option(section, key):
-        print(f"Error: Key '{key}' not found in section [{section}]", file=sys.stderr)
-        return 1
+    if error := validate_config_key(parser, section, key):
+        return error
 
     value = parser.get(section, key)
     print(value)
@@ -243,10 +237,11 @@ def _get_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) -> i
 
 def _get_toml(config_file: Path, section: str, key: str, args: ParsedArgs) -> int:
     """Get value from jgo.toml file."""
-    from ...util.toml import tomllib
+    from ..helpers import load_toml_file
 
-    with open(config_file, "rb") as f:
-        data = tomllib.load(f)
+    data = load_toml_file(config_file)
+    if data is None:
+        return 1
 
     if section not in data:
         print(f"Error: Section [{section}] not found", file=sys.stderr)
@@ -265,13 +260,10 @@ def _set_config(
     config_file: Path, config_type: str, key: str, value: str, args: ParsedArgs
 ) -> int:
     """Set a configuration value."""
+    from ..helpers import parse_config_key
+
     # Parse key as section.key or just key
-    if "." in key:
-        section, key_name = key.split(".", 1)
-    else:
-        # Default to settings section
-        section = "settings"
-        key_name = key
+    section, key_name = parse_config_key(key)
 
     if config_type == "global":
         return _set_jgorc(config_file, section, key_name, value, args)
@@ -283,11 +275,9 @@ def _set_jgorc(
     config_file: Path, section: str, key: str, value: str, args: ParsedArgs
 ) -> int:
     """Set value in .jgorc file."""
-    parser = configparser.ConfigParser()
+    from ..helpers import handle_dry_run, load_config_parser, verbose_print
 
-    # Read existing file if it exists
-    if config_file.exists():
-        parser.read(config_file)
+    parser = load_config_parser(config_file)
 
     # Create section if it doesn't exist
     if not parser.has_section(section):
@@ -297,8 +287,7 @@ def _set_jgorc(
     parser.set(section, key, value)
 
     # Dry run
-    if args.dry_run:
-        print(f"Would set [{section}] {key} = {value} in {config_file}")
+    if handle_dry_run(args, f"Would set [{section}] {key} = {value} in {config_file}"):
         return 0
 
     # Write to file
@@ -306,8 +295,7 @@ def _set_jgorc(
     with open(config_file, "w") as f:
         parser.write(f)
 
-    if args.verbose > 0:
-        print(f"Set [{section}] {key} = {value} in {config_file}")
+    verbose_print(args, f"Set [{section}] {key} = {value} in {config_file}")
 
     return 0
 
@@ -318,19 +306,17 @@ def _set_toml(
     """Set value in jgo.toml file."""
     import tomli_w
 
-    from ...util.toml import tomllib
+    from ..helpers import handle_dry_run, load_toml_file, verbose_print
 
     # Read existing file
-    if not config_file.exists():
+    data = load_toml_file(config_file)
+    if data is None:
         print(
             f"Error: No local configuration file found at {config_file}",
             file=sys.stderr,
         )
         print("Run 'jgo init' to create a new environment file first.", file=sys.stderr)
         return 1
-
-    with open(config_file, "rb") as f:
-        data = tomllib.load(f)
 
     # Create section if it doesn't exist
     if section not in data:
@@ -341,16 +327,16 @@ def _set_toml(
     data[section][key] = parsed_value
 
     # Dry run
-    if args.dry_run:
-        print(f"Would set [{section}] {key} = {parsed_value} in {config_file}")
+    if handle_dry_run(
+        args, f"Would set [{section}] {key} = {parsed_value} in {config_file}"
+    ):
         return 0
 
     # Write to file
     with open(config_file, "wb") as f:
         tomli_w.dump(data, f)
 
-    if args.verbose > 0:
-        print(f"Set [{section}] {key} = {parsed_value} in {config_file}")
+    verbose_print(args, f"Set [{section}] {key} = {parsed_value} in {config_file}")
 
     return 0
 
@@ -359,6 +345,8 @@ def _unset_config(
     config_file: Path, config_type: str, key: str, args: ParsedArgs
 ) -> int:
     """Unset a configuration value."""
+    from ..helpers import parse_config_key
+
     if not config_file.exists():
         print(
             f"Error: No {config_type} configuration file found at {config_file}",
@@ -367,12 +355,7 @@ def _unset_config(
         return 1
 
     # Parse key as section.key or just key
-    if "." in key:
-        section, key_name = key.split(".", 1)
-    else:
-        # Default to settings section
-        section = "settings"
-        key_name = key
+    section, key_name = parse_config_key(key)
 
     if config_type == "global":
         return _unset_jgorc(config_file, section, key_name, args)
@@ -382,20 +365,20 @@ def _unset_config(
 
 def _unset_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) -> int:
     """Unset value in .jgorc file."""
-    parser = configparser.ConfigParser()
-    parser.read(config_file)
+    from ..helpers import (
+        handle_dry_run,
+        load_config_parser,
+        validate_config_key,
+        verbose_print,
+    )
 
-    if not parser.has_section(section):
-        print(f"Error: Section [{section}] not found", file=sys.stderr)
-        return 1
+    parser = load_config_parser(config_file)
 
-    if not parser.has_option(section, key):
-        print(f"Error: Key '{key}' not found in section [{section}]", file=sys.stderr)
-        return 1
+    if error := validate_config_key(parser, section, key):
+        return error
 
     # Dry run
-    if args.dry_run:
-        print(f"Would remove [{section}] {key} from {config_file}")
+    if handle_dry_run(args, f"Would remove [{section}] {key} from {config_file}"):
         return 0
 
     # Remove option
@@ -409,8 +392,7 @@ def _unset_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) ->
     with open(config_file, "w") as f:
         parser.write(f)
 
-    if args.verbose > 0:
-        print(f"Removed [{section}] {key} from {config_file}")
+    verbose_print(args, f"Removed [{section}] {key} from {config_file}")
 
     return 0
 
@@ -419,10 +401,11 @@ def _unset_toml(config_file: Path, section: str, key: str, args: ParsedArgs) -> 
     """Unset value in jgo.toml file."""
     import tomli_w
 
-    from ...util.toml import tomllib
+    from ..helpers import handle_dry_run, load_toml_file, verbose_print
 
-    with open(config_file, "rb") as f:
-        data = tomllib.load(f)
+    data = load_toml_file(config_file)
+    if data is None:
+        return 1
 
     if section not in data:
         print(f"Error: Section [{section}] not found", file=sys.stderr)
@@ -433,8 +416,7 @@ def _unset_toml(config_file: Path, section: str, key: str, args: ParsedArgs) -> 
         return 1
 
     # Dry run
-    if args.dry_run:
-        print(f"Would remove [{section}] {key} from {config_file}")
+    if handle_dry_run(args, f"Would remove [{section}] {key} from {config_file}"):
         return 0
 
     # Remove key
@@ -448,8 +430,7 @@ def _unset_toml(config_file: Path, section: str, key: str, args: ParsedArgs) -> 
     with open(config_file, "wb") as f:
         tomli_w.dump(data, f)
 
-    if args.verbose > 0:
-        print(f"Removed [{section}] {key} from {config_file}")
+    verbose_print(args, f"Removed [{section}] {key} from {config_file}")
 
     return 0
 

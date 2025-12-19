@@ -137,24 +137,18 @@ def manifest(ctx, endpoint, raw):
     config = JgoConfig.load_from_opts(opts)
     args = _build_parsed_args(opts, endpoint=endpoint, command="info")
 
+    from ..helpers import parse_coordinate_safe
+
     try:
         # Create Maven context
         commands = JgoCommands(args, config.to_dict())
         maven_context = commands._create_maven_context()
 
         # Parse endpoint to get G:A:V
-        try:
-            from ...parse.coordinate import Coordinate
-
-            coord = Coordinate.parse(endpoint)
-            version = coord.version or "RELEASE"
-        except ValueError:
-            print(
-                f"Error: Invalid endpoint format: {endpoint}",
-                file=sys.stderr,
-            )
-            print("Expected: groupId:artifactId[:version]", file=sys.stderr)
-            ctx.exit(1)
+        coord, exit_code = parse_coordinate_safe(endpoint)
+        if exit_code != 0:
+            ctx.exit(exit_code)
+        version = coord.version or "RELEASE"
 
         # Get component
         component = maven_context.project(coord.groupId, coord.artifactId).at_version(
@@ -215,24 +209,18 @@ def pom(ctx, endpoint):
     config = JgoConfig.load_from_opts(opts)
     args = _build_parsed_args(opts, endpoint=endpoint, command="info")
 
+    from ..helpers import parse_coordinate_safe
+
     try:
         # Create Maven context
         commands = JgoCommands(args, config.to_dict())
         maven_context = commands._create_maven_context()
 
         # Parse endpoint to get G:A:V
-        try:
-            from ...parse.coordinate import Coordinate
-
-            coord = Coordinate.parse(endpoint)
-            version = coord.version or "RELEASE"
-        except ValueError:
-            print(
-                f"Error: Invalid endpoint format: {endpoint}",
-                file=sys.stderr,
-            )
-            print("Expected: groupId:artifactId[:version]", file=sys.stderr)
-            ctx.exit(1)
+        coord, exit_code = parse_coordinate_safe(endpoint)
+        if exit_code != 0:
+            ctx.exit(exit_code)
+        version = coord.version or "RELEASE"
 
         # Get component
         component = maven_context.project(coord.groupId, coord.artifactId).at_version(

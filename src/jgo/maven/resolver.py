@@ -100,6 +100,64 @@ class Resolver(ABC):
         """
         ...
 
+    def _build_dependency_list(
+        self, components: list[Component], deps: list[Dependency]
+    ) -> tuple[DependencyNode, list[DependencyNode]]:
+        """
+        Common logic for building dependency list structure.
+
+        Args:
+            components: List of Maven components
+            deps: List of resolved dependencies
+
+        Returns:
+            Tuple of (root_node, dependency_nodes)
+        """
+        root = _create_root(components)
+
+        # Add components as children of root
+        for comp in components:
+            comp_artifact = comp.artifact()
+            comp_dep = Dependency(comp_artifact)
+            root.children.append(DependencyNode(comp_dep))
+
+        # Sort for consistent output
+        deps.sort(key=lambda d: (d.groupId, d.artifactId, d.version))
+
+        # Convert to DependencyNode list
+        dep_nodes = [DependencyNode(dep) for dep in deps]
+
+        return root, dep_nodes
+
+    def _prepare_dependency_resolution(
+        self,
+        components: list[Component] | Component,
+        managed: bool,
+        boms: list[Component] | None,
+    ) -> tuple[list[Component], list[Component] | None]:
+        """
+        Prepare components and BOMs for dependency resolution.
+
+        Args:
+            components: Component(s) to resolve
+            managed: Whether to use managed dependencies
+            boms: Optional list of components to use as BOMs
+
+        Returns:
+            Tuple of (components_list, boms_list)
+
+        Raises:
+            ValueError: If no components provided
+        """
+        components = _ensure_component_list(components)
+
+        if not components:
+            raise ValueError("At least one component is required")
+
+        boms = _resolve_boms(components, managed, boms)
+
+        return components, boms
+
     @abstractmethod
     def get_dependency_list(
         self, component: Component
@@ -248,35 +306,8 @@ class SimpleResolver(Resolver):
             Tuple of (root_node, flat_list_of_dependencies)
         """
         components = _ensure_component_list(components)
-        root = _create_root(components)
-
-        # Add components as children of root for proper display
-        for comp in components:
-            comp_artifact = comp.artifact()
-            comp_dep = Dependency(comp_artifact)
-            root.children.append(DependencyNode(comp_dep))
-
-        boms = _resolve_boms(components, managed, boms)
-
-        # Synthesize a wrapper POM
-        pom = create_pom(components, boms)
-
-        # Build the model and get mediated dependencies
-        model = Model(pom, components[0].context)
-        deps = model.dependencies()
-
-        deps = _filter_component_deps(deps, components)
-
-        # Filter out test scope dependencies
-        deps = [dep for dep in deps if dep.scope not in ("test",)]
-
-        # Sort for consistent output
-        deps.sort(key=lambda d: (d.groupId, d.artifactId, d.version))
-
-        # Convert to DependencyNode list
-        dep_nodes = [DependencyNode(dep) for dep in deps]
-
-        return root, dep_nodes
+        deps = self.dependencies(components, managed=managed, boms=boms)
+        return self._build_dependency_list(components, deps)
 
     def get_dependency_tree(
         self,
@@ -366,6 +397,66 @@ class MavenResolver(Resolver):
         if debug:
             self.mvn_flags.append("-X")
 
+    def _create_temp_pom(
+        self, components: list[Component], boms: list[Component] | None
+    ) -> Path:
+        """Create temporary POM file for Maven commands."""
+        pom = create_pom(components, boms or [])
+        temp_pom = write_temp_pom(pom)
+        _log.debug(
+            f"Created wrapper POM at {temp_pom} with {len(components)} "
+            f"component(s) and {len(boms or [])} BOM(s)"
+        )
+        return temp_pom
+
+    def _filter_maven_output(self, output: str, log_debug: bool = True) -> list[str]:
+        """Filter Maven output to extract [INFO] lines."""
+        lines = []
+        for line in output.splitlines():
+            line = line.strip()
+            if log_debug and line.startswith(("[DEBUG]", "[WARNING]", "[ERROR]")):
+                _log.debug(line)
+            if not line.startswith("[INFO]"):
+                continue
+            # Skip download/progress messages
+            if (
+                "Downloading from" in line
+                or "Downloaded from" in line
+                or "Progress" in line
+            ):
+                continue
+            lines.append(line)
+        return lines
+
+    def _parse_maven_coordinate(
+        self, content: str, context, require_scope: bool = False
+    ) -> Dependency | None:
+        """Parse Maven output coordinate string into Dependency object."""
+        # Strip module information added by Java 9+
+        if " -- module " in content:
+            content = content.split(" -- module ")[0].strip()
+
+        try:
+            from ..parse.coordinate import Coordinate
+
+            coord = Coordinate.parse(content)
+
+            # For dependency:list output, we need to validate the scope
+            if require_scope:
+                if not coord.scope or coord.scope not in (
+                    "compile",
+                    "runtime",
+                    "provided",
+                    "test",
+                    "system",
+                    "import",
+                ):
+                    return None
+
+            return context.create_dependency(coord)
+        except ValueError:
+            return None
+
     def download(self, artifact: Artifact) -> Path | None:
         _log.info(f"Downloading artifact: {artifact}")
         assert artifact.context.repo_cache
@@ -423,12 +514,8 @@ class MavenResolver(Resolver):
 
         boms = _resolve_boms(components, managed, boms) or []
 
-        # Write to temporary file (MavenResolver needs a file for mvn command)
-        pom = create_pom(components, boms)
-        temp_pom = write_temp_pom(pom)
-        _log.debug(
-            f"Created wrapper POM at {temp_pom} with {len(components)} component(s) and {len(boms)} BOM(s)"
-        )
+        # Create temporary POM
+        temp_pom = self._create_temp_pom(components, boms)
 
         output = self._mvn(
             "dependency:list",
@@ -442,17 +529,9 @@ class MavenResolver(Resolver):
         # Java 9+: [INFO]    groupId:artifactId:packaging:version:scope -- module module.name
         dependencies = []
 
-        for line in output.splitlines():
-            line = line.strip()
-            if (
-                line.startswith("[DEBUG]")
-                or line.startswith("[WARNING]")
-                or line.startswith("[ERROR]")
-            ):
-                _log.debug(line)
-            if not line.startswith("[INFO]"):
-                continue
+        info_lines = self._filter_maven_output(output)
 
+        for line in info_lines:
             # Remove [INFO] prefix and whitespace
             content = line[6:].strip()
 
@@ -460,32 +539,13 @@ class MavenResolver(Resolver):
             if ":" not in content:
                 continue
 
-            # Strip module information added by Java 9+ (e.g., " -- module org.junit.jupiter.api")
-            if " -- module " in content:
-                content = content.split(" -- module ")[0].strip()
-
             # Parse G:A:P[:C]:V:S format using Coordinate
-            try:
-                from ..parse.coordinate import Coordinate
-
-                coord = Coordinate.parse(content)
-            except ValueError:
+            dep = self._parse_maven_coordinate(content, context, require_scope=True)
+            if not dep:
                 # Not a valid coordinate format
                 continue
 
-            # Check if this looks like a dependency (has scope)
-            if not coord.scope or coord.scope not in (
-                "compile",
-                "runtime",
-                "provided",
-                "test",
-                "system",
-                "import",
-            ):
-                continue
-
             # Create dependency object from coordinate
-            dep = context.create_dependency(coord)
             dependencies.append(dep)
 
         return _filter_component_deps(dependencies, components)
@@ -508,24 +568,8 @@ class MavenResolver(Resolver):
             Tuple of (root_node, flat_list_of_dependencies)
         """
         components = _ensure_component_list(components)
-        root = _create_root(components)
-
-        # Add components as children of root for proper display
-        for comp in components:
-            comp_artifact = comp.artifact()
-            comp_dep = Dependency(comp_artifact)
-            root.children.append(DependencyNode(comp_dep))
-
-        # Get dependencies using existing method
         deps = self.dependencies(components, managed=managed, boms=boms)
-
-        # Sort for consistent output
-        deps.sort(key=lambda d: (d.groupId, d.artifactId, d.version))
-
-        # Convert to DependencyNode list
-        dep_nodes = [DependencyNode(dep) for dep in deps]
-
-        return root, dep_nodes
+        return self._build_dependency_list(components, deps)
 
     def get_dependency_tree(
         self,
@@ -554,12 +598,8 @@ class MavenResolver(Resolver):
 
         boms = _resolve_boms(components, managed, boms) or []
 
-        # Write to temporary file (MavenResolver needs a file for mvn command)
-        pom = create_pom(components, boms)
-        temp_pom = write_temp_pom(pom)
-        _log.debug(
-            f"Created wrapper POM at {temp_pom} with {len(components)} component(s) and {len(boms)} BOM(s)"
-        )
+        # Create temporary POM
+        temp_pom = self._create_temp_pom(components, boms)
 
         output = self._mvn(
             "dependency:tree",
@@ -575,15 +615,11 @@ class MavenResolver(Resolver):
         #         [INFO]    |  \- dep2:jar:2.0:scope
         #         [INFO]    \- dep3:jar:3.0:scope
 
-        lines = output.splitlines()
+        info_lines = self._filter_maven_output(output, log_debug=False)
         root = None
         stack = []  # Stack of (indent_level, node)
 
-        for line in lines:
-            line_stripped = line.strip()
-            if not line_stripped.startswith("[INFO]"):
-                continue
-
+        for line in info_lines:
             # Remove [INFO] prefix
             content = line[6:]  # Skip "[INFO] "
 
@@ -618,21 +654,11 @@ class MavenResolver(Resolver):
             if not clean_content or ":" not in clean_content:
                 continue
 
-            # Strip module information added by Java 9+ (e.g., " -- module org.junit.jupiter.api")
-            if " -- module " in clean_content:
-                clean_content = clean_content.split(" -- module ")[0].strip()
-
             # Parse G:A:P[:C]:V[:S] format using Coordinate
-            try:
-                from ..parse.coordinate import Coordinate
-
-                coord = Coordinate.parse(clean_content)
-            except ValueError:
-                # Not a valid coordinate format
+            dep = self._parse_maven_coordinate(clean_content, context)
+            if not dep:
                 continue
 
-            # Create dependency and node
-            dep = context.create_dependency(coord)
             node = DependencyNode(dep)
 
             # Handle root node (no indent)

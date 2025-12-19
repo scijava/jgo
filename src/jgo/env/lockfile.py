@@ -11,13 +11,11 @@ import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
 
-import tomli_w
-
 from ..maven import Dependency
-from ..util.toml import tomllib
+from ..util.serialization import FieldValidatorMixin, TOMLSerializableMixin
 
 
-class LockedDependency:
+class LockedDependency(TOMLSerializableMixin, FieldValidatorMixin):
     """
     A dependency with locked version and checksum.
     """
@@ -94,7 +92,7 @@ class LockedDependency:
         return f"LockedDependency({self.groupId}:{self.artifactId}:{self.version})"
 
 
-class LockFile:
+class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
     """
     Lock file for reproducible builds (jgo.lock.toml).
 
@@ -147,30 +145,7 @@ class LockFile:
         )
 
     @classmethod
-    def load(cls, path: Path) -> "LockFile":
-        """
-        Load a lock file from jgo.lock.toml.
-
-        Args:
-            path: Path to jgo.lock.toml file
-
-        Returns:
-            LockFile instance
-
-        Raises:
-            FileNotFoundError: If the file doesn't exist
-            ValueError: If the file is invalid
-        """
-        path = Path(path)
-        if not path.exists():
-            raise FileNotFoundError(f"Lock file not found: {path}")
-
-        try:
-            with open(path, "rb") as f:
-                data = tomllib.load(f)
-        except Exception as e:
-            raise ValueError(f"Failed to parse {path}: {e}") from e
-
+    def _from_dict(cls, data: dict, path: Path | None = None) -> "LockFile":
         # Parse metadata
         metadata = data.get("metadata", {})
         jgo_version = metadata.get("jgo_version", "unknown")
@@ -206,22 +181,6 @@ class LockFile:
                 pass  # Use current time if parsing fails
 
         return lockfile
-
-    def save(self, path: Path):
-        """
-        Save this lock file to jgo.lock.toml.
-
-        Args:
-            path: Path to save jgo.lock.toml file
-        """
-        path = Path(path)
-        data = self._to_dict()
-
-        # Ensure parent directory exists
-        path.parent.mkdir(parents=True, exist_ok=True)
-
-        with open(path, "wb") as f:
-            tomli_w.dump(data, f)
 
     def _to_dict(self) -> dict:
         """Convert LockFile to dict for TOML serialization."""

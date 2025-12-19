@@ -53,22 +53,14 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    from ...env import EnvironmentSpec
+    from ..helpers import load_spec_file, verbose_print
 
     # Get the spec file path
+    _spec, exit_code = load_spec_file(args)
+    if exit_code != 0:
+        return exit_code
+
     spec_file = args.get_spec_file()
-
-    if not spec_file.exists():
-        print(f"Error: {spec_file} does not exist", file=sys.stderr)
-        print("Run 'jgo init' to create a new environment file first.", file=sys.stderr)
-        return 1
-
-    # Load spec
-    try:
-        _spec = EnvironmentSpec.load(spec_file)
-    except Exception as e:
-        print(f"Error: Failed to load {spec_file}: {e}", file=sys.stderr)
-        return 1
 
     # Check if --check mode
     if getattr(args, "check", False):
@@ -82,8 +74,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
         print(f"Lock file exists: {lock_file}")
         return 0
 
-    if args.verbose > 0:
-        print(f"Updating lock file for {spec_file}")
+    verbose_print(args, f"Updating lock file for {spec_file}")
 
     # TODO: Implement lock file generation
     # This would resolve dependencies using Maven and create a lock file

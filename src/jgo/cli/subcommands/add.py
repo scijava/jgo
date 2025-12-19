@@ -54,15 +54,15 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    from ...env import EnvironmentSpec
 
     # Get the spec file path
-    spec_file = args.get_spec_file()
+    from ..helpers import load_spec_file
 
-    if not spec_file.exists():
-        print(f"Error: {spec_file} does not exist", file=sys.stderr)
-        print("Run 'jgo init' to create a new environment file first.", file=sys.stderr)
-        return 1
+    spec, exit_code = load_spec_file(args)
+    if exit_code != 0:
+        return exit_code
+
+    spec_file = args.get_spec_file()
 
     # Get coordinates to add
     coordinates = getattr(args, "coordinates", [])
@@ -71,32 +71,26 @@ def execute(args: ParsedArgs, config: dict) -> int:
         print("Usage: jgo add <coordinate> [<coordinate> ...]", file=sys.stderr)
         return 1
 
-    # Load existing spec
-    try:
-        spec = EnvironmentSpec.load(spec_file)
-    except Exception as e:
-        print(f"Error: Failed to load {spec_file}: {e}", file=sys.stderr)
-        return 1
+    from ..helpers import verbose_print
 
     # Add coordinates
     added_count = 0
     for coord in coordinates:
         if coord in spec.coordinates:
-            if args.verbose > 0:
-                print(f"Already present: {coord}")
+            verbose_print(args, f"Already present: {coord}")
         else:
             spec.coordinates.append(coord)
             added_count += 1
-            if args.verbose > 0:
-                print(f"Added: {coord}")
+            verbose_print(args, f"Added: {coord}")
 
     if added_count == 0:
         print("No new dependencies added", file=sys.stderr)
         return 0
 
+    from ..helpers import handle_dry_run
+
     # Save updated spec
-    if args.dry_run:
-        print(f"Would add {added_count} dependencies to {spec_file}")
+    if handle_dry_run(args, f"Would add {added_count} dependencies to {spec_file}"):
         return 0
 
     try:
@@ -108,8 +102,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     # Auto-sync unless --no-sync specified
     if not getattr(args, "no_sync", False):
-        if args.verbose > 0:
-            print("\nSyncing environment...")
+        verbose_print(args, "\nSyncing environment...")
         from . import sync as sync_cmd
 
         return sync_cmd.execute(args, config)

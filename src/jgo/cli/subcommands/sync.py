@@ -54,36 +54,36 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    from ...env import EnvironmentBuilder, EnvironmentSpec
+    from ...env import EnvironmentBuilder
     from ...env.linking import LinkStrategy
     from ...maven import MavenContext
+    from ..helpers import (
+        handle_dry_run,
+        load_spec_file,
+        print_exception_if_verbose,
+        verbose_multiline,
+        verbose_print,
+    )
 
     # Get the spec file path
+    spec, exit_code = load_spec_file(args)
+    if exit_code != 0:
+        return exit_code
+
     spec_file = args.get_spec_file()
 
-    if not spec_file.exists():
-        print(f"Error: {spec_file} does not exist", file=sys.stderr)
-        print("Run 'jgo init' to create a new environment file first.", file=sys.stderr)
-        return 1
-
-    # Load spec
-    try:
-        spec = EnvironmentSpec.load(spec_file)
-    except Exception as e:
-        print(f"Error: Failed to load {spec_file}: {e}", file=sys.stderr)
-        return 1
-
-    if args.verbose > 0:
-        print(f"Syncing environment from {spec_file}")
-        if spec.name:
-            print(f"  Name: {spec.name}")
-        if spec.description:
-            print(f"  Description: {spec.description}")
-        print(f"  Dependencies: {len(spec.coordinates)}")
+    verbose_messages = [
+        f"Syncing environment from {spec_file}",
+    ]
+    if spec.name:
+        verbose_messages.append(f"  Name: {spec.name}")
+    if spec.description:
+        verbose_messages.append(f"  Description: {spec.description}")
+    verbose_messages.append(f"  Dependencies: {len(spec.coordinates)}")
+    verbose_multiline(args, verbose_messages)
 
     # Dry run mode
-    if args.dry_run:
-        print(f"Would sync environment from {spec_file}")
+    if handle_dry_run(args, f"Would sync environment from {spec_file}"):
         return 0
 
     # Build environment
@@ -109,16 +109,12 @@ def execute(args: ParsedArgs, config: dict) -> int:
         update = args.update or getattr(args, "force", False)
         env = builder.from_spec(spec, update=update)
 
-        if args.verbose > 0:
-            print(f"Environment built at: {env.path}")
-            print(f"Classpath entries: {len(env.classpath)}")
+        verbose_print(args, f"Environment built at: {env.path}")
+        verbose_print(args, f"Classpath entries: {len(env.classpath)}")
 
         return 0
 
     except Exception as e:
         print(f"Error: Failed to build environment: {e}", file=sys.stderr)
-        if args.verbose > 1:
-            import traceback
-
-            traceback.print_exc()
+        print_exception_if_verbose(args)
         return 1
