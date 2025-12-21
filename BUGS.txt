@@ -1,6 +1,3 @@
-Remove --raw flag
-- Just support ! for raw individual components, that's it.
-
 Fix Sphinx-style :param: docstring syntax -- always use Google-style "Args:"
 
 jgo.cli.subcommands -> jgo.cli.commands (can we really parcel out *all* of commands.py?)

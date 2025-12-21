@@ -54,11 +54,9 @@ class EnvironmentBuilder:
         context: MavenContext,
         cache_dir: Path | None = None,
         link_strategy: LinkStrategy = LinkStrategy.AUTO,
-        raw: bool = False,
     ):
         self.context = context
         self.link_strategy = link_strategy
-        self.raw = raw
 
         # Auto-detect cache directory if not specified
         if cache_dir is None:
@@ -89,8 +87,7 @@ class EnvironmentBuilder:
         Build an environment from an endpoint string.
 
         Endpoint format: G:A[:V][:C][:mainClass][!][+G:A:V...]
-        - Components with ! suffix are always raw/unmanaged
-        - --raw flag enables raw resolution for all components
+        - Components with ! suffix are raw/unmanaged
         """
         # Parse endpoint
         components, coordinates, parsed_main_class = self._parse_endpoint(endpoint)
@@ -266,10 +263,10 @@ class EnvironmentBuilder:
 
         # Resolve all dependencies in one shot using wrapper POM
         # Use managed components from endpoint parsing (stored in _current_boms)
-        # or fall back to old behavior for backward compatibility
+        # or fall back to default behavior: manage all components
         boms = getattr(self, "_current_boms", None)
-        if boms is None and not self.raw:
-            # Backward compatibility: if not using raw resolution, manage all components
+        if boms is None:
+            # Default: manage all components
             boms = components
 
         # Resolve all components together (not separately!)
