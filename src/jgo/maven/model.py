@@ -149,6 +149,7 @@ class Model:
         self,
         resolved: dict[GACT, Dependency] | None = None,
         root_dep_mgmt: dict[GACT, Dependency] | None = None,
+        max_depth: int | None = None,
     ) -> list[Dependency]:
         """
         Compute the component's list of dependencies, including transitive dependencies.
@@ -160,6 +161,11 @@ class Model:
         :param root_dep_mgmt:
             Optional dependency management from the root project.
             This will be used to override versions of transitive dependencies.
+        :param max_depth:
+            Maximum depth to recurse when resolving dependencies. None means unlimited
+            (fully transitive). 1 means direct dependencies only (when called on a
+            synthetic wrapper POM, this gives the direct dependencies of the wrapped
+            components). 0 would mean no dependencies at all.
         :return: The list of Dependency objects.
         """
         deps: dict[GACT, Dependency] = {}
@@ -185,10 +191,18 @@ class Model:
             deps[gact] = direct_deps[gact] = dep
             _log.debug(f"{self.gav}: {dep}")
 
+        # Stop if we've reached the maximum depth.
+        if max_depth is not None and max_depth <= 0:
+            return list(deps.values())
+
         # Look for transitive dependencies (i.e. dependencies of direct dependencies).
         for dep in direct_deps.values():
             dep_model = Model(dep.artifact.component.pom(), self.context)
-            dep_deps = dep_model.dependencies(deps, root_dep_mgmt)
+            dep_deps = dep_model.dependencies(
+                deps,
+                root_dep_mgmt,
+                max_depth=None if max_depth is None else max_depth - 1,
+            )
             for dep_dep in dep_deps:
                 if dep_dep.optional:
                     continue  # Optional dependency is not transitive.
@@ -225,7 +239,6 @@ class Model:
                     dep_dep.set_version(managed_dep.version)
 
                 _log.debug(f"{self.gav}: {dep} -> {dep_dep}{managed_note}")
-
         return list(deps.values())
 
     def _import_boms(self, candidates: dict[GACT, Dependency]) -> None:
