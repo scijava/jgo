@@ -12,13 +12,17 @@ if TYPE_CHECKING:
 
 @click.command(name="list", help="List resolved dependencies (flat list)")
 @click.argument("endpoint", required=False)
+@click.option(
+    "--direct", is_flag=True, help="Show only direct dependencies (non-transitive)"
+)
 @click.pass_context
-def list_cmd(ctx, endpoint):
+def list_cmd(ctx, endpoint, direct):
     """List resolved dependencies as a flat list."""
     from ...config.jgorc import JgoConfig
     from ..parser import _build_parsed_args
 
     opts = ctx.obj
+    opts["direct_only"] = direct
     config = JgoConfig.load_from_opts(opts)
     args = _build_parsed_args(opts, endpoint=endpoint, command="list")
 

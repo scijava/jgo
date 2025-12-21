@@ -56,8 +56,11 @@ def deptree(ctx, endpoint):
 
 @click.command(help="Show flat list of dependencies")
 @click.argument("endpoint", required=False)
+@click.option(
+    "--direct", is_flag=True, help="Show only direct dependencies (non-transitive)"
+)
 @click.pass_context
-def deplist(ctx, endpoint):
+def deplist(ctx, endpoint, direct):
     """Show a flat list of all dependencies for the given endpoint."""
     from ...config.jgorc import JgoConfig
     from ..parser import _build_parsed_args
@@ -68,6 +71,7 @@ def deplist(ctx, endpoint):
     opts["print_dependency_tree"] = False
     opts["print_dependency_list"] = True
     opts["list_entrypoints"] = False
+    opts["direct_only"] = direct
 
     config = JgoConfig.load_from_opts(opts)
     args = _build_parsed_args(opts, endpoint=endpoint, command="info")

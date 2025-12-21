@@ -66,6 +66,7 @@ class ParsedArgs:
         print_java_info: bool = False,
         print_dependency_tree: bool = False,
         print_dependency_list: bool = False,
+        direct_only: bool = False,
         dry_run: bool = False,
         # Spec file
         file: Path | None = None,
@@ -111,6 +112,7 @@ class ParsedArgs:
         self.print_java_info = print_java_info
         self.print_dependency_tree = print_dependency_tree
         self.print_dependency_list = print_dependency_list
+        self.direct_only = direct_only
         self.dry_run = dry_run
         # Spec file
         self.file = file
@@ -471,6 +473,7 @@ def _build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, comman
         print_java_info=opts.get("print_java_info", False),
         print_dependency_tree=opts.get("print_dependency_tree", False),
         print_dependency_list=opts.get("print_dependency_list", False),
+        direct_only=opts.get("direct_only", False),
         dry_run=opts.get("dry_run", False),
         # Spec file
         file=opts.get("file"),

@@ -377,6 +377,7 @@ class JgoCommands:
                 components,
                 managed=bool(boms),
                 boms=boms,
+                transitive=not self.args.direct_only,
             )
         else:
             output = context.resolver.print_dependency_tree(

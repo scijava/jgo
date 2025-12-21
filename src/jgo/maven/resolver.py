@@ -94,6 +94,7 @@ class Resolver(ABC):
         components: list[Component] | Component,
         managed: bool = False,
         boms: list[Component] | None = None,
+        transitive: bool = True,
     ) -> list[Dependency]:
         """
         Determine dependencies for the given Maven component.
@@ -101,6 +102,7 @@ class Resolver(ABC):
         :param managed: If True, use dependency management (import components as BOMs).
         :param boms: List of components to import as BOMs in dependencyManagement.
                                    If None and managed=True, uses [component].
+        :param transitive: Whether to include transitive dependencies.
         :return: The list of dependencies.
         """
         ...
@@ -165,7 +167,7 @@ class Resolver(ABC):
 
     @abstractmethod
     def get_dependency_list(
-        self, component: Component
+        self, component: Component, transitive: bool = True
     ) -> tuple[DependencyNode, list[DependencyNode]]:
         """
         Get the flat list of resolved dependencies as data structures.
@@ -174,6 +176,7 @@ class Resolver(ABC):
         the dependency printing logic to ensure consistent output across resolvers.
 
         :param component: The component for which to get dependencies.
+        :param transitive: If False, return only direct dependencies.
         :return: Tuple of (root_node, dependencies_list) where root_node is the
                  component itself and dependencies_list is the sorted list of all
                  resolved transitive dependencies.
@@ -199,6 +202,7 @@ class Resolver(ABC):
         components: list[Component] | Component,
         managed: bool = False,
         boms: list[Component] | None = None,
+        transitive: bool = True,
     ) -> str:
         """
         Print a flat list of resolved dependencies (like mvn dependency:list).
@@ -206,9 +210,12 @@ class Resolver(ABC):
         :param components: The component(s) for which to print dependencies.
         :param managed: If True, use dependency management (import components as BOMs).
         :param boms: List of components to import as BOMs. Defaults to [component].
+        :param transitive: If False, show only direct dependencies (non-transitive).
         :return: The dependency list as a string.
         """
-        root, deps = self.get_dependency_list(components, managed=managed, boms=boms)
+        root, deps = self.get_dependency_list(
+            components, managed=managed, boms=boms, transitive=transitive
+        )
         return format_dependency_list(root, deps)
 
     def print_dependency_tree(
@@ -265,6 +272,7 @@ class SimpleResolver(Resolver):
         components: list[Component] | Component,
         managed: bool = False,
         boms: list[Component] | None = None,
+        transitive: bool = True,
     ) -> list[Dependency]:
         """
         Get all dependencies for the given components.
@@ -273,9 +281,10 @@ class SimpleResolver(Resolver):
             components: Single component or list of components
             managed: If True and boms is None, use components as BOMs
             boms: Optional list of components to import in dependencyManagement
+            transitive: Whether to include transitive dependencies
 
         Returns:
-            Flat list of all transitive dependencies
+            Flat list of dependencies
         """
         components = _listify(components)
 
@@ -286,7 +295,10 @@ class SimpleResolver(Resolver):
 
         pom = create_pom(components, boms)
         model = Model(pom, components[0].context)
-        deps = model.dependencies()
+        # When transitive=False, set max_depth=1 to get one level of dependencies
+        # from the synthetic wrapper (i.e., the direct dependencies of the components)
+        max_depth = 1 if not transitive else None
+        deps = model.dependencies(max_depth=max_depth)
 
         deps = _filter_component_deps(deps, components)
 
@@ -298,6 +310,7 @@ class SimpleResolver(Resolver):
         components: list[Component] | Component,
         managed: bool = False,
         boms: list[Component] | None = None,
+        transitive: bool = True,
     ) -> tuple[DependencyNode, list[DependencyNode]]:
         """
         Get the flat list of resolved dependencies as data structures.
@@ -306,12 +319,15 @@ class SimpleResolver(Resolver):
             components: Single component or list of components
             managed: If True and boms is None, use components as BOMs
             boms: Optional list of components to import in dependencyManagement
+            transitive: If False, return only direct dependencies
 
         Returns:
             Tuple of (root_node, flat_list_of_dependencies)
         """
         components = _listify(components)
-        deps = self.dependencies(components, managed=managed, boms=boms)
+        deps = self.dependencies(
+            components, managed=managed, boms=boms, transitive=transitive
+        )
         return self._build_dependency_list(components, deps)
 
     def get_dependency_tree(
@@ -496,6 +512,7 @@ class MavenResolver(Resolver):
         components: list[Component] | Component,
         managed: bool = False,
         boms: list[Component] | None = None,
+        transitive: bool = True,
     ) -> list[Dependency]:
         """
         Get all dependencies for the given components.
@@ -504,10 +521,26 @@ class MavenResolver(Resolver):
             components: Single component or list of components to resolve dependencies for
             managed: If True and boms is None, use components as BOMs
             boms: Optional list of components to import in dependencyManagement
+            transitive: Whether to include transitive dependencies
 
         Returns:
-            Flat list of all transitive dependencies
+            Flat list of dependencies
         """
+        if not transitive:
+            # Use get_dependency_tree and extract only direct children (depth 1)
+            root = self.get_dependency_tree(components, managed=managed, boms=boms)
+            dependencies = []
+
+            # Extract direct children of the root's children (which are the components)
+            for component_node in root.children:
+                # component_node represents one of the input components
+                # Its direct children are the direct dependencies we want
+                dependencies.extend(component_node.children)
+
+            # Convert DependencyNodes back to Dependency objects
+            return [node.dep for node in dependencies]
+
+        # For transitive=True, use dependency:list
         components = _listify(components)
 
         if not components:
@@ -560,6 +593,7 @@ class MavenResolver(Resolver):
         components: list[Component] | Component,
         managed: bool = False,
         boms: list[Component] | None = None,
+        transitive: bool = True,
     ) -> tuple[DependencyNode, list[DependencyNode]]:
         """
         Get the flat list of resolved dependencies as data structures.
@@ -568,12 +602,15 @@ class MavenResolver(Resolver):
             components: Single component or list of components
             managed: If True and boms is None, use components as BOMs
             boms: Optional list of components to import in dependencyManagement
+            transitive: If False, return only direct dependencies
 
         Returns:
             Tuple of (root_node, flat_list_of_dependencies)
         """
         components = _listify(components)
-        deps = self.dependencies(components, managed=managed, boms=boms)
+        deps = self.dependencies(
+            components, managed=managed, boms=boms, transitive=transitive
+        )
         return self._build_dependency_list(components, deps)
 
     def get_dependency_tree(
