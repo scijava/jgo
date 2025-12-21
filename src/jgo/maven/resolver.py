@@ -22,14 +22,19 @@ from .model import Model
 from .pom import write_temp_pom
 
 if TYPE_CHECKING:
+    from typing import List, TypeVar
+
     from .core import Artifact, Component
+
+    T = TypeVar("T")
+
 
 _log = logging.getLogger(__name__)
 
 
-def _ensure_component_list(components: list[Component] | Component) -> list[Component]:
-    """Convert single component to list for uniform handling."""
-    return components if isinstance(components, list) else [components]
+def _listify(items: List[T] | T) -> List[T]:
+    """Convert single item to list for uniform handling."""
+    return items if isinstance(items, list) else [items]
 
 
 def _resolve_boms(
@@ -149,7 +154,7 @@ class Resolver(ABC):
         Raises:
             ValueError: If no components provided
         """
-        components = _ensure_component_list(components)
+        components = _listify(components)
 
         if not components:
             raise ValueError("At least one component is required")
@@ -272,7 +277,7 @@ class SimpleResolver(Resolver):
         Returns:
             Flat list of all transitive dependencies
         """
-        components = _ensure_component_list(components)
+        components = _listify(components)
 
         if not components:
             raise ValueError("At least one component is required")
@@ -305,7 +310,7 @@ class SimpleResolver(Resolver):
         Returns:
             Tuple of (root_node, flat_list_of_dependencies)
         """
-        components = _ensure_component_list(components)
+        components = _listify(components)
         deps = self.dependencies(components, managed=managed, boms=boms)
         return self._build_dependency_list(components, deps)
 
@@ -326,7 +331,7 @@ class SimpleResolver(Resolver):
         Returns:
             Root DependencyNode with full tree structure
         """
-        components = _ensure_component_list(components)
+        components = _listify(components)
         root = _create_root(components)
         boms = _resolve_boms(components, managed, boms)
 
@@ -503,7 +508,7 @@ class MavenResolver(Resolver):
         Returns:
             Flat list of all transitive dependencies
         """
-        components = _ensure_component_list(components)
+        components = _listify(components)
 
         if not components:
             raise ValueError("At least one component is required")
@@ -567,7 +572,7 @@ class MavenResolver(Resolver):
         Returns:
             Tuple of (root_node, flat_list_of_dependencies)
         """
-        components = _ensure_component_list(components)
+        components = _listify(components)
         deps = self.dependencies(components, managed=managed, boms=boms)
         return self._build_dependency_list(components, deps)
 
@@ -588,7 +593,7 @@ class MavenResolver(Resolver):
         Returns:
             Root DependencyNode with full tree structure
         """
-        components = _ensure_component_list(components)
+        components = _listify(components)
 
         if not components:
             raise ValueError("At least one component is required")
