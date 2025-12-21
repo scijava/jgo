@@ -61,21 +61,6 @@ class Coordinate:
             self.raw,
         )
 
-    def __repr__(self) -> str:
-        """Return detailed representation."""
-        parts = [f"{self.groupId}:{self.artifactId}"]
-        if self.version:
-            parts.append(f"v={self.version}")
-        if self.classifier:
-            parts.append(f"c={self.classifier}")
-        if self.packaging:
-            parts.append(f"p={self.packaging}")
-        if self.scope:
-            parts.append(f"s={self.scope}")
-        if self.optional:
-            parts.append("optional")
-        return f"<Coordinate {' '.join(parts)}>"
-
     @classmethod
     def parse(cls, coordinate: "Coordinate" | str) -> "Coordinate":
         """

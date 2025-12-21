@@ -89,15 +89,6 @@ class Endpoint:
             result += f"@{self.main_class}"
         return result
 
-    def __repr__(self) -> str:
-        """Return detailed representation."""
-        raw_count = sum(1 for c in self.coordinates if c.raw)
-        return (
-            f"<Endpoint coords={len(self.coordinates)} "
-            f"main={self.main_class or 'None'} "
-            f"raw={raw_count}/{len(self.coordinates)}>"
-        )
-
     @classmethod
     def parse(cls, endpoint: "Endpoint" | str) -> "Endpoint":
         """
