@@ -44,13 +44,6 @@ Fix passing of JVM arguments. E.g. this doesn't currently work:
 nor does this:
   `jgo run ops+org.scijava:app-launcher -- --add-opens=java.base/java.lang=ALL-UNNAMED`
 
-Fix broken `jgo config` syntax:
-- On the one hand, it works like git: `jgo config mykey myvalue` for setting.
-- But on the other hand, `jgo config shortcut` is supposed to be a subcommand.
-- But the `shortcut` subcommand does not actually work; it's interpreted as a key name.
-- Should `jgo config` with no args do a `--list` by default? `git config` does not do this.
-- Probably we should just deviate from git in favor of consistency with subcommand syntax.
-
 Make verbose flags give more dependency resolution detail:
 - `jgo -v update` gives some info
 - But it does not say what the newest version of each dep is, nor which deps got updated.

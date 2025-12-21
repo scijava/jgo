@@ -13,75 +13,33 @@ if TYPE_CHECKING:
 
 
 @click.group(help="Manage jgo configuration", invoke_without_command=True)
-@click.option(
-    "--list",
-    "list_all",
-    is_flag=True,
-    help="List all configuration values",
-)
-@click.option(
-    "--global",
-    "global_config",
-    is_flag=True,
-    help="Use global configuration (~/.jgorc)",
-)
-@click.option(
-    "--local",
-    "local_config",
-    is_flag=True,
-    help="Use local configuration (jgo.toml)",
-)
-@click.option(
-    "--unset",
-    metavar="KEY",
-    help="Remove a configuration value",
-)
-@click.argument("key", required=False)
-@click.argument("value", required=False)
 @click.pass_context
-def config(ctx, list_all, global_config, local_config, unset, key, value):
+def config(ctx):
     """
     Manage jgo configuration.
 
-    Without arguments: show all configuration
-    With KEY only: show value for that key
-    With KEY and VALUE: set the value for that key
-
-    Keys can be specified as 'section.key' or just 'key' (defaults to settings section).
+    Use subcommands to manage configuration:
+      list      - List all configuration values
+      get       - Get a specific configuration value
+      set       - Set a configuration value
+      unset     - Remove a configuration value
+      shortcut  - Manage endpoint shortcuts
 
     EXAMPLES:
-      jgo config                              # Show all config
-      jgo config --list                       # Show all config
-      jgo config cache_dir                    # Show cache_dir value
-      jgo config settings.cache_dir           # Show cache_dir from settings section
-      jgo config cache_dir ~/.jgo             # Set cache_dir
-      jgo config repositories.central URL     # Set repository URL
-      jgo config --unset cache_dir            # Remove cache_dir setting
-      jgo config --global cache_dir ~/.jgo    # Set in global config
-      jgo config --local cache_dir .jgo       # Set in local config
+      jgo config list                         # Show all config
+      jgo config get cache_dir                # Show cache_dir value
+      jgo config get settings.cache_dir       # Show cache_dir from settings section
+      jgo config set cache_dir ~/.jgo         # Set cache_dir
+      jgo config set repositories.central URL # Set repository URL
+      jgo config unset cache_dir              # Remove cache_dir setting
+      jgo config --global set cache_dir ~/.jgo # Set in global config
+      jgo config --local set cache_dir .jgo   # Set in local config
+      jgo config shortcut list                # List all shortcuts
     """
-    from ...config.jgorc import JgoConfig
-    from ..parser import _build_parsed_args
-
-    # If a subcommand was invoked, don't execute the default behavior
-    if ctx.invoked_subcommand is not None:
-        return
-
-    opts = ctx.obj
-    jgorc = JgoConfig.load_from_opts(opts)
-    args = _build_parsed_args(opts, command="config")
-
-    exit_code = execute(
-        args,
-        jgorc.to_dict(),
-        key=key,
-        value=value,
-        unset=unset,
-        list_all=list_all,
-        global_config=global_config,
-        local_config=local_config,
-    )
-    ctx.exit(exit_code)
+    # If no subcommand, show help
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+        ctx.exit(0)
 
 
 def execute(
@@ -465,6 +423,157 @@ def _parse_value(value: str) -> str | int | float | bool:
 
     # Return as string
     return value
+
+
+# Subcommands
+
+
+@config.command(name="list", help="List all configuration values")
+@click.option(
+    "--global",
+    "global_config",
+    is_flag=True,
+    help="Use global configuration (~/.jgorc)",
+)
+@click.option(
+    "--local",
+    "local_config",
+    is_flag=True,
+    help="Use local configuration (jgo.toml)",
+)
+@click.pass_context
+def list_cmd(ctx, global_config, local_config):
+    """List all configuration values."""
+    from ...config.jgorc import JgoConfig
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    jgorc = JgoConfig.load_from_opts(opts)
+    args = _build_parsed_args(opts, command="config")
+
+    exit_code = execute(
+        args,
+        jgorc.to_dict(),
+        key=None,
+        value=None,
+        unset=None,
+        list_all=True,
+        global_config=global_config,
+        local_config=local_config,
+    )
+    ctx.exit(exit_code)
+
+
+@config.command(name="get", help="Get a configuration value")
+@click.argument("key")
+@click.option(
+    "--global",
+    "global_config",
+    is_flag=True,
+    help="Use global configuration (~/.jgorc)",
+)
+@click.option(
+    "--local",
+    "local_config",
+    is_flag=True,
+    help="Use local configuration (jgo.toml)",
+)
+@click.pass_context
+def get_cmd(ctx, key, global_config, local_config):
+    """Get a configuration value."""
+    from ...config.jgorc import JgoConfig
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    jgorc = JgoConfig.load_from_opts(opts)
+    args = _build_parsed_args(opts, command="config")
+
+    exit_code = execute(
+        args,
+        jgorc.to_dict(),
+        key=key,
+        value=None,
+        unset=None,
+        list_all=False,
+        global_config=global_config,
+        local_config=local_config,
+    )
+    ctx.exit(exit_code)
+
+
+@config.command(name="set", help="Set a configuration value")
+@click.argument("key")
+@click.argument("value")
+@click.option(
+    "--global",
+    "global_config",
+    is_flag=True,
+    help="Use global configuration (~/.jgorc)",
+)
+@click.option(
+    "--local",
+    "local_config",
+    is_flag=True,
+    help="Use local configuration (jgo.toml)",
+)
+@click.pass_context
+def set_cmd(ctx, key, value, global_config, local_config):
+    """Set a configuration value."""
+    from ...config.jgorc import JgoConfig
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    jgorc = JgoConfig.load_from_opts(opts)
+    args = _build_parsed_args(opts, command="config")
+
+    exit_code = execute(
+        args,
+        jgorc.to_dict(),
+        key=key,
+        value=value,
+        unset=None,
+        list_all=False,
+        global_config=global_config,
+        local_config=local_config,
+    )
+    ctx.exit(exit_code)
+
+
+@config.command(name="unset", help="Remove a configuration value")
+@click.argument("key")
+@click.option(
+    "--global",
+    "global_config",
+    is_flag=True,
+    help="Use global configuration (~/.jgorc)",
+)
+@click.option(
+    "--local",
+    "local_config",
+    is_flag=True,
+    help="Use local configuration (jgo.toml)",
+)
+@click.pass_context
+def unset_cmd(ctx, key, global_config, local_config):
+    """Remove a configuration value."""
+    from ...config.jgorc import JgoConfig
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    jgorc = JgoConfig.load_from_opts(opts)
+    args = _build_parsed_args(opts, command="config")
+
+    exit_code = execute(
+        args,
+        jgorc.to_dict(),
+        key=None,
+        value=None,
+        unset=key,
+        list_all=False,
+        global_config=global_config,
+        local_config=local_config,
+    )
+    ctx.exit(exit_code)
 
 
 # Import and register shortcut subcommand
