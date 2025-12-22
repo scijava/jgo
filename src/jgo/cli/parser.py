@@ -331,6 +331,7 @@ def global_options(f):
 @click.group(
     cls=JgoGroup,
     invoke_without_command=True,
+    context_settings=dict(ignore_unknown_options=True, allow_interspersed_args=False),
     help="""Environment manager for Java programs.
 
 Launch Java applications directly from Maven coordinates,

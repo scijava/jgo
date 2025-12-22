@@ -23,11 +23,6 @@ Does `-vvv` (or a sufficient number of v's) pass `-X` to `mvn` when using the Mv
 
 Fix the `--dry-run` flag to actually not run -- it should print the java launch command.
 
-Fix passing of JVM arguments. E.g. this doesn't currently work:
-  `jgo run ops+org.scijava:app-launcher --add-opens=java.base/java.lang=ALL-UNNAMED`
-nor does this:
-  `jgo run ops+org.scijava:app-launcher -- --add-opens=java.base/java.lang=ALL-UNNAMED`
-
 Make verbose flags give more dependency resolution detail:
 - `jgo -v update` gives some info
 - But it does not say what the newest version of each dep is, nor which deps got updated.

@@ -10,7 +10,10 @@ if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
 
-@click.command(help="Run a Java application from Maven coordinates or jgo.toml")
+@click.command(
+    help="Run a Java application from Maven coordinates or jgo.toml",
+    context_settings=dict(ignore_unknown_options=True, allow_interspersed_args=False),
+)
 @click.option(
     "--main-class",
     metavar="CLASS",
