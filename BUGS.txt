@@ -38,17 +38,3 @@ Terms `endpoint` and `entrypoint` are confusingly similar -- any recourse, or no
 
 What is the difference between `jgo -u` and `jgo update`? Do we need both?
 - For non-project mode, `jgo -u` seems needed for whether to update hashed env...
-
-`jgo init` does not add an entrypoint for inferred main class of endpoint
-- E.g. `jgo init org.python:jython-slim` followed by `jgo run` will run `org.python.util.jython`.
-- But that entrypoint is not written into the `jgo.toml`
-- What happens after a subsequent `jgo update` if the `jython-slim` main class has changed?
-  - If we write `default = org.python:jython-slim` as the default entrypoint, we can
-    retain the magical inference, updating `manifest.json` after each `-u`.
-  - Or, if we write `default = org.python.util.jython`, we can keep it fixed.
-  - Which behavior is better? I lean toward the former.
-- Similarly, minimum java version is inferred... but at update, is it updated?
-  - Generally speaking: how "hard" should `jgo update` update?
-    - recalculate min java version?
-    - recalculate inferred main classes?
-

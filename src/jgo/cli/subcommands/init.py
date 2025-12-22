@@ -98,6 +98,10 @@ def _parse_endpoint_with_shortcuts(
     """
     Parse endpoint (possibly with shortcuts and + composition) to extract coordinates and entrypoints.
 
+    When no main class is specified via @ notation, the default entrypoint will use an
+    endpoint reference (e.g., "org.python:jython-slim") to indicate main class inference
+    from coordinates, rather than scanning for a main class explicitly during the init.
+
     Args:
         original_endpoint: Original endpoint string (may contain shortcut names)
         expanded_endpoint: Expanded endpoint string (shortcuts replaced with coordinates)
@@ -106,8 +110,8 @@ def _parse_endpoint_with_shortcuts(
     Returns:
         Tuple of (coordinates, entrypoints, default_entrypoint)
         - coordinates: List of Maven coordinates
-        - entrypoints: Dict mapping entrypoint names to main classes
-        - default_entrypoint: Name of default entrypoint (first one with main class)
+        - entrypoints: Dict mapping entrypoint names to coordinate references or main classes
+        - default_entrypoint: Name of default entrypoint
     """
     # Split on + for composition
     original_parts = original_endpoint.split("+")
@@ -149,6 +153,13 @@ def _parse_endpoint_with_shortcuts(
             # First entrypoint becomes default
             if default_entrypoint is None:
                 default_entrypoint = entrypoint_name
+        elif len(coordinates) == 1:
+            # No explicit main class specified - use coordinate reference for inference
+            # This allows "jgo init org.python:jython-slim" to infer main class at build time
+            entrypoint_name = "main"
+            # Use the full expanded coordinate as the entrypoint value
+            entrypoints[entrypoint_name] = exp_part
+            default_entrypoint = entrypoint_name
 
     return coordinates, entrypoints, default_entrypoint
 

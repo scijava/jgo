@@ -231,7 +231,8 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
         if self.link_strategy:
             settings_section["links"] = self.link_strategy
         if self.cache_dir:
-            settings_section["cache_dir"] = self.cache_dir
+            # Convert Path to string for TOML serialization
+            settings_section["cache_dir"] = str(self.cache_dir)
         if settings_section:
             data["settings"] = settings_section
 

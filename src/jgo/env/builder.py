@@ -15,7 +15,7 @@ from ..parse.coordinate import Coordinate
 from .environment import Environment
 from .jar_util import autocomplete_main_class, detect_main_class_from_jar
 from .linking import LinkStrategy, link_file
-from .lockfile import LockFile
+from .lockfile import LockFile, compute_spec_hash
 
 if TYPE_CHECKING:
     from ..maven import Component, MavenContext
@@ -37,6 +37,54 @@ def filter_managed_components(
         List of components that should be managed (coordinates without raw flag)
     """
     return [comp for comp, coord in zip(components, coordinates) if not coord.raw]
+
+
+def is_coordinate_reference(entrypoint_value: str) -> bool:
+    """
+    Check if entrypoint value is a Maven coordinate reference vs. a class name.
+
+    Maven coordinates contain colons (e.g., "org.python:jython-slim" or "org.foo:foo+org.bar:bar")
+    Class names do not contain colons (e.g., "org.python.util.jython" or "MyMain")
+
+    Args:
+        entrypoint_value: Entrypoint value from jgo.toml
+
+    Returns:
+        True if value is a coordinate reference, False if it's a class name
+    """
+    return ":" in entrypoint_value
+
+
+def infer_main_class_from_coordinates(
+    coord_str: str, components: list[Component], jars_dir: Path
+) -> str | None:
+    """
+    Infer main class from a coordinate string.
+
+    For composite coordinates (with +), tries each in order until one succeeds.
+
+    Args:
+        coord_str: Coordinate string (e.g., "org.python:jython-slim" or "org.foo:foo+org.bar:bar")
+        components: List of Maven components (parallel to coord parts)
+        jars_dir: Directory containing JAR files
+
+    Returns:
+        Inferred main class, or None if no Main-Class found
+    """
+    coord_parts = coord_str.split("+")
+
+    for i, coord_part in enumerate(coord_parts):
+        coord_part = coord_part.strip()
+        coord = Coordinate.parse(coord_part)
+
+        # Find matching JAR in environment
+        for jar_path in jars_dir.glob("*.jar"):
+            if coord.artifactId in jar_path.name:
+                main_class = detect_main_class_from_jar(jar_path)
+                if main_class:
+                    return main_class
+
+    return None
 
 
 class EnvironmentBuilder:
@@ -150,6 +198,7 @@ class EnvironmentBuilder:
         spec: EnvironmentSpec,
         update: bool = False,
         entrypoint: str | None = None,
+        java_version: str | None = None,
     ) -> Environment:
         """
         Build an environment from an EnvironmentSpec (jgo.toml).
@@ -158,6 +207,7 @@ class EnvironmentBuilder:
             spec: Environment specification
             update: If True, force rebuild even if environment exists
             entrypoint: Optional entrypoint name to use (overrides spec default)
+            java_version: Resolved Java version from cjdk (for lockfile)
 
         Returns:
             Environment instance
@@ -172,9 +222,6 @@ class EnvironmentBuilder:
                 coord.groupId, coord.artifactId
             ).at_version(version)
             components.append(component)
-
-        # Get main class from entrypoint
-        main_class = spec.get_main_class(entrypoint)
 
         # Use spec's cache_dir if specified, otherwise use builder's default
         cache_dir = (
@@ -193,19 +240,30 @@ class EnvironmentBuilder:
         if workspace_path.exists() and not update:
             # Validate environment has JARs
             if environment.classpath:
-                # Environment is valid, but we still need to set main class from entrypoint
-                if main_class:
-                    # Auto-complete and set main class
-                    jars_dir = workspace_path / "jars"
-                    main_class = autocomplete_main_class(
-                        main_class, primary.artifactId, jars_dir
-                    )
-                    environment.set_main_class(main_class)
+                # TODO: Validate lockfile is not stale
                 return environment
             # Otherwise fall through to rebuild
 
         # Build environment and get resolved dependencies
-        resolved_deps = self._build_environment(environment, components, main_class)
+        resolved_deps = self._build_environment(environment, components, None)
+
+        # Infer concrete entrypoints from spec
+        jars_dir = environment.path / "jars"
+        concrete_entrypoints = self._infer_concrete_entrypoints(
+            spec, components, jars_dir
+        )
+
+        # Get concrete default entrypoint and set as main class
+        concrete_default_class = None
+        if spec.default_entrypoint and spec.default_entrypoint in concrete_entrypoints:
+            concrete_default_class = concrete_entrypoints[spec.default_entrypoint]
+        elif concrete_entrypoints:
+            # Use first entrypoint as default if none specified
+            concrete_default_class = next(iter(concrete_entrypoints.values()))
+
+        # Set main class in environment (for backwards compat with manifest.json)
+        if concrete_default_class:
+            environment.set_main_class(concrete_default_class)
 
         # Save spec and lock file to environment directory
         spec_path = environment.path / "jgo.toml"
@@ -213,13 +271,24 @@ class EnvironmentBuilder:
 
         spec.save(spec_path)
 
+        # Compute spec hash for staleness detection (from root jgo.toml if it exists)
+        root_spec_path = Path("jgo.toml")
+        if root_spec_path.exists():
+            spec_hash = compute_spec_hash(root_spec_path)
+        else:
+            # Use the spec we just saved in the environment
+            spec_hash = compute_spec_hash(spec_path)
+
         # Generate lock file from resolved dependencies
         lockfile = LockFile.from_resolved_dependencies(
             dependencies=resolved_deps,
             environment_name=spec.name,
+            java_version=java_version or spec.java_version,
+            java_vendor=spec.java_vendor,
             min_java_version=environment.min_java_version,
-            entrypoints=spec.entrypoints,
+            entrypoints=concrete_entrypoints,
             default_entrypoint=spec.default_entrypoint,
+            spec_hash=spec_hash,
         )
         lockfile.save(lock_path)
 
@@ -234,6 +303,45 @@ class EnvironmentBuilder:
         )
         combined = "+".join(coord_strings)
         return hashlib.sha256(combined.encode()).hexdigest()[:16]
+
+    def _infer_concrete_entrypoints(
+        self, spec: EnvironmentSpec, components: list[Component], jars_dir: Path
+    ) -> dict[str, str]:
+        """
+        Infer concrete main classes from spec entrypoints.
+
+        For each entrypoint in the spec:
+        - If value contains ":" → coordinate reference → infer from JARs
+        - Otherwise → class name (concrete or simple) → auto-complete if needed
+
+        Args:
+            spec: Environment specification
+            components: List of Maven components
+            jars_dir: Directory containing JAR files
+
+        Returns:
+            Dictionary of entrypoint names to concrete main class names
+        """
+        concrete_entrypoints = {}
+
+        for name, value in spec.entrypoints.items():
+            if is_coordinate_reference(value):
+                # Coordinate reference - infer from JARs
+                main_class = infer_main_class_from_coordinates(
+                    value, components, jars_dir
+                )
+                if main_class:
+                    concrete_entrypoints[name] = main_class
+                # If inference fails, omit entrypoint (no Main-Class found)
+            else:
+                # Class name - auto-complete if needed
+                primary = components[0]
+                main_class = autocomplete_main_class(
+                    value, primary.artifactId, jars_dir
+                )
+                concrete_entrypoints[name] = main_class
+
+        return concrete_entrypoints
 
     def _build_environment(
         self,

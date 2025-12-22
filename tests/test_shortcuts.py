@@ -285,9 +285,10 @@ class TestInitWithShortcuts:
                 # Should have the coordinate
                 assert spec.coordinates == ["net.imagej:imagej"]
 
-                # Should have NO entrypoints (no main class)
-                assert not spec.entrypoints
-                assert spec.default_entrypoint is None
+                # Should have entrypoint matching endpoint
+                assert "main" in spec.entrypoints
+                assert spec.entrypoints["main"] == "net.imagej:imagej"
+                assert spec.default_entrypoint == "main"
 
             finally:
                 os.chdir(original_cwd)

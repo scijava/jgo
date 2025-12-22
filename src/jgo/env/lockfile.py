@@ -99,24 +99,31 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
     Records:
     - Exact resolved versions (SNAPSHOT → timestamped)
     - SHA256 checksums for verification
-    - Environment metadata (name, min_java_version)
-    - Entrypoints
+    - Environment metadata (name, java versions)
+    - Entrypoints (concrete, inferred main classes)
+    - Spec hash for staleness detection
     """
 
     def __init__(
         self,
         dependencies: list[LockedDependency],
         environment_name: str | None = None,
+        java_version: str | None = None,
+        java_vendor: str | None = None,
         min_java_version: int | None = None,
         entrypoints: dict[str, str] | None = None,
         default_entrypoint: str | None = None,
+        spec_hash: str | None = None,
         jgo_version: str = "2.0.0",
     ):
         self.dependencies = dependencies
         self.environment_name = environment_name
+        self.java_version = java_version
+        self.java_vendor = java_vendor
         self.min_java_version = min_java_version
         self.entrypoints = entrypoints or {}
         self.default_entrypoint = default_entrypoint
+        self.spec_hash = spec_hash
         self.jgo_version = jgo_version
         self.generated = datetime.now(timezone.utc)
 
@@ -125,9 +132,12 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
         cls,
         dependencies: list[Dependency],
         environment_name: str | None = None,
+        java_version: str | None = None,
+        java_vendor: str | None = None,
         min_java_version: int | None = None,
         entrypoints: dict[str, str] | None = None,
         default_entrypoint: str | None = None,
+        spec_hash: str | None = None,
     ) -> "LockFile":
         """
         Create a lock file from resolved dependencies.
@@ -139,9 +149,12 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
         return cls(
             dependencies=locked_deps,
             environment_name=environment_name,
+            java_version=java_version,
+            java_vendor=java_vendor,
             min_java_version=min_java_version,
             entrypoints=entrypoints,
             default_entrypoint=default_entrypoint,
+            spec_hash=spec_hash,
         )
 
     @classmethod
@@ -149,11 +162,17 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
         # Parse metadata
         metadata = data.get("metadata", {})
         jgo_version = metadata.get("jgo_version", "unknown")
+        spec_hash = metadata.get("spec_hash")
 
         # Parse environment section
         env_section = data.get("environment", {})
         environment_name = env_section.get("name")
         min_java_version = env_section.get("min_java_version")
+
+        # Parse java section
+        java_section = data.get("java", {})
+        java_version = java_section.get("version")
+        java_vendor = java_section.get("vendor")
 
         # Parse dependencies
         deps_list = data.get("dependencies", [])
@@ -167,9 +186,12 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
         lockfile = cls(
             dependencies=dependencies,
             environment_name=environment_name,
+            java_version=java_version,
+            java_vendor=java_vendor,
             min_java_version=min_java_version,
             entrypoints=entrypoints,
             default_entrypoint=default_entrypoint,
+            spec_hash=spec_hash,
             jgo_version=jgo_version,
         )
 
@@ -191,6 +213,8 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
             "generated": self.generated.isoformat(),
             "jgo_version": self.jgo_version,
         }
+        if self.spec_hash:
+            metadata["spec_hash"] = self.spec_hash
         data["metadata"] = metadata
 
         # [environment] section
@@ -201,6 +225,15 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
             env_section["min_java_version"] = self.min_java_version
         if env_section:
             data["environment"] = env_section
+
+        # [java] section
+        java_section = {}
+        if self.java_version:
+            java_section["version"] = self.java_version
+        if self.java_vendor:
+            java_section["vendor"] = self.java_vendor
+        if java_section:
+            data["java"] = java_section
 
         # [[dependencies]] array
         data["dependencies"] = [dep.to_dict() for dep in self.dependencies]
@@ -282,3 +315,17 @@ def compute_sha256(path: Path) -> str:
         while chunk := f.read(8192):
             sha256.update(chunk)
     return sha256.hexdigest()
+
+
+def compute_spec_hash(spec_path: Path) -> str:
+    """
+    Compute SHA256 hash of jgo.toml for staleness detection.
+
+    Args:
+        spec_path: Path to jgo.toml
+
+    Returns:
+        First 16 characters of SHA256 hex string
+    """
+    content = spec_path.read_text(encoding="utf-8")
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()[:16]

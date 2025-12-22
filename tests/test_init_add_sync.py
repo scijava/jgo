@@ -101,7 +101,10 @@ def test_init_with_main_class_then_add():
 
 def test_init_without_main_class():
     """
-    Test that jgo init still works without a main class (baseline test).
+    Test that jgo init without @MainClass creates a coordinate reference entrypoint.
+
+    New behavior: jgo init org.scijava:scijava-common creates an entrypoint
+    with coordinate reference for inference at build time.
     """
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
@@ -135,9 +138,9 @@ def test_init_without_main_class():
             # Should have coordinate
             assert spec.coordinates == ["org.scijava:scijava-common"]
 
-            # Should have no entrypoints
-            assert not spec.entrypoints
-            assert spec.default_entrypoint is None
+            # Should have entrypoint with coordinate reference (new behavior)
+            assert spec.entrypoints == {"main": "org.scijava:scijava-common"}
+            assert spec.default_entrypoint == "main"
 
         finally:
             os.chdir(original_cwd)
