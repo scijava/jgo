@@ -198,16 +198,16 @@ def global_options(f):
         count=True,
         help="Verbose output (can be repeated: -vv, -vvv)",
     )(f)
-    f = click.option("-q", "--quiet", is_flag=True, help="Suppress all output")(f)
+    f = click.option("-q", "--quiet", is_flag=True, help="Suppress all output.")(f)
     f = click.option(
         "-f",
         "--file",
         type=click.Path(path_type=Path),
         metavar="FILE",
-        help="Use specific environment file (default: jgo.toml)",
+        help="Use specific environment file (default: jgo.toml).",
     )(f)
     f = click.option(
-        "--dry-run", is_flag=True, help="Show what would be done without doing it"
+        "--dry-run", is_flag=True, help="Show what would be done without doing it."
     )(f)
 
     # Cache options
@@ -215,33 +215,33 @@ def global_options(f):
         "-u",
         "--update",
         is_flag=True,
-        help="Update cached environment [env: JGO_UPDATE]",
+        help="Update cached environment. [env: JGO_UPDATE]",
         envvar="JGO_UPDATE",
     )(f)
     f = click.option(
         "--offline",
         is_flag=True,
-        help="Work offline, don't download [env: JGO_OFFLINE]",
+        help="Work offline, don't download. [env: JGO_OFFLINE]",
         envvar="JGO_OFFLINE",
     )(f)
     f = click.option(
         "--no-cache",
         is_flag=True,
-        help="Skip cache entirely, always rebuild [env: JGO_NO_CACHE]",
+        help="Skip cache entirely, always rebuild. [env: JGO_NO_CACHE]",
         envvar="JGO_NO_CACHE",
     )(f)
     f = click.option(
         "--cache-dir",
         type=click.Path(path_type=Path),
         metavar="PATH",
-        help="Override cache directory [env: JGO_CACHE_DIR]",
+        help="Override cache directory. [env: JGO_CACHE_DIR]",
         envvar="JGO_CACHE_DIR",
     )(f)
     f = click.option(
         "--repo-cache",
         type=click.Path(path_type=Path),
         metavar="PATH",
-        help="Override Maven repo cache [env: M2_REPO]",
+        help="Override Maven repo cache. [env: M2_REPO]",
         envvar="M2_REPO",
     )(f)
 
@@ -257,7 +257,7 @@ def global_options(f):
         "--repository",
         multiple=True,
         metavar="NAME=URL",
-        help="Add remote Maven repository",
+        help="Add remote Maven repository.",
     )(f)
     f = click.option(
         "-m",
@@ -266,7 +266,7 @@ def global_options(f):
         flag_value=False,
         default=False,
         hidden=True,
-        help="[DEPRECATED] Enable dependency management - this is now the default and has no effect",
+        help="[DEPRECATED] Enable dependency management (this is now the default and has no effect).",
     )(f)
 
     # Java options
@@ -274,19 +274,19 @@ def global_options(f):
         "--java-version",
         type=int,
         metavar="VERSION",
-        help="Force specific Java version (e.g., 17) [env: JAVA_VERSION]",
+        help="Force specific Java version (e.g., 17). [env: JAVA_VERSION]",
         envvar="JAVA_VERSION",
     )(f)
     f = click.option(
         "--java-vendor",
         metavar="VENDOR",
-        help="Prefer specific Java vendor (e.g., 'adoptium', 'zulu')",
+        help="Prefer specific Java vendor (e.g., 'adoptium', 'zulu').",
     )(f)
     f = click.option(
         "--system-java",
         "use_system_java",
         is_flag=True,
-        help="Use system Java instead of downloading Java on demand",
+        help="Use system Java instead of downloading Java on demand.",
     )(f)
 
     # Advanced options
@@ -297,7 +297,7 @@ def global_options(f):
         help="How to link JARs: hard, soft, copy, or auto (default)",
     )(f)
     f = click.option(
-        "--ignore-jgorc", is_flag=True, help="Ignore ~/.jgorc configuration file"
+        "--ignore-jgorc", is_flag=True, help="Ignore ~/.jgorc configuration file."
     )(f)
 
     # Legacy flags (hidden)
@@ -322,7 +322,7 @@ def global_options(f):
         callback=_print_version,
         expose_value=False,
         is_eager=True,
-        help="Show jgo version and exit",
+        help="Show jgo version and exit.",
     )(f)
 
     return f
