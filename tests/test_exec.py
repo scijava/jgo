@@ -124,9 +124,9 @@ class TestJavaLocator:
         with pytest.raises(RuntimeError, match="required"):
             locator.locate(min_version=999)
 
-    def test_cjdk_java(self):
-        """Test obtaining Java via cjdk."""
-        locator = JavaLocator(java_source=JavaSource.CJDK, java_version=11)
+    def test_auto_java(self):
+        """Test obtaining Java via auto mode."""
+        locator = JavaLocator(java_source=JavaSource.AUTO, java_version=11)
         java_path = locator.locate()
 
         assert java_path.exists()
@@ -156,7 +156,7 @@ class TestJavaRunner:
         """Test JavaRunner initialization."""
         runner = JavaRunner()
         assert runner.jvm_config is not None
-        assert runner.java_source == JavaSource.CJDK
+        assert runner.java_source == JavaSource.AUTO
 
     def test_runner_with_config(self):
         """Test JavaRunner with custom JVM config."""

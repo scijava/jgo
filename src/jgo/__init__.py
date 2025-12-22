@@ -46,7 +46,7 @@ Layer 2 - Environment materialization (jgo.env):
 Layer 3 - Execution (jgo.exec):
     JavaRunner - Execute Java programs from environments
     JVMConfig - Configure JVM settings (heap, GC, system properties)
-    JavaSource - Java selection strategy (SYSTEM, CJDK)
+    JavaSource - Java selection strategy (SYSTEM, AUTO)
 
 Example - Full Control
 ----------------------
@@ -139,7 +139,7 @@ def run(
     repositories: dict[str, str] | None = None,
     java_version: int | None = None,
     java_vendor: str | None = None,
-    java_source: str = "cjdk",
+    java_source: str = "auto",
 ) -> subprocess.CompletedProcess:
     """
     Run a Java application from a Maven endpoint.
@@ -157,7 +157,7 @@ def run(
         repositories: Additional Maven repositories (name -> URL)
         java_version: Force specific Java version
         java_vendor: Prefer specific Java vendor
-        java_source: Java source strategy ("cjdk", "system")
+        java_source: Java source strategy ("auto", "system")
 
     Returns:
         CompletedProcess from subprocess.run
@@ -197,12 +197,12 @@ def run(
     # Create Java runner
     java_source_map = {
         "system": JavaSource.SYSTEM,
-        "cjdk": JavaSource.CJDK,
+        "auto": JavaSource.AUTO,
     }
 
     runner = JavaRunner(
         jvm_config=JVMConfig(),
-        java_source=java_source_map.get(java_source, JavaSource.CJDK),
+        java_source=java_source_map.get(java_source, JavaSource.AUTO),
         java_version=java_version,
         java_vendor=java_vendor,
         verbose=verbose,

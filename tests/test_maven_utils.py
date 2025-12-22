@@ -1,5 +1,5 @@
 """
-Tests for the cjdk utility functions (jgo.util.cjdk).
+Tests for the Maven utility functions (jgo.util.maven).
 """
 
 import shutil
@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from jgo.util.cjdk import ensure_maven_available, fetch_maven
+from jgo.util.maven import ensure_maven_available, fetch_maven
 
 
 class TestEnsureMavenAvailable:
@@ -24,7 +24,7 @@ class TestEnsureMavenAvailable:
             assert mvn_path.name == "mvn" or mvn_path.name == "mvn.cmd"
 
     def test_fetches_maven_when_missing(self, monkeypatch):
-        """Test that it fetches Maven using cjdk when not on PATH."""
+        """Test that it fetches Maven when not on PATH."""
         # Mock shutil.which to return None (simulating Maven not being on PATH)
         monkeypatch.setattr(shutil, "which", lambda x: None)
 

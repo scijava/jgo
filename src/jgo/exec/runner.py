@@ -22,7 +22,7 @@ class JavaRunner:
     def __init__(
         self,
         jvm_config: JVMConfig | None = None,
-        java_source: JavaSource = JavaSource.CJDK,
+        java_source: JavaSource = JavaSource.AUTO,
         java_version: int | None = None,
         java_vendor: str | None = None,
         verbose: bool = False,

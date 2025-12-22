@@ -16,7 +16,7 @@ from jgo.env import EnvironmentBuilder
 from jgo.maven import MavenContext
 from jgo.maven.core import Component, Dependency
 from jgo.maven.resolver import MvnResolver, PythonResolver
-from jgo.util.cjdk import ensure_maven_available
+from jgo.util.maven import ensure_maven_available
 
 
 @dataclass(frozen=True)

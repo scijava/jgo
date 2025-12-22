@@ -322,7 +322,7 @@ class JgoCommands:
         Create Java runner from arguments and configuration.
         """
         java_source = (
-            JavaSource.SYSTEM if self.args.use_system_java else JavaSource.CJDK
+            JavaSource.SYSTEM if self.args.use_system_java else JavaSource.AUTO
         )
 
         # Create JVM config

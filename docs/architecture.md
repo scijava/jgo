@@ -209,7 +209,7 @@ jvm_config = JVMConfig(
 # Run program
 runner = JavaRunner(
     jvm_config=jvm_config,
-    java_source=JavaSource.CJDK  # Auto-download Java if needed
+    java_source=JavaSource.AUTO  # Auto-download Java if needed
 )
 
 result = runner.run(
@@ -226,9 +226,9 @@ result = runner.run(
 - Lightweight, no extra dependencies
 - Requires pre-installed Java
 
-**CJDK**:
+**AUTO**:
 - Detects environment's `min_java_version`
-- Uses cjdk to download Java automatically
+- Automatically fetches/downloads Java if needed
 - Supports version and vendor selection
 
 ### Zero-Configuration Execution
@@ -242,7 +242,7 @@ jgo.run("net.imagej:imagej")
 
 # Output:
 # INFO: Detected minimum Java version: 17
-# INFO: Obtaining Java 17 via cjdk...
+# INFO: Obtaining Java 17 automatically...
 # INFO: Using Java 17.0.9 (Adoptium)
 # [ImageJ launches]
 ```
@@ -254,7 +254,7 @@ jgo.run("net.imagej:imagej")
 from jgo.exec import JavaRunner, JavaSource
 
 runner = JavaRunner(
-    java_source=JavaSource.CJDK,
+    java_source=JavaSource.AUTO,
     java_version="11"
 )
 runner.run(env)  # Test with Java 11
@@ -335,7 +335,7 @@ jvm_config = JVMConfig(
 
 runner = JavaRunner(
     jvm_config=jvm_config,
-    java_source=JavaSource.CJDK,
+    java_source=JavaSource.AUTO,
     java_version="17",
     java_vendor="adoptium"
 )
@@ -368,7 +368,7 @@ Each layer can be tested in isolation:
 Mix and match components:
 - Use PythonResolver or MvnResolver
 - Use hard links or copies
-- Use cjdk or system Java
+- Use auto or system Java
 
 ### 4. No External Dependencies (Core)
 
@@ -449,7 +449,7 @@ jgo/
   ├─ exec/                 # Layer 3: Execution
   │   ├─ runner.py         # JavaRunner
   │   ├─ config.py         # JVMConfig
-  │   └─ java_source.py    # JavaLocator, cjdk integration
+  │   └─ java_source.py    # JavaLocator, auto Java management
   ├─ cli/                  # Command-line interface
   │   ├─ parser.py         # Argument parsing
   │   └─ commands.py       # CLI commands

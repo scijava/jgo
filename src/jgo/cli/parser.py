@@ -286,7 +286,7 @@ def global_options(f):
         "--system-java",
         "use_system_java",
         is_flag=True,
-        help="Use system Java instead of downloading via cjdk",
+        help="Use system Java instead of downloading Java on demand",
     )(f)
 
     # Advanced options

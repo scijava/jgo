@@ -75,10 +75,10 @@ def demo_java_source_selection():
     runner_system = JavaRunner(java_source=JavaSource.SYSTEM, verbose=True)
     print(f"   Strategy: {runner_system.java_source.value}")
 
-    # Strategy 2: Use cjdk
-    print("\n2. CJDK: Use cjdk for automatic Java management")
-    runner_cjdk = JavaRunner(
-        java_source=JavaSource.CJDK,
+    # Strategy 2: Use automatic Java fetching
+    print("\n2. AUTO: Automatically fetch/download Java if needed")
+    runner_auto = JavaRunner(
+        java_source=JavaSource.AUTO,
         java_version=17,
         java_vendor="zulu"  # Default is "zulu" (widest version support)
     )
@@ -101,7 +101,7 @@ def demo_bytecode_detection():
     print("This was determined by scanning .class files in the JARs")
 
     # Runner will automatically use this detected version
-    runner = JavaRunner(java_source=JavaSource.CJDK)
+    runner = JavaRunner(java_source=JavaSource.AUTO)
     print(
         f"\nRunner will automatically ensure Java {min_java}+ is available when executing"
     )

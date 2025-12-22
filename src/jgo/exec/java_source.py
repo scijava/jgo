@@ -20,7 +20,7 @@ class JavaSource(Enum):
     """
 
     SYSTEM = "system"  # Use system Java (from PATH or JAVA_HOME)
-    CJDK = "cjdk"  # Use cjdk to download/manage Java
+    AUTO = "auto"  # Automatically fetch/download Java if needed
 
 
 class JavaLocator:
@@ -32,7 +32,7 @@ class JavaLocator:
 
     def __init__(
         self,
-        java_source: JavaSource = JavaSource.CJDK,
+        java_source: JavaSource = JavaSource.AUTO,
         java_version: int | None = None,
         java_vendor: str | None = None,
         verbose: bool = False,
@@ -48,7 +48,7 @@ class JavaLocator:
         """
         self.java_source = java_source
         self.java_version = java_version
-        # Default to "zulu" vendor for cjdk since it has the widest Java version support
+        # Default to "zulu" vendor for auto mode since it has the widest Java version support
         # (including Java 8 which adoptium lacks)
         self.java_vendor = java_vendor or "zulu"
         self.verbose = verbose
@@ -72,8 +72,8 @@ class JavaLocator:
         # Select strategy
         if self.java_source == JavaSource.SYSTEM:
             return self._locate_system_java(required_version)
-        elif self.java_source == JavaSource.CJDK:
-            return self._locate_cjdk_java(required_version)
+        elif self.java_source == JavaSource.AUTO:
+            return self._locate_auto_java(required_version)
         else:
             raise ValueError(f"Unknown JavaSource: {self.java_source}")
 
@@ -94,7 +94,7 @@ class JavaLocator:
         java_path = self._find_java_in_path()
         if java_path is None:
             raise RuntimeError(
-                "Java not found. Please install Java or use cjdk mode for automatic Java management."
+                "Java not found. Please install Java or use auto mode for automatic Java management."
             )
 
         # Check version if required
@@ -103,7 +103,7 @@ class JavaLocator:
             if actual_version < required_version:
                 raise RuntimeError(
                     f"Java {required_version} or higher required, but system Java is version {actual_version}. "
-                    f"Please upgrade Java or use cjdk mode for automatic Java management."
+                    f"Please upgrade Java or use auto mode for automatic Java management."
                 )
             elif self.verbose:
                 print(
@@ -113,9 +113,9 @@ class JavaLocator:
 
         return java_path
 
-    def _locate_cjdk_java(self, required_version: int | None = None) -> Path:
+    def _locate_auto_java(self, required_version: int | None = None) -> Path:
         """
-        Locate Java using cjdk.
+        Locate Java using automatic download/caching.
 
         Args:
             required_version: Desired Java version
@@ -124,22 +124,22 @@ class JavaLocator:
             Path to java executable
 
         Raises:
-            RuntimeError: If cjdk fails
+            RuntimeError: If auto-fetch fails
         """
 
         # Default to latest LTS if no version specified
         version = required_version or 21
 
         if self.verbose:
-            print(f"Obtaining Java {version} via cjdk...", file=sys.stderr)
+            print(f"Obtaining Java {version} automatically...", file=sys.stderr)
 
         try:
-            # Get or download Java via cjdk
+            # Use cjdk to locate a suitable Java, downloading it on demand.
             java_home = cjdk.java_home(version=str(version), vendor=self.java_vendor)
             java_path = Path(java_home) / "bin" / "java"
 
             if not java_path.exists():
-                raise RuntimeError(f"cjdk returned invalid Java path: {java_path}")
+                raise RuntimeError(f"Failed to obtain Java path: {java_path}")
 
             if self.verbose:
                 actual_version = self._get_java_version(java_path)
@@ -152,7 +152,7 @@ class JavaLocator:
             return java_path
 
         except Exception as e:
-            raise RuntimeError(f"Failed to obtain Java via cjdk: {e}")
+            raise RuntimeError(f"Failed to obtain Java automatically: {e}")
 
     def _find_java_in_path(self) -> Path | None:
         """

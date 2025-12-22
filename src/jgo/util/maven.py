@@ -1,8 +1,9 @@
 """
-Utility functions for fetching Maven using cjdk.
+Utility functions for Maven execution.
 
 This module provides functions to automatically download
 and cache Maven when it's not available on the system.
+Maven distributions are managed with cjdk's caching mechanism.
 """
 
 from __future__ import annotations
@@ -19,7 +20,7 @@ _logger = logging.getLogger(__name__)
 
 def ensure_maven_available() -> Path:
     """
-    Ensure that Maven is available, downloading it with cjdk if necessary.
+    Ensure that Maven is available, downloading it if necessary.
 
     Returns:
         Path to the mvn command
@@ -33,13 +34,13 @@ def ensure_maven_available() -> Path:
         _logger.debug(f"Found Maven on PATH: {mvn_path}")
         return Path(mvn_path)
 
-    # Maven not found, fetch it with cjdk
+    # Maven not found, fetch it from the remote server
     return fetch_maven()
 
 
 def fetch_maven(url: str = "", sha: str = "") -> Path:
     """
-    Fetch Maven using cjdk and add it to the PATH.
+    Fetch Maven and add it to the PATH.
 
     Args:
         url: URL to download Maven from (optional, uses default if not provided)
@@ -49,7 +50,6 @@ def fetch_maven(url: str = "", sha: str = "") -> Path:
         Path to the mvn command
 
     Raises:
-        ImportError: If cjdk is not installed
         RuntimeError: If Maven download or setup fails
     """
 
@@ -78,7 +78,7 @@ def fetch_maven(url: str = "", sha: str = "") -> Path:
             )
         kwargs = {sha_lengths[sha_len]: sha}
 
-    _logger.info("Fetching Maven using cjdk...")
+    _logger.info("Fetching Maven from remote server...")
     maven_dir = cjdk.cache_package("Maven", url, **kwargs)
     _logger.debug(f"maven_dir -> {maven_dir}")
 
