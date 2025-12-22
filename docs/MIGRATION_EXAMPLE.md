@@ -428,23 +428,7 @@ analyze_dependencies('org.scijava:scijava-common:2.96.0')
 
 ## Troubleshooting Migration Issues
 
-### Issue 1: Import Errors
-
-**Problem:**
-```python
-from jgo.jgo import resolve_dependencies  # ImportError in 2.x
-```
-
-**Solution:**
-```python
-# Use compatibility layer
-from jgo.compat.v1 import resolve_dependencies
-
-# Or use new API
-from jgo.env import EnvironmentBuilder
-```
-
-### Issue 2: Old CLI Flags Don't Work
+### Issue 1: Old CLI Flags Don't Work
 
 **Problem:**
 ```bash
@@ -458,21 +442,6 @@ jgo --update --force --managed org.python:jython-standalone
 
 # Or use jgo1 command for exact old behavior
 jgo1 -u -U -m org.python:jython-standalone
-```
-
-### Issue 3: Missing m2_path() Function
-
-**Problem:**
-```python
-from jgo.jgo import m2_path  # Deprecated in 1.x, removed in 2.x
-```
-
-**Solution:**
-```python
-from jgo.maven import MavenContext
-
-env = Environment()
-repo_cache = env.repo_cache  # Path to ~/.m2/repository
 ```
 
 ## Summary of Benefits
