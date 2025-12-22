@@ -309,6 +309,22 @@ def global_options(f):
     f = click.option("--print-dependency-list", is_flag=True, hidden=True)(f)
     f = click.option("--list-entrypoints", is_flag=True, hidden=True)(f)
 
+    # Version flag
+    def _print_version(ctx, param, value):
+        if value:
+            parser = JgoArgumentParser()
+            click.echo(f"jgo {parser._get_version()}")
+            ctx.exit(0)
+
+    f = click.option(
+        "--version",
+        is_flag=True,
+        callback=_print_version,
+        expose_value=False,
+        is_eager=True,
+        help="Show jgo version and exit",
+    )(f)
+
     return f
 
 
