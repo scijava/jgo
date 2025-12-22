@@ -49,6 +49,10 @@ jgo --java-version 17 net.imagej:imagej
 
 # Print classpath without running
 jgo info classpath org.python:jython-standalone
+
+# Preview commands without executing (--dry-run)
+jgo --dry-run run org.scijava:parsington         # See java command
+jgo --dry-run init org.python:jython-standalone  # Preview jgo.toml
 ```
 
 ### Python API

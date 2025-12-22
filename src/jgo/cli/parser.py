@@ -374,7 +374,10 @@ cli.add_command(tree)
 cli.add_command(update)
 
 
-@cli.group(help="Show information about environment or artifact")
+@cli.group(
+    help="Show information about environment or artifact",
+    epilog="TIP: To see the launch command, use: jgo --dry-run run <endpoint>",
+)
 @click.pass_context
 def info(ctx):
     """
@@ -394,6 +397,9 @@ def info(ctx):
       jgo info deptree org.scijava:scijava-common
       jgo info versions org.python:jython-standalone
       jgo info entrypoints
+
+    Related:
+      To see the launch command: jgo --dry-run run <endpoint>
     """
     pass
 

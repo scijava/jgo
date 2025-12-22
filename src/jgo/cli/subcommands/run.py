@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 @click.command(
     help="Run a Java application from Maven coordinates or jgo.toml",
+    epilog="TIP: Use 'jgo --dry-run run' to see the command without executing it.",
     context_settings=dict(ignore_unknown_options=True, allow_interspersed_args=False),
 )
 @click.option(
@@ -57,6 +58,9 @@ def run(ctx, main_class, entrypoint, add_classpath, endpoint, remaining):
       jgo run org.scijava:scijava-common@ScriptREPL
       jgo run --main-class ScriptREPL org.scijava:scijava-common
       jgo run org.python:jython-standalone:2.7.3 -- -Xmx2G -- script.py
+
+    TIP:
+      Use 'jgo --dry-run run' to see the command without executing it.
     """
     from ...config.jgorc import JgoConfig
     from ..parser import _build_parsed_args, _parse_remaining
