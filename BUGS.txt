@@ -7,12 +7,6 @@ Use consistent capitalization style for Markdown docs (excepting README.md and A
 FIX PythonResolver bugs!
 - Migrate thicket code from db-xml-maven
 
-Reconcile jgo.toml, jgo.lock.toml, manifest.json in jgo envs -- do we really need manifest.json?
-- Is jgo.toml in `./` always the same as the one in `./.jgo/<groupId>/<artifactId>/<hash>/` ?
-
-Do we really need the `<groupId>/<artifactId>/<hash>` substructure beneath `.jgo` for workspace-based jgo?
-- Nicer would be to mutate the env directly under the `cache_dir`. Do we need a toml flag for controlling this?
-
 Add support for module paths
 
 Shore up "jgorc" references throughout the codebase. `--ignore-jgorc` -> `--ignore-config`

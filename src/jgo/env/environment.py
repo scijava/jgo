@@ -7,7 +7,6 @@ execution.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from .bytecode import detect_environment_java_version
@@ -18,11 +17,14 @@ from .spec import EnvironmentSpec
 class Environment:
     """
     A materialized Maven environment - a directory containing JARs.
+
+    Environment metadata is stored in jgo.lock.toml (entrypoints, min_java_version,
+    link_strategy, resolved dependencies with checksums).
     """
 
     def __init__(self, path: Path):
         self.path = path
-        self._manifest = None
+        self._lockfile = None
 
     @property
     def spec_path(self) -> Path:
@@ -33,10 +35,6 @@ class Environment:
     def lock_path(self) -> Path:
         """Path to jgo.lock.toml file in this environment."""
         return self.path / "jgo.lock.toml"
-
-    @property
-    def manifest_path(self) -> Path:
-        return self.path / "manifest.json"
 
     @property
     def spec(self) -> EnvironmentSpec | None:
@@ -58,25 +56,9 @@ class Environment:
         Returns:
             LockFile instance, or None if jgo.lock.toml doesn't exist
         """
-        if self.lock_path.exists():
-            return LockFile.load(self.lock_path)
-        return None
-
-    @property
-    def manifest(self) -> dict:
-        """Load manifest.json with metadata about this environment."""
-        if self._manifest is None:
-            if self.manifest_path.exists():
-                with open(self.manifest_path) as f:
-                    self._manifest = json.load(f)
-            else:
-                self._manifest = {}
-        return self._manifest
-
-    def save_manifest(self):
-        """Save manifest.json."""
-        with open(self.manifest_path, "w") as f:
-            json.dump(self._manifest, f, indent=2)
+        if self._lockfile is None and self.lock_path.exists():
+            self._lockfile = LockFile.load(self.lock_path)
+        return self._lockfile
 
     @property
     def classpath(self) -> list[Path]:
@@ -88,47 +70,63 @@ class Environment:
 
     @property
     def main_class(self) -> str | None:
-        """Main class for this environment (if detected/specified)."""
-        return self.manifest.get("main_class")
+        """
+        Main class for this environment (if detected/specified).
 
-    def set_main_class(self, main_class: str):
-        """Set the main class for this environment."""
-        # Ensure the environment directory exists
-        self.path.mkdir(parents=True, exist_ok=True)
+        Reads from lockfile's default entrypoint.
+        """
+        if self.lockfile:
+            default_ep = self.lockfile.default_entrypoint
+            if default_ep and default_ep in self.lockfile.entrypoints:
+                return self.lockfile.entrypoints[default_ep]
+            # If no default, use first entrypoint
+            if self.lockfile.entrypoints:
+                return next(iter(self.lockfile.entrypoints.values()))
+        return None
 
-        # Store in manifest only
-        self._manifest = self.manifest  # Load manifest if not already loaded
-        self._manifest["main_class"] = main_class
-        self.save_manifest()
+    def get_main_class(self, entrypoint: str | None = None) -> str | None:
+        """
+        Get main class for a specific entrypoint.
+
+        Args:
+            entrypoint: Entrypoint name, or None for default
+
+        Returns:
+            Main class string, or None if not found
+        """
+        if self.lockfile:
+            if entrypoint:
+                return self.lockfile.entrypoints.get(entrypoint)
+            # Use default entrypoint
+            default_ep = self.lockfile.default_entrypoint
+            if default_ep and default_ep in self.lockfile.entrypoints:
+                return self.lockfile.entrypoints[default_ep]
+            # If no default, use first entrypoint
+            if self.lockfile.entrypoints:
+                return next(iter(self.lockfile.entrypoints.values()))
+        return None
 
     @property
     def min_java_version(self) -> int | None:
         """
         Minimum Java version required by this environment.
 
-        Scans bytecode of JAR files to detect the highest class file version,
-        then rounds up to the nearest LTS version (8, 11, 17, 21).
-
-        The result is cached in manifest.json to avoid re-scanning.
+        Reads from lockfile, or detects from bytecode if not cached.
 
         Returns:
             Minimum Java version (e.g., 8, 11, 17, 21), or None if no JARs found
         """
-        # Check cache first
-        cached_version = self.manifest.get("min_java_version")
-        if cached_version is not None:
-            return cached_version
+        # Try lockfile first
+        if self.lockfile and self.lockfile.min_java_version is not None:
+            return self.lockfile.min_java_version
 
-        # Detect from bytecode
+        # Detect from bytecode (not cached - lockfile should have it)
         jars_dir = self.path / "jars"
-        detected_version = detect_environment_java_version(jars_dir)
+        return detect_environment_java_version(jars_dir)
 
-        # Cache the result
-        if detected_version is not None:
-            self._manifest = self.manifest  # Load manifest if not already loaded
-            self._manifest["min_java_version"] = detected_version
-            # Only save if environment directory exists
-            if self.path.exists():
-                self.save_manifest()
-
-        return detected_version
+    @property
+    def link_strategy(self) -> str | None:
+        """Link strategy used to create this environment."""
+        if self.lockfile:
+            return self.lockfile.link_strategy
+        return None

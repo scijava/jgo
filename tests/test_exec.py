@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from jgo.env import Environment
+from jgo.env.lockfile import LockFile
 from jgo.exec import JavaLocator, JavaRunner, JavaSource, JVMConfig
 
 
@@ -148,9 +149,17 @@ class TestJavaRunner:
         # For now, we'll just create the environment structure
         # A real test would need a real JAR file
         env = Environment(env_path)
-        env.set_main_class("org.example.HelloWorld")
 
-        return env
+        # Create a lockfile with the main class
+        lockfile = LockFile(
+            dependencies=[],
+            entrypoints={"main": "org.example.HelloWorld"},
+            default_entrypoint="main",
+        )
+        lockfile.save(env.lock_path)
+
+        # Reload to pick up lockfile
+        return Environment(env_path)
 
     def test_runner_initialization(self):
         """Test JavaRunner initialization."""
@@ -185,15 +194,22 @@ class TestJavaRunner:
 
         assert classpath == "C:/path/to/a.jar;C:/path/to/b.jar"
 
-    def test_run_requires_main_class(self, simple_environment):
+    def test_run_requires_main_class(self, tmp_path):
         """Test that run() requires a main class."""
-        # Clear main class
-        simple_environment._manifest = {}
+        # Create environment with no main class (empty lockfile)
+        env_path = tmp_path / "no_main_env"
+        jars_dir = env_path / "jars"
+        jars_dir.mkdir(parents=True)
+        env = Environment(env_path)
+
+        # Create a lockfile with no entrypoints
+        lockfile = LockFile(dependencies=[])
+        lockfile.save(env.lock_path)
 
         runner = JavaRunner()
 
         with pytest.raises(RuntimeError, match="No main class"):
-            runner.run(simple_environment)
+            runner.run(Environment(env_path))
 
     def test_run_requires_jars(self, tmp_path):
         """Test that run() requires JARs in environment."""
@@ -201,12 +217,19 @@ class TestJavaRunner:
         env_path = tmp_path / "empty_env"
         env_path.mkdir()
         env = Environment(env_path)
-        env.set_main_class("org.example.Main")
+
+        # Create a lockfile with main class but no JARs
+        lockfile = LockFile(
+            dependencies=[],
+            entrypoints={"main": "org.example.Main"},
+            default_entrypoint="main",
+        )
+        lockfile.save(env.lock_path)
 
         runner = JavaRunner()
 
         with pytest.raises(RuntimeError, match="No JARs found"):
-            runner.run(env)
+            runner.run(Environment(env_path))
 
     def test_print_command(self, simple_environment, capsys):
         """Test that print_command works."""
@@ -291,9 +314,16 @@ class TestIntegration:
         shutil.copy(jar_path, jars_dir / "hello-world.jar")
 
         env = Environment(env_path)
-        env.set_main_class("org.apposed.jgo.test.HelloWorld")
 
-        return env
+        # Create a lockfile with the main class
+        lockfile = LockFile(
+            dependencies=[],
+            entrypoints={"main": "org.apposed.jgo.test.HelloWorld"},
+            default_entrypoint="main",
+        )
+        lockfile.save(env.lock_path)
+
+        return Environment(env_path)
 
     def test_run_hello_world(self, hello_world_jar):
         """Test running a simple Hello World program."""

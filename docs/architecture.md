@@ -113,9 +113,8 @@ An environment is a directory containing:
   ├─ jars/                      # Materialized JAR files
   │   ├─ jython-standalone-2.7.3.jar
   │   └─ ...
-  ├─ manifest.json              # Metadata
-  ├─ jgo.toml                   # Environment spec (optional)
-  └─ jgo.lock.toml              # Locked versions (optional)
+  ├─ jgo.toml                   # Environment spec
+  └─ jgo.lock.toml              # Metadata with locked versions
 ```
 
 ### Link Strategies

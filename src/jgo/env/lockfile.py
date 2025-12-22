@@ -114,6 +114,7 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
         entrypoints: dict[str, str] | None = None,
         default_entrypoint: str | None = None,
         spec_hash: str | None = None,
+        link_strategy: str | None = None,
         jgo_version: str = "2.0.0",
     ):
         self.dependencies = dependencies
@@ -124,6 +125,7 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
         self.entrypoints = entrypoints or {}
         self.default_entrypoint = default_entrypoint
         self.spec_hash = spec_hash
+        self.link_strategy = link_strategy
         self.jgo_version = jgo_version
         self.generated = datetime.now(timezone.utc)
 
@@ -138,6 +140,7 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
         entrypoints: dict[str, str] | None = None,
         default_entrypoint: str | None = None,
         spec_hash: str | None = None,
+        link_strategy: str | None = None,
     ) -> "LockFile":
         """
         Create a lock file from resolved dependencies.
@@ -155,6 +158,7 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
             entrypoints=entrypoints,
             default_entrypoint=default_entrypoint,
             spec_hash=spec_hash,
+            link_strategy=link_strategy,
         )
 
     @classmethod
@@ -168,6 +172,7 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
         env_section = data.get("environment", {})
         environment_name = env_section.get("name")
         min_java_version = env_section.get("min_java_version")
+        link_strategy = env_section.get("link_strategy")
 
         # Parse java section
         java_section = data.get("java", {})
@@ -192,6 +197,7 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
             entrypoints=entrypoints,
             default_entrypoint=default_entrypoint,
             spec_hash=spec_hash,
+            link_strategy=link_strategy,
             jgo_version=jgo_version,
         )
 
@@ -223,6 +229,8 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
             env_section["name"] = self.environment_name
         if self.min_java_version is not None:
             env_section["min_java_version"] = self.min_java_version
+        if self.link_strategy:
+            env_section["link_strategy"] = self.link_strategy
         if env_section:
             data["environment"] = env_section
 

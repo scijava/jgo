@@ -7,6 +7,7 @@ import tempfile
 from pathlib import Path
 
 from jgo.env import Environment, EnvironmentBuilder, LinkStrategy
+from jgo.env.lockfile import LockFile
 from jgo.maven import MavenContext
 
 
@@ -17,7 +18,7 @@ def test_environment_creation():
         env = Environment(env_path)
         assert env is not None
         assert env.path == env_path
-        assert env.manifest_path == env_path / "manifest.json"
+        assert env.lock_path == env_path / "jgo.lock.toml"
 
 
 def test_environment_classpath():
@@ -45,17 +46,26 @@ def test_environment_main_class():
     """Test main_class property."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         env_path = Path(tmp_dir) / "test_env"
+        env_path.mkdir(parents=True)
         env = Environment(env_path)
 
-        # Should return None when no main class file or manifest exists
+        # Should return None when no lockfile exists
         assert env.main_class is None
 
-        # Set main class via manifest
-        env.set_main_class("org.example.Main")
+        # Create a lockfile with an entrypoint
+        lockfile = LockFile(
+            dependencies=[],
+            entrypoints={"main": "org.example.Main"},
+            default_entrypoint="main",
+        )
+        lockfile.save(env.lock_path)
+
+        # Reload environment to pick up lockfile
+        env = Environment(env_path)
         assert env.main_class == "org.example.Main"
 
-        # Test that main class is saved to manifest
-        assert env.manifest.get("main_class") == "org.example.Main"
+        # Test get_main_class with specific entrypoint
+        assert env.get_main_class("main") == "org.example.Main"
 
 
 def test_environment_builder_creation():
@@ -154,12 +164,16 @@ def test_environment_min_java_version():
         version = env.min_java_version
         assert version == 17
 
-        # Should be cached in manifest
-        assert env.manifest.get("min_java_version") == 17
+        # Now test that lockfile caches the version
+        lockfile = LockFile(
+            dependencies=[],
+            min_java_version=17,
+        )
+        lockfile.save(env.lock_path)
 
         # Create new environment pointing to same path
         env2 = Environment(env_path)
-        # Should read from cache without re-scanning
+        # Should read from lockfile
         assert env2.min_java_version == 17
 
 

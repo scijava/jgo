@@ -128,6 +128,16 @@ class EnvironmentBuilder:
         # Default to centralized cache
         return DEFAULT_JGO_CACHE
 
+    @staticmethod
+    def is_project_mode() -> bool:
+        """
+        Check if we're in project mode (jgo.toml exists in CWD).
+
+        In project mode, the cache structure is flat (.jgo/ directly).
+        In ad-hoc mode, the cache uses hierarchical structure (G/A/hash/).
+        """
+        return Path("jgo.toml").exists()
+
     def from_endpoint(
         self, endpoint: str, update: bool = False, main_class: str | None = None
     ) -> Environment:
@@ -160,12 +170,12 @@ class EnvironmentBuilder:
         main_class: str | None = None,
     ) -> Environment:
         """
-        Build an environment from a list of components.
+        Build an environment from a list of components (ad-hoc mode).
         """
         # Generate cache key
         cache_key = self._cache_key(components)
 
-        # Environment path
+        # Environment path (always hierarchical for ad-hoc mode)
         primary = components[0]
         workspace_path = self.cache_dir / primary.project.path_prefix / cache_key
 
@@ -175,21 +185,44 @@ class EnvironmentBuilder:
             # Validate environment has JARs
             if environment.classpath:
                 # Environment is valid, use cached build
-                # But we still need to set/update main class if provided
-                if main_class:
-                    # Auto-complete main class if needed
-                    jars_dir = workspace_path / "jars"
-                    main_class = autocomplete_main_class(
-                        main_class, primary.artifactId, jars_dir
-                    )
-                    environment.set_main_class(main_class)
                 return environment
             # Otherwise fall through to rebuild
 
-        # Build/rebuild environment
-        # Note: We don't need the returned deps here since from_components
-        # is primarily for endpoint-based builds, not spec-based builds
-        self._build_environment(environment, components, main_class)
+        # Build environment and get resolved dependencies
+        resolved_deps = self._build_environment(environment, components, main_class)
+
+        # Generate lockfile for ad-hoc mode
+        jars_dir = environment.path / "jars"
+
+        # Determine main class (auto-complete if needed)
+        final_main_class = None
+        if main_class:
+            final_main_class = autocomplete_main_class(
+                main_class, primary.artifactId, jars_dir
+            )
+        else:
+            # Auto-detect from primary component JAR
+            primary_jar = jars_dir / primary.artifact().filename
+            if primary_jar.exists():
+                final_main_class = detect_main_class_from_jar(primary_jar)
+
+        # Create entrypoints dict if we have a main class
+        entrypoints = {}
+        default_entrypoint = None
+        if final_main_class:
+            entrypoints["main"] = final_main_class
+            default_entrypoint = "main"
+
+        # Generate and save lockfile
+        lock_path = environment.path / "jgo.lock.toml"
+        lockfile = LockFile.from_resolved_dependencies(
+            dependencies=resolved_deps,
+            min_java_version=environment.min_java_version,
+            entrypoints=entrypoints,
+            default_entrypoint=default_entrypoint,
+            link_strategy=self.link_strategy.name,
+        )
+        lockfile.save(lock_path)
 
         return environment
 
@@ -228,12 +261,17 @@ class EnvironmentBuilder:
             Path(spec.cache_dir).expanduser() if spec.cache_dir else self.cache_dir
         )
 
-        # Generate cache key for this spec
-        cache_key = self._cache_key(components)
-
-        # Environment path
-        primary = components[0]
-        workspace_path = cache_dir / primary.project.path_prefix / cache_key
+        # Determine workspace path based on mode
+        # Project mode: flat structure (.jgo/ directly)
+        # Ad-hoc mode: hierarchical structure (G/A/hash/)
+        if self.is_project_mode():
+            # Flat structure for project mode
+            workspace_path = cache_dir
+        else:
+            # Hierarchical structure for ad-hoc mode
+            cache_key = self._cache_key(components)
+            primary = components[0]
+            workspace_path = cache_dir / primary.project.path_prefix / cache_key
 
         # Check if environment exists and is valid
         environment = Environment(workspace_path)
@@ -253,33 +291,18 @@ class EnvironmentBuilder:
             spec, components, jars_dir
         )
 
-        # Get concrete default entrypoint and set as main class
-        concrete_default_class = None
-        if spec.default_entrypoint and spec.default_entrypoint in concrete_entrypoints:
-            concrete_default_class = concrete_entrypoints[spec.default_entrypoint]
-        elif concrete_entrypoints:
-            # Use first entrypoint as default if none specified
-            concrete_default_class = next(iter(concrete_entrypoints.values()))
-
-        # Set main class in environment (for backwards compat with manifest.json)
-        if concrete_default_class:
-            environment.set_main_class(concrete_default_class)
-
-        # Save spec and lock file to environment directory
-        spec_path = environment.path / "jgo.toml"
-        lock_path = environment.path / "jgo.lock.toml"
-
-        spec.save(spec_path)
-
         # Compute spec hash for staleness detection (from root jgo.toml if it exists)
         root_spec_path = Path("jgo.toml")
         if root_spec_path.exists():
             spec_hash = compute_spec_hash(root_spec_path)
         else:
-            # Use the spec we just saved in the environment
+            # Use the spec path (for ad-hoc mode where we save a copy)
+            spec_path = environment.path / "jgo.toml"
+            spec.save(spec_path)
             spec_hash = compute_spec_hash(spec_path)
 
         # Generate lock file from resolved dependencies
+        lock_path = environment.path / "jgo.lock.toml"
         lockfile = LockFile.from_resolved_dependencies(
             dependencies=resolved_deps,
             environment_name=spec.name,
@@ -289,8 +312,12 @@ class EnvironmentBuilder:
             entrypoints=concrete_entrypoints,
             default_entrypoint=spec.default_entrypoint,
             spec_hash=spec_hash,
+            link_strategy=self.link_strategy.name,
         )
         lockfile.save(lock_path)
+
+        # In project mode, don't copy jgo.toml (root is source of truth)
+        # In ad-hoc mode, save a copy for reference (already done above if needed)
 
         return environment
 
@@ -350,7 +377,12 @@ class EnvironmentBuilder:
         main_class: str | None,
     ) -> list[Dependency]:
         """
-        Actually build the environment by resolving and linking JARs.
+        Build the environment by resolving and linking JARs.
+
+        Args:
+            environment: Environment to build
+            components: Maven components to include
+            main_class: Main class (unused, kept for signature compatibility)
 
         Returns:
             List of resolved dependencies (for lock file generation)
@@ -396,30 +428,6 @@ class EnvironmentBuilder:
 
             if not dest_path.exists():
                 link_file(source_path, dest_path, self.link_strategy)
-
-        # Save manifest
-        environment.manifest["components"] = [
-            f"{c.groupId}:{c.artifactId}:{c.resolved_version}" for c in components
-        ]
-        environment.manifest["link_strategy"] = self.link_strategy.name
-        environment.save_manifest()
-
-        # Detect/set main class
-        if main_class:
-            # Auto-complete main class if needed
-            primary_component = components[0]
-            main_class = autocomplete_main_class(
-                main_class, primary_component.artifactId, jars_dir
-            )
-            environment.set_main_class(main_class)
-        else:
-            # Auto-detect from primary component JAR
-            primary_component = components[0]
-            primary_jar = jars_dir / primary_component.artifact().filename
-            if primary_jar.exists():
-                detected_main = detect_main_class_from_jar(primary_jar)
-                if detected_main:
-                    environment.set_main_class(detected_main)
 
         # Return dependencies for lock file generation
         return all_deps

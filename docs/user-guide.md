@@ -199,9 +199,8 @@ jgo -f path/to/environment.toml
 
 # Initial run creates .jgo/ directory with:
 # - jgo.toml (your spec, copied)
-# - jgo.lock.toml (locked versions)
+# - jgo.lock.toml (metadata with locked versions)
 # - jars/ (materialized JARs)
-# - manifest.json (metadata)
 ```
 
 ### Lock Files

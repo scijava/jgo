@@ -146,14 +146,6 @@ main = "org.foo:foo+org.bar:bar"
 
 Inference tries each coordinate in order until Main-Class is found.
 
-### manifest.json Status
-
-Currently kept for backward compatibility. It stores:
-- `main_class`: Concrete main class (redundant with lockfile)
-- `min_java_version`: Cached bytecode analysis (redundant with lockfile)
-
-**Future**: Can be eliminated or made pure performance optimization.
-
 ## Migration Path
 
 Existing jgo.toml files with concrete entrypoints continue to work unchanged.
