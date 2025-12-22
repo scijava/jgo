@@ -275,7 +275,31 @@ class Model:
     def _merge_deps(self, source: Iterable[Dependency], managed: bool = False) -> None:
         target = self.dep_mgmt if managed else self.deps
         for dep in source:
-            k = (dep.groupId, dep.artifactId, dep.classifier, dep.type)
+            # Interpolate coordinates early using available properties
+            g = Model._evaluate(dep.groupId, self.props) if dep.groupId else dep.groupId
+            a = (
+                Model._evaluate(dep.artifactId, self.props)
+                if dep.artifactId
+                else dep.artifactId
+            )
+            c = (
+                Model._evaluate(dep.classifier, self.props)
+                if dep.classifier
+                else dep.classifier
+            )
+            t = Model._evaluate(dep.type, self.props) if dep.type else dep.type
+
+            # Update dep coordinates if interpolation changed them
+            if g != dep.groupId:
+                dep.artifact.component.project.groupId = g
+            if a != dep.artifactId:
+                dep.artifact.component.project.artifactId = a
+            if c != dep.classifier:
+                dep.artifact.classifier = c
+            if t != dep.type:
+                dep.artifact.packaging = t
+
+            k = (g, a, c, t)
             if k not in target:
                 target[k] = dep
 
@@ -289,12 +313,8 @@ class Model:
         Merge metadata from the given POM source into this model.
         For now, we handle only dependencies, dependencyManagement, and properties.
         """
-        self._merge_deps(self.context.pom_dependencies(pom))
-        self._merge_deps(self.context.pom_dependencies(pom, managed=True), managed=True)
-        self._merge_props(pom.properties)
-
-        # Make an effort to populate Maven special properties.
-        # https://github.com/cko/predefined_maven_properties/blob/master/README.md
+        # Merge special properties first, before dependencies, so that _merge_deps
+        # can interpolate dependency coordinates using properties like ${project.groupId}
         self._merge_props(
             {
                 "project.groupId": pom.groupId,
@@ -304,6 +324,10 @@ class Model:
                 "project.description": pom.description,
             }
         )
+        self._merge_props(pom.properties)
+
+        self._merge_deps(self.context.pom_dependencies(pom))
+        self._merge_deps(self.context.pom_dependencies(pom, managed=True), managed=True)
 
     def _interpolate_deps(self, deps: dict[GACT, Dependency]) -> dict[GACT, Dependency]:
         """
