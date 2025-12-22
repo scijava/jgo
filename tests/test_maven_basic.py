@@ -3,7 +3,7 @@
 Basic tests for the Maven layer to verify the port was successful.
 """
 
-from jgo.maven import MavenContext, SimpleResolver
+from jgo.maven import MavenContext, PythonResolver
 
 
 def test_context_creation():
@@ -12,7 +12,7 @@ def test_context_creation():
     assert maven is not None
     assert maven.repo_cache is not None
     assert maven.resolver is not None
-    assert isinstance(maven.resolver, SimpleResolver)
+    assert isinstance(maven.resolver, PythonResolver)
     print("✓ MavenContext creation works")
 
 

@@ -219,10 +219,10 @@ def test_cached_environment_uses_entrypoint():
 
             # Build environment the first time
             from jgo.env import EnvironmentBuilder
-            from jgo.maven import MavenContext, SimpleResolver
+            from jgo.maven import MavenContext, PythonResolver
 
             context = MavenContext(
-                resolver=SimpleResolver(),
+                resolver=PythonResolver(),
                 repo_cache=tmp_path / ".m2" / "repository",
             )
 

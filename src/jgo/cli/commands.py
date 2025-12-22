@@ -13,7 +13,7 @@ from ..constants import DEFAULT_MAVEN_REPO, MAVEN_CENTRAL_URL
 from ..env import EnvironmentBuilder, EnvironmentSpec, LinkStrategy
 from ..env.builder import filter_managed_components
 from ..exec import JavaRunner, JavaSource, JVMConfig
-from ..maven import MavenContext, MavenResolver, SimpleResolver
+from ..maven import MavenContext, MvnResolver, PythonResolver
 from .parser import ParsedArgs
 
 if TYPE_CHECKING:
@@ -251,17 +251,17 @@ class JgoCommands:
         Create Maven context from arguments and configuration.
         """
         # Determine resolver
-        if self.args.resolver == "pure":
-            resolver = SimpleResolver()
-        elif self.args.resolver == "maven":
+        if self.args.resolver == "python":
+            resolver = PythonResolver()
+        elif self.args.resolver == "mvn":
             from jgo.util import ensure_maven_available
 
             mvn_command = ensure_maven_available()
-            resolver = MavenResolver(
+            resolver = MvnResolver(
                 mvn_command, update=self.args.update, debug=self.args.verbose >= 2
             )
         else:  # auto
-            resolver = SimpleResolver()  # Default to pure Python
+            resolver = PythonResolver()  # Default to pure Python
 
         # Get repo cache path
         repo_cache = self.args.repo_cache

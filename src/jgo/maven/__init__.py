@@ -20,7 +20,7 @@ from .core import (
 from .metadata import Metadata, Metadatas, MetadataXML
 from .model import Model
 from .pom import POM, XML
-from .resolver import MavenResolver, Resolver, SimpleResolver
+from .resolver import MvnResolver, PythonResolver, Resolver
 
 __all__ = [
     # Core classes
@@ -32,8 +32,8 @@ __all__ = [
     "XML",
     # Resolvers
     "Resolver",
-    "SimpleResolver",
-    "MavenResolver",
+    "PythonResolver",
+    "MvnResolver",
     # POM and metadata
     "POM",
     "Metadata",

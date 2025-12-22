@@ -42,7 +42,7 @@ This document categorizes existing jgo flags for the command-based CLI redesign.
 ### Resolution & Dependencies
 | Flag | Category | Notes |
 |------|----------|-------|
-| `--resolver {auto,pure,maven}` | **Keep** | Global flag - affects all dependency resolution |
+| `--resolver {auto,python,mvn}` | **Keep** | Global flag - affects all dependency resolution |
 | `--link {hard,soft,copy,auto}` | **Keep** | Global flag - affects environment building |
 | `--no-managed` | **Keep** | Global flag - inverse of `-m`, affects resolution |
 | `--main-class CLASS` | **Move** | ✅ Moved to `jgo run` only |
@@ -122,7 +122,7 @@ Global Options:
   -r, --repository       Add Maven repository
   --ignore-jgorc         Ignore ~/.jgorc config
   --link {hard,soft,copy,auto}  Link strategy
-  --resolver {auto,pure,maven}  Resolver to use
+  --resolver {auto,python,mvn}  Resolver to use
   --offline              Work offline
   --no-cache             Skip cache entirely
   --cache-dir PATH       Override cache directory

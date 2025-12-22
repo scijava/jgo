@@ -4,14 +4,14 @@ Test property interpolation in Maven POMs.
 This test validates that property interpolation works correctly across:
 - Parent POM inheritance
 - Dependency management
-- Both SimpleResolver (pure Python) and MavenResolver (mvn-based)
+- Both PythonResolver (pure Python) and MvnResolver (mvn-based)
 
 Ported from db-xml-maven/tests/test_maven.py
 """
 
 from re import match
 
-from jgo.maven import MavenContext, MavenResolver
+from jgo.maven import MavenContext, MvnResolver
 from jgo.maven.model import Model
 
 
@@ -20,14 +20,14 @@ class TestPropertyInterpolation:
 
     def test_interpolate_syscall(self):
         """
-        Test property interpolation with both SimpleResolver and MavenResolver.
+        Test property interpolation with both PythonResolver and MvnResolver.
 
         Uses pom-scijava 35.1.1 as a complex real-world test case with:
         - Deep parent POM inheritance
         - Extensive dependency management
         - Property-based versioning
         """
-        # Test with SimpleResolver (pure Python)
+        # Test with PythonResolver (pure Python)
         maven = MavenContext()
         component_simple = maven.project("org.scijava", "pom-scijava").at_version(
             "35.1.1"
@@ -35,8 +35,8 @@ class TestPropertyInterpolation:
         model_simple = Model(component_simple.pom())
         self.assert_model_interpolated(model_simple)
 
-        # Test with MavenResolver (mvn-based)
-        maven_syscall = MavenContext(resolver=MavenResolver("mvn"))
+        # Test with MvnResolver (mvn-based)
+        maven_syscall = MavenContext(resolver=MvnResolver("mvn"))
         maven_syscall.resolver.mvn_flags = ["-o"] + maven_syscall.resolver.mvn_flags
         component_syscall = maven_syscall.project(
             "org.scijava", "pom-scijava"
@@ -79,7 +79,7 @@ class TestPropertyInterpolation:
         lines1 = self.lockdown(xml1).dump().splitlines()
         lines2 = self.lockdown(xml2).dump().splitlines()
         assert len(lines1) > 100, "POM seems too small, might be invalid"
-        assert lines1 == lines2, "POMs differ between SimpleResolver and MavenResolver"
+        assert lines1 == lines2, "POMs differ between PythonResolver and MvnResolver"
 
     def lockdown(self, xml):
         """

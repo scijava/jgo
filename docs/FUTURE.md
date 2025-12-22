@@ -66,19 +66,19 @@ jgo --project /path/to/other-project list
 **Example**:
 ```ini
 [shortcuts]
-surge = --resolver maven tree org.scijava:scijava-common+org.scijava:scripting-groovy
+surge = --resolver mvn tree org.scijava:scijava-common+org.scijava:scripting-groovy
 ```
 
 Then `jgo surge` would expand to:
 ```bash
-jgo --resolver maven tree org.scijava:scijava-common+org.scijava:scripting-groovy
+jgo --resolver mvn tree org.scijava:scijava-common+org.scijava:scripting-groovy
 ```
 
 **Comments**: This would add significant complexity and could be confusing. Users who want this behavior can use shell aliases instead:
 
 ```bash
 # In ~/.bashrc or ~/.zshrc
-alias jgosurge='jgo --resolver maven tree org.scijava:scijava-common+org.scijava:scripting-groovy'
+alias jgosurge='jgo --resolver mvn tree org.scijava:scijava-common+org.scijava:scripting-groovy'
 ```
 
 **Rationale**: Neither `uv` nor `pixi` support this kind of full-command aliasing. Keeping shortcuts simple (endpoint-only expansion) maintains clarity and consistency with similar tools.

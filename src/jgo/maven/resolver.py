@@ -236,7 +236,7 @@ class Resolver(ABC):
         return format_dependency_tree(root)
 
 
-class SimpleResolver(Resolver):
+class PythonResolver(Resolver):
     """
     A resolver that works by pure Python code.
     Low overhead, but less feature complete than mvn.
@@ -404,7 +404,7 @@ class SimpleResolver(Resolver):
         return root
 
 
-class MavenResolver(Resolver):
+class MvnResolver(Resolver):
     """
     A resolver that works by shelling out to mvn.
     Requires Maven to be installed.
@@ -721,7 +721,7 @@ class MavenResolver(Resolver):
         return root if root else DependencyNode(Dependency(components[0].artifact()))
 
     def _mvn(self, *args) -> str:
-        return MavenResolver._run(self.mvn_command, *self.mvn_flags, *args)
+        return MvnResolver._run(self.mvn_command, *self.mvn_flags, *args)
 
     @staticmethod
     def _run(command, *args) -> str:

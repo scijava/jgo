@@ -6,7 +6,7 @@ Remove or repurpose obsolete files in docs/
 
 Use consistent capitalization style for Markdown docs (excepting README.md and AGENTS.md, of course).
 
-FIX SimpleResolver bugs!
+FIX PythonResolver bugs!
 - Migrate thicket code from db-xml-maven
 
 Reconcile jgo.toml, jgo.lock.toml, manifest.json in jgo envs -- do we really need manifest.json?
@@ -21,10 +21,6 @@ Change `jgo --java-source system` to just `jgo --system-java`.
 - Will we ever have a third option besides cjdk or system? I don't think so.
 
 Add support for module paths
-
-What's the difference between `jgo --resolver auto` and `jgo --resolver pure` ?
-
-Rename SimpleResolver to PythonResolver? And MavenResolver to MvnResolver?
 
 Shore up "jgorc" references throughout the codebase. `--ignore-jgorc` -> `--ignore-config`
 

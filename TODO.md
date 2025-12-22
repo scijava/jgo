@@ -7,7 +7,7 @@ This document tracks remaining work for the jgo 2.0.0 release.
 These items **must** be completed before releasing 2.0.0:
 
 - [ ] **CLI Command-Based Interface**: Finalize command-based CLI design (`jgo run`, `jgo add`, etc.) - see `docs/CLI-REDESIGN.md`
-- [ ] **Dependency Resolution**: `SimpleResolver` and `MavenResolver` must produce the same dependency graphs in both managed and no-managed modes.
+- [ ] **Dependency Resolution**: `PythonResolver` and `MvnResolver` must produce the same dependency graphs in both managed and no-managed modes.
 - [ ] **Documentation**: Write user-facing documentation (see Documentation section below)
 - [ ] **CHANGELOG.md**: Create comprehensive changelog documenting all changes from 1.x
 - [ ] **README.md**: Update with jgo 2.0 features and architecture

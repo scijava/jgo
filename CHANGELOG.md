@@ -27,8 +27,8 @@ jgo 2.0 is a complete architectural redesign around three clean, independently u
 #### Three-Layer Architecture
 - **Layer 1 - Maven resolution** (`jgo.maven`): Pure Python dependency resolution, POM parsing, and artifact downloading
   - `MavenContext`: Maven configuration and repository management
-  - `SimpleResolver`: Pure Python resolver (no Maven installation required!)
-  - `MavenResolver`: Shell out to `mvn` command for edge cases
+  - `PythonResolver`: Pure Python resolver (no Maven installation required!)
+  - `MvnResolver`: Shell out to `mvn` command for edge cases
   - Full support for: transitive dependencies, scopes, exclusions, dependency management (BOMs), property interpolation
 
 - **Layer 2 - Environment materialization** (`jgo.env`): Build executable environments (directories of JARs)

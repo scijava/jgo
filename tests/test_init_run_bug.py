@@ -56,11 +56,11 @@ def test_run_with_main_class_after_init():
             # Step 2: Build the environment first (to avoid needing Java runtime)
             # This simulates what happens when you run jgo without --print-classpath
             from jgo.env import EnvironmentBuilder, EnvironmentSpec
-            from jgo.maven import MavenContext, SimpleResolver
+            from jgo.maven import MavenContext, PythonResolver
 
             spec = EnvironmentSpec.load(tmp_path / "jgo.toml")
             context = MavenContext(
-                resolver=SimpleResolver(),
+                resolver=PythonResolver(),
                 repo_cache=tmp_path / ".m2" / "repository",
             )
             builder = EnvironmentBuilder(context, cache_dir=tmp_path / ".jgo")
@@ -95,7 +95,7 @@ def test_run_with_main_class_after_init():
                     print_java_info=False,
                     update=False,
                     entrypoint=None,
-                    resolver="pure",
+                    resolver="python",
                     repo_cache=tmp_path / ".m2" / "repository",
                 )
 
@@ -153,7 +153,7 @@ def test_run_endpoint_with_main_class():
             print_java_info=False,
             update=False,
             entrypoint=None,
-            resolver="pure",
+            resolver="python",
             repo_cache=tmp_path / ".m2" / "repository",
         )
 

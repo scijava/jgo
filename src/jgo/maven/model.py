@@ -383,10 +383,10 @@ class Model:
                 # <arch>x86</arch>
                 # <version>5.1.2600</version>
                 # TODO: The db.xml generator would benefit from being able to glean
-                # platform-specific dependencies. We can support it in the SimpleResolver
+                # platform-specific dependencies. We can support it in the PythonResolver
                 # by inventing our own `platforms` field in the Dependency class and
                 # changing this method to return a list of platforms rather than True.
-                # But the MavenResolver won't be able to populate it naively.
+                # But the MvnResolver won't be able to populate it naively.
                 pass
 
             elif condition.tag == "property":

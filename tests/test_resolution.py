@@ -2,7 +2,7 @@
 Tests for dependency resolution behavior.
 
 These tests validate that dependency resolution works correctly with both
-MavenResolver and SimpleResolver, including proper handling of dependency
+MvnResolver and PythonResolver, including proper handling of dependency
 management and scope filtering.
 """
 
@@ -15,7 +15,7 @@ import pytest
 from jgo.env import EnvironmentBuilder
 from jgo.maven import MavenContext
 from jgo.maven.core import Component, Dependency
-from jgo.maven.resolver import MavenResolver, SimpleResolver
+from jgo.maven.resolver import MvnResolver, PythonResolver
 from jgo.util.cjdk import ensure_maven_available
 
 
@@ -198,8 +198,8 @@ def maven_command():
 
 
 @pytest.fixture(scope="module")
-def maven_resolver(maven_command):
-    return MavenResolver(maven_command, update=False)
+def mvn_resolver(maven_command):
+    return MvnResolver(maven_command, update=False)
 
 
 @pytest.mark.parametrize(
@@ -207,33 +207,33 @@ def maven_resolver(maven_command):
     RESOLUTION_SCENARIOS,
     ids=lambda case: case.endpoint,
 )
-def test_resolution_modes(tmp_path, scenario, maven_resolver):
+def test_resolution_modes(tmp_path, scenario, mvn_resolver):
     repo_cache = tmp_path / "m2_repo"
     repo_cache.mkdir(parents=True, exist_ok=True)
 
-    simple_resolver = SimpleResolver()
-    context = MavenContext(repo_cache=repo_cache, resolver=simple_resolver)
+    python_resolver = PythonResolver()
+    context = MavenContext(repo_cache=repo_cache, resolver=python_resolver)
     components = components_from_endpoint(context, scenario.endpoint)
 
-    truth = resolve_dependency_set(maven_resolver, components, managed=True)
+    truth = resolve_dependency_set(mvn_resolver, components, managed=True)
     assert truth == scenario.truth_set(), (
         f"Maven resolver managed output for {scenario.endpoint} "
         "diverged from expected truth"
     )
 
-    maven_unmanaged = resolve_dependency_set(maven_resolver, components, managed=False)
-    assert_expected_diff(scenario.endpoint, truth, maven_unmanaged, scenario.unmanaged)
+    mvn_unmanaged = resolve_dependency_set(mvn_resolver, components, managed=False)
+    assert_expected_diff(scenario.endpoint, truth, mvn_unmanaged, scenario.unmanaged)
 
-    simple_managed = resolve_dependency_set(simple_resolver, components, managed=True)
-    assert simple_managed == truth, (
-        f"SimpleResolver managed output differed from Maven for {scenario.endpoint}"
+    python_managed = resolve_dependency_set(python_resolver, components, managed=True)
+    assert python_managed == truth, (
+        f"PythonResolver managed output differed from Maven for {scenario.endpoint}"
     )
 
-    simple_unmanaged = resolve_dependency_set(
-        simple_resolver, components, managed=False
+    python_unmanaged = resolve_dependency_set(
+        python_resolver, components, managed=False
     )
-    assert simple_unmanaged == maven_unmanaged, (
-        "SimpleResolver --no-managed output differed from Maven for "
+    assert python_unmanaged == mvn_unmanaged, (
+        "PythonResolver --no-managed output differed from Maven for "
         f"{scenario.endpoint}"
     )
 
@@ -248,7 +248,7 @@ def test_no_test_scope_in_resolution(tmp_path):
     context = MavenContext(repo_cache=tmp_path / "m2_repo")
     component = context.project("org.scijava", "minimaven").at_version("2.2.2")
 
-    resolver = SimpleResolver()
+    resolver = PythonResolver()
     deps = resolver.dependencies([component], managed=True)
 
     # Check that no test dependencies are present
@@ -269,7 +269,7 @@ def test_component_not_in_dependency_list(tmp_path):
     context = MavenContext(repo_cache=tmp_path / "m2_repo")
     component = context.project("org.scijava", "minimaven").at_version("2.2.2")
 
-    resolver = SimpleResolver()
+    resolver = PythonResolver()
     deps = resolver.dependencies([component], managed=True)
 
     # The component itself should not be in the dependency list
@@ -281,7 +281,7 @@ def test_component_not_in_dependency_list(tmp_path):
 
 def test_multi_component_resolution(tmp_path):
     """
-    Test that multi-component resolution works correctly with SimpleResolver.
+    Test that multi-component resolution works correctly with PythonResolver.
 
     This test verifies that:
     1. Both components are resolved together in a single resolution
@@ -293,7 +293,7 @@ def test_multi_component_resolution(tmp_path):
     comp1 = context.project("org.scijava", "minimaven").at_version("2.2.2")
     comp2 = context.project("org.scijava", "parsington").at_version("3.1.0")
 
-    resolver = SimpleResolver()
+    resolver = PythonResolver()
     deps = resolver.dependencies([comp1, comp2], managed=True)
 
     # Neither component should appear in the dependency list

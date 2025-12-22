@@ -15,16 +15,16 @@ This document defines the official terminology for jgo 2.0 to ensure consistency
 - `repo_cache` - Path to local Maven repository cache (~/.m2/repository)
 - `local_repos` - List of local Maven repository storage directories
 - `remote_repos` - Dict of remote repository name:URL pairs
-- `resolver` - Resolver instance (SimpleResolver or MavenResolver)
+- `resolver` - Resolver instance (PythonResolver or MvnResolver)
 
 **Usage:**
 ```python
-from jgo.maven import MavenContext, SimpleResolver
+from jgo.maven import MavenContext, PythonResolver
 
 maven = MavenContext(
     repo_cache=Path("~/.m2/repository"),
     remote_repos={"central": "https://repo.maven.apache.org/maven2"},
-    resolver=SimpleResolver()
+    resolver=PythonResolver()
 )
 
 # Use it to access Maven projects

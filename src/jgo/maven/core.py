@@ -83,7 +83,7 @@ class MavenContext:
             If no remote repository paths are given, only Maven Central will be used.
         :param resolver:
             Optional mechanism to use for resolving local paths to artifacts.
-            By default, the SimpleResolver will be used.
+            By default, the PythonResolver will be used.
         """
         self.repo_cache: Path = repo_cache or Path(
             environ.get("M2_REPO", str(DEFAULT_MAVEN_REPO))
@@ -96,9 +96,9 @@ class MavenContext:
         ).copy()
         # Import here to avoid circular dependency
         if resolver is None:
-            from .resolver import SimpleResolver
+            from .resolver import PythonResolver
 
-            resolver = SimpleResolver()
+            resolver = PythonResolver()
         self.resolver: Resolver = resolver
 
     def project(self, groupId: str, artifactId: str) -> "Project":

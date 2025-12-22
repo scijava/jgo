@@ -71,7 +71,7 @@ These short flags are **permanent aliases** and will not be removed:
 | `--ignore-jgorc` | Ignore ~/.jgorc configuration file |
 | `--offline` | Work offline (don't download) |
 | `--no-cache` | Skip cache entirely |
-| `--resolver {auto,pure,maven}` | Choose dependency resolver |
+| `--resolver {auto,python,mvn}` | Choose dependency resolver |
 | `--java-version VERSION` | Force specific Java version |
 | `--java-vendor VENDOR` | Prefer specific Java vendor |
 | `--print-classpath` | Print classpath and exit |
@@ -219,12 +219,12 @@ No need to pre-install Java - jgo detects requirements from bytecode and downloa
 For power users, jgo 2.0 provides three independently useful layers:
 
 ```python
-from jgo.maven import MavenContext, SimpleResolver
+from jgo.maven import MavenContext, PythonResolver
 from jgo.env import EnvironmentBuilder
 from jgo.exec import JavaRunner
 
 # Layer 1: Maven resolution (no Maven required!)
-maven = MavenContext(resolver=SimpleResolver())
+maven = MavenContext(resolver=PythonResolver())
 component = maven.project("org.python", "jython-standalone").at_version("2.7.3")
 
 # Layer 2: Environment materialization
@@ -249,7 +249,7 @@ jgo 2.0 includes a pure-Python Maven resolver:
 
 ```bash
 # No Maven installation required!
-jgo --resolver pure org.python:jython-standalone
+jgo --resolver python org.python:jython-standalone
 ```
 
 Falls back to system `mvn` command only when needed for edge cases.

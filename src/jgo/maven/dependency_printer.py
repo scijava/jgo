@@ -2,7 +2,7 @@
 Dependency printing utilities.
 
 Provides common data structures and formatting logic for dependency lists and trees,
-used by both SimpleResolver and MavenResolver to ensure consistent output.
+used by both PythonResolver and MvnResolver to ensure consistent output.
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ class DependencyNode:
     """
     Represents a dependency in a dependency tree or list.
 
-    This is a common data structure returned by both SimpleResolver and MavenResolver,
+    This is a common data structure returned by both PythonResolver and MvnResolver,
     allowing for consistent formatting regardless of the resolution mechanism.
     """
 

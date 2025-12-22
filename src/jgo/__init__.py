@@ -35,7 +35,7 @@ For fine-grained control, use the three-layer architecture:
 
 Layer 1 - Maven resolution (jgo.maven):
     MavenContext - Maven configuration and repository access
-    SimpleResolver - Pure Python dependency resolution (no Maven required)
+    PythonResolver - Pure Python dependency resolution (no Maven required)
     Component - Versioned Maven artifact (groupId:artifactId:version)
 
 Layer 2 - Environment materialization (jgo.env):
@@ -50,12 +50,12 @@ Layer 3 - Execution (jgo.exec):
 
 Example - Full Control
 ----------------------
->>> from jgo.maven import MavenContext, SimpleResolver
+>>> from jgo.maven import MavenContext, PythonResolver
 >>> from jgo.env import EnvironmentBuilder, LinkStrategy
 >>> from jgo.exec import JavaRunner, JVMConfig
 >>>
 >>> # Layer 1: Maven resolution
->>> maven = MavenContext(resolver=SimpleResolver())
+>>> maven = MavenContext(resolver=PythonResolver())
 >>> component = maven.project("org.python", "jython-standalone").at_version("2.7.3")
 >>>
 >>> # Layer 2: Environment materialization
@@ -121,7 +121,7 @@ from .jgo import (
     resolve_dependencies,
 )
 from .jgo import _jgo_main as main
-from .maven import Component, MavenContext, SimpleResolver
+from .maven import Component, MavenContext, PythonResolver
 from .util import (
     add_jvm_args_as_necessary,
     main_from_endpoint,
@@ -178,7 +178,7 @@ def run(
     context = MavenContext(
         repo_cache=config.repo_cache,
         remote_repos=remote_repos,
-        resolver=SimpleResolver(),
+        resolver=PythonResolver(),
     )
 
     # Create environment builder
@@ -255,7 +255,7 @@ def build(
     context = MavenContext(
         repo_cache=config.repo_cache,
         remote_repos=remote_repos,
-        resolver=SimpleResolver(),
+        resolver=PythonResolver(),
     )
 
     # Create environment builder
@@ -300,7 +300,7 @@ def resolve(
     context = MavenContext(
         repo_cache=config.repo_cache,
         remote_repos=remote_repos,
-        resolver=SimpleResolver(),
+        resolver=PythonResolver(),
     )
 
     # Parse endpoint to get components

@@ -41,7 +41,7 @@ This adds [cjdk](https://github.com/cachedjdk/cjdk) integration, allowing jgo to
 **Minimal installation:**
 - Python 3.9 or later
 - Java 8 or later (pre-installed)
-- Maven (optional, for `--resolver maven` mode)
+- Maven (optional, for `--resolver mvn` mode)
 
 **Full installation:**
 - Python 3.9 or later
@@ -107,7 +107,7 @@ jgo [OPTIONS] <endpoint> [-- JVM_ARGS] [-- APP_ARGS]
 **Environment Configuration:**
 - `--cache-dir PATH` - Override cache directory (default: `~/.cache/jgo`)
 - `--link {hard,soft,copy,auto}` - How to link JARs (default: auto)
-- `--resolver {auto,pure,maven}` - Dependency resolver (default: auto)
+- `--resolver {auto,python,mvn}` - Dependency resolver (default: auto)
   - `pure` - Pure Python, no Maven required
   - `maven` - Shell out to `mvn` command
   - `auto` - Use pure, fallback to maven if needed
@@ -283,13 +283,13 @@ for comp in components:
 For fine-grained control, use the three-layer architecture:
 
 ```python
-from jgo.maven import MavenContext, SimpleResolver
+from jgo.maven import MavenContext, PythonResolver
 from jgo.env import EnvironmentBuilder, LinkStrategy
 from jgo.exec import JavaRunner, JVMConfig
 
 # Layer 1: Maven - Dependency resolution
 maven = MavenContext(
-    resolver=SimpleResolver(),  # Pure Python, no mvn needed
+    resolver=PythonResolver(),  # Pure Python, no mvn needed
     remote_repos={
         "central": "https://repo.maven.apache.org/maven2",
         "scijava": "https://maven.scijava.org/content/groups/public"

@@ -142,13 +142,13 @@ for dep in deps:
 
 **jgo 2.x:**
 ```python
-from jgo.maven import MavenContext, SimpleResolver, MavenResolver
+from jgo.maven import MavenContext, PythonResolver, MvnResolver
 
 # Pure Python (no mvn needed)
-env_pure = Environment(resolver=SimpleResolver())
+env_pure = Environment(resolver=PythonResolver())
 
 # Using mvn
-env_mvn = Environment(resolver=MavenResolver(mvn_command='mvn'))
+env_mvn = Environment(resolver=MvnResolver(mvn_command='mvn'))
 
 # Auto (tries pure, falls back to mvn)
 env_auto = Environment()  # Default is auto-selection
@@ -312,7 +312,7 @@ links = auto
 maven.repo_cache = /path/to/.m2/repository
 jgo.cache_dir = /path/to/.jgo
 jgo.link_strategy = auto
-jgo.resolver = auto  # New: auto, pure, or maven
+jgo.resolver = auto  # New: auto, python, or mvn
 
 [repositories]
 scijava.public = https://maven.scijava.org/content/groups/public

@@ -370,7 +370,7 @@ class TestRunWithShortcuts:
                     print_java_info=False,
                     update=False,
                     entrypoint=None,
-                    resolver="pure",
+                    resolver="python",
                     repo_cache=tmp_path / ".m2" / "repository",
                 )
 

@@ -248,9 +248,9 @@ def global_options(f):
     # Maven options
     f = click.option(
         "--resolver",
-        type=click.Choice(["auto", "pure", "maven"]),
+        type=click.Choice(["auto", "python", "mvn"]),
         default="auto",
-        help="Dependency resolver: auto (default), pure, or maven",
+        help="Dependency resolver: auto (default), python, or mvn",
     )(f)
     f = click.option(
         "-r",

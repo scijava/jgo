@@ -17,13 +17,13 @@ This design makes jgo modular, testable, and extensible while eliminating the mo
 ### Key Classes
 
 ```python
-from jgo.maven import MavenContext, SimpleResolver, MavenResolver
+from jgo.maven import MavenContext, PythonResolver, MvnResolver
 
 # Maven configuration
 maven = MavenContext(
     repo_cache=Path("~/.m2/repository"),
     remote_repos={"central": "https://repo.maven.apache.org/maven2"},
-    resolver=SimpleResolver()  # Pure Python, no mvn needed
+    resolver=PythonResolver()  # Pure Python, no mvn needed
 )
 
 # Access projects
@@ -47,7 +47,7 @@ Project (G:A)
 
 ### Resolvers
 
-**SimpleResolver** (Pure Python):
+**PythonResolver** (Pure Python):
 - No external dependencies
 - Parses POM files directly
 - Handles transitive dependencies
@@ -56,14 +56,14 @@ Project (G:A)
 - Exclusions and scopes
 - Downloads from Maven repositories
 
-**MavenResolver** (Shells out to mvn):
+**MvnResolver** (Shells out to mvn):
 - Falls back when pure Python resolver can't handle edge cases
 - Uses system Maven installation
 - Handles all Maven features
 
 **Auto Resolver**:
-- Tries SimpleResolver first
-- Falls back to MavenResolver if needed
+- Tries PythonResolver first
+- Falls back to MvnResolver if needed
 
 ### Use Cases
 
@@ -305,13 +305,13 @@ jgo.run("org.python:jython-standalone:2.7.3", app_args=["script.py"])
 For fine-grained control:
 
 ```python
-from jgo.maven import MavenContext, SimpleResolver
+from jgo.maven import MavenContext, PythonResolver
 from jgo.env import EnvironmentBuilder, LinkStrategy
 from jgo.exec import JavaRunner, JVMConfig, JavaSource
 
 # Layer 1: Configure Maven
 maven = MavenContext(
-    resolver=SimpleResolver(),
+    resolver=PythonResolver(),
     remote_repos={
         "central": "https://repo.maven.apache.org/maven2",
         "scijava": "https://maven.scijava.org/content/groups/public"
@@ -368,7 +368,7 @@ Each layer can be tested in isolation:
 ### 3. Flexibility
 
 Mix and match components:
-- Use SimpleResolver or MavenResolver
+- Use PythonResolver or MvnResolver
 - Use hard links or copies
 - Use cjdk or system Java
 
@@ -437,7 +437,7 @@ jgo/
   ├─ __init__.py           # High-level API: run(), build(), resolve()
   ├─ maven/                # Layer 1: Maven resolution
   │   ├─ core.py           # MavenContext, Project, Component, Artifact
-  │   ├─ resolver.py       # SimpleResolver, MavenResolver
+  │   ├─ resolver.py       # PythonResolver, MvnResolver
   │   ├─ model.py          # Dependency resolution logic
   │   ├─ pom.py            # POM parsing
   │   └─ metadata.py       # maven-metadata.xml parsing
