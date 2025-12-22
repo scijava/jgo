@@ -15,11 +15,6 @@ Reconcile jgo.toml, jgo.lock.toml, manifest.json in jgo envs -- do we really nee
 Do we really need the `<groupId>/<artifactId>/<hash>` substructure beneath `.jgo` for workspace-based jgo?
 - Nicer would be to mutate the env directly under the `cache_dir`. Do we need a toml flag for controlling this?
 
-Make `jgo help` work:
-* `jgo help` = `jgo --help`
-* `jgo help version` = `jgo version --help`
-* etc.
-
 Make `jgo --version` work. Same as `jgo version`.
 
 Change `jgo --java-source system` to just `jgo --system-java`.

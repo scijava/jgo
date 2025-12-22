@@ -397,6 +397,56 @@ def version():
     click.echo(f"jgo {parser._get_version()}")
 
 
+@cli.command(
+    context_settings=dict(ignore_unknown_options=True, allow_interspersed_args=False)
+)
+@click.argument("commands", nargs=-1, required=False)
+@click.pass_context
+def help(ctx, commands):
+    """Show help for jgo or a specific command.
+
+    Examples:
+      jgo help              - Show main help
+      jgo help version      - Show help for 'version' command
+      jgo help run          - Show help for 'run' command
+      jgo help config shortcut  - Show help for nested 'config shortcut' command
+    """
+    if not commands:
+        # No command specified - show main help
+        click.echo(ctx.parent.get_help())
+        return
+
+    # Navigate through nested commands
+    current_group = ctx.parent.command
+    current_ctx = ctx.parent
+
+    for i, cmd_name in enumerate(commands):
+        if not hasattr(current_group, "commands"):
+            click.echo(f"Error: '{cmd_name}' is not a command group", err=True)
+            ctx.exit(1)
+
+        cmd = current_group.commands.get(cmd_name)
+        if cmd is None:
+            click.echo(f"Error: Unknown command '{cmd_name}'", err=True)
+            ctx.exit(1)
+
+        # If this is the last command, show its help
+        if i == len(commands) - 1:
+            # Get the help text without triggering Click's exit mechanism
+            cmd_ctx = click.Context(cmd, info_name=cmd_name, parent=current_ctx)
+            click.echo(cmd.get_help(cmd_ctx))
+            return
+
+        # Otherwise, navigate deeper if it's a group
+        if isinstance(cmd, click.Group):
+            # Create intermediate context
+            current_ctx = click.Context(cmd, info_name=cmd_name, parent=current_ctx)
+            current_group = cmd
+        else:
+            click.echo(f"Error: '{cmd_name}' is not a command group", err=True)
+            ctx.exit(1)
+
+
 def _parse_remaining(remaining):
     """
     Parse remaining args for JVM and app arguments.
