@@ -233,13 +233,11 @@ result = runner.run(
 
 ### Zero-Configuration Execution
 
-With cjdk integration:
-
 ```python
 import jgo
 
 # User doesn't need Java installed!
-# Detects requirement → downloads Java 17 → runs
+# Detects requirement → downloads correct Java version → runs
 jgo.run("net.imagej:imagej")
 
 # Output:

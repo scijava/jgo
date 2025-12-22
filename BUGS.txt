@@ -15,11 +15,6 @@ Reconcile jgo.toml, jgo.lock.toml, manifest.json in jgo envs -- do we really nee
 Do we really need the `<groupId>/<artifactId>/<hash>` substructure beneath `.jgo` for workspace-based jgo?
 - Nicer would be to mutate the env directly under the `cache_dir`. Do we need a toml flag for controlling this?
 
-Change `jgo --java-source system` to just `jgo --system-java`.
-- "java-source" sounds like something with source code -- but it's not.
-- Keeps cjdk better encapsulated.
-- Will we ever have a third option besides cjdk or system? I don't think so.
-
 Add support for module paths
 
 Shore up "jgorc" references throughout the codebase. `--ignore-jgorc` -> `--ignore-config`

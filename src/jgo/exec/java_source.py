@@ -94,7 +94,7 @@ class JavaLocator:
         java_path = self._find_java_in_path()
         if java_path is None:
             raise RuntimeError(
-                "Java not found. Please install Java or use jgo[cjdk] for automatic Java management."
+                "Java not found. Please install Java or use cjdk mode for automatic Java management."
             )
 
         # Check version if required
@@ -103,7 +103,7 @@ class JavaLocator:
             if actual_version < required_version:
                 raise RuntimeError(
                     f"Java {required_version} or higher required, but system Java is version {actual_version}. "
-                    f"Please upgrade Java or use jgo[cjdk] for automatic Java management."
+                    f"Please upgrade Java or use cjdk mode for automatic Java management."
                 )
             elif self.verbose:
                 print(

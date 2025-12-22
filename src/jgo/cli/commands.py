@@ -321,12 +321,9 @@ class JgoCommands:
         """
         Create Java runner from arguments and configuration.
         """
-        # Map string to JavaSource enum
-        java_source_map = {
-            "system": JavaSource.SYSTEM,
-            "cjdk": JavaSource.CJDK,
-        }
-        java_source = java_source_map[self.args.java_source]
+        java_source = (
+            JavaSource.SYSTEM if self.args.use_system_java else JavaSource.CJDK
+        )
 
         # Create JVM config
         jvm_config = JVMConfig()

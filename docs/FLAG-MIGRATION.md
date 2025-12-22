@@ -70,7 +70,7 @@ This document categorizes existing jgo flags for the command-based CLI redesign.
 |------|----------|-------|
 | `--java-version VERSION` | **Keep** | Global flag - affects Java selection for all commands |
 | `--java-vendor VENDOR` | **Keep** | Global flag - affects Java selection |
-| `--java-source {cjdk,system}` | **Keep** | Global flag - affects Java selection |
+| `--system-java` | **Keep** | Global flag - use system Java instead of cjdk (default) |
 
 ---
 
@@ -131,7 +131,7 @@ Global Options:
   -f, --file FILE        Use specific jgo.toml
   --java-version VERSION Force Java version
   --java-vendor VENDOR   Prefer Java vendor
-  --java-source {cjdk,system}  Java source strategy
+  --system-java          Use system Java (default: cjdk)
   
   # Deprecated but kept for backwards compat
   --additional-endpoints Add endpoints (use + syntax instead)

@@ -76,7 +76,7 @@ class ParsedArgs:
         # Java
         java_version: int | None = None,
         java_vendor: str | None = None,
-        java_source: str = "cjdk",
+        use_system_java: bool = False,
         # Endpoint and args
         endpoint: str | None = None,
         jvm_args: list[str] | None = None,
@@ -122,7 +122,7 @@ class ParsedArgs:
         # Java
         self.java_version = java_version
         self.java_vendor = java_vendor
-        self.java_source = java_source
+        self.use_system_java = use_system_java
         # Endpoint and args
         self.endpoint = endpoint
         self.jvm_args = jvm_args or []
@@ -283,10 +283,10 @@ def global_options(f):
         help="Prefer specific Java vendor (e.g., 'adoptium', 'zulu')",
     )(f)
     f = click.option(
-        "--java-source",
-        type=click.Choice(["cjdk", "system"]),
-        default="cjdk",
-        help="Java source: cjdk (default) or system",
+        "--system-java",
+        "use_system_java",
+        is_flag=True,
+        help="Use system Java instead of downloading via cjdk",
     )(f)
 
     # Advanced options
@@ -549,7 +549,7 @@ def _build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, comman
         # Java
         java_version=opts.get("java_version"),
         java_vendor=opts.get("java_vendor"),
-        java_source=opts.get("java_source", "cjdk"),
+        use_system_java=opts.get("use_system_java", False),
         # Endpoint and args
         endpoint=endpoint,
         jvm_args=jvm_args or [],

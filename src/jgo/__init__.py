@@ -90,8 +90,7 @@ Old jgo 1.x APIs still work but show deprecation warnings:
 
 Installation
 ------------
-Basic: pip install jgo  (requires Java pre-installed)
-Full:  pip install jgo[cjdk]  (automatic Java download/management)
+Basic: pip install jgo
 
 See Also
 --------

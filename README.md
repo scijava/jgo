@@ -7,7 +7,7 @@
 
 ## Summary
 
-`jgo` launches Java applications directly from Maven coordinates—no installation required. Just specify a Maven artifact identifier and an optional main class, and `jgo` resolves dependencies, materializes the environment, and runs your program.
+`jgo` launches Java applications directly from Maven coordinates—no installation required. Just specify a Maven artifact identifier and an optional main class, and `jgo` resolves dependencies, materializes the environment including the version of Java needed, and runs your program.
 
 ```bash
 # Run Jython REPL (latest version)
@@ -15,10 +15,6 @@ jgo org.python:jython-standalone
 
 # Run with specific version
 jgo org.python:jython-standalone:2.7.3
-
-# With cjdk: automatically downloads Java if needed!
-pip install jgo[cjdk]
-jgo net.imagej:imagej  # Downloads Java 17 automatically
 ```
 
 ### What's New in 2.0

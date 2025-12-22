@@ -12,8 +12,6 @@
 
 ## Installation
 
-### Basic Installation
-
 Install jgo using pip or conda:
 
 ```bash
@@ -24,28 +22,10 @@ pip install jgo
 conda install -c conda-forge jgo
 ```
 
-This provides core jgo functionality and requires Java to be pre-installed on your system.
-
-### Full Installation with Automatic Java Management
-
-For zero-configuration execution with automatic Java download:
-
-```bash
-pip install jgo[cjdk]
-```
-
-This adds [cjdk](https://github.com/cachedjdk/cjdk) integration, allowing jgo to automatically download the correct Java version for each program.
-
 ### Prerequisites
 
-**Minimal installation:**
 - Python 3.9 or later
-- Java 8 or later (pre-installed)
-- Maven (optional, for `--resolver mvn` mode)
-
-**Full installation:**
-- Python 3.9 or later
-- No Java required! (cjdk downloads it automatically)
+- No Java required! (jgo downloads it on demand)
 
 ## Quick Start
 
@@ -120,7 +100,7 @@ jgo [OPTIONS] <endpoint> [-- JVM_ARGS] [-- APP_ARGS]
 **Java Version Control:**
 - `--java-version VERSION` - Force specific Java version
 - `--java-vendor VENDOR` - Prefer specific vendor (adoptium, zulu, etc.)
-- `--java-source {cjdk,system}` - Java selection strategy
+- `--system-java` - Use system Java instead of downloading it on demand
 
 **Output Options:**
 - Use `jgo info` subcommands to get information without running:
@@ -457,12 +437,10 @@ jgo -- -- --scan-classpath
 
 ### Zero-Configuration Execution
 
-With cjdk installed:
-
 ```bash
 # Java automatically downloaded if needed
-pip install jgo[cjdk]
-jgo net.imagej:imagej  # Downloads Java 17 automatically!
+pip install jgo
+jgo net.imagej:imagej  # Downloads Java 8 automatically!
 ```
 
 ## Next Steps

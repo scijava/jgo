@@ -19,7 +19,7 @@ These items **must** be completed before releasing 2.0.0:
 Documentation to write in `docs/`:
 
 - [ ] **User Guide** (`docs/user-guide.md`)
-  - Installation (minimal vs full with cjdk)
+  - Installation
   - Quick start examples
   - CLI command reference (new command-based interface)
   - jgo.toml specification and usage

@@ -77,12 +77,11 @@ def demo_java_source_selection():
 
     # Strategy 2: Use cjdk
     print("\n2. CJDK: Use cjdk for automatic Java management")
-    print("   Note: Requires 'pip install jgo[cjdk]'")
-    # runner_cjdk = JavaRunner(
-    #     java_source=JavaSource.CJDK,
-    #     java_version=17,
-    #     java_vendor="zulu"  # Default is "zulu" (widest version support)
-    # )
+    runner_cjdk = JavaRunner(
+        java_source=JavaSource.CJDK,
+        java_version=17,
+        java_vendor="zulu"  # Default is "zulu" (widest version support)
+    )
 
 
 def demo_bytecode_detection():
