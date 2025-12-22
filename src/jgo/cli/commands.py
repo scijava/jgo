@@ -177,6 +177,7 @@ class JgoCommands:
             additional_jvm_args=self.args.jvm_args,
             additional_classpath=self.args.classpath_append,
             print_command=self.debug,
+            dry_run=self.args.dry_run,
         )
 
         return result.returncode
@@ -242,6 +243,7 @@ class JgoCommands:
             additional_jvm_args=self.args.jvm_args,
             additional_classpath=self.args.classpath_append,
             print_command=self.debug,
+            dry_run=self.args.dry_run,
         )
 
         return result.returncode

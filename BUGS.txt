@@ -21,8 +21,6 @@ Shore up "jgorc" references throughout the codebase. `--ignore-jgorc` -> `--igno
 
 Does `-vvv` (or a sufficient number of v's) pass `-X` to `mvn` when using the MvnResolver?
 
-Fix the `--dry-run` flag to actually not run -- it should print the java launch command.
-
 Make verbose flags give more dependency resolution detail:
 - `jgo -v update` gives some info
 - But it does not say what the newest version of each dep is, nor which deps got updated.

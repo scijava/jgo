@@ -207,7 +207,9 @@ def global_options(f):
         help="Use specific environment file (default: jgo.toml).",
     )(f)
     f = click.option(
-        "--dry-run", is_flag=True, help="Show what would be done without doing it."
+        "--dry-run",
+        is_flag=True,
+        help="Show what would be done without doing it. Note: while this mode prevents the primary action (e.g. running Java, creating files), jgo may still download dependencies and build cached environments as needed to report accurate information.",
     )(f)
 
     # Cache options

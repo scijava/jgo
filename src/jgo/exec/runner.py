@@ -51,6 +51,7 @@ class JavaRunner:
         additional_jvm_args: list[str] | None = None,
         additional_classpath: list[str] | None = None,
         print_command: bool = False,
+        dry_run: bool = False,
     ) -> subprocess.CompletedProcess:
         """
         Run a Java program from an environment.
@@ -64,6 +65,7 @@ class JavaRunner:
             additional_classpath: Additional classpath elements (JARs,
                 directories, etc.)
             print_command: If True, print the java command being executed
+            dry_run: If True, print the command but don't execute it
 
         Returns:
             CompletedProcess from subprocess.run
@@ -123,9 +125,13 @@ class JavaRunner:
         if app_args:
             cmd.extend(app_args)
 
-        # Print command if requested
-        if print_command or self.verbose:
+        # Print command if requested or in dry-run mode
+        if print_command or self.verbose or dry_run:
             print(" ".join(cmd), file=sys.stderr)
+
+        # In dry-run mode, don't execute - just return a mock result
+        if dry_run:
+            return subprocess.CompletedProcess(args=cmd, returncode=0)
 
         # Execute
         try:

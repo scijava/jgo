@@ -80,6 +80,19 @@ def execute(args: ParsedArgs, config: dict) -> int:
     )
 
     output_file = args.file or Path("jgo.toml")
+
+    # Handle dry-run mode
+    if args.dry_run:
+        import tomli_w
+
+        from ..helpers import handle_dry_run
+
+        # Generate the TOML content that would be written
+        toml_content = tomli_w.dumps(spec._to_dict())
+        message = f"Would create {output_file}:\n{toml_content}"
+        handle_dry_run(args, message)
+        return 0
+
     spec.save(output_file)
 
     if args.verbose > 0:
