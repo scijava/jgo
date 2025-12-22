@@ -25,9 +25,13 @@ from jgo.util import main_from_endpoint
 def _call_args(mock: MagicMock) -> tuple[tuple, dict]:
     """
     Returns the arguments and keyword arguments passed in a mock call.
-    :param mock: The mock that was called
-    :return: A tuple, where the first element is the args passed in the call,
-        and the second element is the keyword args passed in the call
+
+    Args:
+        mock: The mock that was called.
+
+    Returns:
+        A tuple, where the first element is the args passed in the call,
+        and the second element is the keyword args passed in the call.
     """
     if sys.version_info.minor >= 8:
         return (mock.call_args.args, mock.call_args.kwargs)

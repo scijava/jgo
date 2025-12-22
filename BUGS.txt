@@ -1,5 +1,3 @@
-Fix Sphinx-style :param: docstring syntax -- always use Google-style "Args:"
-
 jgo.cli.subcommands -> jgo.cli.commands (can we really parcel out *all* of commands.py?)
 
 Remove or repurpose obsolete files in docs/

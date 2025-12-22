@@ -26,9 +26,10 @@ def link_file(source: Path, link_name: Path, strategy: LinkStrategy):
     """
     Link a file using the specified strategy.
 
-    :param source: Source file path
-    :param link_name: Target link path
-    :param strategy: Link strategy to use
+    Args:
+        source: Source file path
+        link_name: Target link path
+        strategy: Link strategy to use
     """
     if strategy == LinkStrategy.HARD:
         return os.link(source, link_name)

@@ -20,8 +20,11 @@ def parse_dependency_element_to_coordinate(
     This function bridges the XML parsing layer (pom.py) and the data layer (endpoint.py),
     allowing core.py to work with Coordinates without touching ElementTree.
 
-    :param el: The XML element to parse.
-    :return: Tuple of (Coordinate object, list of exclusion (groupId, artifactId) tuples)
+    Args:
+        el: The XML element to parse.
+
+    Returns:
+        Tuple of (Coordinate object, list of exclusion (groupId, artifactId) tuples)
     """
     groupId = el.findtext("groupId")
     artifactId = el.findtext("artifactId")
@@ -65,8 +68,12 @@ class XML:
     def dump(self, el: ElementTree.Element = None) -> str:
         """
         Get a string representation of the given XML element.
-        :param el: Element to stringify, or None to stringify the root node.
-        :return: The XML as a string.
+
+        Args:
+            el: Element to stringify, or None to stringify the root node.
+
+        Returns:
+            The XML as a string.
         """
         # NB: Be careful: childless ElementTree.Element objects are falsy!
         if el is None:

@@ -19,10 +19,13 @@ def add_jvm_args_as_necessary(argv, gc_option="-XX:+UseConcMarkSweepGC"):
         Use :class:`jgo.exec.config.JVMConfig` instead for new code.
         This function will be removed in jgo 3.0.
 
-    :param argv: argument vector
-    :param gc_option: Use this garbage collector settings, if any.
-                     Note: CMS is deprecated; use G1GC for modern JVMs.
-    :return: argv with added JVM arguments
+    Args:
+        argv: Argument vector.
+        gc_option: Use this garbage collector settings, if any.
+            Note: CMS is deprecated; use G1GC for modern JVMs.
+
+    Returns:
+        argv with added JVM arguments.
     """
     warnings.warn(
         "add_jvm_args_as_necessary() is deprecated. "
@@ -61,7 +64,8 @@ def maven_scijava_repository():
     """
     Get the SciJava Maven repository URL.
 
-    :return: SciJava repository URL
+    Returns:
+        SciJava repository URL.
     """
     return "https://maven.scijava.org/content/groups/public"
 
@@ -75,8 +79,9 @@ def main_from_endpoint(
     secondary_endpoints=(),
 ):
     """
-    Convenience method to populate appropriate argv for jgo. This is useful to
-    distribute Java programs as Python modules.
+    Convenience method to populate appropriate argv for jgo.
+
+    This is useful to distribute Java programs as Python modules.
 
     For example, to run paintera with slf4j logging bindings, call:
         main_from_endpoint(
@@ -85,15 +90,18 @@ def main_from_endpoint(
             secondary_endpoints=('org.slf4j:slf4j-simple:1.7.25',),
         )
 
-    :param primary_endpoint: The primary endpoint of the Java program you want to run.
-    :param repositories: Any maven repository that holds the required jars. Defaults
-        to {'scijava.public': maven_scijava_repository()}.
-    :param primary_endpoint_version: Will be appended to primary_endpoint if it
-        does not evaluate to False
-    :param primary_endpoint_main_class: Will be appended to primary_endpoint if it
-        does not evaluate to False.
-    :param secondary_endpoints: Any other endpoints that should be added.
-    :return: None
+    Args:
+        primary_endpoint: The primary endpoint of the Java program you want to run.
+        repositories: Any maven repository that holds the required jars. Defaults
+            to {'scijava.public': maven_scijava_repository()}.
+        primary_endpoint_version: Will be appended to primary_endpoint if it
+            does not evaluate to False.
+        primary_endpoint_main_class: Will be appended to primary_endpoint if it
+            does not evaluate to False.
+        secondary_endpoints: Any other endpoints that should be added.
+
+    Returns:
+        None.
     """
     warnings.warn(
         "jgo.main_from_endpoint() is deprecated. Use the new jgo API: jgo.run()",

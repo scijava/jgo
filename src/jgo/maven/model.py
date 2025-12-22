@@ -29,8 +29,9 @@ class Model:
         """
         Build a Maven metadata model from the given POM.
 
-        :param pom: A source POM from which to extract metadata (e.g. dependencies).
-        :param context: Maven context for dependency resolution. If None, creates a default context.
+        Args:
+            pom: A source POM from which to extract metadata (e.g. dependencies).
+            context: Maven context for dependency resolution. If None, creates a default context.
         """
         from .core import MavenContext
 
@@ -154,19 +155,22 @@ class Model:
         """
         Compute the component's list of dependencies, including transitive dependencies.
 
-        :param resolved:
-            Optional dictionary of already-resolved dependency coordinates.
-            Items present in this structure will be pruned from the
-            returned dependency list rather than recursively explored.
-        :param root_dep_mgmt:
-            Optional dependency management from the root project.
-            This will be used to override versions of transitive dependencies.
-        :param max_depth:
-            Maximum depth to recurse when resolving dependencies. None means unlimited
-            (fully transitive). 1 means direct dependencies only (when called on a
-            synthetic wrapper POM, this gives the direct dependencies of the wrapped
-            components). 0 would mean no dependencies at all.
-        :return: The list of Dependency objects.
+        Args:
+            resolved:
+                Optional dictionary of already-resolved dependency coordinates.
+                Items present in this structure will be pruned from the
+                returned dependency list rather than recursively explored.
+            root_dep_mgmt:
+                Optional dependency management from the root project.
+                This will be used to override versions of transitive dependencies.
+            max_depth:
+                Maximum depth to recurse when resolving dependencies. None means unlimited
+                (fully transitive). 1 means direct dependencies only (when called on a
+                synthetic wrapper POM, this gives the direct dependencies of the wrapped
+                components). 0 would mean no dependencies at all.
+
+        Returns:
+            The list of Dependency objects.
         """
         deps: dict[GACT, Dependency] = {}
 
@@ -244,9 +248,12 @@ class Model:
     def _import_boms(self, candidates: dict[GACT, Dependency]) -> None:
         """
         Scan the candidates for dependencies of type pom with scope import.
+
         For each such dependency found, import its dependencyManagement section
         into ours, scanning it recursively for more BOMs to import.
-        :param candidates: The candidate dependencies, which might be BOMs.
+
+        Args:
+            candidates: The candidate dependencies, which might be BOMs.
         """
         for dep in candidates.values():
             if not (dep.scope == "import" and dep.type == "pom"):

@@ -64,26 +64,27 @@ class MavenContext:
         """
         Create a Maven context.
 
-        :param repo_cache:
-            Optional path to Maven local repository cache directory, i.e. destination
-            of `mvn install`. Maven typically uses ~/.m2/repository by default.
-            This directory is treated as *read-write* by this library, e.g.
-            the download() function will store downloaded artifacts there.
-            If no local repository cache path is given, Maven defaults will be used
-            (M2_REPO environment variable, or ~/.m2/repository by default).
-        :param local_repos:
-            Optional list of Maven repository storage local paths to check for artifacts.
-            These are real Maven repositories, such as those managed by a Sonatype Nexus v2 instance,
-            i.e. ultimate destinations of `mvn deploy`, *not* local repository caches!
-            These directories are treated as *read-only* by this library.
-            If no local repository paths are given, none will be inferred.
-        :param remote_repos:
-            Optional dict of remote name:URL pairs, with each URL corresponding
-            to a remote Maven repository accessible via HTTP/HTTPS.
-            If no remote repository paths are given, only Maven Central will be used.
-        :param resolver:
-            Optional mechanism to use for resolving local paths to artifacts.
-            By default, the PythonResolver will be used.
+        Args:
+            repo_cache:
+                Optional path to Maven local repository cache directory, i.e. destination
+                of `mvn install`. Maven typically uses ~/.m2/repository by default.
+                This directory is treated as *read-write* by this library, e.g.
+                the download() function will store downloaded artifacts there.
+                If no local repository cache path is given, Maven defaults will be used
+                (M2_REPO environment variable, or ~/.m2/repository by default).
+            local_repos:
+                Optional list of Maven repository storage local paths to check for artifacts.
+                These are real Maven repositories, such as those managed by a Sonatype Nexus v2 instance,
+                i.e. ultimate destinations of `mvn deploy`, *not* local repository caches!
+                These directories are treated as *read-only* by this library.
+                If no local repository paths are given, none will be inferred.
+            remote_repos:
+                Optional dict of remote name:URL pairs, with each URL corresponding
+                to a remote Maven repository accessible via HTTP/HTTPS.
+                If no remote repository paths are given, only Maven Central will be used.
+            resolver:
+                Optional mechanism to use for resolving local paths to artifacts.
+                By default, the PythonResolver will be used.
         """
         self.repo_cache: Path = repo_cache or Path(
             environ.get("M2_REPO", str(DEFAULT_MAVEN_REPO))
@@ -104,9 +105,13 @@ class MavenContext:
     def project(self, groupId: str, artifactId: str) -> "Project":
         """
         Get a project (G:A) with the given groupId and artifactId.
-        :param groupId: The groupId of the project.
-        :param artifactId: The artifactId of the project.
-        :return: The Project object.
+
+        Args:
+            groupId: The groupId of the project.
+            artifactId: The artifactId of the project.
+
+        Returns:
+            The Project object.
         """
         return Project(self, groupId, artifactId)
 
@@ -117,8 +122,11 @@ class MavenContext:
         This delegates to pom.py for XML parsing, then uses create_dependency
         to build the Dependency object.
 
-        :param el: The XML element from which to create the dependency.
-        :return: The Dependency object.
+        Args:
+            el: The XML element from which to create the dependency.
+
+        Returns:
+            The Dependency object.
         """
         from .pom import parse_dependency_element_to_coordinate
 
@@ -144,9 +152,12 @@ class MavenContext:
         """
         Create a Dependency object from a Maven coordinate.
 
-        :param coordinate: The Maven coordinate to convert to a Dependency.
-        :param exclusions: Optional list of Project exclusions.
-        :return: The Dependency object.
+        Args:
+            coordinate: The Maven coordinate to convert to a Dependency.
+            exclusions: Optional list of Project exclusions.
+
+        Returns:
+            The Dependency object.
         """
         coord = Coordinate.parse(coordinate)
         groupId = coord.groupId
@@ -165,8 +176,12 @@ class MavenContext:
     def pom_to_artifact(self, pom: POM) -> "Artifact":
         """
         Create an Artifact object representing the given POM.
-        :param pom: The POM to convert to an Artifact.
-        :return: The Artifact object.
+
+        Args:
+            pom: The POM to convert to an Artifact.
+
+        Returns:
+            The Artifact object.
         """
         project = self.project(pom.groupId, pom.artifactId)
         return project.at_version(pom.version).artifact(packaging="pom")
@@ -174,8 +189,12 @@ class MavenContext:
     def pom_parent(self, pom: POM) -> "POM | None":
         """
         Resolve and return the parent POM, or None if no parent is declared.
-        :param pom: The POM whose parent to resolve.
-        :return: The parent POM object, or None if no parent.
+
+        Args:
+            pom: The POM whose parent to resolve.
+
+        Returns:
+            The parent POM object, or None if no parent.
         """
         from .pom import POM
 
@@ -208,9 +227,13 @@ class MavenContext:
     def pom_dependencies(self, pom: POM, managed: bool = False) -> list["Dependency"]:
         """
         Extract dependencies from POM as Dependency objects.
-        :param pom: The POM from which to extract dependencies.
-        :param managed: If True, extract from dependencyManagement instead of dependencies.
-        :return: List of Dependency objects.
+
+        Args:
+            pom: The POM from which to extract dependencies.
+            managed: If True, extract from dependencyManagement instead of dependencies.
+
+        Returns:
+            List of Dependency objects.
         """
         xpath = "dependencies/dependency"
         if managed:
@@ -253,8 +276,12 @@ class Project:
     def at_version(self, version: str) -> "Component":
         """
         Fix this project (G:A) at a particular version (G:A:V).
-        :param version: The version of the project.
-        :return: Component at the given version.
+
+        Args:
+            version: The version of the project.
+
+        Returns:
+            Component at the given version.
         """
         return Component(self, version)
 
@@ -319,16 +346,19 @@ class Project:
         """
         Get a list of all known versions of this project.
 
-        :param releases:
-            If True, include release versions (those not ending in -SNAPSHOT) in the results.
-        :param snapshots:
-            If True, include snapshot versions (those ending in -SNAPSHOT) in the results.
-        :param locked:
-            If True, returned snapshot versions will include the timestamp or "lock" flavor
-            of the version strings;
-            For example: 2.94.3-20230706.150124-1 rather than 2.94.3-SNAPSHOT.
-            As such, there may be more entries returned than when this flag is False.
-        :return: List of Component objects, each of which represents a known version.
+        Args:
+            releases:
+                If True, include release versions (those not ending in -SNAPSHOT) in the results.
+            snapshots:
+                If True, include snapshot versions (those ending in -SNAPSHOT) in the results.
+            locked:
+                If True, returned snapshot versions will include the timestamp or "lock" flavor
+                of the version strings;
+                For example: 2.94.3-20230706.150124-1 rather than 2.94.3-SNAPSHOT.
+                As such, there may be more entries returned than when this flag is False.
+
+        Returns:
+            List of Component objects, each of which represents a known version.
         """
         # TODO: Think about whether multiple timestamped snapshots at the same snapshot
         # version should be one Component, or multiple Components.
@@ -429,9 +459,11 @@ class Component:
         """
         Get an artifact (G:A:P:C:V) associated with this component.
 
-        :param classifier: Classifier of the artifact.
-        :param packaging: Packaging/type of the artifact.
-        :return:
+        Args:
+            classifier: Classifier of the artifact.
+            packaging: Packaging/type of the artifact.
+
+        Returns:
             The Artifact object representing this component
             with particular classifier and packaging.
         """
@@ -441,7 +473,8 @@ class Component:
         """
         Get a data structure with the contents of the POM.
 
-        :return: The POM content.
+        Returns:
+            The POM content.
         """
         from .pom import POM
 
@@ -628,7 +661,9 @@ class Dependency:
     def set_version(self, version: str) -> None:
         """
         Alter the dependency's version.
-        :param version: The new version to use.
+
+        Args:
+            version: The new version to use.
         """
         assert isinstance(version, str)
         self.artifact.component.version = version

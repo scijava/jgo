@@ -83,8 +83,12 @@ class Resolver(ABC):
     def download(self, artifact: Artifact) -> Path | None:
         """
         Download an artifact file from a remote repository.
-        :param artifact: The artifact for which a local path should be resolved.
-        :return: Local path to the saved artifact, or None if the artifact cannot be resolved.
+
+        Args:
+            artifact: The artifact for which a local path should be resolved.
+
+        Returns:
+            Local path to the saved artifact, or None if the artifact cannot be resolved.
         """
         ...
 
@@ -98,12 +102,16 @@ class Resolver(ABC):
     ) -> list[Dependency]:
         """
         Determine dependencies for the given Maven component.
-        :param components: The component(s) for which to determine the dependencies.
-        :param managed: If True, use dependency management (import components as BOMs).
-        :param boms: List of components to import as BOMs in dependencyManagement.
-                                   If None and managed=True, uses [component].
-        :param transitive: Whether to include transitive dependencies.
-        :return: The list of dependencies.
+
+        Args:
+            components: The component(s) for which to determine the dependencies.
+            managed: If True, use dependency management (import components as BOMs).
+            boms: List of components to import as BOMs in dependencyManagement.
+                If None and managed=True, uses [component].
+            transitive: Whether to include transitive dependencies.
+
+        Returns:
+            The list of dependencies.
         """
         ...
 
@@ -175,11 +183,14 @@ class Resolver(ABC):
         This returns the dependency data in a common format that can be used by
         the dependency printing logic to ensure consistent output across resolvers.
 
-        :param component: The component for which to get dependencies.
-        :param transitive: If False, return only direct dependencies.
-        :return: Tuple of (root_node, dependencies_list) where root_node is the
-                 component itself and dependencies_list is the sorted list of all
-                 resolved transitive dependencies.
+        Args:
+            component: The component for which to get dependencies.
+            transitive: If False, return only direct dependencies.
+
+        Returns:
+            Tuple of (root_node, dependencies_list) where root_node is the
+            component itself and dependencies_list is the sorted list of all
+            resolved transitive dependencies.
         """
         ...
 
@@ -191,9 +202,12 @@ class Resolver(ABC):
         This returns the dependency data in a common format that can be used by
         the dependency printing logic to ensure consistent output across resolvers.
 
-        :param component: The component for which to get the dependency tree.
-        :return: DependencyNode representing the root component with children populated
-                 recursively to form the complete dependency tree.
+        Args:
+            component: The component for which to get the dependency tree.
+
+        Returns:
+            DependencyNode representing the root component with children populated
+            recursively to form the complete dependency tree.
         """
         ...
 
@@ -206,12 +220,17 @@ class Resolver(ABC):
     ) -> str:
         """
         Print a flat list of resolved dependencies (like mvn dependency:list).
+
         This shows what will actually be used when building the environment.
-        :param components: The component(s) for which to print dependencies.
-        :param managed: If True, use dependency management (import components as BOMs).
-        :param boms: List of components to import as BOMs. Defaults to [component].
-        :param transitive: If False, show only direct dependencies (non-transitive).
-        :return: The dependency list as a string.
+
+        Args:
+            components: The component(s) for which to print dependencies.
+            managed: If True, use dependency management (import components as BOMs).
+            boms: List of components to import as BOMs. Defaults to [component].
+            transitive: If False, show only direct dependencies (non-transitive).
+
+        Returns:
+            The dependency list as a string.
         """
         root, deps = self.get_dependency_list(
             components, managed=managed, boms=boms, transitive=transitive
@@ -226,11 +245,16 @@ class Resolver(ABC):
     ) -> str:
         """
         Print the full dependency tree for the given component (like mvn dependency:tree).
+
         Uses proper dependency mediation - only one version per artifact.
-        :param components: The component(s) for which to print dependencies.
-        :param managed: If True, use dependency management (import components as BOMs).
-        :param boms: List of components to import as BOMs. Defaults to [component].
-        :return: The dependency tree as a string.
+
+        Args:
+            components: The component(s) for which to print dependencies.
+            managed: If True, use dependency management (import components as BOMs).
+            boms: List of components to import as BOMs. Defaults to [component].
+
+        Returns:
+            The dependency tree as a string.
         """
         root = self.get_dependency_tree(components, managed=managed, boms=boms)
         return format_dependency_tree(root)
