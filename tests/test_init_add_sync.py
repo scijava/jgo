@@ -47,7 +47,7 @@ def test_init_with_main_class_then_add():
                 file=tmp_path / "jgo.toml",
             )
 
-            from jgo.cli.subcommands import init as init_cmd
+            from jgo.cli.commands import init as init_cmd
 
             result = init_cmd.execute(init_args, {})
             assert result == 0
@@ -81,7 +81,7 @@ def test_init_with_main_class_then_add():
             add_args.coordinates = ["org.scijava:scripting-groovy"]
             add_args.no_sync = True  # Don't sync for this test (would need Maven)
 
-            from jgo.cli.subcommands import add as add_cmd
+            from jgo.cli.commands import add as add_cmd
 
             result = add_cmd.execute(add_args, {})
             assert result == 0
@@ -125,7 +125,7 @@ def test_init_without_main_class():
                 file=tmp_path / "jgo.toml",
             )
 
-            from jgo.cli.subcommands import init as init_cmd
+            from jgo.cli.commands import init as init_cmd
 
             result = init_cmd.execute(init_args, {})
             assert result == 0
@@ -169,7 +169,7 @@ def test_init_with_old_format_main_class():
                 file=tmp_path / "jgo.toml",
             )
 
-            from jgo.cli.subcommands import init as init_cmd
+            from jgo.cli.commands import init as init_cmd
 
             result = init_cmd.execute(init_args, {})
             assert result == 0

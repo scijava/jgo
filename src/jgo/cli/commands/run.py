@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import click
@@ -85,7 +87,7 @@ def run(ctx, main_class, entrypoint, add_classpath, endpoint, remaining):
     else:
         config = JgoConfig.load()
 
-    # Build ParsedArgs for backwards compat with existing code
+    # Build ParsedArgs
     args = _build_parsed_args(
         opts, endpoint=endpoint, jvm_args=jvm_args, app_args=app_args, command="run"
     )
@@ -111,18 +113,16 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    from pathlib import Path
-
-    # Import here to avoid circular dependency
     from ...config.jgorc import JgoConfig
     from ...env import EnvironmentSpec
-    from ..commands import JgoCommands
+
+    verbose = args.verbose > 0 and not args.quiet
 
     # Check if we're in spec mode (jgo.toml exists)
     spec_file = Path("jgo.toml")
     if spec_file.exists() and not args.endpoint:
         # No endpoint specified, use jgo.toml
-        return JgoCommands(args, config)._cmd_run_spec()
+        return _run_spec(args, config)
 
     # If endpoint is specified and jgo.toml exists, check resolution order
     if args.endpoint and spec_file.exists():
@@ -131,12 +131,12 @@ def execute(args: ParsedArgs, config: dict) -> int:
             # Check if endpoint is an entrypoint name
             if args.endpoint in spec.entrypoints:
                 # Use entrypoint from jgo.toml (project-local wins)
-                if args.verbose > 0:
+                if verbose:
                     print(f"Using entrypoint '{args.endpoint}' from jgo.toml")
                 # Set entrypoint argument and run in spec mode
                 args.entrypoint = args.endpoint
                 args.endpoint = None  # Clear endpoint to trigger spec mode
-                return JgoCommands(args, config)._cmd_run_spec()
+                return _run_spec(args, config)
         except Exception:
             # If we can't load spec, fall through to endpoint mode
             pass
@@ -147,11 +147,153 @@ def execute(args: ParsedArgs, config: dict) -> int:
         jgoconfig = JgoConfig(shortcuts=shortcuts)
         expanded = jgoconfig.expand_shortcuts(args.endpoint)
 
-        if expanded != args.endpoint and args.verbose > 0:
+        if expanded != args.endpoint and verbose:
             print(f"Expanded shortcut: {args.endpoint} → {expanded}")
 
         # Update endpoint with expanded value
         args.endpoint = expanded
 
     # Run in endpoint mode
-    return JgoCommands(args, config)._cmd_run_endpoint()
+    return _run_endpoint(args, config)
+
+
+def _run_spec(args: ParsedArgs, config: dict) -> int:
+    """
+    Run from jgo.toml spec file.
+
+    Args:
+        args: Parsed command line arguments
+        config: Configuration from ~/.jgorc
+
+    Returns:
+        Exit code (0 for success, non-zero for failure)
+    """
+    from ...env import EnvironmentSpec
+    from ..context import (
+        create_environment_builder,
+        create_java_runner,
+        create_maven_context,
+    )
+    from ..output import print_classpath, print_java_info
+
+    verbose = args.verbose > 0 and not args.quiet
+    debug = args.verbose >= 2
+
+    spec_file = args.get_spec_file()
+
+    if not spec_file.exists():
+        print(f"Error: {spec_file} not found", file=sys.stderr)
+        return 1
+
+    # Load spec
+    spec = EnvironmentSpec.load(spec_file)
+
+    # Create Maven context and environment builder
+    context = create_maven_context(args, config)
+    builder = create_environment_builder(args, config, context)
+
+    # Build environment
+    if verbose:
+        print(f"Building environment from {spec_file}...")
+
+    environment = builder.from_spec(
+        spec, update=args.update, entrypoint=args.entrypoint
+    )
+
+    # If --print-classpath, just print and exit
+    if args.print_classpath:
+        print_classpath(environment)
+        return 0
+
+    # If --print-java-info, just print and exit
+    if args.print_java_info:
+        print_java_info(environment)
+        return 0
+
+    # Create runner and execute
+    if verbose:
+        print(f"Running {spec.name}...")
+
+    runner = create_java_runner(args, config)
+    # Use environment's main class if set, otherwise fall back to args.main_class
+    main_class_to_use = environment.main_class or args.main_class
+    result = runner.run(
+        environment=environment,
+        main_class=main_class_to_use,
+        app_args=args.app_args,
+        additional_jvm_args=args.jvm_args,
+        additional_classpath=args.classpath_append,
+        print_command=debug,
+        dry_run=args.dry_run,
+    )
+
+    return result.returncode
+
+
+def _run_endpoint(args: ParsedArgs, config: dict) -> int:
+    """
+    Run from endpoint string.
+
+    Args:
+        args: Parsed command line arguments
+        config: Configuration from ~/.jgorc
+
+    Returns:
+        Exit code (0 for success, non-zero for failure)
+    """
+    from ..context import (
+        create_environment_builder,
+        create_java_runner,
+        create_maven_context,
+    )
+    from ..output import print_classpath, print_java_info
+
+    verbose = args.verbose > 0 and not args.quiet
+    debug = args.verbose >= 2
+
+    if not args.endpoint:
+        print("Error: No endpoint specified", file=sys.stderr)
+        print("Use 'jgo --help' for usage information", file=sys.stderr)
+        return 1
+
+    # Create Maven context and environment builder
+    context = create_maven_context(args, config)
+    builder = create_environment_builder(args, config, context)
+
+    # Build environment
+    if verbose:
+        print(f"Building environment for {args.endpoint}...")
+
+    environment = builder.from_endpoint(
+        args.endpoint,
+        update=args.update,
+    )
+
+    # If --print-classpath, just print and exit
+    if args.print_classpath:
+        print_classpath(environment)
+        return 0
+
+    # If --print-java-info, just print and exit
+    if args.print_java_info:
+        print_java_info(environment)
+        return 0
+
+    # Create runner and execute
+    if verbose:
+        print("Running Java application...")
+
+    runner = create_java_runner(args, config)
+    # CLI main_class override takes precedence, otherwise use environment's main class
+    main_class_to_use = args.main_class or environment.main_class
+    result = runner.run(
+        environment=environment,
+        main_class=main_class_to_use,
+        app_args=args.app_args,
+        additional_jvm_args=args.jvm_args,
+        additional_classpath=args.classpath_append,
+        print_command=debug,
+        dry_run=args.dry_run,
+    )
+
+    return result.returncode

@@ -39,7 +39,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
     """
     import sys
 
-    from ..commands import JgoCommands
+    from ..context import create_maven_context
     from ..helpers import parse_coordinate_safe
 
     if not args.endpoint:
@@ -54,9 +54,8 @@ def execute(args: ParsedArgs, config: dict) -> int:
     if exit_code != 0:
         return exit_code
 
-    # Create commands instance to access maven context creation
-    commands = JgoCommands(args, config)
-    context = commands._create_maven_context()
+    # Create maven context
+    context = create_maven_context(args, config)
 
     # Get project and fetch versions
     project = context.project(coord.groupId, coord.artifactId)

@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from jgo.cli.commands import JgoCommands
+from jgo.cli.commands import run as run_cmd
 from jgo.cli.parser import ParsedArgs
 
 
@@ -44,8 +44,7 @@ def test_run_with_main_class_after_init():
                 file=tmp_path / "jgo.toml",
             )
 
-            commands = JgoCommands(init_args, {})
-            from jgo.cli.subcommands import init as init_cmd
+            from jgo.cli.commands import init as init_cmd
 
             result = init_cmd.execute(init_args, {})
             assert result == 0
@@ -75,10 +74,8 @@ def test_run_with_main_class_after_init():
 
             mock_runner = Mock(spec=JavaRunner)
 
-            # Patch _create_java_runner to return our mock
-            with patch.object(
-                JgoCommands, "_create_java_runner", return_value=mock_runner
-            ):
+            # Patch create_java_runner to return our mock
+            with patch("jgo.cli.context.create_java_runner", return_value=mock_runner):
                 run_args = ParsedArgs(
                     endpoint=None,  # No endpoint - should use jgo.toml
                     command="run",
@@ -99,14 +96,12 @@ def test_run_with_main_class_after_init():
                     repo_cache=tmp_path / ".m2" / "repository",
                 )
 
-                commands = JgoCommands(run_args, {})
-
                 # Mock the run method to return success
                 from subprocess import CompletedProcess
 
                 mock_runner.run.return_value = CompletedProcess([], 0)
 
-                result = commands._cmd_run_spec()
+                result = run_cmd._run_spec(run_args, {})
 
                 # Verify that runner.run() was called with main_class parameter
                 mock_runner.run.assert_called_once()
@@ -157,11 +152,9 @@ def test_run_endpoint_with_main_class():
             repo_cache=tmp_path / ".m2" / "repository",
         )
 
-        commands = JgoCommands(run_args, {})
-
         # This should work (baseline)
         try:
-            commands._cmd_run_endpoint()
+            run_cmd._run_endpoint(run_args, {})
             # Success - endpoint mode passes main_class correctly
         except RuntimeError as e:
             if "No main class specified" in str(e):

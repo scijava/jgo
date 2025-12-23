@@ -19,9 +19,9 @@ else:
 
 import tomli_w
 
+from jgo.cli.commands import config as config_cmd
+from jgo.cli.commands import search as search_cmd
 from jgo.cli.parser import ParsedArgs
-from jgo.cli.subcommands import config as config_cmd
-from jgo.cli.subcommands import search as search_cmd
 
 # ============================================================================
 # Config Command Tests
@@ -58,7 +58,7 @@ def test_config_list_jgorc():
         )
 
         # Temporarily patch the config file location
-        with patch("jgo.cli.subcommands.config.Path.home") as mock_home:
+        with patch("jgo.cli.commands.config.Path.home") as mock_home:
             mock_home.return_value = Path(tmpdir)
             exit_code = config_cmd._list_jgorc(config_file, args)
 
@@ -248,7 +248,7 @@ def test_search_execute_success():
     """Test search command execution."""
     args = ParsedArgs(verbose=0, dry_run=False)
 
-    with patch("jgo.cli.subcommands.search._search_maven_central") as mock_search:
+    with patch("jgo.cli.commands.search._search_maven_central") as mock_search:
         mock_search.return_value = [
             {
                 "group_id": "junit",
@@ -259,7 +259,7 @@ def test_search_execute_success():
             }
         ]
 
-        with patch("jgo.cli.subcommands.search._display_results"):
+        with patch("jgo.cli.commands.search._display_results"):
             exit_code = search_cmd.execute(args, {}, query="junit", limit=10)
 
     assert exit_code == 0

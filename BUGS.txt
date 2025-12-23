@@ -1,5 +1,3 @@
-jgo.cli.subcommands -> jgo.cli.commands (can we really parcel out *all* of commands.py?)
-
 Remove or repurpose obsolete files in docs/
 
 Use consistent capitalization style for Markdown docs (excepting README.md and AGENTS.md, of course).

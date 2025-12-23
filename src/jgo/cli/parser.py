@@ -8,9 +8,9 @@ from pathlib import Path
 
 import click
 
-from .subcommands.add import add
-from .subcommands.config import config
-from .subcommands.info import (
+from .commands.add import add
+from .commands.config import config
+from .commands.info import (
     classpath,
     deplist,
     deptree,
@@ -19,16 +19,16 @@ from .subcommands.info import (
     manifest,
     pom,
 )
-from .subcommands.init import init
-from .subcommands.list import list_cmd
-from .subcommands.lock import lock
-from .subcommands.remove import remove
-from .subcommands.run import run
-from .subcommands.search import search
-from .subcommands.sync import sync
-from .subcommands.tree import tree
-from .subcommands.update import update
-from .subcommands.versions import versions
+from .commands.init import init
+from .commands.list import list_cmd
+from .commands.lock import lock
+from .commands.remove import remove
+from .commands.run import run
+from .commands.search import search
+from .commands.sync import sync
+from .commands.tree import tree
+from .commands.update import update
+from .commands.versions import versions
 
 
 class ParsedArgs:

@@ -110,8 +110,8 @@ class TestInitWithShortcuts:
             try:
                 os.chdir(tmp_path)
 
+                from jgo.cli.commands import init as init_cmd
                 from jgo.cli.parser import ParsedArgs
-                from jgo.cli.subcommands import init as init_cmd
 
                 # Create config with shortcut
                 config = {
@@ -156,8 +156,8 @@ class TestInitWithShortcuts:
             try:
                 os.chdir(tmp_path)
 
+                from jgo.cli.commands import init as init_cmd
                 from jgo.cli.parser import ParsedArgs
-                from jgo.cli.subcommands import init as init_cmd
 
                 # Create config with shortcuts
                 config = {
@@ -211,8 +211,8 @@ class TestInitWithShortcuts:
             try:
                 os.chdir(tmp_path)
 
+                from jgo.cli.commands import init as init_cmd
                 from jgo.cli.parser import ParsedArgs
-                from jgo.cli.subcommands import init as init_cmd
 
                 # Create config with one shortcut
                 config = {
@@ -260,8 +260,8 @@ class TestInitWithShortcuts:
             try:
                 os.chdir(tmp_path)
 
+                from jgo.cli.commands import init as init_cmd
                 from jgo.cli.parser import ParsedArgs
-                from jgo.cli.subcommands import init as init_cmd
 
                 # Create config with shortcut (no @MainClass)
                 config = {"shortcuts": {"imagej": "net.imagej:imagej"}}
@@ -304,8 +304,8 @@ class TestInitWithShortcuts:
             try:
                 os.chdir(tmp_path)
 
+                from jgo.cli.commands import init as init_cmd
                 from jgo.cli.parser import ParsedArgs
-                from jgo.cli.subcommands import init as init_cmd
 
                 # No shortcuts
                 config = {"shortcuts": {}}
@@ -398,8 +398,8 @@ class TestRunWithShortcuts:
             try:
                 os.chdir(tmp_path)
 
+                from jgo.cli.commands import init as init_cmd
                 from jgo.cli.parser import ParsedArgs
-                from jgo.cli.subcommands import init as init_cmd
 
                 # Create config with shortcut
                 config = {
