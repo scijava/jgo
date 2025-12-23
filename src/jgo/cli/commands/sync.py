@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import click
 
 if TYPE_CHECKING:
+    from ...env.lockfile import LockFile
     from ..parser import ParsedArgs
 
 
@@ -54,8 +56,10 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
+
     from ...env import EnvironmentBuilder
     from ...env.linking import LinkStrategy
+    from ...env.lockfile import LockFile
     from ...maven import MavenContext
     from ..helpers import (
         handle_dry_run,
@@ -105,12 +109,33 @@ def execute(args: ParsedArgs, config: dict) -> int:
             link_strategy=link_strategy,
         )
 
-        # Build environment from spec
+        # Load old lock file if updating (for version change reporting)
         update = args.update or getattr(args, "force", False)
+        old_lockfile = None
+        if update and args.verbose > 0:
+            # Determine lock file path based on project mode
+            if builder.is_project_mode():
+                lock_path = args.cache_dir / "jgo.lock.toml"
+            else:
+                # For ad-hoc mode, we'd need to compute the cache key
+                # Skip old lockfile loading for now in ad-hoc mode
+                lock_path = None
+
+            if lock_path and lock_path.exists():
+                try:
+                    old_lockfile = LockFile.load(lock_path)
+                except Exception:
+                    pass  # Ignore errors loading old lockfile
+
+        # Build environment from spec
         env = builder.from_spec(spec, update=update)
 
         verbose_print(args, f"Environment built at: {env.path}")
         verbose_print(args, f"Classpath entries: {len(env.classpath)}")
+
+        # Show version changes if updating and verbose
+        if update and args.verbose > 0 and old_lockfile:
+            _show_version_changes(old_lockfile, env.path / "jgo.lock.toml", args)
 
         return 0
 
@@ -118,3 +143,86 @@ def execute(args: ParsedArgs, config: dict) -> int:
         print(f"Error: Failed to build environment: {e}", file=sys.stderr)
         print_exception_if_verbose(args)
         return 1
+
+
+def _show_version_changes(
+    old_lock_path: LockFile | Path, new_lock_path: Path, args: ParsedArgs
+) -> None:
+    """
+    Show what dependencies changed between old and new lock files.
+
+    Args:
+        old_lock_path: Old lock file or path to it
+        new_lock_path: Path to new lock file
+        args: Parsed arguments for verbose level
+    """
+    import logging
+
+    from ...env.lockfile import LockFile
+
+    _log = logging.getLogger("jgo")
+
+    try:
+        # Load lock files
+        if isinstance(old_lock_path, LockFile):
+            old_lock = old_lock_path
+        else:
+            old_lock = LockFile.load(old_lock_path)
+
+        if not new_lock_path.exists():
+            return
+
+        new_lock = LockFile.load(new_lock_path)
+
+        # Build maps of groupId:artifactId -> version
+        old_versions = {
+            f"{dep.groupId}:{dep.artifactId}": dep.version
+            for dep in old_lock.dependencies
+        }
+        new_versions = {
+            f"{dep.groupId}:{dep.artifactId}": dep.version
+            for dep in new_lock.dependencies
+        }
+
+        # Find changes
+        added = []
+        removed = []
+        updated = []
+
+        for coord, new_version in new_versions.items():
+            if coord not in old_versions:
+                added.append((coord, new_version))
+            elif old_versions[coord] != new_version:
+                updated.append((coord, old_versions[coord], new_version))
+
+        for coord, old_version in old_versions.items():
+            if coord not in new_versions:
+                removed.append((coord, old_version))
+
+        # Log changes
+        if updated or added or removed:
+            _log.info("")
+            _log.info("Dependency changes:")
+
+        if updated:
+            _log.info("  Updated:")
+            for coord, old_ver, new_ver in sorted(updated):
+                _log.info(f"    {coord}: {old_ver} -> {new_ver}")
+
+        if added:
+            _log.info("  Added:")
+            for coord, version in sorted(added):
+                _log.info(f"    {coord}:{version}")
+
+        if removed:
+            _log.info("  Removed:")
+            for coord, version in sorted(removed):
+                _log.info(f"    {coord}:{version}")
+
+        if not (updated or added or removed):
+            _log.info("")
+            _log.info("No dependency changes detected.")
+
+    except Exception:
+        # Silently ignore errors in version change reporting
+        pass
