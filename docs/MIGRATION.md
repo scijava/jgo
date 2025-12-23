@@ -148,7 +148,7 @@ jgo -vv org.scijava:parsington   # -v (INFO), -vv (DEBUG), -vvv (TRACE)
 The settings file format remains the same (INI format with `[settings]`, `[repositories]`, and `[shortcuts]` sections).
 
 **New in jgo 2.0:** Settings files can now be placed at:
-1. `~/.config/jgo/config` (XDG Base Directory standard - recommended)
+1. `~/.config/jgo.conf` (XDG Base Directory standard - recommended)
 2. `~/.jgorc` (legacy location, still supported for backward compatibility)
 
 jgo will check both locations, preferring the XDG location if it exists. Your existing `~/.jgorc` file will continue to work without any changes. To ignore the settings file, use `--ignore-config`.

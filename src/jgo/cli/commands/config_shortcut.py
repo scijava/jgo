@@ -37,7 +37,7 @@ def shortcut(ctx, remove_name, list_all, name, endpoint):
     """
     Manage global endpoint shortcuts.
 
-    Shortcuts are stored in the settings file (~/.config/jgo/config or ~/.jgorc).
+    Shortcuts are stored in the settings file (~/.config/jgo.conf or ~/.jgorc).
     They provide quick aliases for Maven endpoint strings.
 
     Without arguments: show help (use -l/--list to list all shortcuts)

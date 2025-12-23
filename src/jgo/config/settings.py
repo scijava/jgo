@@ -21,7 +21,7 @@ def config_file_path() -> Path:
         Use :func:`~jgo.config.manager.get_settings_path` instead.
 
     Returns:
-        Path to settings file (~/.config/jgo/config if exists, otherwise ~/.jgorc)
+        Path to settings file (~/.config/jgo.conf if exists, otherwise ~/.jgorc)
     """
     return get_settings_path()
 
@@ -31,7 +31,7 @@ class GlobalSettings:
     Global settings loaded from settings file and environment variables.
 
     Settings file locations (in order of precedence):
-    1. ~/.config/jgo/config (XDG Base Directory standard)
+    1. ~/.config/jgo.conf (XDG Base Directory standard)
     2. ~/.jgorc (legacy location, for backward compatibility)
 
     The settings file is an INI file with sections:
@@ -58,8 +58,10 @@ class GlobalSettings:
             repositories: Maven repositories (name -> URL)
             shortcuts: Coordinate shortcuts
         """
-        self.cache_dir = cache_dir or (Path.home() / ".cache" / "jgo")
-        self.repo_cache = repo_cache or (Path.home() / ".m2" / "repository")
+        from ..constants import default_jgo_cache, default_maven_repo
+
+        self.cache_dir = cache_dir or default_jgo_cache()
+        self.repo_cache = repo_cache or default_maven_repo()
         self.links = links
         self.repositories = repositories or {}
         self.shortcuts = shortcuts or {}
@@ -70,7 +72,7 @@ class GlobalSettings:
         Load global settings from file and environment variables.
 
         Args:
-            settings_file: Path to settings file (defaults to ~/.config/jgo/config, then ~/.jgorc)
+            settings_file: Path to settings file (defaults to ~/.config/jgo.conf, then ~/.jgorc)
 
         Returns:
             GlobalSettings instance
@@ -113,9 +115,11 @@ class GlobalSettings:
         Returns:
             GlobalSettings with default values
         """
+        from ..constants import default_jgo_cache, default_maven_repo
+
         return cls(
-            cache_dir=Path.home() / ".cache" / "jgo",
-            repo_cache=Path.home() / ".m2" / "repository",
+            cache_dir=default_jgo_cache(),
+            repo_cache=default_maven_repo(),
             links="auto",
             repositories={},
             shortcuts={},

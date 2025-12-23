@@ -8,30 +8,25 @@ from __future__ import annotations
 
 from pathlib import Path
 
-# Display names for user-facing messages
-SETTINGS_FILE_DISPLAY_NAME = "jgo settings file"
-LEGACY_SETTINGS_NAME = "~/.jgorc"
+from ..constants import (
+    SETTINGS_FILE_DISPLAY_NAME,
+    SETTINGS_FILE_LEGACY_NAME,
+    SETTINGS_FILE_XDG_NAME,
+    legacy_settings_path,
+    xdg_settings_path,
+)
 
 
-def get_settings_path(prefer_legacy: bool = False) -> Path:
+def get_settings_path() -> Path:
     """
     Get the settings file path using XDG Base Directory standard.
 
-    Args:
-        prefer_legacy: If True, prefer ~/.jgorc even if XDG config exists
-
     Returns:
         Path to settings file:
-        - If prefer_legacy is True: ~/.jgorc
-        - Otherwise: ~/.config/jgo/config if it exists, else ~/.jgorc
+        - ~/.config/jgo.conf if it exists, else ~/.jgorc
     """
-    xdg_config = Path.home() / ".config" / "jgo" / "config"
-    legacy_config = Path.home() / ".jgorc"
-
-    if prefer_legacy:
-        return legacy_config
-
-    return xdg_config if xdg_config.exists() else legacy_config
+    xdg_path = xdg_settings_path()
+    return xdg_path if xdg_path.exists() else legacy_settings_path()
 
 
 def get_settings_display_name(path: Path) -> str:
@@ -44,16 +39,13 @@ def get_settings_display_name(path: Path) -> str:
     Returns:
         Display name for user-facing messages:
         - "~/.jgorc" if path is the legacy location
-        - "~/.config/jgo/config" if path is the XDG location
+        - "~/.config/jgo.conf" if path is the XDG location
         - Generic "jgo settings file" for other paths
     """
-    legacy_config = Path.home() / ".jgorc"
-    xdg_config = Path.home() / ".config" / "jgo" / "config"
-
-    if path.resolve() == legacy_config.resolve():
-        return LEGACY_SETTINGS_NAME
-    elif path.resolve() == xdg_config.resolve():
-        return "~/.config/jgo/config"
+    if path.resolve() == legacy_settings_path().resolve():
+        return SETTINGS_FILE_LEGACY_NAME
+    elif path.resolve() == xdg_settings_path().resolve():
+        return SETTINGS_FILE_XDG_NAME
     else:
         return SETTINGS_FILE_DISPLAY_NAME
 
@@ -72,8 +64,8 @@ def format_settings_message(path: Path, action: str) -> str:
     Examples:
         >>> format_settings_message(Path.home() / ".jgorc", "created")
         "~/.jgorc created"
-        >>> format_settings_message(Path.home() / ".config/jgo/config", "not found")
-        "~/.config/jgo/config not found"
+        >>> format_settings_message(Path.home() / ".config/jgo.conf", "not found")
+        "~/.config/jgo.conf not found"
     """
     display_name = get_settings_display_name(path)
     return f"{display_name} {action}"

@@ -189,7 +189,7 @@ jgo config [OPTIONS] [key] [value]
 ```bash
 jgo config shortcut [OPTIONS] [name] [endpoint]
 ```
-- Manage global endpoint shortcuts (saved in `~/.config/jgo/config`)
+- Manage global endpoint shortcuts (saved in `~/.config/jgo.conf`)
 - Shortcuts are quick aliases that expand to full Maven endpoint strings
 - Support composition with `+`: shortcuts can be combined (e.g., `jgo run repl+groovy`)
 - Without args: list all shortcuts

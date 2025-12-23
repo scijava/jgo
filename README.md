@@ -227,7 +227,7 @@ you can also try:
 
 You can configure the behavior of `jgo` using a settings file. The settings file is searched in the following locations (in order of precedence):
 
-1. `~/.config/jgo/config` (XDG Base Directory standard - recommended)
+1. `~/.config/jgo.conf` (XDG Base Directory standard - recommended)
 2. `~/.jgorc` (legacy location for backward compatibility)
 
 #### Repositories
