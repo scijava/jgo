@@ -83,6 +83,61 @@ class TOMLSerializableMixin:
         """Create instance from parsed TOML dict."""
         raise NotImplementedError(f"{cls.__name__} must implement _from_dict()")
 
+    @staticmethod
+    def _parse_entrypoints_section(
+        data: dict,
+    ) -> tuple[dict[str, str], str | None]:
+        """
+        Parse [entrypoints] section from TOML data.
+
+        Validates that if "default" exists, it references another entrypoint name
+        and is not itself being used as an entrypoint.
+
+        Returns:
+            tuple of (entrypoints dict, default_entrypoint name)
+
+        Raises:
+            ValueError: If "default" appears to be used as an entrypoint name
+        """
+        entrypoints_section = data.get("entrypoints", {})
+
+        # If "default" exists, check if it looks like an entrypoint name or a reference
+        default_value = entrypoints_section.get("default")
+        if default_value is not None:
+            # If default_value contains a dot, it's likely a main class (entrypoint),
+            # not a reference to another entrypoint name
+            if "." in str(default_value):
+                raise ValueError(
+                    'Entrypoint name "default" is reserved for specifying the default entrypoint. '
+                    f'The value "{default_value}" appears to be a main class. '
+                    "Create a named entrypoint and reference it: "
+                    'e.g., main = "{}", default = "main"'.format(default_value)
+                )
+
+        default_entrypoint = entrypoints_section.pop("default", None)
+        entrypoints = entrypoints_section
+        return entrypoints, default_entrypoint
+
+    @staticmethod
+    def _serialize_entrypoints_section(
+        entrypoints: dict[str, str],
+        default_entrypoint: str | None,
+    ) -> dict[str, str]:
+        """
+        Serialize entrypoints to TOML section dict.
+
+        Args:
+            entrypoints: Dict of entrypoint_name -> main_class
+            default_entrypoint: Name of default entrypoint (optional)
+
+        Returns:
+            Dict ready for TOML serialization
+        """
+        entrypoints_section = dict(entrypoints)
+        if default_entrypoint:
+            entrypoints_section["default"] = default_entrypoint
+        return entrypoints_section
+
 
 class FieldValidatorMixin:
     """Provides common validation patterns for TOML deserialization."""

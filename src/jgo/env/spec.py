@@ -78,6 +78,13 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
         self.link_strategy = link_strategy
         self.cache_dir = cache_dir
 
+        # Validate that "default" is not used as an entrypoint name
+        if "default" in self.entrypoints:
+            raise ValueError(
+                'Entrypoint name "default" is reserved for specifying the default entrypoint. '
+                "Use a different name for your entrypoint."
+            )
+
     @classmethod
     def _from_dict(cls, data: dict, path: Path | None = None) -> "EnvironmentSpec":
         """Create EnvironmentSpec from parsed TOML dict."""
@@ -141,9 +148,7 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
                 )
 
         # [entrypoints] section (optional)
-        entrypoints_section = data.get("entrypoints", {})
-        default_entrypoint = entrypoints_section.pop("default", None)
-        entrypoints = entrypoints_section  # Remaining keys are entrypoint definitions
+        entrypoints, default_entrypoint = cls._parse_entrypoints_section(data)
 
         # Validate entrypoints
         if entrypoints:
@@ -221,11 +226,9 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
 
         # [entrypoints] section
         if self.entrypoints or self.default_entrypoint:
-            entrypoints_section = dict(self.entrypoints)
-            # Only set default if not already in entrypoints
-            if self.default_entrypoint and "default" not in entrypoints_section:
-                entrypoints_section["default"] = self.default_entrypoint
-            data["entrypoints"] = entrypoints_section
+            data["entrypoints"] = self._serialize_entrypoints_section(
+                self.entrypoints, self.default_entrypoint
+            )
 
         # [settings] section
         settings_section = {}

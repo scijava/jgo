@@ -129,6 +129,13 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
         self.jgo_version = jgo_version
         self.generated = datetime.now(timezone.utc)
 
+        # Validate that "default" is not used as an entrypoint name
+        if "default" in self.entrypoints:
+            raise ValueError(
+                'Entrypoint name "default" is reserved for specifying the default entrypoint. '
+                "Use a different name for your entrypoint."
+            )
+
     @classmethod
     def from_resolved_dependencies(
         cls,
@@ -184,14 +191,7 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
         dependencies = [LockedDependency.from_dict(dep) for dep in deps_list]
 
         # Parse entrypoints
-        entrypoints_section = data.get("entrypoints", {})
-        # If "default" is a key in entrypoints, its value is the default entrypoint name
-        # Otherwise, look for an explicit "default_entrypoint" value (for backward compat)
-        if "default" in entrypoints_section:
-            default_entrypoint = entrypoints_section.pop("default")
-        else:
-            default_entrypoint = entrypoints_section.pop("default_entrypoint", None)
-        entrypoints = entrypoints_section
+        entrypoints, default_entrypoint = cls._parse_entrypoints_section(data)
 
         lockfile = cls(
             dependencies=dependencies,
@@ -253,11 +253,9 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
 
         # [entrypoints] section
         if self.entrypoints or self.default_entrypoint:
-            entrypoints_section = dict(self.entrypoints)
-            # Only set default if not already in entrypoints
-            if self.default_entrypoint and "default" not in entrypoints_section:
-                entrypoints_section["default"] = self.default_entrypoint
-            data["entrypoints"] = entrypoints_section
+            data["entrypoints"] = self._serialize_entrypoints_section(
+                self.entrypoints, self.default_entrypoint
+            )
 
         return data
 

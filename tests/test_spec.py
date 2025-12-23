@@ -186,6 +186,30 @@ default = "nonexistent"  # This entrypoint doesn't exist
             EnvironmentSpec.load(spec_path)
 
 
+def test_environment_spec_validation_reserved_entrypoint_name():
+    """Test that EnvironmentSpec rejects 'default' as an entrypoint name."""
+    # Using constructor should fail
+    with pytest.raises(ValueError, match='Entrypoint name "default" is reserved'):
+        EnvironmentSpec(
+            coordinates=["org.example:artifact:1.0.0"],
+            entrypoints={"default": "org.example.Main"},
+            default_entrypoint="default",
+        )
+
+    # Loading from TOML should also fail
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        spec_path = Path(tmp_dir) / "jgo.toml"
+        spec_path.write_text("""
+[dependencies]
+coordinates = ["org.example:artifact:1.0.0"]
+
+[entrypoints]
+default = "org.example.Main"
+""")
+        with pytest.raises(ValueError, match='Entrypoint name "default" is reserved'):
+            EnvironmentSpec.load(spec_path)
+
+
 def test_environment_spec_get_main_class():
     """Test get_main_class method."""
     spec = EnvironmentSpec(
@@ -365,6 +389,33 @@ def test_lockfile_metadata():
         assert "[metadata]" in content
         assert "generated" in content
         assert "jgo_version" in content
+
+
+def test_lockfile_validation_reserved_entrypoint_name():
+    """Test that LockFile rejects 'default' as an entrypoint name."""
+    # Using constructor should fail
+    with pytest.raises(ValueError, match='Entrypoint name "default" is reserved'):
+        LockFile(
+            dependencies=[],
+            entrypoints={"default": "org.example.Main"},
+            default_entrypoint="default",
+        )
+
+    # Loading from TOML should also fail
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        lock_path = Path(tmp_dir) / "jgo.lock.toml"
+        lock_path.write_text("""
+dependencies = []
+
+[metadata]
+generated = "2025-01-01T00:00:00+00:00"
+jgo_version = "2.0.0"
+
+[entrypoints]
+default = "org.example.Main"
+""")
+        with pytest.raises(ValueError, match='Entrypoint name "default" is reserved'):
+            LockFile.load(lock_path)
 
 
 if __name__ == "__main__":

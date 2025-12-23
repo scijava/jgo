@@ -28,8 +28,8 @@ class TestMainClassPriority:
             # Create environment with auto-detected main class
             lockfile = LockFile(
                 dependencies=[],
-                entrypoints={"default": "org.example.AutoDetected"},
-                default_entrypoint="default",
+                entrypoints={"autodetected": "org.example.AutoDetected"},
+                default_entrypoint="autodetected",
             )
             lockfile.save(env_path / "jgo.lock.toml")
 
