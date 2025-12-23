@@ -576,6 +576,11 @@ class MvnResolver(Resolver):
 
         boms = _resolve_boms(components, managed, boms) or []
 
+        # Log what we're resolving
+        _log.info(f"Resolving dependencies for {len(components)} component(s)")
+        for comp in components:
+            _log.debug(f"  Component: {comp.groupId}:{comp.artifactId}:{comp.version}")
+
         # Create temporary POM
         temp_pom = self._create_temp_pom(components, boms)
 
