@@ -68,3 +68,23 @@ def get_logger(name: str = "jgo") -> logging.Logger:
         Logger instance
     """
     return logging.getLogger(name)
+
+
+def get_log_level() -> int:
+    """
+    Get the current log level for the jgo logger.
+
+    Returns:
+        Current log level (e.g., logging.DEBUG, logging.INFO, logging.WARNING)
+    """
+    return logging.getLogger("jgo").level
+
+
+def is_debug_enabled() -> bool:
+    """
+    Check if DEBUG logging is enabled.
+
+    Returns:
+        True if the current log level is DEBUG or lower
+    """
+    return get_log_level() <= logging.DEBUG
