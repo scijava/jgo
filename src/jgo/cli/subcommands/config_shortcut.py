@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING
 import click
 
 if TYPE_CHECKING:
+    from click import Context
+
     from ..parser import ParsedArgs
 
 
@@ -38,7 +40,7 @@ def shortcut(ctx, remove_name, list_all, name, endpoint):
     Shortcuts are stored in ~/.config/jgo/config (or ~/.jgorc for legacy).
     They provide quick aliases for Maven endpoint strings.
 
-    Without arguments: list all shortcuts
+    Without arguments: show help (use -l/--list to list all shortcuts)
     With NAME only: show what NAME expands to
     With NAME and ENDPOINT: add/update shortcut
 
@@ -46,7 +48,8 @@ def shortcut(ctx, remove_name, list_all, name, endpoint):
       jgo run repl+groovy → expands both shortcuts
 
     EXAMPLES:
-      jgo config shortcut                                      # List all
+      jgo config shortcut                                      # Show help
+      jgo config shortcut --list                               # List all
       jgo config shortcut repl                                 # Show expansion
       jgo config shortcut repl org.scijava:scijava-common@ScriptREPL  # Add/update
       jgo config shortcut groovy org.scijava:scripting-groovy@GroovySh
@@ -66,6 +69,7 @@ def shortcut(ctx, remove_name, list_all, name, endpoint):
         endpoint=endpoint,
         remove_name=remove_name,
         list_all=list_all,
+        ctx=ctx,
     )
     ctx.exit(exit_code)
 
@@ -78,6 +82,7 @@ def execute(
     remove_name: str | None = None,
     list_all: bool = False,
     config_file: Path | None = None,
+    ctx: Context | None = None,
 ) -> int:
     """
     Execute the config shortcut command.
@@ -90,6 +95,7 @@ def execute(
         remove_name: Shortcut name to remove
         list_all: Whether to list all shortcuts
         config_file: Config file path (for testing)
+        ctx: Click context (for showing help)
 
     Returns:
         Exit code (0 for success, non-zero for failure)
@@ -105,7 +111,15 @@ def execute(
         return _remove_shortcut(config_file, remove_name, args)
 
     # Handle list
-    if list_all or (name is None and endpoint is None):
+    if list_all:
+        return _list_shortcuts(config_file, config, args)
+
+    # Show help if no arguments provided
+    if name is None and endpoint is None:
+        if ctx is not None:
+            click.echo(ctx.get_help())
+            return 0
+        # Fallback for testing without context
         return _list_shortcuts(config_file, config, args)
 
     # Handle show (name only)
