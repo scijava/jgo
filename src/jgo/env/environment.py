@@ -25,6 +25,7 @@ class Environment:
     def __init__(self, path: Path):
         self.path = path
         self._lockfile = None
+        self._runtime_main_class = None  # Runtime override, not persisted
 
     @property
     def spec_path(self) -> Path:
@@ -73,8 +74,12 @@ class Environment:
         """
         Main class for this environment (if detected/specified).
 
-        Reads from lockfile's default entrypoint.
+        Returns runtime override if set, otherwise reads from lockfile's default entrypoint.
         """
+        # Runtime override takes precedence
+        if self._runtime_main_class:
+            return self._runtime_main_class
+
         if self.lockfile:
             default_ep = self.lockfile.default_entrypoint
             if default_ep and default_ep in self.lockfile.entrypoints:

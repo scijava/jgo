@@ -222,7 +222,8 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
         # [entrypoints] section
         if self.entrypoints or self.default_entrypoint:
             entrypoints_section = dict(self.entrypoints)
-            if self.default_entrypoint:
+            # Only set default if not already in entrypoints
+            if self.default_entrypoint and "default" not in entrypoints_section:
                 entrypoints_section["default"] = self.default_entrypoint
             data["entrypoints"] = entrypoints_section
 

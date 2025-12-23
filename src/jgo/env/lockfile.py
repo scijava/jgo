@@ -185,7 +185,12 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
 
         # Parse entrypoints
         entrypoints_section = data.get("entrypoints", {})
-        default_entrypoint = entrypoints_section.pop("default", None)
+        # If "default" is a key in entrypoints, its value is the default entrypoint name
+        # Otherwise, look for an explicit "default_entrypoint" value (for backward compat)
+        if "default" in entrypoints_section:
+            default_entrypoint = entrypoints_section.pop("default")
+        else:
+            default_entrypoint = entrypoints_section.pop("default_entrypoint", None)
         entrypoints = entrypoints_section
 
         lockfile = cls(
@@ -249,7 +254,8 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
         # [entrypoints] section
         if self.entrypoints or self.default_entrypoint:
             entrypoints_section = dict(self.entrypoints)
-            if self.default_entrypoint:
+            # Only set default if not already in entrypoints
+            if self.default_entrypoint and "default" not in entrypoints_section:
                 entrypoints_section["default"] = self.default_entrypoint
             data["entrypoints"] = entrypoints_section
 

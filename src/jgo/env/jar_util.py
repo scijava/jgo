@@ -145,29 +145,28 @@ def autocomplete_main_class(main_class: str, artifact_id: str, jars_dir: Path) -
 
     # New format: automatic fallback for non-fully-qualified class names
     # If the main class contains dots, assume it's fully qualified and use as-is
-    # Otherwise, attempt auto-completion
-    if "." not in main_class:
-        # No dots, so try to auto-complete
-        pattern_str = f".*{re.escape(main_class)}\\.class"
-        pattern = re.compile(pattern_str)
-        relevant_jars = [
-            jar for jar in jars_dir.glob("*.jar") if artifact_id in jar.name
-        ]
-        for jar in relevant_jars:
-            try:
-                with zipfile.ZipFile(jar) as jar_file:
-                    for entry in jar_file.namelist():
-                        entry = entry.strip()
-                        if pattern.match(entry):
-                            return entry[:-6].replace("/", ".")
-            except (zipfile.BadZipFile, IOError):
-                continue
-        # If auto-completion fails, return the original name (might still work if it's in default package)
-        warnings.warn(
-            f"Could not auto-complete main class '{main_class}'. Using as-is.",
-            UserWarning,
-            stacklevel=3,
-        )
+    # Otherwise, attempt auto-completion in artifact-filtered JARs
+    if "." in main_class:
+        # Fully qualified name: use as-is without searching
+        return main_class
 
-    # Main class contains dots or auto-completion failed, assume it's fully qualified
+    # Simple name: try to auto-complete in artifact-filtered JARs
+    pattern_str = f".*{re.escape(main_class)}\\.class"
+    pattern = re.compile(pattern_str)
+    relevant_jars = [jar for jar in jars_dir.glob("*.jar") if artifact_id in jar.name]
+    for jar in relevant_jars:
+        try:
+            with zipfile.ZipFile(jar) as jar_file:
+                for entry in jar_file.namelist():
+                    entry = entry.strip()
+                    if pattern.match(entry):
+                        return entry[:-6].replace("/", ".")
+        except (zipfile.BadZipFile, IOError):
+            continue
+    # If auto-completion fails, return the original name (might still work if it's in default package)
+    warnings.warn(
+        f"Could not auto-complete main class '{main_class}'. Using as-is.",
+        UserWarning,
+        stacklevel=3,
+    )
     return main_class

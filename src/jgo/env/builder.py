@@ -146,6 +146,11 @@ class EnvironmentBuilder:
 
         Endpoint format: G:A[:V][:C][:mainClass][!][+G:A:V...]
         - Components with ! suffix are raw/unmanaged
+
+        Args:
+            endpoint: Endpoint string
+            update: Force update from remote repos
+            main_class: CLI override for main class (not persisted to lockfile)
         """
         # Parse endpoint
         components, coordinates, parsed_main_class = self._parse_endpoint(endpoint)
@@ -156,12 +161,17 @@ class EnvironmentBuilder:
         # Temporarily store managed components for use in from_components
         self._current_boms = boms if boms else None
 
-        # Use parsed main class if caller didn't provide one
-        if main_class is None:
-            main_class = parsed_main_class
+        # Build environment without specifying a main class
+        # This allows auto-detection from the JAR manifest if not cached
+        environment = self.from_components(components, update=update, main_class=None)
 
-        # Build environment
-        return self.from_components(components, update=update, main_class=main_class)
+        # Apply runtime override with priority: CLI main class > endpoint main class > auto-detected
+        # This ensures explicitly specified main classes override cached auto-detected classes
+        environment._runtime_main_class = (
+            main_class or parsed_main_class or environment.main_class
+        )
+
+        return environment
 
     def from_components(
         self,
@@ -190,8 +200,6 @@ class EnvironmentBuilder:
 
         # Build environment and get resolved dependencies
         resolved_deps = self._build_environment(environment, components, main_class)
-
-        # Generate lockfile for ad-hoc mode
         jars_dir = environment.path / "jars"
 
         # Determine main class (auto-complete if needed)

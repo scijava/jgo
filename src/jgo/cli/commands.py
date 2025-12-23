@@ -215,7 +215,6 @@ class JgoCommands:
         environment = builder.from_endpoint(
             self.args.endpoint,
             update=self.args.update,
-            main_class=self.args.main_class,
         )
 
         # If --print-classpath, just print and exit
@@ -233,9 +232,8 @@ class JgoCommands:
             print("Running Java application...")
 
         runner = self._create_java_runner()
-        # Use environment's main class if set (it's been auto-completed),
-        # otherwise fall back to args.main_class
-        main_class_to_use = environment.main_class or self.args.main_class
+        # CLI main_class override takes precedence, otherwise use environment's main class
+        main_class_to_use = self.args.main_class or environment.main_class
         result = runner.run(
             environment=environment,
             main_class=main_class_to_use,

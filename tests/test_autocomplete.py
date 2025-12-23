@@ -102,7 +102,7 @@ def test_autocomplete_nested_class():
 
 
 def test_autocomplete_filters_by_artifact_id():
-    """Test that auto-completion only searches relevant JARs."""
+    """Test that auto-completion only searches relevant JARs for simple names."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         jars_dir = Path(tmp_dir)
 
@@ -117,6 +117,26 @@ def test_autocomplete_filters_by_artifact_id():
         # Should find class in right JAR only
         result = autocomplete_main_class("Main", "myartifact", jars_dir)
         assert result == "org.example.Main"
+
+
+def test_autocomplete_fully_qualified_uses_as_is():
+    """Test that fully qualified class names are used as-is without searching."""
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        jars_dir = Path(tmp_dir)
+
+        # Create JAR without artifact ID in name (doesn't contain the class)
+        other_jar = jars_dir / "scijava-common-1.0.0.jar"
+        create_jar_with_class(other_jar, "org.imagej.Main")
+
+        # Create JAR with artifact ID in name (doesn't contain the class either)
+        artifact_jar = jars_dir / "imagej-1.0.0.jar"
+        create_jar_with_class(artifact_jar, "org.imagej.ImageJ")
+
+        # Should use fully qualified name as-is without searching
+        result = autocomplete_main_class(
+            "org.scijava.script.ScriptREPL", "imagej", jars_dir
+        )
+        assert result == "org.scijava.script.ScriptREPL"
 
 
 if __name__ == "__main__":
