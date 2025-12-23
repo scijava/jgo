@@ -1,7 +1,7 @@
 """
-Configuration file parsing for jgo.
+Global settings file parsing for jgo.
 
-Supports jgo configuration files with backward compatibility to jgo 1.x.
+Supports jgo settings files with backward compatibility to jgo 1.x.
 """
 
 from __future__ import annotations
@@ -10,28 +10,31 @@ import configparser
 import os
 from pathlib import Path
 
+from .manager import get_settings_path
+
 
 def config_file_path() -> Path:
     """
-    Get the config file path using XDG Base Directory standard.
+    Get the settings file path using XDG Base Directory standard.
+
+    .. deprecated::
+        Use :func:`~jgo.config.manager.get_settings_path` instead.
 
     Returns:
-        Path to config file (~/.config/jgo/config if exists, otherwise ~/.jgorc)
+        Path to settings file (~/.config/jgo/config if exists, otherwise ~/.jgorc)
     """
-    xdg_config = Path.home() / ".config" / "jgo" / "config"
-    legacy_config = Path.home() / ".jgorc"
-    return xdg_config if xdg_config.exists() else legacy_config
+    return get_settings_path()
 
 
-class JgoConfig:
+class GlobalSettings:
     """
-    Configuration loaded from config file and environment variables.
+    Global settings loaded from settings file and environment variables.
 
-    Config file locations (in order of precedence):
+    Settings file locations (in order of precedence):
     1. ~/.config/jgo/config (XDG Base Directory standard)
     2. ~/.jgorc (legacy location, for backward compatibility)
 
-    The config file is an INI file with sections:
+    The settings file is an INI file with sections:
     - [settings]: General settings (cache_dir, repo_cache, links, etc.)
     - [repositories]: Maven repositories (name = URL)
     - [shortcuts]: Coordinate shortcuts for the CLI
@@ -62,53 +65,53 @@ class JgoConfig:
         self.shortcuts = shortcuts or {}
 
     @classmethod
-    def load(cls, config_file: Path | None = None) -> "JgoConfig":
+    def load(cls, settings_file: Path | None = None) -> "GlobalSettings":
         """
-        Load configuration from file and environment variables.
+        Load global settings from file and environment variables.
 
         Args:
-            config_file: Path to config file (defaults to ~/.config/jgo/config, then ~/.jgorc)
+            settings_file: Path to settings file (defaults to ~/.config/jgo/config, then ~/.jgorc)
 
         Returns:
-            JgoConfig instance
+            GlobalSettings instance
         """
-        if config_file is None:
-            config_file = config_file_path()
+        if settings_file is None:
+            settings_file = get_settings_path()
 
         # Start with defaults
-        config = cls._default_config()
+        settings = cls._default_config()
 
         # Load from file if it exists
-        if config_file.exists():
-            config = cls._load_from_file(config_file, config)
+        if settings_file.exists():
+            settings = cls._load_from_file(settings_file, settings)
 
         # Override with environment variables
-        config = cls._apply_environment_variables(config)
+        settings = cls._apply_environment_variables(settings)
 
-        return config
+        return settings
 
     @classmethod
-    def load_from_opts(cls, opts: dict) -> "JgoConfig":
+    def load_from_opts(cls, opts: dict) -> "GlobalSettings":
         """
-        Load configuration based on command options.
+        Load global settings based on command options.
 
         Args:
             opts: Options dictionary (e.g., from argparse Namespace.__dict__)
 
         Returns:
-            JgoConfig instance (empty if ignore_config is set, otherwise loaded)
+            GlobalSettings instance (empty if ignore_config is set, otherwise loaded)
         """
         if opts.get("ignore_config"):
             return cls()
         return cls.load()
 
     @classmethod
-    def _default_config(cls) -> "JgoConfig":
+    def _default_config(cls) -> "GlobalSettings":
         """
-        Create default configuration.
+        Create default settings.
 
         Returns:
-            JgoConfig with default values
+            GlobalSettings with default values
         """
         return cls(
             cache_dir=Path.home() / ".cache" / "jgo",
@@ -120,20 +123,20 @@ class JgoConfig:
 
     @classmethod
     def _load_from_file(
-        cls, config_file: Path, base_config: "JgoConfig"
-    ) -> "JgoConfig":
+        cls, settings_file: Path, base_config: "GlobalSettings"
+    ) -> "GlobalSettings":
         """
-        Load configuration from INI file.
+        Load global settings from INI file.
 
         Args:
-            config_file: Path to .jgorc file
-            base_config: Base configuration to build upon
+            settings_file: Path to settings file
+            base_config: Base settings to build upon
 
         Returns:
-            Updated JgoConfig
+            Updated GlobalSettings
         """
         parser = configparser.ConfigParser()
-        parser.read(config_file)
+        parser.read(settings_file)
 
         # Parse [settings] section
         cache_dir = base_config.cache_dir
@@ -181,7 +184,9 @@ class JgoConfig:
         )
 
     @classmethod
-    def _apply_environment_variables(cls, config: "JgoConfig") -> "JgoConfig":
+    def _apply_environment_variables(
+        cls, settings: "GlobalSettings"
+    ) -> "GlobalSettings":
         """
         Apply environment variable overrides.
 
@@ -190,13 +195,13 @@ class JgoConfig:
         - M2_REPO: Override Maven repository cache
 
         Args:
-            config: Base configuration
+            settings: Base settings
 
         Returns:
-            Updated JgoConfig
+            Updated GlobalSettings
         """
-        cache_dir = config.cache_dir
-        repo_cache = config.repo_cache
+        cache_dir = settings.cache_dir
+        repo_cache = settings.repo_cache
 
         # Check environment variables
         if os.getenv("JGO_CACHE_DIR"):
@@ -208,9 +213,9 @@ class JgoConfig:
         return cls(
             cache_dir=cache_dir,
             repo_cache=repo_cache,
-            links=config.links,
-            repositories=config.repositories,
-            shortcuts=config.shortcuts,
+            links=settings.links,
+            repositories=settings.repositories,
+            shortcuts=settings.shortcuts,
         )
 
     def to_dict(self) -> dict:
@@ -284,3 +289,114 @@ class JgoConfig:
                 break
 
         return coordinate
+
+    def save(self, settings_file: Path | None = None) -> None:
+        """
+        Save settings to file.
+
+        Args:
+            settings_file: Path to save to (defaults to standard location)
+        """
+        if settings_file is None:
+            settings_file = get_settings_path()
+
+        # Ensure parent directory exists
+        settings_file.parent.mkdir(parents=True, exist_ok=True)
+
+        parser = configparser.ConfigParser()
+
+        # Write [settings] section
+        parser.add_section("settings")
+        parser.set("settings", "cache_dir", str(self.cache_dir))
+        parser.set("settings", "repo_cache", str(self.repo_cache))
+        parser.set("settings", "links", self.links)
+
+        # Write [repositories] section
+        if self.repositories:
+            parser.add_section("repositories")
+            for name, url in self.repositories.items():
+                parser.set("repositories", name, url)
+
+        # Write [shortcuts] section
+        if self.shortcuts:
+            parser.add_section("shortcuts")
+            for name, replacement in self.shortcuts.items():
+                parser.set("shortcuts", name, replacement)
+
+        # Write to file
+        with open(settings_file, "w") as f:
+            parser.write(f)
+
+    def set_setting(self, key: str, value: str) -> None:
+        """
+        Set a value in the [settings] section.
+
+        Args:
+            key: Setting name (cache_dir, repo_cache, links)
+            value: Setting value
+        """
+        if key == "cache_dir":
+            self.cache_dir = Path(value).expanduser()
+        elif key == "repo_cache":
+            self.repo_cache = Path(value).expanduser()
+        elif key == "links":
+            self.links = value
+        else:
+            raise ValueError(f"Unknown setting: {key}")
+
+    def set_repository(self, name: str, url: str) -> None:
+        """
+        Add or update a repository.
+
+        Args:
+            name: Repository name
+            url: Repository URL
+        """
+        self.repositories[name] = url
+
+    def set_shortcut(self, name: str, replacement: str) -> None:
+        """
+        Add or update a shortcut.
+
+        Args:
+            name: Shortcut name
+            replacement: Replacement coordinate
+        """
+        self.shortcuts[name] = replacement
+
+    def unset_setting(self, key: str) -> None:
+        """
+        Reset a setting to its default value.
+
+        Args:
+            key: Setting name (cache_dir, repo_cache, links)
+        """
+        defaults = self._default_config()
+        if key == "cache_dir":
+            self.cache_dir = defaults.cache_dir
+        elif key == "repo_cache":
+            self.repo_cache = defaults.repo_cache
+        elif key == "links":
+            self.links = defaults.links
+        else:
+            raise ValueError(f"Unknown setting: {key}")
+
+    def unset_repository(self, name: str) -> None:
+        """
+        Remove a repository.
+
+        Args:
+            name: Repository name
+        """
+        if name in self.repositories:
+            del self.repositories[name]
+
+    def unset_shortcut(self, name: str) -> None:
+        """
+        Remove a shortcut.
+
+        Args:
+            name: Shortcut name
+        """
+        if name in self.shortcuts:
+            del self.shortcuts[name]

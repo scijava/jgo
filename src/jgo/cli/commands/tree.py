@@ -16,11 +16,11 @@ if TYPE_CHECKING:
 @click.pass_context
 def tree(ctx, endpoint):
     """Show the dependency tree for an endpoint or jgo.toml."""
-    from ...config.file import JgoConfig
+    from ...config import GlobalSettings
     from ..parser import _build_parsed_args
 
     opts = ctx.obj
-    config = JgoConfig.load_from_opts(opts)
+    config = GlobalSettings.load_from_opts(opts)
     args = _build_parsed_args(opts, endpoint=endpoint, command="tree")
 
     exit_code = execute(args, config.to_dict())

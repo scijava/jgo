@@ -29,12 +29,12 @@ def update(ctx, force):
       jgo update
       jgo update --force
     """
-    from ...config.file import JgoConfig
+    from ...config import GlobalSettings
     from ..parser import _build_parsed_args
     from . import sync as sync_cmd
 
     opts = ctx.obj
-    config = JgoConfig.load_from_opts(opts)
+    config = GlobalSettings.load_from_opts(opts)
 
     # Force update flag to be set
     opts["update"] = True

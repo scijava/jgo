@@ -64,7 +64,7 @@ def run(ctx, main_class, entrypoint, add_classpath, endpoint, remaining):
     TIP:
       Use 'jgo --dry-run run' to see the command without executing it.
     """
-    from ...config.file import JgoConfig
+    from ...config import GlobalSettings
     from ..parser import _build_parsed_args, _parse_remaining
 
     # Get global options from context
@@ -83,9 +83,9 @@ def run(ctx, main_class, entrypoint, add_classpath, endpoint, remaining):
 
     # Load config
     if opts.get("ignore_config"):
-        config = JgoConfig()
+        config = GlobalSettings()
     else:
-        config = JgoConfig.load()
+        config = GlobalSettings.load()
 
     # Build ParsedArgs
     args = _build_parsed_args(
@@ -113,7 +113,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    from ...config.file import JgoConfig
+    from ...config import GlobalSettings
     from ...env import EnvironmentSpec
 
     verbose = args.verbose > 0 and not args.quiet
@@ -144,7 +144,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
     # Not an entrypoint, expand shortcuts
     if args.endpoint:
         shortcuts = config.get("shortcuts", {})
-        jgoconfig = JgoConfig(shortcuts=shortcuts)
+        jgoconfig = GlobalSettings(shortcuts=shortcuts)
         expanded = jgoconfig.expand_shortcuts(args.endpoint)
 
         if expanded != args.endpoint and verbose:

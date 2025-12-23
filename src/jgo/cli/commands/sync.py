@@ -31,11 +31,11 @@ def sync(ctx, force):
       jgo sync --offline
       jgo sync -u  # Update to latest versions
     """
-    from ...config.file import JgoConfig
+    from ...config import GlobalSettings
     from ..parser import _build_parsed_args
 
     opts = ctx.obj
-    config = JgoConfig.load_from_opts(opts)
+    config = GlobalSettings.load_from_opts(opts)
     args = _build_parsed_args(opts, command="sync")
     args.force = force
 

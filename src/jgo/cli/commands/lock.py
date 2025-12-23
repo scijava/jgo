@@ -30,11 +30,11 @@ def lock(ctx, check):
       jgo lock --check
       jgo lock --update
     """
-    from ...config.file import JgoConfig
+    from ...config import GlobalSettings
     from ..parser import _build_parsed_args
 
     opts = ctx.obj
-    config = JgoConfig.load_from_opts(opts)
+    config = GlobalSettings.load_from_opts(opts)
     args = _build_parsed_args(opts, command="lock")
     args.check = check
 

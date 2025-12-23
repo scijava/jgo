@@ -242,8 +242,8 @@ def expand_coordinate(coordinate, shortcuts={}):
 
 ## Progress Tracking
 
-- [ ] Phase 1: Create Config Manager Module
-- [ ] Phase 2: Extend JgoConfig with Write Operations
+- [x] Phase 1: Create Config Manager Module
+- [x] Phase 2: Extend JgoConfig with Write Operations
 - [ ] Phase 3: Refactor CLI Config Commands
 - [ ] Phase 4: Update Terminology in Documentation
 - [ ] Phase 5: Update Terminology in Code

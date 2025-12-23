@@ -1,11 +1,15 @@
 """
 Configuration module for jgo.
 
-Provides configuration file parsing and defaults management.
+Provides global settings file parsing and defaults management.
 """
 
-from .file import JgoConfig
+from .settings import GlobalSettings
+
+# Backward compatibility alias
+JgoConfig = GlobalSettings
 
 __all__ = [
-    "JgoConfig",
+    "GlobalSettings",
+    "JgoConfig",  # Deprecated, use GlobalSettings
 ]

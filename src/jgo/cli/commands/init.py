@@ -15,11 +15,11 @@ if TYPE_CHECKING:
 @click.pass_context
 def init(ctx, endpoint):
     """Create a new jgo.toml file."""
-    from ...config.file import JgoConfig
+    from ...config import GlobalSettings
     from ..parser import _build_parsed_args
 
     opts = ctx.obj
-    config = JgoConfig.load_from_opts(opts)
+    config = GlobalSettings.load_from_opts(opts)
     args = _build_parsed_args(opts, endpoint=endpoint, command="init")
 
     exit_code = execute(args, config.to_dict())
@@ -44,7 +44,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
     import sys
     from pathlib import Path
 
-    from ...config.file import JgoConfig
+    from ...config import GlobalSettings
     from ...env import EnvironmentSpec
 
     endpoint = args.endpoint
@@ -58,7 +58,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     # Expand shortcuts (supports + composition)
     shortcuts = config.get("shortcuts", {})
-    jgoconfig = JgoConfig(shortcuts=shortcuts)
+    jgoconfig = GlobalSettings(shortcuts=shortcuts)
     expanded_endpoint = jgoconfig.expand_shortcuts(endpoint)
 
     if args.verbose > 0 and expanded_endpoint != endpoint:

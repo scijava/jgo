@@ -55,11 +55,11 @@ def shortcut(ctx, remove_name, list_all, name, endpoint):
       jgo config shortcut groovy org.scijava:scripting-groovy@GroovySh
       jgo config shortcut --remove repl                        # Remove
     """
-    from ...config.file import JgoConfig
+    from ...config import GlobalSettings
     from ..parser import _build_parsed_args
 
     opts = ctx.obj
-    config = JgoConfig.load_from_opts(opts)
+    config = GlobalSettings.load_from_opts(opts)
     args = _build_parsed_args(opts, command="config")
 
     exit_code = execute(
@@ -102,9 +102,9 @@ def execute(
     """
     # Determine config file location (always global for shortcuts)
     if config_file is None:
-        from ...config.file import config_file_path
+        from ...config.manager import get_settings_path
 
-        config_file = config_file_path()
+        config_file = get_settings_path()
 
     # Handle remove
     if remove_name:

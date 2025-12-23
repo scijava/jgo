@@ -15,11 +15,11 @@ if TYPE_CHECKING:
 @click.pass_context
 def versions(ctx, coordinate):
     """List available versions of a Maven artifact."""
-    from ...config.file import JgoConfig
+    from ...config import GlobalSettings
     from ..parser import _build_parsed_args
 
     opts = ctx.obj
-    config = JgoConfig.load_from_opts(opts)
+    config = GlobalSettings.load_from_opts(opts)
     args = _build_parsed_args(opts, endpoint=coordinate, command="versions")
 
     exit_code = execute(args, config.to_dict())

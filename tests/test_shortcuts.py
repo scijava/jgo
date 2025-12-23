@@ -2,7 +2,7 @@
 """
 Tests for shortcut expansion functionality.
 
-Tests both the JgoConfig.expand_shortcuts() method and integration
+Tests both the GlobalSettings.expand_shortcuts() method and integration
 with jgo init to create multi-entrypoint environments.
 """
 
@@ -11,16 +11,16 @@ from pathlib import Path
 
 import pytest
 
-from jgo.config.file import JgoConfig
+from jgo.config import GlobalSettings
 from jgo.env import EnvironmentSpec
 
 
 class TestShortcutExpansion:
-    """Test JgoConfig.expand_shortcuts() method."""
+    """Test GlobalSettings.expand_shortcuts() method."""
 
     def test_no_shortcuts(self):
         """Test that expansion with no shortcuts is a no-op."""
-        config = JgoConfig(shortcuts={})
+        config = GlobalSettings(shortcuts={})
         assert (
             config.expand_shortcuts("org.scijava:scijava-common")
             == "org.scijava:scijava-common"
@@ -28,20 +28,22 @@ class TestShortcutExpansion:
 
     def test_simple_shortcut(self):
         """Test simple shortcut expansion."""
-        config = JgoConfig(shortcuts={"repl": "org.scijava:scijava-common@ScriptREPL"})
+        config = GlobalSettings(
+            shortcuts={"repl": "org.scijava:scijava-common@ScriptREPL"}
+        )
         assert (
             config.expand_shortcuts("repl") == "org.scijava:scijava-common@ScriptREPL"
         )
 
     def test_shortcut_with_suffix(self):
         """Test shortcut expansion with additional text after shortcut."""
-        config = JgoConfig(shortcuts={"imagej": "net.imagej:imagej"})
+        config = GlobalSettings(shortcuts={"imagej": "net.imagej:imagej"})
         # Shortcut matches at start, rest is preserved
         assert config.expand_shortcuts("imagej:2.0.0") == "net.imagej:imagej:2.0.0"
 
     def test_composition_with_plus(self):
         """Test shortcut composition using + operator."""
-        config = JgoConfig(
+        config = GlobalSettings(
             shortcuts={
                 "repl": "org.scijava:scijava-common@ScriptREPL",
                 "groovy": "org.scijava:scripting-groovy@GroovySh",
@@ -55,14 +57,16 @@ class TestShortcutExpansion:
 
     def test_partial_composition(self):
         """Test composition where only some parts are shortcuts."""
-        config = JgoConfig(shortcuts={"repl": "org.scijava:scijava-common@ScriptREPL"})
+        config = GlobalSettings(
+            shortcuts={"repl": "org.scijava:scijava-common@ScriptREPL"}
+        )
         # Only first part is a shortcut
         result = config.expand_shortcuts("repl+org.scijava:parsington")
         assert result == "org.scijava:scijava-common@ScriptREPL+org.scijava:parsington"
 
     def test_no_matching_shortcut(self):
         """Test that non-shortcuts pass through unchanged."""
-        config = JgoConfig(shortcuts={"repl": "org.scijava:scijava-common"})
+        config = GlobalSettings(shortcuts={"repl": "org.scijava:scijava-common"})
         assert (
             config.expand_shortcuts("org.python:jython-standalone")
             == "org.python:jython-standalone"
@@ -70,7 +74,7 @@ class TestShortcutExpansion:
 
     def test_multiple_shortcuts_in_composition(self):
         """Test composing multiple shortcuts with explicit coordinates."""
-        config = JgoConfig(
+        config = GlobalSettings(
             shortcuts={
                 "scijava": "org.scijava:scijava-common",
                 "groovy": "org.scijava:scripting-groovy",
@@ -84,7 +88,7 @@ class TestShortcutExpansion:
 
     def test_nested_shortcuts(self):
         """Test shortcuts that reference other shortcuts."""
-        config = JgoConfig(
+        config = GlobalSettings(
             shortcuts={
                 "base": "org.scijava:scijava-common",
                 "repl": "base@ScriptREPL",  # References "base" shortcut

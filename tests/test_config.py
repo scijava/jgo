@@ -1,9 +1,9 @@
-"""Tests for JgoConfig class and config file loading."""
+"""Tests for GlobalSettings class and settings file loading."""
 
 import tempfile
 from pathlib import Path
 
-from jgo.config.file import JgoConfig
+from jgo.config import GlobalSettings
 
 
 def test_xdg_config_precedence():
@@ -42,7 +42,7 @@ legacy_repo = https://legacy.example.com/maven2
 
         try:
             # Load config - should prefer XDG location
-            config = JgoConfig.load()
+            config = GlobalSettings.load()
 
             # Verify XDG config was loaded
             assert str(config.cache_dir) == "/xdg/cache"
@@ -77,7 +77,7 @@ legacy_repo = https://legacy.example.com/maven2
 
         try:
             # Load config - should use legacy location
-            config = JgoConfig.load()
+            config = GlobalSettings.load()
 
             # Verify legacy config was loaded
             assert str(config.cache_dir) == "/legacy/cache"
@@ -104,7 +104,7 @@ def test_no_config_file():
 
         try:
             # Load config - should use defaults
-            config = JgoConfig.load()
+            config = GlobalSettings.load()
 
             # Verify defaults
             assert config.cache_dir == tmpdir / ".cache" / "jgo"
@@ -131,7 +131,7 @@ custom_repo = https://custom.example.com/maven2
 """)
 
         # Load with explicit path
-        config = JgoConfig.load(config_file=custom_config)
+        config = GlobalSettings.load(settings_file=custom_config)
 
         # Verify custom config was loaded
         assert str(config.cache_dir) == "/custom/cache"

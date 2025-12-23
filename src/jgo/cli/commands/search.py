@@ -53,11 +53,11 @@ def search(ctx, limit, repository, query):
     Multiple terms can be combined:
       jgo search g:org.apache.commons a:commons-lang3
     """
-    from ...config.file import JgoConfig
+    from ...config import GlobalSettings
     from ..parser import _build_parsed_args
 
     opts = ctx.obj
-    config = JgoConfig.load_from_opts(opts)
+    config = GlobalSettings.load_from_opts(opts)
     args = _build_parsed_args(opts, command="search")
 
     # Join query parts into a single string

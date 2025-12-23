@@ -30,11 +30,11 @@ def add(ctx, coordinates, no_sync):
       jgo add org.scijava:scijava-common org.scijava:parsington
       jgo add --no-sync net.imagej:imagej:2.15.0
     """
-    from ...config.file import JgoConfig
+    from ...config import GlobalSettings
     from ..parser import _build_parsed_args
 
     opts = ctx.obj
-    config = JgoConfig.load_from_opts(opts)
+    config = GlobalSettings.load_from_opts(opts)
     args = _build_parsed_args(opts, command="add")
     args.coordinates = list(coordinates)
     args.no_sync = no_sync
