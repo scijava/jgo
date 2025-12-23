@@ -302,15 +302,6 @@ def global_options(f):
         "--ignore-jgorc", is_flag=True, help="Ignore ~/.jgorc configuration file."
     )(f)
 
-    # Legacy flags (hidden)
-    f = click.option("--init", metavar="ENDPOINT", hidden=True)(f)
-    f = click.option("--list-versions", is_flag=True, hidden=True)(f)
-    f = click.option("--print-classpath", is_flag=True, hidden=True)(f)
-    f = click.option("--print-java-info", is_flag=True, hidden=True)(f)
-    f = click.option("--print-dependency-tree", is_flag=True, hidden=True)(f)
-    f = click.option("--print-dependency-list", is_flag=True, hidden=True)(f)
-    f = click.option("--list-entrypoints", is_flag=True, hidden=True)(f)
-
     # Version flag
     def _print_version(ctx, param, value):
         if value:
@@ -510,7 +501,7 @@ def _parse_remaining(remaining):
 
 
 def _build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, command=None):
-    """Build a ParsedArgs object from Click options for backwards compatibility."""
+    """Build a ParsedArgs object from Click options."""
     # Parse repositories from NAME=URL format
     repositories = {}
     if opts.get("repository"):

@@ -5,7 +5,6 @@ CLI command implementations for jgo.
 from __future__ import annotations
 
 import sys
-import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -37,78 +36,6 @@ class JgoCommands:
         self.config = config or {}
         self.verbose = args.verbose > 0 and not args.quiet
         self.debug = args.verbose >= 2
-
-    def execute(self) -> int:
-        """
-        Execute the appropriate command based on parsed arguments (legacy path).
-
-        This method handles the old flag-based interface for backwards compatibility.
-        New command-based interface is dispatched from __main__.py.
-
-        Returns:
-            Exit code (0 for success, non-zero for failure)
-        """
-        # Show deprecation warnings for old jgo 1.x flags
-        self._check_deprecated_flags()
-
-        try:
-            # Handle legacy --init flag
-            if self.args.init:
-                from .subcommands import init
-
-                # Create a copy of args with endpoint set to init value
-                self.args.endpoint = self.args.init
-                return init.execute(self.args, self.config)
-
-            # Handle legacy --list-entrypoints flag
-            if self.args.list_entrypoints:
-                from .subcommands import info
-
-                return info.execute(self.args, self.config)
-
-            # Handle legacy --list-versions flag
-            if self.args.list_versions:
-                from .subcommands import versions
-
-                return versions.execute(self.args, self.config)
-
-            # Handle spec file mode vs endpoint mode
-            if self.args.is_spec_mode():
-                return self._cmd_run_spec()
-            else:
-                return self._cmd_run_endpoint()
-
-        except KeyboardInterrupt:
-            if self.verbose:
-                print("\nInterrupted by user", file=sys.stderr)
-            return 130  # Standard exit code for SIGINT
-        except Exception as e:
-            if self.debug:
-                raise  # Show full traceback in debug mode
-            print(f"Error: {e}", file=sys.stderr)
-            return 1
-
-    def _check_deprecated_flags(self):
-        """
-        Check for deprecated jgo 1.x flags and show warnings.
-        """
-        # Check for --additional-endpoints
-        if self.args.additional_endpoints:
-            warnings.warn(
-                "--additional-endpoints is deprecated. Use '+' syntax instead:\n"
-                "  Old: jgo --additional-endpoints org.dep:lib org.main:app\n"
-                "  New: jgo org.main:app+org.dep:lib",
-                DeprecationWarning,
-                stacklevel=3,
-            )
-
-        # Check for --log-level
-        if self.args.log_level:
-            warnings.warn(
-                "--log-level is deprecated. Use -v/-vv/-vvv for verbose output instead",
-                DeprecationWarning,
-                stacklevel=3,
-            )
 
     def _cmd_run_spec(self) -> int:
         """
