@@ -7,8 +7,7 @@ FIX PythonResolver bugs!
 
 Add support for module paths
 
-Deal with `~/.jgorc` references throughout the codebase
-→ See docs/config-refactoring-plan.md for implementation plan
+Decide about remaining `~/.jgorc` references throughout the codebase
 
 Does `-vvv` (or a sufficient number of v's) pass `-X` to `mvn` when using the MvnResolver?
 
