@@ -85,7 +85,7 @@ def execute(
 
     Args:
         args: Parsed command line arguments
-        config: Configuration from ~/.jgorc
+        config: Global settings
         query: Search query
         limit: Maximum number of results to show
         repository: Specific repository to search (currently only 'central' supported)

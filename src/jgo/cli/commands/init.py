@@ -36,7 +36,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     Args:
         args: Parsed command line arguments
-        config: Configuration from ~/.jgorc
+        config: Global settings
 
     Returns:
         Exit code (0 for success, non-zero for failure)

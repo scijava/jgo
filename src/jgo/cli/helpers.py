@@ -7,7 +7,6 @@ to reduce duplication and improve consistency.
 
 from __future__ import annotations
 
-import configparser
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -103,63 +102,6 @@ def parse_config_key(key: str, default_section: str = "settings") -> tuple[str, 
     if "." in key:
         return tuple(key.split(".", 1))
     return default_section, key
-
-
-def validate_config_section(
-    parser: configparser.ConfigParser, section: str
-) -> int | None:
-    """
-    Validate that section exists in config parser.
-
-    Args:
-        parser: ConfigParser to validate
-        section: Section name to check
-
-    Returns:
-        1 if error (section not found), None if valid
-    """
-    if not parser.has_section(section):
-        print(f"Error: Section [{section}] not found", file=sys.stderr)
-        return 1
-    return None
-
-
-def validate_config_key(
-    parser: configparser.ConfigParser, section: str, key: str
-) -> int | None:
-    """
-    Validate that key exists in section.
-
-    Args:
-        parser: ConfigParser to validate
-        section: Section name
-        key: Key name to check
-
-    Returns:
-        1 if error, None if valid
-    """
-    if error := validate_config_section(parser, section):
-        return error
-    if not parser.has_option(section, key):
-        print(f"Error: Key '{key}' not found in section [{section}]", file=sys.stderr)
-        return 1
-    return None
-
-
-def load_config_parser(config_file: Path) -> configparser.ConfigParser:
-    """
-    Load config file into ConfigParser.
-
-    Args:
-        config_file: Path to config file
-
-    Returns:
-        ConfigParser with loaded config (empty if file doesn't exist)
-    """
-    parser = configparser.ConfigParser()
-    if config_file.exists():
-        parser.read(config_file)
-    return parser
 
 
 def load_toml_file(config_file: Path) -> dict | None:

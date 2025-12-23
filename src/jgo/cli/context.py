@@ -25,7 +25,7 @@ def create_maven_context(args: ParsedArgs, config: dict) -> MavenContext:
 
     Args:
         args: Parsed command line arguments
-        config: Configuration from ~/.jgorc
+        config: Global settings
 
     Returns:
         Configured MavenContext instance
@@ -78,7 +78,7 @@ def create_environment_builder(
 
     Args:
         args: Parsed command line arguments
-        config: Configuration from ~/.jgorc
+        config: Global settings
         context: Maven context to use
 
     Returns:
@@ -113,7 +113,7 @@ def create_java_runner(args: ParsedArgs, config: dict) -> JavaRunner:
 
     Args:
         args: Parsed command line arguments
-        config: Configuration from ~/.jgorc (currently unused, reserved for future)
+        config: Global settings (currently unused, reserved for future)
 
     Returns:
         Configured JavaRunner instance
@@ -123,7 +123,7 @@ def create_java_runner(args: ParsedArgs, config: dict) -> JavaRunner:
     # Create JVM config
     jvm_config = JVMConfig()
 
-    # TODO: Load JVM options from config file
+    # TODO: Load JVM options from settings file
 
     verbose = args.verbose > 0 and not args.quiet
 

@@ -57,18 +57,18 @@ def execute(
 
     Args:
         args: Parsed command line arguments
-        config: Configuration from ~/.jgorc
+        config: Global settings
         key: Configuration key to get/set
         value: Value to set (only used with key)
         unset: Key to unset
         list_all: Whether to list all configuration
-        global_config: Whether to use global config (~/.jgorc)
+        global_config: Whether to use global settings
         local_config: Whether to use local config (jgo.toml)
 
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    # Determine which config file to use
+    # Determine which settings/config file to use
     if local_config and global_config:
         print("Error: Cannot use both --global and --local", file=sys.stderr)
         return 1
@@ -77,7 +77,7 @@ def execute(
         config_file = args.get_spec_file()
         config_type = "local"
     else:
-        # Default to global
+        # Default to global settings
         from ...config.manager import get_settings_path
 
         config_file = get_settings_path()
@@ -114,18 +114,33 @@ def _list_config(config_file: Path, config_type: str, args: ParsedArgs) -> int:
 
 
 def _list_jgorc(config_file: Path, args: ParsedArgs) -> int:
-    """List all configuration from .jgorc file."""
-    from ..helpers import load_config_parser
+    """List all configuration from global settings file."""
+    from ...config import GlobalSettings
 
-    parser = load_config_parser(config_file)
+    settings = GlobalSettings.load(config_file)
 
     print(f"Configuration from {config_file}:")
     print()
 
-    for section in parser.sections():
-        print(f"[{section}]")
-        for key, value in parser.items(section):
-            print(f"  {key} = {value}")
+    # Print [settings] section
+    print("[settings]")
+    print(f"  cache_dir = {settings.cache_dir}")
+    print(f"  repo_cache = {settings.repo_cache}")
+    print(f"  links = {settings.links}")
+    print()
+
+    # Print [repositories] section if any
+    if settings.repositories:
+        print("[repositories]")
+        for name, url in settings.repositories.items():
+            print(f"  {name} = {url}")
+        print()
+
+    # Print [shortcuts] section if any
+    if settings.shortcuts:
+        print("[shortcuts]")
+        for name, replacement in settings.shortcuts.items():
+            print(f"  {name} = {replacement}")
         print()
 
     return 0
@@ -180,16 +195,38 @@ def _get_config(config_file: Path, config_type: str, key: str, args: ParsedArgs)
 
 
 def _get_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) -> int:
-    """Get value from .jgorc file."""
-    from ..helpers import load_config_parser, validate_config_key
+    """Get value from global settings file."""
+    from ...config import GlobalSettings
 
-    parser = load_config_parser(config_file)
+    settings = GlobalSettings.load(config_file)
 
-    if error := validate_config_key(parser, section, key):
-        return error
+    # Get value based on section
+    if section == "settings":
+        if key == "cache_dir":
+            print(settings.cache_dir)
+        elif key == "repo_cache":
+            print(settings.repo_cache)
+        elif key == "links":
+            print(settings.links)
+        else:
+            print(f"Error: Unknown setting: {key}", file=sys.stderr)
+            return 1
+    elif section == "repositories":
+        if key in settings.repositories:
+            print(settings.repositories[key])
+        else:
+            print(f"Error: Repository '{key}' not found", file=sys.stderr)
+            return 1
+    elif section == "shortcuts":
+        if key in settings.shortcuts:
+            print(settings.shortcuts[key])
+        else:
+            print(f"Error: Shortcut '{key}' not found", file=sys.stderr)
+            return 1
+    else:
+        print(f"Error: Unknown section: [{section}]", file=sys.stderr)
+        return 1
 
-    value = parser.get(section, key)
-    print(value)
     return 0
 
 
@@ -232,10 +269,24 @@ def _set_config(
 def _set_jgorc(
     config_file: Path, section: str, key: str, value: str, args: ParsedArgs
 ) -> int:
-    """Set value in .jgorc file."""
-    from ..helpers import handle_dry_run, load_config_parser, verbose_print
+    """Set value in global settings file."""
+    import configparser
 
-    parser = load_config_parser(config_file)
+    from ..helpers import handle_dry_run, verbose_print
+
+    # Validate section and key
+    valid_settings = ("cache_dir", "repo_cache", "links")
+    if section == "settings" and key not in valid_settings:
+        print(f"Error: Unknown setting: {key}", file=sys.stderr)
+        return 1
+    elif section not in ("settings", "repositories", "shortcuts"):
+        print(f"Error: Unknown section: [{section}]", file=sys.stderr)
+        return 1
+
+    # Load existing config
+    parser = configparser.ConfigParser()
+    if config_file.exists():
+        parser.read(config_file)
 
     # Create section if it doesn't exist
     if not parser.has_section(section):
@@ -322,18 +373,30 @@ def _unset_config(
 
 
 def _unset_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) -> int:
-    """Unset value in .jgorc file."""
-    from ..helpers import (
-        handle_dry_run,
-        load_config_parser,
-        validate_config_key,
-        verbose_print,
-    )
+    """Unset value in global settings file."""
+    import configparser
 
-    parser = load_config_parser(config_file)
+    from ..helpers import handle_dry_run, verbose_print
 
-    if error := validate_config_key(parser, section, key):
-        return error
+    if not config_file.exists():
+        print(
+            f"Error: No configuration file found at {config_file}",
+            file=sys.stderr,
+        )
+        return 1
+
+    # Load existing config
+    parser = configparser.ConfigParser()
+    parser.read(config_file)
+
+    # Validate that section and key exist
+    if not parser.has_section(section):
+        print(f"Error: Section [{section}] not found", file=sys.stderr)
+        return 1
+
+    if not parser.has_option(section, key):
+        print(f"Error: Key '{key}' not found in section [{section}]", file=sys.stderr)
+        return 1
 
     # Dry run
     if handle_dry_run(args, f"Would remove [{section}] {key} from {config_file}"):

@@ -453,7 +453,7 @@ jgo/
   │   ├─ parser.py         # Argument parsing
   │   └─ commands.py       # CLI commands
   ├─ config/               # Configuration
-  │   └─ jgorc.py          # ~/.jgorc parsing
+  │   └─ settings.py       # Global settings parsing
   └─ compat/               # Backward compatibility
       └─ v1.py             # jgo 1.x compatibility layer
 ```

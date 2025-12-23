@@ -171,17 +171,17 @@ jgo search [OPTIONS] <query>
 jgo config [OPTIONS] [key] [value]
 ```
 - Manage jgo configuration
-- Without args: show current config
+- Without args: show current settings
 - With key only: show value for key
 - With key and value: set value
 - Could subsume `~/.jgorc` functionality long-term
 - Options:
-  - `--global` - modify global config (~/.jgorc)
+  - `--global` - modify global settings (settings file)
   - `--local` - modify project config (jgo.toml)
-  - `--list` - list all config values
+  - `--list` - list all settings/config values
   - `--unset KEY` - remove config value
 - Examples:
-  - `jgo config` - show all config
+  - `jgo config` - show all settings
   - `jgo config cache_dir` - show cache directory
   - `jgo config cache_dir ~/.local/share/jgo` - set cache directory
   - `jgo config --global repositories.central https://repo.maven.apache.org/maven2`
@@ -516,8 +516,8 @@ jgo config cache_dir ~/.local/share/jgo
 
 1. **Should `jgo config` eventually replace `~/.jgorc`?**
    - Could support both for backwards compat
-   - `jgo config --global` writes to ~/.jgorc
-   - Eventually could migrate to XDG config dirs
+   - `jgo config --global` writes to settings file
+   - Already migrated to XDG config dirs (2.0)
 
 2. **Should there be a `jgo clean` command?**
    - Clear cache directories

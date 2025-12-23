@@ -456,6 +456,8 @@ def jgo_cache_dir_environment_variable():
 
 
 def default_config():
+    # DEPRECATED: Use GlobalSettings._default_config() instead (see src/jgo/config/settings.py)
+    # This function is kept for backward compatibility with jgo 1.x and will be removed in 3.0
     config = configparser.ConfigParser()
 
     # settings
@@ -478,6 +480,8 @@ def default_config():
 
 
 def expand_coordinate(coordinate, shortcuts={}):
+    # DEPRECATED: Use GlobalSettings.expand_shortcuts() instead (see src/jgo/config/settings.py)
+    # This function is kept for backward compatibility with jgo 1.x and will be removed in 3.0
     was_changed = True
     used_shortcuts = set()
     while was_changed:
