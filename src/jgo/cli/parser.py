@@ -57,7 +57,7 @@ class ParsedArgs:
         # Classpath
         classpath_append: list[str] | None = None,
         # Backward compatibility
-        ignore_jgorc: bool = False,
+        ignore_config: bool = False,
         additional_endpoints: list[str] | None = None,
         log_level: str | None = None,
         # Information commands
@@ -103,7 +103,7 @@ class ParsedArgs:
         # Classpath
         self.classpath_append = classpath_append or []
         # Backward compatibility
-        self.ignore_jgorc = ignore_jgorc
+        self.ignore_config = ignore_config
         self.additional_endpoints = additional_endpoints
         self.log_level = log_level
         # Information commands
@@ -299,8 +299,10 @@ def global_options(f):
         help="How to link JARs: hard, soft, copy, or auto (default)",
     )(f)
     f = click.option(
-        "--ignore-jgorc", is_flag=True, help="Ignore ~/.jgorc configuration file."
+        "--ignore-config", is_flag=True, help="Ignore ~/.jgorc configuration file."
     )(f)
+    # Hidden alias for backward compatibility
+    f = click.option("--ignore-jgorc", "ignore_config", is_flag=True, hidden=True)(f)
 
     # Version flag
     def _print_version(ctx, param, value):
@@ -530,7 +532,7 @@ def _build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, comman
         # Classpath
         classpath_append=list(opts.get("add_classpath", [])),
         # Backward compatibility
-        ignore_jgorc=opts.get("ignore_jgorc", False),
+        ignore_config=opts.get("ignore_config", False),
         additional_endpoints=None,
         log_level=None,
         # Information commands (legacy)

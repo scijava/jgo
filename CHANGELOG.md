@@ -66,7 +66,7 @@ jgo 2.0 is a complete architectural redesign around three clean, independently u
   - `--print-java-info`: Print detected Java version requirements
   - `--offline`: Work offline (don't download)
   - `--no-cache`: Skip cache entirely
-  - `--ignore-jgorc`: Ignore ~/.jgorc configuration
+  - `--ignore-config`: Ignore ~/.jgorc configuration
   - `-f FILE, --file FILE`: Use specific jgo.toml file
   - `--entrypoint NAME`: Run specific entry point from jgo.toml
   - `--add-classpath PATH`: Append to classpath (replaces `--additional-jars`)

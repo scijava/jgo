@@ -40,7 +40,7 @@ def test_run_with_main_class_after_init():
                 command="init",
                 verbose=0,
                 quiet=False,
-                ignore_jgorc=True,
+                ignore_config=True,
                 file=tmp_path / "jgo.toml",
             )
 
@@ -81,7 +81,7 @@ def test_run_with_main_class_after_init():
                     command="run",
                     verbose=0,
                     quiet=False,
-                    ignore_jgorc=True,
+                    ignore_config=True,
                     main_class="org.scijava.script.ScriptREPL",
                     app_args=[],
                     jvm_args=[],
@@ -137,7 +137,7 @@ def test_run_endpoint_with_main_class():
             command="run",
             verbose=0,
             quiet=False,
-            ignore_jgorc=True,
+            ignore_config=True,
             main_class="org.scijava.script.ScriptREPL",
             app_args=[],
             jvm_args=[],

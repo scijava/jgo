@@ -53,7 +53,7 @@ def search(ctx, limit, repository, query):
     Multiple terms can be combined:
       jgo search g:org.apache.commons a:commons-lang3
     """
-    from ...config.jgorc import JgoConfig
+    from ...config.file import JgoConfig
     from ..parser import _build_parsed_args
 
     opts = ctx.obj

@@ -3,7 +3,7 @@
 import tempfile
 from pathlib import Path
 
-from jgo.config.jgorc import JgoConfig
+from jgo.config.file import JgoConfig
 
 
 def test_xdg_config_precedence():

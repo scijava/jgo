@@ -29,7 +29,7 @@ def update(ctx, force):
       jgo update
       jgo update --force
     """
-    from ...config.jgorc import JgoConfig
+    from ...config.file import JgoConfig
     from ..parser import _build_parsed_args
     from . import sync as sync_cmd
 

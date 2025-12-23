@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 @click.pass_context
 def tree(ctx, endpoint):
     """Show the dependency tree for an endpoint or jgo.toml."""
-    from ...config.jgorc import JgoConfig
+    from ...config.file import JgoConfig
     from ..parser import _build_parsed_args
 
     opts = ctx.obj

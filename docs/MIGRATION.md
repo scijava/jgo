@@ -68,7 +68,7 @@ These short flags are **permanent aliases** and will not be removed:
 | Flag | Description |
 |------|-------------|
 | `--add-classpath PATH` | Append JARs, directories, or other classpath elements |
-| `--ignore-jgorc` | Ignore ~/.jgorc configuration file |
+| `--ignore-config` | Ignore ~/.jgorc configuration file |
 | `--offline` | Work offline (don't download) |
 | `--no-cache` | Skip cache entirely |
 | `--resolver {auto,python,mvn}` | Choose dependency resolver |
@@ -151,7 +151,7 @@ The configuration file format remains the same (INI format with `[settings]`, `[
 1. `~/.config/jgo/config` (XDG Base Directory standard - recommended)
 2. `~/.jgorc` (legacy location, still supported for backward compatibility)
 
-jgo will check both locations, preferring the XDG location if it exists. Your existing `~/.jgorc` file will continue to work without any changes. To ignore config files, use `--ignore-jgorc`.
+jgo will check both locations, preferring the XDG location if it exists. Your existing `~/.jgorc` file will continue to work without any changes. To ignore config files, use `--ignore-config`.
 
 ## Breaking Changes (Minimal)
 

@@ -43,7 +43,7 @@ def test_init_with_main_class_then_add():
                 command="init",
                 verbose=0,
                 quiet=False,
-                ignore_jgorc=True,
+                ignore_config=True,
                 file=tmp_path / "jgo.toml",
             )
 
@@ -73,7 +73,7 @@ def test_init_with_main_class_then_add():
                 command="add",
                 verbose=0,
                 quiet=False,
-                ignore_jgorc=True,
+                ignore_config=True,
                 file=tmp_path / "jgo.toml",
                 repo_cache=tmp_path / ".m2" / "repository",
                 dry_run=False,
@@ -121,7 +121,7 @@ def test_init_without_main_class():
                 command="init",
                 verbose=0,
                 quiet=False,
-                ignore_jgorc=True,
+                ignore_config=True,
                 file=tmp_path / "jgo.toml",
             )
 
@@ -165,7 +165,7 @@ def test_init_with_old_format_main_class():
                 command="init",
                 verbose=0,
                 quiet=False,
-                ignore_jgorc=True,
+                ignore_config=True,
                 file=tmp_path / "jgo.toml",
             )
 

@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from jgo.config.jgorc import JgoConfig
+from jgo.config.file import JgoConfig
 from jgo.env import EnvironmentSpec
 
 
@@ -124,7 +124,7 @@ class TestInitWithShortcuts:
                     command="init",
                     verbose=0,
                     quiet=False,
-                    ignore_jgorc=True,
+                    ignore_config=True,
                     file=tmp_path / "jgo.toml",
                 )
 
@@ -173,7 +173,7 @@ class TestInitWithShortcuts:
                     command="init",
                     verbose=0,
                     quiet=False,
-                    ignore_jgorc=True,
+                    ignore_config=True,
                     file=tmp_path / "jgo.toml",
                 )
 
@@ -225,7 +225,7 @@ class TestInitWithShortcuts:
                     command="init",
                     verbose=0,
                     quiet=False,
-                    ignore_jgorc=True,
+                    ignore_config=True,
                     file=tmp_path / "jgo.toml",
                 )
 
@@ -272,7 +272,7 @@ class TestInitWithShortcuts:
                     command="init",
                     verbose=0,
                     quiet=False,
-                    ignore_jgorc=True,
+                    ignore_config=True,
                     file=tmp_path / "jgo.toml",
                 )
 
@@ -316,7 +316,7 @@ class TestInitWithShortcuts:
                     command="init",
                     verbose=0,
                     quiet=False,
-                    ignore_jgorc=True,
+                    ignore_config=True,
                     file=tmp_path / "jgo.toml",
                 )
 
@@ -360,7 +360,7 @@ class TestRunWithShortcuts:
                     command="run",
                     verbose=1,
                     quiet=False,
-                    ignore_jgorc=True,
+                    ignore_config=True,
                     print_classpath=True,
                     main_class=None,
                     app_args=[],
@@ -412,7 +412,7 @@ class TestRunWithShortcuts:
                     command="init",
                     verbose=0,
                     quiet=False,
-                    ignore_jgorc=True,
+                    ignore_config=True,
                     file=tmp_path / "jgo.toml",
                 )
                 init_cmd.execute(init_args, config)

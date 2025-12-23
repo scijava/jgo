@@ -95,7 +95,7 @@ jgo [OPTIONS] <endpoint> [-- JVM_ARGS] [-- APP_ARGS]
 **Maven Configuration:**
 - `-r NAME=URL, --repository NAME=URL` - Add Maven repository
 - `-m, --managed` - Use dependency management (import scope)
-- `--ignore-jgorc` - Ignore `~/.jgorc` configuration
+- `--ignore-config` - Ignore `~/.jgorc` configuration
 
 **Java Version Control:**
 - `--java-version VERSION` - Force specific Java version

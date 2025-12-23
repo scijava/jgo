@@ -96,9 +96,9 @@ class JgoConfig:
             opts: Options dictionary (e.g., from argparse Namespace.__dict__)
 
         Returns:
-            JgoConfig instance (empty if ignore_jgorc is set, otherwise loaded)
+            JgoConfig instance (empty if ignore_config is set, otherwise loaded)
         """
-        if opts.get("ignore_jgorc"):
+        if opts.get("ignore_config"):
             return cls()
         return cls.load()
 

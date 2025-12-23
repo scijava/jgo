@@ -31,7 +31,7 @@ def sync(ctx, force):
       jgo sync --offline
       jgo sync -u  # Update to latest versions
     """
-    from ...config.jgorc import JgoConfig
+    from ...config.file import JgoConfig
     from ..parser import _build_parsed_args
 
     opts = ctx.obj

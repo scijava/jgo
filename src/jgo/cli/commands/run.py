@@ -64,7 +64,7 @@ def run(ctx, main_class, entrypoint, add_classpath, endpoint, remaining):
     TIP:
       Use 'jgo --dry-run run' to see the command without executing it.
     """
-    from ...config.jgorc import JgoConfig
+    from ...config.file import JgoConfig
     from ..parser import _build_parsed_args, _parse_remaining
 
     # Get global options from context
@@ -82,7 +82,7 @@ def run(ctx, main_class, entrypoint, add_classpath, endpoint, remaining):
     jvm_args, app_args = _parse_remaining(remaining)
 
     # Load config
-    if opts.get("ignore_jgorc"):
+    if opts.get("ignore_config"):
         config = JgoConfig()
     else:
         config = JgoConfig.load()
@@ -113,7 +113,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    from ...config.jgorc import JgoConfig
+    from ...config.file import JgoConfig
     from ...env import EnvironmentSpec
 
     verbose = args.verbose > 0 and not args.quiet

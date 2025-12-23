@@ -7,7 +7,7 @@ FIX PythonResolver bugs!
 
 Add support for module paths
 
-Shore up "jgorc" references throughout the codebase. `--ignore-jgorc` -> `--ignore-config`
+Rename `~/.jgorc` references throughout the codebase to `jgo config file` or `~/.config/jgo/config` or ... something less deprecated. ;-)
 
 Does `-vvv` (or a sufficient number of v's) pass `-X` to `mvn` when using the MvnResolver?
 

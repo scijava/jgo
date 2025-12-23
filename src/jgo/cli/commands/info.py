@@ -13,7 +13,7 @@ import click
 @click.pass_context
 def classpath(ctx, endpoint):
     """Show the classpath for the given endpoint."""
-    from ...config.jgorc import JgoConfig
+    from ...config.file import JgoConfig
     from ...env import EnvironmentSpec
     from ..context import create_environment_builder, create_maven_context
     from ..output import print_classpath
@@ -49,7 +49,7 @@ def classpath(ctx, endpoint):
 @click.pass_context
 def deptree(ctx, endpoint):
     """Show the dependency tree for the given endpoint."""
-    from ...config.jgorc import JgoConfig
+    from ...config.file import JgoConfig
     from ...env import EnvironmentSpec
     from ...env.builder import filter_managed_components
     from ...parse.coordinate import Coordinate
@@ -99,7 +99,7 @@ def deptree(ctx, endpoint):
 @click.pass_context
 def deplist(ctx, endpoint, direct):
     """Show a flat list of all dependencies for the given endpoint."""
-    from ...config.jgorc import JgoConfig
+    from ...config.file import JgoConfig
     from ...env import EnvironmentSpec
     from ...env.builder import filter_managed_components
     from ...parse.coordinate import Coordinate
@@ -148,7 +148,7 @@ def deplist(ctx, endpoint, direct):
 @click.pass_context
 def javainfo(ctx, endpoint):
     """Show Java version requirements for the given endpoint."""
-    from ...config.jgorc import JgoConfig
+    from ...config.file import JgoConfig
     from ...env import EnvironmentSpec
     from ..context import create_environment_builder, create_maven_context
     from ..output import print_java_info
@@ -217,7 +217,7 @@ def manifest(ctx, endpoint, raw):
     """Show the JAR manifest for the given endpoint."""
     import zipfile
 
-    from ...config.jgorc import JgoConfig
+    from ...config.file import JgoConfig
     from ...env.jar_util import parse_manifest, read_raw_manifest
     from ..context import create_maven_context
     from ..helpers import parse_coordinate_safe
@@ -286,7 +286,7 @@ def pom(ctx, endpoint):
     """Show the POM for the given component."""
     import xml.dom.minidom
 
-    from ...config.jgorc import JgoConfig
+    from ...config.file import JgoConfig
     from ..context import create_maven_context
     from ..helpers import parse_coordinate_safe
     from ..parser import _build_parsed_args

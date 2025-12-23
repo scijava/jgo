@@ -78,7 +78,7 @@ def execute(
         config_type = "local"
     else:
         # Default to global
-        from ...config.jgorc import config_file_path
+        from ...config.file import config_file_path
 
         config_file = config_file_path()
         config_type = "global"
@@ -444,16 +444,16 @@ def _parse_value(value: str) -> str | int | float | bool:
 @click.pass_context
 def list_cmd(ctx, global_config, local_config):
     """List all configuration values."""
-    from ...config.jgorc import JgoConfig
+    from ...config.file import JgoConfig
     from ..parser import _build_parsed_args
 
     opts = ctx.obj
-    jgorc = JgoConfig.load_from_opts(opts)
+    config = JgoConfig.load_from_opts(opts)
     args = _build_parsed_args(opts, command="config")
 
     exit_code = execute(
         args,
-        jgorc.to_dict(),
+        config.to_dict(),
         key=None,
         value=None,
         unset=None,
@@ -481,16 +481,16 @@ def list_cmd(ctx, global_config, local_config):
 @click.pass_context
 def get_cmd(ctx, key, global_config, local_config):
     """Get a configuration value."""
-    from ...config.jgorc import JgoConfig
+    from ...config.file import JgoConfig
     from ..parser import _build_parsed_args
 
     opts = ctx.obj
-    jgorc = JgoConfig.load_from_opts(opts)
+    config = JgoConfig.load_from_opts(opts)
     args = _build_parsed_args(opts, command="config")
 
     exit_code = execute(
         args,
-        jgorc.to_dict(),
+        config.to_dict(),
         key=key,
         value=None,
         unset=None,
@@ -519,16 +519,16 @@ def get_cmd(ctx, key, global_config, local_config):
 @click.pass_context
 def set_cmd(ctx, key, value, global_config, local_config):
     """Set a configuration value."""
-    from ...config.jgorc import JgoConfig
+    from ...config.file import JgoConfig
     from ..parser import _build_parsed_args
 
     opts = ctx.obj
-    jgorc = JgoConfig.load_from_opts(opts)
+    config = JgoConfig.load_from_opts(opts)
     args = _build_parsed_args(opts, command="config")
 
     exit_code = execute(
         args,
-        jgorc.to_dict(),
+        config.to_dict(),
         key=key,
         value=value,
         unset=None,
@@ -556,16 +556,16 @@ def set_cmd(ctx, key, value, global_config, local_config):
 @click.pass_context
 def unset_cmd(ctx, key, global_config, local_config):
     """Remove a configuration value."""
-    from ...config.jgorc import JgoConfig
+    from ...config.file import JgoConfig
     from ..parser import _build_parsed_args
 
     opts = ctx.obj
-    jgorc = JgoConfig.load_from_opts(opts)
+    config = JgoConfig.load_from_opts(opts)
     args = _build_parsed_args(opts, command="config")
 
     exit_code = execute(
         args,
-        jgorc.to_dict(),
+        config.to_dict(),
         key=None,
         value=None,
         unset=key,

@@ -22,7 +22,7 @@ This document categorizes existing jgo flags for the command-based CLI redesign.
 | `-r, --repository` | **Keep** | Global flag - can add repos for any command |
 | `-a, --additional-jars` | **Keep** → Rename | Already renamed to `--add-classpath` in jgo2 |
 | `--additional-endpoints` | **Keep** | Deprecated but keep for backwards compat |
-| `--ignore-jgorc` | **Keep** | Global flag - applies to configuration loading |
+| `--ignore-jgorc` | **Keep** | Global flag - applies to configuration loading - deprecate in favor of `--ignore-config` |
 | `--link-type` | **Keep** → Rename | Already renamed to `--link` in jgo2 |
 | `--log-level` | **Retire** | Replaced by `-v/-vv/-vvv` in jgo2 |
 

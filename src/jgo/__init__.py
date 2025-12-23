@@ -105,7 +105,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from .config.jgorc import JgoConfig
+from .config.file import JgoConfig
 from .constants import MAVEN_CENTRAL_URL
 from .env import Environment, EnvironmentBuilder, LinkStrategy
 from .exec import JavaRunner, JavaSource, JVMConfig
