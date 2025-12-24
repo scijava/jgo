@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING
 
 import click
 
+from ...util import is_debug_enabled, is_info_enabled, setup_logging
+
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
@@ -116,7 +118,10 @@ def execute(args: ParsedArgs, config: dict) -> int:
     from ...config import GlobalSettings
     from ...env import EnvironmentSpec
 
-    verbose = args.verbose > 0 and not args.quiet
+    # Set up logging based on verbosity level
+    setup_logging(args.verbose, args.quiet)
+
+    verbose = is_info_enabled() and not args.quiet
 
     # Check if we're in spec mode (jgo.toml exists)
     spec_file = Path("jgo.toml")
@@ -176,8 +181,8 @@ def _run_spec(args: ParsedArgs, config: dict) -> int:
     )
     from ..output import print_classpath, print_java_info
 
-    verbose = args.verbose > 0 and not args.quiet
-    debug = args.verbose >= 2
+    verbose = is_info_enabled() and not args.quiet
+    debug = is_debug_enabled()
 
     spec_file = args.get_spec_file()
 
@@ -248,8 +253,8 @@ def _run_endpoint(args: ParsedArgs, config: dict) -> int:
     )
     from ..output import print_classpath, print_java_info
 
-    verbose = args.verbose > 0 and not args.quiet
-    debug = args.verbose >= 2
+    verbose = is_info_enabled() and not args.quiet
+    debug = is_debug_enabled()
 
     if not args.endpoint:
         print("Error: No endpoint specified", file=sys.stderr)

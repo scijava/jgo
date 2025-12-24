@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING
 
 import click
 
+from ...util import is_info_enabled, setup_logging
+
 if TYPE_CHECKING:
     from ...env.lockfile import LockFile
     from ..parser import ParsedArgs
@@ -56,6 +58,8 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
+    # Set up logging based on verbosity level
+    setup_logging(args.verbose, args.quiet)
 
     from ...env import EnvironmentBuilder
     from ...env.linking import LinkStrategy
@@ -112,7 +116,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
         # Load old lock file if updating (for version change reporting)
         update = args.update or getattr(args, "force", False)
         old_lockfile = None
-        if update and args.verbose > 0:
+        if update and is_info_enabled():
             # Determine lock file path based on project mode
             if builder.is_project_mode():
                 lock_path = args.cache_dir / "jgo.lock.toml"
@@ -134,7 +138,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
         verbose_print(args, f"Classpath entries: {len(env.classpath)}")
 
         # Show version changes if updating and verbose
-        if update and args.verbose > 0 and old_lockfile:
+        if update and is_info_enabled() and old_lockfile:
             _show_version_changes(old_lockfile, env.path / "jgo.lock.toml", args)
 
         return 0

@@ -14,6 +14,7 @@ from ..constants import DEFAULT_MAVEN_REPO, MAVEN_CENTRAL_URL
 from ..env import EnvironmentBuilder, LinkStrategy
 from ..exec import JavaRunner, JavaSource, JVMConfig
 from ..maven import MavenContext, MvnResolver, PythonResolver
+from ..util import is_debug_enabled, is_info_enabled
 
 if TYPE_CHECKING:
     from .parser import ParsedArgs
@@ -37,7 +38,9 @@ def create_maven_context(args: ParsedArgs, config: dict) -> MavenContext:
         from jgo.util import ensure_maven_available
 
         mvn_command = ensure_maven_available()
-        resolver = MvnResolver(mvn_command, update=args.update, debug=args.verbose >= 2)
+        resolver = MvnResolver(
+            mvn_command, update=args.update, debug=is_debug_enabled()
+        )
     else:  # auto
         resolver = PythonResolver()  # Default to pure Python
 
@@ -125,7 +128,7 @@ def create_java_runner(args: ParsedArgs, config: dict) -> JavaRunner:
 
     # TODO: Load JVM options from settings file
 
-    verbose = args.verbose > 0 and not args.quiet
+    verbose = is_info_enabled() and not args.quiet
 
     return JavaRunner(
         jvm_config=jvm_config,

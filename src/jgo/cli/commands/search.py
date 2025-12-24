@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING
 
 import click
 
+from ...util import is_debug_enabled, is_info_enabled, setup_logging
+
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
@@ -93,6 +95,9 @@ def execute(
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
+    # Set up logging based on verbosity level
+    setup_logging(args.verbose, args.quiet)
+
     if not query:
         print("Error: Search query is required", file=sys.stderr)
         return 1
@@ -106,7 +111,7 @@ def execute(
         )
         return 1
 
-    if args.verbose > 0:
+    if is_info_enabled():
         print(f"Searching Maven Central for: {query}")
 
     # Dry run
@@ -118,14 +123,14 @@ def execute(
 
     # Search Maven Central
     try:
-        results = _search_maven_central(query, limit, args.verbose > 1)
+        results = _search_maven_central(query, limit, is_debug_enabled())
 
         if not results:
             print(f"No artifacts found for query: {query}")
             return 0
 
         # Display results
-        _display_results(results, args.verbose > 0)
+        _display_results(results, is_info_enabled())
 
         return 0
 

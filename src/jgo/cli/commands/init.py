@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 
 import click
 
+from ...util import is_info_enabled, setup_logging
+
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
@@ -47,6 +49,9 @@ def execute(args: ParsedArgs, config: dict) -> int:
     from ...config import GlobalSettings
     from ...env import EnvironmentSpec
 
+    # Set up logging based on verbosity level
+    setup_logging(args.verbose, args.quiet)
+
     endpoint = args.endpoint
     if not endpoint:
         print("Error: init requires an endpoint", file=sys.stderr)
@@ -61,7 +66,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
     jgoconfig = GlobalSettings(shortcuts=shortcuts)
     expanded_endpoint = jgoconfig.expand_shortcuts(endpoint)
 
-    if args.verbose > 0 and expanded_endpoint != endpoint:
+    if is_info_enabled() and expanded_endpoint != endpoint:
         print(f"Expanded shortcuts: {endpoint} → {expanded_endpoint}", file=sys.stderr)
 
     # Parse endpoint to extract coordinates and entrypoints
@@ -95,7 +100,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     spec.save(output_file)
 
-    if args.verbose > 0:
+    if is_info_enabled():
         print(f"Generated {output_file}")
         if entrypoints:
             print(

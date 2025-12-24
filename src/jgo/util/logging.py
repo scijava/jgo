@@ -88,3 +88,13 @@ def is_debug_enabled() -> bool:
         True if the current log level is DEBUG or lower
     """
     return get_log_level() <= logging.DEBUG
+
+
+def is_info_enabled() -> bool:
+    """
+    Check if INFO logging is enabled.
+
+    Returns:
+        True if the current log level is INFO or lower (INFO or DEBUG)
+    """
+    return get_log_level() <= logging.INFO

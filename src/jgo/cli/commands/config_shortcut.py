@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING
 
 import click
 
+from ...util import is_info_enabled, setup_logging
+
 if TYPE_CHECKING:
     from click import Context
 
@@ -100,6 +102,9 @@ def execute(
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
+    # Set up logging based on verbosity level
+    setup_logging(args.verbose, args.quiet)
+
     # Determine settings file location (always global for shortcuts)
     if config_file is None:
         from ...config.manager import get_settings_path
@@ -215,7 +220,7 @@ def _add_shortcut(config_file: Path, name: str, endpoint: str, args: ParsedArgs)
     action = "Updated" if is_update else "Added"
     print(f"{action} shortcut: {name} → {endpoint}")
 
-    if args.verbose > 0:
+    if is_info_enabled():
         print(f"Saved to: {config_file}")
 
     return 0
@@ -260,7 +265,7 @@ def _remove_shortcut(config_file: Path, name: str, args: ParsedArgs) -> int:
 
     print(f"Removed shortcut: {name} → {endpoint}")
 
-    if args.verbose > 0:
+    if is_info_enabled():
         print(f"Updated: {config_file}")
 
     return 0
