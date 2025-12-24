@@ -25,17 +25,26 @@ class Model:
     A minimal Maven metadata model, tracking only dependencies and properties.
     """
 
-    def __init__(self, pom: POM, context: MavenContext | None = None):
+    def __init__(
+        self,
+        pom: POM,
+        context: MavenContext | None = None,
+        root_dep_mgmt: dict[GACT, "Dependency"] | None = None,
+    ):
         """
         Build a Maven metadata model from the given POM.
 
         Args:
             pom: A source POM from which to extract metadata (e.g. dependencies).
             context: Maven context for dependency resolution. If None, creates a default context.
+            root_dep_mgmt: Optional dependency management from the root project.
+                This takes precedence over the local dependency management and is used
+                to ensure consistent versions across all transitive dependencies.
         """
         from .core import MavenContext
 
         self.context = context or MavenContext()
+        self.root_dep_mgmt = root_dep_mgmt
         self.gav = f"{pom.groupId}:{pom.artifactId}:{pom.version}"
         _log.debug(f"{self.gav}: begin model initialization")
 
@@ -118,24 +127,50 @@ class Model:
         # Handles injection of dependency management into the model.
         # According to Maven semantics, dependency management provides default values for:
         # version, scope, type, classifier, exclusions, and optional flag.
+        #
+        # IMPORTANT: Root dependency management (from the wrapper/entry point) takes
+        # precedence over local dependency management. This ensures that the root project's
+        # version constraints are applied consistently across all transitive dependencies.
         for gact, dep in self.deps.items():
-            managed = self.dep_mgmt.get(gact, None)
+            # First check root_dep_mgmt (highest priority), then local dep_mgmt
+            root_managed = self.root_dep_mgmt.get(gact) if self.root_dep_mgmt else None
+            local_managed = self.dep_mgmt.get(gact, None)
+            managed = root_managed or local_managed
+
             if managed is None:
                 # No managed version available
                 if not dep.version:  # Check for None or empty string
                     raise ValueError(f"No version available for dependency {dep}")
                 continue
 
-            # Inject version if not set
+            dep_ga = f"{dep.groupId}:{dep.artifactId}"
+            source = "root dependencyManagement" if root_managed else "dependencyManagement"
+
+            # Inject version if not set, or if root_dep_mgmt overrides it
             if not dep.version:  # Check for None or empty string
+                _log.debug(
+                    f"{self.gav}: {dep_ga}: version set to {managed.version} (from {source})"
+                )
                 dep.set_version(managed.version)
+            elif root_managed and dep.version != root_managed.version:
+                # Root dep management overrides the version even if already set
+                _log.debug(
+                    f"{self.gav}: {dep_ga}: version overridden {dep.version} -> {root_managed.version} (from {source})"
+                )
+                dep.set_version(root_managed.version)
 
             # Inject scope if not explicitly set
             if dep.scope is None and managed.scope is not None:
+                _log.debug(
+                    f"{self.gav}: {dep_ga}: scope set to {managed.scope} (from {source})"
+                )
                 dep.scope = managed.scope
 
             # Inject exclusions if managed dependency has them and current doesn't
             if managed.exclusions and not dep.exclusions:
+                _log.debug(
+                    f"{self.gav}: {dep_ga}: exclusions inherited from {source}"
+                )
                 dep.exclusions = managed.exclusions
 
         # -- set default scopes --
@@ -155,6 +190,9 @@ class Model:
         """
         Compute the component's list of dependencies, including transitive dependencies.
 
+        Uses breadth-first traversal (nearest-wins algorithm) to match Maven's behavior.
+        Dependencies at depth N are all processed before moving to depth N+1.
+
         Args:
             resolved:
                 Optional dictionary of already-resolved dependency coordinates.
@@ -172,7 +210,7 @@ class Model:
         Returns:
             The list of Dependency objects.
         """
-        deps: dict[GACT, Dependency] = {}
+        all_deps: dict[GACT, Dependency] = {}
 
         # Determine whether we are currently diving into transitive dependencies.
         recursing: bool = resolved is not None
@@ -181,69 +219,88 @@ class Model:
             # At the root level, use our own dependency management for transitive deps
             root_dep_mgmt = self.dep_mgmt
 
-        # Process direct dependencies.
-        direct_deps: dict[GACT, Dependency] = {}
-        for gact, dep in self.deps.items():
-            if gact in resolved:
-                continue  # Dependency has already been processed.
-            if recursing and dep.scope not in ("compile", "runtime"):
-                continue  # Non-transitive scope.
-            if recursing and dep.optional:
-                continue  # Optional dependencies are not transitive.
+        # Queue for breadth-first traversal: (model, parent_dep, parent_scope)
+        # parent_dep is None for root level, used for exclusion checking
+        # parent_scope is used for scope transformation
+        queue: list[tuple[Model, Dependency | None, str | None]] = [
+            (self, None, None)
+        ]
+        current_depth = 0
 
-            # Record this new direct dependency.
-            deps[gact] = direct_deps[gact] = dep
-            _log.debug(f"{self.gav}: {dep}")
+        while queue and (max_depth is None or current_depth <= max_depth):
+            # Process all items at current depth
+            next_queue: list[tuple[Model, Dependency | None, str | None]] = []
 
-        # Stop if we've reached the maximum depth.
-        if max_depth is not None and max_depth <= 0:
-            return list(deps.values())
+            for model, parent_dep, parent_scope in queue:
+                for gact, dep in model.deps.items():
+                    dep_ga = f"{dep.groupId}:{dep.artifactId}"
 
-        # Look for transitive dependencies (i.e. dependencies of direct dependencies).
-        for dep in direct_deps.values():
-            dep_model = Model(dep.artifact.component.pom(), self.context)
-            dep_deps = dep_model.dependencies(
-                deps,
-                root_dep_mgmt,
-                max_depth=None if max_depth is None else max_depth - 1,
-            )
-            for dep_dep in dep_deps:
-                if dep_dep.optional:
-                    continue  # Optional dependency is not transitive.
-                if dep_dep.scope not in ("compile", "runtime"):
-                    continue  # Non-transitive scope.
-                if Model._is_excluded(dep_dep, dep.exclusions):
-                    continue  # Dependency is excluded.
-                dep_dep_gact = (
-                    dep_dep.groupId,
-                    dep_dep.artifactId,
-                    dep_dep.classifier,
-                    dep_dep.type,
-                )
-                if dep_dep_gact in resolved:
-                    continue  # Dependency has already been processed.
+                    # Skip if already resolved (nearest-wins)
+                    if gact in resolved:
+                        _log.debug(f"{model.gav}: {dep_ga}: skipped (already resolved)")
+                        continue
 
-                # Record the transitive dependency.
-                deps[dep_dep_gact] = dep_dep
+                    # Skip non-transitive scopes when recursing
+                    if recursing and dep.scope not in ("compile", "runtime"):
+                        _log.debug(
+                            f"{model.gav}: {dep_ga}: skipped (non-transitive scope: {dep.scope})"
+                        )
+                        continue
 
-                # Adjust scope of transitive dependency appropriately.
-                if dep.scope == "runtime":
-                    dep_dep.scope = (
-                        "runtime"  # We only need this dependency at runtime.
-                    )
-                elif dep.scope == "test":
-                    dep_dep.scope = "test"  # We only need this dependency for testing.
+                    # Skip optional dependencies when recursing
+                    if recursing and dep.optional:
+                        _log.debug(f"{model.gav}: {dep_ga}: skipped (optional)")
+                        continue
 
-                # If the transitive dependency has a managed version in the root, prefer it.
-                # This ensures the root project's dependency management applies to all dependencies.
-                managed_note = ""
-                if root_dep_mgmt and dep_dep_gact in root_dep_mgmt:
-                    managed_dep = root_dep_mgmt.get(dep_dep_gact)
-                    managed_note = f" (managed from {dep_dep.version})"
-                    dep_dep.set_version(managed_dep.version)
+                    # Check exclusions from parent
+                    if parent_dep and Model._is_excluded(dep, parent_dep.exclusions):
+                        _log.debug(
+                            f"{model.gav}: {dep_ga}: excluded by {parent_dep.groupId}:{parent_dep.artifactId}"
+                        )
+                        continue
 
-                _log.debug(f"{self.gav}: {dep} -> {dep_dep}{managed_note}")
-        return list(deps.values())
+                    # Record this dependency
+                    resolved[gact] = dep
+                    all_deps[gact] = dep
+
+                    # Apply scope transformation based on parent scope
+                    original_scope = dep.scope
+                    if parent_scope == "runtime":
+                        dep.scope = "runtime"
+                    elif parent_scope == "test":
+                        dep.scope = "test"
+
+                    if dep.scope != original_scope:
+                        _log.debug(
+                            f"{model.gav}: {dep_ga}: scope transformed {original_scope} -> {dep.scope}"
+                        )
+
+                    # Log the dependency
+                    if parent_dep:
+                        _log.debug(f"{model.gav}: {parent_dep} -> {dep}")
+                    else:
+                        _log.debug(f"{model.gav}: {dep}")
+
+                    # Queue this dependency's model for next depth level
+                    if max_depth is None or current_depth < max_depth:
+                        try:
+                            dep_model = Model(
+                                dep.artifact.component.pom(),
+                                model.context,
+                                root_dep_mgmt,
+                            )
+                            next_queue.append((dep_model, dep, dep.scope))
+                        except Exception as e:
+                            _log.debug(
+                                f"Could not build model for {dep}: {e}"
+                            )
+
+            # Move to next depth level
+            queue = next_queue
+            current_depth += 1
+            recursing = True  # After first level, we're always recursing
+
+        return list(all_deps.values())
 
     def _import_boms(self, candidates: dict[GACT, Dependency]) -> None:
         """
@@ -259,6 +316,9 @@ class Model:
             if not (dep.scope == "import" and dep.type == "pom"):
                 continue
 
+            bom_gav = f"{dep.groupId}:{dep.artifactId}:{dep.version}"
+            _log.debug(f"{self.gav}: importing BOM {bom_gav}")
+
             # Load the POM to import.
             bom_project = self.context.project(dep.groupId, dep.artifactId)
             bom_pom = bom_project.at_version(dep.version).pom()
@@ -266,8 +326,18 @@ class Model:
             # Fully build the BOM's model, agnostic of this one.
             bom_model = Model(bom_pom, self.context)
 
+            # Count how many managed deps we're importing
+            before_count = len(self.dep_mgmt)
+
             # Merge the BOM model's <dependencyManagement> into this model.
             self._merge_deps(bom_model.dep_mgmt.values(), managed=True)
+
+            after_count = len(self.dep_mgmt)
+            new_count = after_count - before_count
+            _log.debug(
+                f"{self.gav}: imported {new_count} managed deps from BOM {bom_gav} "
+                f"(total: {after_count})"
+            )
 
             # Scan BOM <dependencyManagement> for additional potential BOMs.
             self._import_boms(bom_model.dep_mgmt)
