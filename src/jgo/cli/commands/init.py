@@ -7,8 +7,6 @@ from typing import TYPE_CHECKING
 
 import rich_click as click
 
-from ...util import setup_logging
-
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
@@ -50,9 +48,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     from ...config import GlobalSettings
     from ...env import EnvironmentSpec
-
-    # Set up logging based on verbosity level
-    setup_logging(args.verbose, args.quiet)
 
     endpoint = args.endpoint
     if not endpoint:

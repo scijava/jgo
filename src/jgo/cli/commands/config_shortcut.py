@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 import rich_click as click
 
-from ...util import is_info_enabled, setup_logging
+from ...util import is_info_enabled
 
 if TYPE_CHECKING:
     from click import Context
@@ -105,9 +105,6 @@ def execute(
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    # Set up logging based on verbosity level
-    setup_logging(args.verbose, args.quiet)
-
     # Determine settings file location (always global for shortcuts)
     if config_file is None:
         from ...config.manager import get_settings_path

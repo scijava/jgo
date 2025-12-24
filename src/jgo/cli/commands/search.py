@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 import rich_click as click
 
-from ...util import is_debug_enabled, is_info_enabled, setup_logging
+from ...util import is_debug_enabled, is_info_enabled
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
@@ -98,9 +98,6 @@ def execute(
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    # Set up logging based on verbosity level
-    setup_logging(args.verbose, args.quiet)
-
     if not query:
         _log.error("Search query is required")
         return 1

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import rich_click as click
 
-from ...util import is_info_enabled, setup_logging
+from ...util import is_info_enabled
 
 if TYPE_CHECKING:
     from ...env.lockfile import LockFile
@@ -60,9 +60,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    # Set up logging based on verbosity level
-    setup_logging(args.verbose, args.quiet)
-
     from ...env import EnvironmentBuilder
     from ...env.linking import LinkStrategy
     from ...env.lockfile import LockFile

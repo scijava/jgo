@@ -8,6 +8,7 @@ from pathlib import Path
 
 import rich_click as click
 
+from ..util import setup_logging
 from .commands.add import add
 from .commands.config import config
 from .commands.info import (
@@ -379,6 +380,11 @@ def cli(ctx, **kwargs):
     - Command mode: jgo <command> [options]
     - Legacy endpoint mode: jgo <endpoint> [options]
     """
+    # Setup logging based on verbose/quiet flags FIRST
+    verbose = kwargs.get("verbose", 0)
+    quiet = kwargs.get("quiet", False)
+    setup_logging(verbose, quiet)
+
     # Store global options in context for subcommands
     ctx.ensure_object(dict)
     ctx.obj.update(kwargs)
