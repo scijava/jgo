@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-import sys
+import logging
 from typing import TYPE_CHECKING
 
 import click
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
+
+_logger = logging.getLogger("jgo")
 
 
 @click.command(help="Update jgo.lock.toml without building environment")
@@ -53,7 +55,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    from ..helpers import load_spec_file, verbose_print
+    from ..helpers import load_spec_file
 
     # Get the spec file path
     _spec, exit_code = load_spec_file(args)
@@ -66,22 +68,20 @@ def execute(args: ParsedArgs, config: dict) -> int:
     if getattr(args, "check", False):
         lock_file = spec_file.parent / "jgo.lock.toml"
         if not lock_file.exists():
-            print("Lock file does not exist", file=sys.stderr)
+            _logger.error("Lock file does not exist")
             return 1
 
         # TODO: Implement lock file validation
         # For now, just check if it exists
-        print(f"Lock file exists: {lock_file}")
+        _logger.info(f"Lock file exists: {lock_file}")
         return 0
 
-    verbose_print(args, f"Updating lock file for {spec_file}")
+    _logger.debug(f"Updating lock file for {spec_file}")
 
     # TODO: Implement lock file generation
     # This would resolve dependencies using Maven and create a lock file
     # with pinned versions without actually building the environment
 
-    print("Lock file generation not yet implemented", file=sys.stderr)
-    print(
-        "Use 'jgo sync' to resolve dependencies and build environment", file=sys.stderr
-    )
+    _logger.error("Lock file generation not yet implemented")
+    _logger.error("Use 'jgo sync' to resolve dependencies and build environment")
     return 1

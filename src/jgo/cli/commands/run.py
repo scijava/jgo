@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
-import sys
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import click
 
-from ...util import is_debug_enabled, is_info_enabled, setup_logging
+from ...util import is_debug_enabled, setup_logging
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
+
+_logger = logging.getLogger("jgo")
 
 
 @click.command(
@@ -121,8 +123,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
     # Set up logging based on verbosity level
     setup_logging(args.verbose, args.quiet)
 
-    verbose = is_info_enabled() and not args.quiet
-
     # Check if we're in spec mode (jgo.toml exists)
     spec_file = Path("jgo.toml")
     if spec_file.exists() and not args.endpoint:
@@ -136,8 +136,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
             # Check if endpoint is an entrypoint name
             if args.endpoint in spec.entrypoints:
                 # Use entrypoint from jgo.toml (project-local wins)
-                if verbose:
-                    print(f"Using entrypoint '{args.endpoint}' from jgo.toml")
+                _logger.info(f"Using entrypoint '{args.endpoint}' from jgo.toml")
                 # Set entrypoint argument and run in spec mode
                 args.entrypoint = args.endpoint
                 args.endpoint = None  # Clear endpoint to trigger spec mode
@@ -152,8 +151,8 @@ def execute(args: ParsedArgs, config: dict) -> int:
         jgoconfig = GlobalSettings(shortcuts=shortcuts)
         expanded = jgoconfig.expand_shortcuts(args.endpoint)
 
-        if expanded != args.endpoint and verbose:
-            print(f"Expanded shortcut: {args.endpoint} → {expanded}")
+        if expanded != args.endpoint:
+            _logger.info(f"Expanded shortcut: {args.endpoint} → {expanded}")
 
         # Update endpoint with expanded value
         args.endpoint = expanded
@@ -181,13 +180,12 @@ def _run_spec(args: ParsedArgs, config: dict) -> int:
     )
     from ..output import print_classpath, print_java_info
 
-    verbose = is_info_enabled() and not args.quiet
     debug = is_debug_enabled()
 
     spec_file = args.get_spec_file()
 
     if not spec_file.exists():
-        print(f"Error: {spec_file} not found", file=sys.stderr)
+        _logger.error(f"{spec_file} not found")
         return 1
 
     # Load spec
@@ -198,8 +196,7 @@ def _run_spec(args: ParsedArgs, config: dict) -> int:
     builder = create_environment_builder(args, config, context)
 
     # Build environment
-    if verbose:
-        print(f"Building environment from {spec_file}...")
+    _logger.info(f"Building environment from {spec_file}...")
 
     environment = builder.from_spec(
         spec, update=args.update, entrypoint=args.entrypoint
@@ -216,8 +213,7 @@ def _run_spec(args: ParsedArgs, config: dict) -> int:
         return 0
 
     # Create runner and execute
-    if verbose:
-        print(f"Running {spec.name}...")
+    _logger.info(f"Running {spec.name}...")
 
     runner = create_java_runner(args, config)
     # Use environment's main class if set, otherwise fall back to args.main_class
@@ -253,12 +249,11 @@ def _run_endpoint(args: ParsedArgs, config: dict) -> int:
     )
     from ..output import print_classpath, print_java_info
 
-    verbose = is_info_enabled() and not args.quiet
     debug = is_debug_enabled()
 
     if not args.endpoint:
-        print("Error: No endpoint specified", file=sys.stderr)
-        print("Use 'jgo --help' for usage information", file=sys.stderr)
+        _logger.error("No endpoint specified")
+        _logger.error("Use 'jgo --help' for usage information")
         return 1
 
     # Create Maven context and environment builder
@@ -266,8 +261,7 @@ def _run_endpoint(args: ParsedArgs, config: dict) -> int:
     builder = create_environment_builder(args, config, context)
 
     # Build environment
-    if verbose:
-        print(f"Building environment for {args.endpoint}...")
+    _logger.info(f"Building environment for {args.endpoint}...")
 
     environment = builder.from_endpoint(
         args.endpoint,
@@ -285,8 +279,7 @@ def _run_endpoint(args: ParsedArgs, config: dict) -> int:
         return 0
 
     # Create runner and execute
-    if verbose:
-        print("Running Java application...")
+    _logger.info("Running Java application...")
 
     runner = create_java_runner(args, config)
     # CLI main_class override takes precedence, otherwise use environment's main class
