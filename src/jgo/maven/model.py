@@ -58,7 +58,8 @@ class Model:
         # The following steps are adapted from the maven-model-builder:
         # https://maven.apache.org/ref/3.3.9/maven-model-builder/
 
-        # -- profile activation and injection --
+        # -- PROFILE ACTIVATION AND INJECTION --
+
         _log.debug(f"{self.gav}: profile activation and injection")
 
         # Compute active profiles.
@@ -88,7 +89,8 @@ class Model:
             profile_props = {el.tag: el.text for el in profile_props_els}
             self._merge_props(profile_props)
 
-        # -- parent resolution and inheritance assembly --
+        # -- PARENT RESOLUTION AND INHERITANCE ASSEMBLY --
+
         _log.debug(f"{self.gav}: parent resolution and inheritance assembly")
 
         # Merge values up the parent chain into the current model.
@@ -97,7 +99,8 @@ class Model:
             self._merge(parent)
             parent = self.context.pom_parent(parent)
 
-        # -- model interpolation --
+        # -- MODEL INTERPOLATION --
+
         _log.debug(f"{self.gav}: model interpolation")
 
         # Replace ${...} expressions in property values.
@@ -109,7 +112,8 @@ class Model:
         self.deps = self._interpolate_deps(self.deps)
         self.dep_mgmt = self._interpolate_deps(self.dep_mgmt)
 
-        # -- dependency management import --
+        # -- DEPENDENCY MANAGEMENT IMPORT --
+
         _log.debug(f"{self.gav}: dependency management import")
 
         # NB: BOM-type dependencies imported in the <dependencyManagement> section are
@@ -121,7 +125,8 @@ class Model:
         # NB: We need to copy the dep_mgmt dict to avoid mutating while iterating it.
         self._import_boms(self.dep_mgmt.copy())
 
-        # -- dependency management injection --
+        # -- DEPENDENCY MANAGEMENT INJECTION --
+
         _log.debug(f"{self.gav}: dependency management injection")
 
         # Handles injection of dependency management into the model.
@@ -173,7 +178,6 @@ class Model:
                 )
                 dep.exclusions = managed.exclusions
 
-        # -- set default scopes --
         # Any dependencies that still don't have a scope get the default
         for dep in self.deps.values():
             if dep.scope is None:
