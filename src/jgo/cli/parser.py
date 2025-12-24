@@ -247,34 +247,39 @@ def global_options(f):
         "-u",
         "--update",
         is_flag=True,
-        help="Update cached environment. [env: [red]JGO_UPDATE[/]]",
+        help="Update cached environment.",
         envvar="JGO_UPDATE",
+        show_envvar=True,
     )(f)
     f = click.option(
         "--offline",
         is_flag=True,
-        help="Work offline, don't download. [env: [red]JGO_OFFLINE[/]]",
+        help="Work offline, don't download.",
         envvar="JGO_OFFLINE",
+        show_envvar=True,
     )(f)
     f = click.option(
         "--no-cache",
         is_flag=True,
-        help="Skip cache entirely, always rebuild. [env: [red]JGO_NO_CACHE[/]]",
+        help="Skip cache entirely, always rebuild.",
         envvar="JGO_NO_CACHE",
+        show_envvar=True,
     )(f)
     f = click.option(
         "--cache-dir",
         type=click.Path(path_type=Path),
         metavar="PATH",
-        help="Override cache directory. [env: [red]JGO_CACHE_DIR[/]]",
+        help="Override cache directory.",
         envvar="JGO_CACHE_DIR",
+        show_envvar=True,
     )(f)
     f = click.option(
         "--repo-cache",
         type=click.Path(path_type=Path),
         metavar="PATH",
-        help="Override Maven repo cache. [env: [red]M2_REPO[/]]",
+        help="Override Maven repo cache.",
         envvar="M2_REPO",
+        show_envvar=True,
     )(f)
 
     # Maven options
@@ -306,8 +311,9 @@ def global_options(f):
         "--java-version",
         type=int,
         metavar="VERSION",
-        help="Force specific Java version (e.g., 17). [env: [red]JAVA_VERSION[/]]",
+        help="Force specific Java version (e.g., 17).",
         envvar="JAVA_VERSION",
+        show_envvar=True,
     )(f)
     f = click.option(
         "--java-vendor",
