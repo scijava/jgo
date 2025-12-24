@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from ...env.lockfile import LockFile
     from ..parser import ParsedArgs
 
-_logger = logging.getLogger("jgo")
+_log = logging.getLogger("jgo")
 
 
 @click.command(help="Resolve dependencies and build environment")
@@ -80,12 +80,12 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     spec_file = args.get_spec_file()
 
-    _logger.debug(f"Syncing environment from {spec_file}")
+    _log.debug(f"Syncing environment from {spec_file}")
     if spec.name:
-        _logger.debug(f"  Name: {spec.name}")
+        _log.debug(f"  Name: {spec.name}")
     if spec.description:
-        _logger.debug(f"  Description: {spec.description}")
-    _logger.debug(f"  Dependencies: {len(spec.coordinates)}")
+        _log.debug(f"  Description: {spec.description}")
+    _log.debug(f"  Dependencies: {len(spec.coordinates)}")
 
     # Dry run mode
     if handle_dry_run(args, f"Would sync environment from {spec_file}"):
@@ -131,8 +131,8 @@ def execute(args: ParsedArgs, config: dict) -> int:
         # Build environment from spec
         env = builder.from_spec(spec, update=update)
 
-        _logger.debug(f"Environment built at: {env.path}")
-        _logger.debug(f"Classpath entries: {len(env.classpath)}")
+        _log.debug(f"Environment built at: {env.path}")
+        _log.debug(f"Classpath entries: {len(env.classpath)}")
 
         # Show version changes if updating and verbose
         if update and is_info_enabled() and old_lockfile:
@@ -141,7 +141,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
         return 0
 
     except Exception as e:
-        _logger.error(f"Failed to build environment: {e}")
+        _log.error(f"Failed to build environment: {e}")
         print_exception_if_verbose(args)
         return 1
 

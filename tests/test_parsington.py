@@ -9,7 +9,7 @@ import unittest
 
 import jgo
 
-_logger = logging.getLogger(__name__)
+_log = logging.getLogger(__name__)
 
 
 IGNORE_JGORC = "--ignore-jgorc"
@@ -61,7 +61,7 @@ class ParsingtonTest(unittest.TestCase):
             )
         except OSError as e:
             if e.errno == 18:
-                _logger.warning(
+                _log.warning(
                     "Unable to cross-device hard link, skipping hard link test: %s",
                     str(e),
                 )

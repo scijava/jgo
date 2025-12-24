@@ -10,7 +10,7 @@ import click
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
-_logger = logging.getLogger("jgo")
+_log = logging.getLogger("jgo")
 
 
 @click.command(help="List available versions of an artifact")
@@ -45,8 +45,8 @@ def execute(args: ParsedArgs, config: dict) -> int:
     from ..helpers import parse_coordinate_safe
 
     if not args.endpoint:
-        _logger.error("versions command requires a coordinate")
-        _logger.error("Usage: jgo versions <groupId:artifactId>")
+        _log.error("versions command requires a coordinate")
+        _log.error("Usage: jgo versions <groupId:artifactId>")
         return 1
 
     # Parse endpoint to get groupId and artifactId
@@ -83,7 +83,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
             print(f"  {version}{marker}")
 
     except Exception as e:
-        _logger.error(f"Error fetching versions: {e}")
+        _log.error(f"Error fetching versions: {e}")
         return 1
 
     return 0

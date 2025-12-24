@@ -12,7 +12,7 @@ from ...util import setup_logging
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
-_logger = logging.getLogger("jgo")
+_log = logging.getLogger("jgo")
 
 
 @click.command(help="Create a new jgo.toml environment file")
@@ -56,7 +56,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     endpoint = args.endpoint
     if not endpoint:
-        _logger.error("init requires an endpoint")
+        _log.error("init requires an endpoint")
         return 1
 
     # Use current directory name as environment name (like pixi and uv do)
@@ -69,7 +69,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
     expanded_endpoint = jgoconfig.expand_shortcuts(endpoint)
 
     if expanded_endpoint != endpoint:
-        _logger.info(f"Expanded shortcuts: {endpoint} → {expanded_endpoint}")
+        _log.info(f"Expanded shortcuts: {endpoint} → {expanded_endpoint}")
 
     # Parse endpoint to extract coordinates and entrypoints
     # Support composition with '+': track original shortcut names for entrypoint naming
@@ -102,9 +102,9 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     spec.save(output_file)
 
-    _logger.info(f"Generated {output_file}")
+    _log.info(f"Generated {output_file}")
     if entrypoints:
-        _logger.info(
+        _log.info(
             f"Created {len(entrypoints)} entrypoint(s): {', '.join(entrypoints.keys())}"
         )
 

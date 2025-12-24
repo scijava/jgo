@@ -57,7 +57,7 @@ def setup_logging(verbose: int = 0, quiet: bool = False) -> logging.Logger:
     return logger
 
 
-def get_logger(name: str = "jgo") -> logging.Logger:
+def get_log(name: str = "jgo") -> logging.Logger:
     """
     Get a logger instance.
 

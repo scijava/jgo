@@ -8,8 +8,8 @@ from .compat import (
     maven_scijava_repository,
 )
 from .logging import (
+    get_log,
     get_log_level,
-    get_logger,
     is_debug_enabled,
     is_info_enabled,
     setup_logging,
@@ -18,7 +18,7 @@ from .maven import ensure_maven_available, fetch_maven
 
 __all__ = [
     "setup_logging",
-    "get_logger",
+    "get_log",
     "get_log_level",
     "is_debug_enabled",
     "is_info_enabled",

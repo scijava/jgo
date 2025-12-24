@@ -12,7 +12,7 @@ import click
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
-_logger = logging.getLogger("jgo")
+_log = logging.getLogger("jgo")
 
 
 @click.group(help="Manage jgo configuration", invoke_without_command=True)
@@ -73,7 +73,7 @@ def execute(
     """
     # Determine which settings/config file to use
     if local_config and global_config:
-        _logger.error("Cannot use both --global and --local")
+        _log.error("Cannot use both --global and --local")
         return 1
 
     if local_config:
@@ -100,7 +100,7 @@ def execute(
         return _set_config(config_file, config_type, key, value, args)
 
     # Should not reach here
-    _logger.error("Invalid arguments")
+    _log.error("Invalid arguments")
     return 1
 
 
@@ -212,22 +212,22 @@ def _get_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) -> i
         elif key == "links":
             print(settings.links)
         else:
-            _logger.error(f"Unknown setting: {key}")
+            _log.error(f"Unknown setting: {key}")
             return 1
     elif section == "repositories":
         if key in settings.repositories:
             print(settings.repositories[key])
         else:
-            _logger.error(f"Repository '{key}' not found")
+            _log.error(f"Repository '{key}' not found")
             return 1
     elif section == "shortcuts":
         if key in settings.shortcuts:
             print(settings.shortcuts[key])
         else:
-            _logger.error(f"Shortcut '{key}' not found")
+            _log.error(f"Shortcut '{key}' not found")
             return 1
     else:
-        _logger.error(f"Unknown section: [{section}]")
+        _log.error(f"Unknown section: [{section}]")
         return 1
 
     return 0
@@ -242,11 +242,11 @@ def _get_toml(config_file: Path, section: str, key: str, args: ParsedArgs) -> in
         return 1
 
     if section not in data:
-        _logger.error(f"Section [{section}] not found")
+        _log.error(f"Section [{section}] not found")
         return 1
 
     if key not in data[section]:
-        _logger.error(f"Key '{key}' not found in section [{section}]")
+        _log.error(f"Key '{key}' not found in section [{section}]")
         return 1
 
     value = data[section][key]
@@ -280,10 +280,10 @@ def _set_jgorc(
     # Validate section and key
     valid_settings = ("cache_dir", "repo_cache", "links")
     if section == "settings" and key not in valid_settings:
-        _logger.error(f"Unknown setting: {key}")
+        _log.error(f"Unknown setting: {key}")
         return 1
     elif section not in ("settings", "repositories", "shortcuts"):
-        _logger.error(f"Unknown section: [{section}]")
+        _log.error(f"Unknown section: [{section}]")
         return 1
 
     # Load existing config
@@ -394,11 +394,11 @@ def _unset_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) ->
 
     # Validate that section and key exist
     if not parser.has_section(section):
-        _logger.error(f"Section [{section}] not found")
+        _log.error(f"Section [{section}] not found")
         return 1
 
     if not parser.has_option(section, key):
-        _logger.error(f"Key '{key}' not found in section [{section}]")
+        _log.error(f"Key '{key}' not found in section [{section}]")
         return 1
 
     # Dry run
@@ -432,11 +432,11 @@ def _unset_toml(config_file: Path, section: str, key: str, args: ParsedArgs) -> 
         return 1
 
     if section not in data:
-        _logger.error(f"Section [{section}] not found")
+        _log.error(f"Section [{section}] not found")
         return 1
 
     if key not in data[section]:
-        _logger.error(f"Key '{key}' not found in section [{section}]")
+        _log.error(f"Key '{key}' not found in section [{section}]")
         return 1
 
     # Dry run

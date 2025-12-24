@@ -10,7 +10,7 @@ import click
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
-_logger = logging.getLogger("jgo")
+_log = logging.getLogger("jgo")
 
 
 @click.command(help="Remove dependencies from jgo.toml")
@@ -69,8 +69,8 @@ def execute(args: ParsedArgs, config: dict) -> int:
     # Get coordinates to remove
     coordinates = getattr(args, "coordinates", [])
     if not coordinates:
-        _logger.error("No coordinates specified")
-        _logger.error("Usage: jgo remove <coordinate> [<coordinate> ...]")
+        _log.error("No coordinates specified")
+        _log.error("Usage: jgo remove <coordinate> [<coordinate> ...]")
         return 1
 
     # Remove coordinates (matching by groupId:artifactId, ignoring version)
@@ -83,7 +83,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
             coord_obj = Coordinate.parse(coord)
             prefix = f"{coord_obj.groupId}:{coord_obj.artifactId}"
         except ValueError:
-            _logger.error(f"Invalid coordinate format: {coord}")
+            _log.error(f"Invalid coordinate format: {coord}")
             continue
 
         # Find matching coordinates
@@ -93,13 +93,13 @@ def execute(args: ParsedArgs, config: dict) -> int:
                 spec.coordinates.remove(existing_coord)
                 removed_count += 1
                 matched = True
-                _logger.debug(f"Removed: {existing_coord}")
+                _log.debug(f"Removed: {existing_coord}")
 
         if not matched:
-            _logger.debug(f"Not found: {coord}")
+            _log.debug(f"Not found: {coord}")
 
     if removed_count == 0:
-        _logger.warning("No dependencies removed")
+        _log.warning("No dependencies removed")
         return 0
 
     from ..helpers import handle_dry_run
@@ -112,14 +112,14 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     try:
         spec.save(spec_file)
-        _logger.info(f"Removed {removed_count} dependencies from {spec_file}")
+        _log.info(f"Removed {removed_count} dependencies from {spec_file}")
     except Exception as e:
-        _logger.error(f"Failed to save {spec_file}: {e}")
+        _log.error(f"Failed to save {spec_file}: {e}")
         return 1
 
     # Auto-sync unless --no-sync specified
     if not getattr(args, "no_sync", False):
-        _logger.debug("Syncing environment...")
+        _log.debug("Syncing environment...")
         from . import sync as sync_cmd
 
         return sync_cmd.execute(args, config)

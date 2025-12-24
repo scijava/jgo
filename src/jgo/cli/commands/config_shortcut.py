@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
     from ..parser import ParsedArgs
 
-_logger = logging.getLogger("jgo")
+_log = logging.getLogger("jgo")
 
 
 @click.command(name="shortcut", help="Manage global endpoint shortcuts")
@@ -139,7 +139,7 @@ def execute(
         return _add_shortcut(config_file, name, endpoint, args)
 
     # Should not reach here
-    _logger.error("Invalid arguments")
+    _log.error("Invalid arguments")
     return 1
 
 
@@ -177,7 +177,7 @@ def _show_shortcut(config_file: Path, config: dict, name: str, args: ParsedArgs)
     shortcuts = config.get("shortcuts", {})
 
     if name not in shortcuts:
-        _logger.error(f"Shortcut '{name}' not found")
+        _log.error(f"Shortcut '{name}' not found")
         print("Use 'jgo config shortcut' to list all shortcuts", file=sys.stderr)
         return 1
 
@@ -190,7 +190,7 @@ def _add_shortcut(config_file: Path, name: str, endpoint: str, args: ParsedArgs)
     """Add or update a shortcut."""
     # Validate shortcut name
     if not name or not name[0].isalnum():
-        _logger.error(f"Invalid shortcut name '{name}'")
+        _log.error(f"Invalid shortcut name '{name}'")
         print("Shortcut names must start with a letter or number", file=sys.stderr)
         return 1
 
@@ -232,18 +232,18 @@ def _add_shortcut(config_file: Path, name: str, endpoint: str, args: ParsedArgs)
 def _remove_shortcut(config_file: Path, name: str, args: ParsedArgs) -> int:
     """Remove a shortcut."""
     if not config_file.exists():
-        _logger.error(f"No configuration file found at {config_file}")
+        _log.error(f"No configuration file found at {config_file}")
         return 1
 
     parser = configparser.ConfigParser()
     parser.read(config_file)
 
     if not parser.has_section("shortcuts"):
-        _logger.error("No shortcuts configured")
+        _log.error("No shortcuts configured")
         return 1
 
     if not parser.has_option("shortcuts", name):
-        _logger.error(f"Shortcut '{name}' not found")
+        _log.error(f"Shortcut '{name}' not found")
         return 1
 
     # Dry run

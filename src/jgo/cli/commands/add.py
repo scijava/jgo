@@ -10,7 +10,7 @@ import click
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
-_logger = logging.getLogger("jgo")
+_log = logging.getLogger("jgo")
 
 
 @click.command(help="Add dependencies to jgo.toml")
@@ -69,22 +69,22 @@ def execute(args: ParsedArgs, config: dict) -> int:
     # Get coordinates to add
     coordinates = getattr(args, "coordinates", [])
     if not coordinates:
-        _logger.error("No coordinates specified")
-        _logger.error("Usage: jgo add <coordinate> [<coordinate> ...]")
+        _log.error("No coordinates specified")
+        _log.error("Usage: jgo add <coordinate> [<coordinate> ...]")
         return 1
 
     # Add coordinates
     added_count = 0
     for coord in coordinates:
         if coord in spec.coordinates:
-            _logger.debug(f"Already present: {coord}")
+            _log.debug(f"Already present: {coord}")
         else:
             spec.coordinates.append(coord)
             added_count += 1
-            _logger.debug(f"Added: {coord}")
+            _log.debug(f"Added: {coord}")
 
     if added_count == 0:
-        _logger.warning("No new dependencies added")
+        _log.warning("No new dependencies added")
         return 0
 
     from ..helpers import handle_dry_run
@@ -95,14 +95,14 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     try:
         spec.save(spec_file)
-        _logger.info(f"Added {added_count} dependencies to {spec_file}")
+        _log.info(f"Added {added_count} dependencies to {spec_file}")
     except Exception as e:
-        _logger.error(f"Failed to save {spec_file}: {e}")
+        _log.error(f"Failed to save {spec_file}: {e}")
         return 1
 
     # Auto-sync unless --no-sync specified
     if not getattr(args, "no_sync", False):
-        _logger.debug("Syncing environment...")
+        _log.debug("Syncing environment...")
         from . import sync as sync_cmd
 
         return sync_cmd.execute(args, config)

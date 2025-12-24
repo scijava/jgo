@@ -10,7 +10,7 @@ import click
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
-_logger = logging.getLogger("jgo")
+_log = logging.getLogger("jgo")
 
 
 @click.command(name="list", help="List resolved dependencies (flat list)")
@@ -57,7 +57,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
     if args.is_spec_mode():
         spec_file = args.get_spec_file()
         if not spec_file.exists():
-            _logger.error(f"{spec_file} not found")
+            _log.error(f"{spec_file} not found")
             return 1
         spec = EnvironmentSpec.load(spec_file)
         components = []
@@ -71,7 +71,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
         boms = None
     else:
         if not args.endpoint:
-            _logger.error("No endpoint specified")
+            _log.error("No endpoint specified")
             return 1
         components, coordinates, _ = builder._parse_endpoint(args.endpoint)
         boms = filter_managed_components(components, coordinates)

@@ -15,7 +15,7 @@ from pathlib import Path
 
 import cjdk
 
-_logger = logging.getLogger(__name__)
+_log = logging.getLogger(__name__)
 
 
 def ensure_maven_available() -> Path:
@@ -31,7 +31,7 @@ def ensure_maven_available() -> Path:
     # First try to find mvn on the system PATH
     mvn_path = shutil.which("mvn")
     if mvn_path:
-        _logger.debug(f"Found Maven on PATH: {mvn_path}")
+        _log.debug(f"Found Maven on PATH: {mvn_path}")
         return Path(mvn_path)
 
     # Maven not found, fetch it from the remote server
@@ -78,15 +78,15 @@ def fetch_maven(url: str = "", sha: str = "") -> Path:
             )
         kwargs = {sha_lengths[sha_len]: sha}
 
-    _logger.info("Fetching Maven from remote server...")
+    _log.info("Fetching Maven from remote server...")
     maven_dir = cjdk.cache_package("Maven", url, **kwargs)
-    _logger.debug(f"maven_dir -> {maven_dir}")
+    _log.debug(f"maven_dir -> {maven_dir}")
 
     # Find the mvn executable in the cached directory
     # Look for apache-maven-*/**/mvn pattern
     if maven_bin := next(maven_dir.rglob("apache-maven-*/bin/mvn"), None):
         _add_to_path(maven_bin.parent, front=True)
-        _logger.info(f"Maven downloaded and cached at: {maven_bin}")
+        _log.info(f"Maven downloaded and cached at: {maven_bin}")
         return maven_bin
     else:
         raise RuntimeError(
