@@ -9,7 +9,7 @@ import urllib.parse
 import urllib.request
 from typing import TYPE_CHECKING
 
-import click
+import rich_click as click
 
 from ...util import is_debug_enabled, is_info_enabled, setup_logging
 
@@ -19,18 +19,18 @@ if TYPE_CHECKING:
 _log = logging.getLogger("jgo")
 
 
-@click.command(help="Search for artifacts in Maven repositories")
+@click.command(help="Search for artifacts in [magenta]Maven repositories[/]")
 @click.option(
     "--limit",
     type=int,
     default=20,
     metavar="N",
-    help="Limit number of results (default: 20)",
+    help="Limit number of results [dim](default: 20)[/]",
 )
 @click.option(
     "--repository",
     metavar="NAME",
-    help="Search specific repository (default: central)",
+    help="Search specific repository [dim](default: central)[/]",
 )
 @click.argument("query", nargs=-1, required=True)
 @click.pass_context

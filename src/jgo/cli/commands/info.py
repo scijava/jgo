@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-import click
+import rich_click as click
 
 _log = logging.getLogger("jgo")
 

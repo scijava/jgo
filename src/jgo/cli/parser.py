@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import click
+import rich_click as click
 
 from .commands.add import add
 from .commands.config import config
@@ -175,7 +175,7 @@ class JgoArgumentParser:
 
 
 # Custom Click group that handles shorthand endpoint syntax and shortcuts
-class JgoGroup(click.Group):
+class JgoGroup(click.RichGroup):
     """Custom group that auto-detects shorthand endpoint syntax and shortcuts."""
 
     def invoke(self, ctx):
@@ -357,11 +357,11 @@ def global_options(f):
     cls=JgoGroup,
     invoke_without_command=True,
     context_settings=dict(ignore_unknown_options=True, allow_interspersed_args=False),
-    help="""Environment manager for Java programs.
+    help="""[bold]Environment manager for Java programs.[/]
 
-Launch Java applications directly from Maven coordinates,
+Launch Java applications directly from [cyan]Maven coordinates[/],
 build reproducible environments, manage Java versions,
-and resolve dependencies -- without manual installation.""",
+and resolve dependencies -- [green]without manual installation[/].""",
 )
 @global_options
 @click.pass_context

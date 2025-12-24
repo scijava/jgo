@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import click
+import rich_click as click
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs

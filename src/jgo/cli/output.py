@@ -7,9 +7,10 @@ and user-facing messages in various formats with consistent styling.
 
 from __future__ import annotations
 
-import os
 import sys
 from typing import TYPE_CHECKING
+
+from rich.console import Console
 
 if TYPE_CHECKING:
     from ..env import Environment
@@ -17,43 +18,12 @@ if TYPE_CHECKING:
     from ..maven.core import Component
 
 
-# === Color/Style Support ===
+# === Console Instances ===
 
-
-def _supports_color() -> bool:
-    """
-    Check if terminal supports color output.
-
-    Respects the NO_COLOR environment variable and checks if output is a TTY.
-
-    Returns:
-        True if colors should be used, False otherwise
-    """
-    # Check if NO_COLOR environment variable is set
-    if os.getenv("NO_COLOR"):
-        return False
-    # Check if output is a TTY
-    return hasattr(sys.stderr, "isatty") and sys.stderr.isatty()
-
-
-def _style_text(text: str, color: str | None = None, bold: bool = False) -> str:
-    """
-    Apply ANSI color/style codes to text if terminal supports it.
-
-    Args:
-        text: Text to style
-        color: Color name (red, green, yellow, blue, cyan, magenta)
-        bold: Whether to make text bold
-
-    Returns:
-        Styled text with ANSI codes, or plain text if colors not supported
-    """
-    if not _supports_color():
-        return text
-
-    import click
-
-    return click.style(text, fg=color, bold=bold)
+# Create console instances that automatically handle color detection
+# They respect NO_COLOR env var and TTY detection
+_console = Console()  # For stdout
+_err_console = Console(stderr=True)  # For stderr
 
 
 # === Message Output Functions ===
@@ -71,16 +41,15 @@ def print_message(message: str, prefix: str = "", indent: int = 0, file=None) ->
         indent: Number of spaces to indent (default: 0)
         file: File to write to (default: stdout)
     """
-    if file is None:
-        file = sys.stdout
-
+    console = _err_console if file is sys.stderr else _console
     indentation = " " * indent
+
     if prefix:
         full_message = f"{indentation}{prefix} {message}"
     else:
         full_message = f"{indentation}{message}"
 
-    print(full_message, file=file)
+    console.print(full_message, highlight=False)
 
 
 def print_success(message: str, indent: int = 0) -> None:
@@ -93,8 +62,8 @@ def print_success(message: str, indent: int = 0) -> None:
         message: Success message to print
         indent: Number of spaces to indent (default: 0)
     """
-    styled_msg = _style_text(message, color="green")
-    print_message(styled_msg, indent=indent)
+    indentation = " " * indent
+    _console.print(f"{indentation}{message}", highlight=False)
 
 
 def print_warning(message: str, indent: int = 0) -> None:
@@ -105,8 +74,8 @@ def print_warning(message: str, indent: int = 0) -> None:
         message: Warning message to print
         indent: Number of spaces to indent (default: 0)
     """
-    styled_msg = _style_text(message, color="yellow")
-    print_message(styled_msg, indent=indent, file=sys.stderr)
+    indentation = " " * indent
+    _err_console.print(f"{indentation}{message}", highlight=False)
 
 
 def print_error(message: str, indent: int = 0) -> None:
@@ -119,8 +88,8 @@ def print_error(message: str, indent: int = 0) -> None:
         message: Error message to print (without "Error:" prefix)
         indent: Number of spaces to indent (default: 0)
     """
-    styled_msg = _style_text(f"Error: {message}", color="red", bold=True)
-    print_message(styled_msg, indent=indent, file=sys.stderr)
+    indentation = " " * indent
+    _err_console.print(f"{indentation}[bold red]Error: {message}", highlight=False)
 
 
 def print_dry_run(message: str) -> None:
@@ -130,26 +99,10 @@ def print_dry_run(message: str) -> None:
     Args:
         message: Dry-run message (e.g., "Would add 5 dependencies")
     """
-    prefix = _style_text("[DRY-RUN]", color="cyan", bold=True)
-    print_message(message, prefix=prefix)
+    _console.print(r"[cyan bold]\[DRY-RUN] " + message, highlight=False)
 
 
 # === Data Output Functions ===
-
-
-def print_data(data: str, separator: str | None = None) -> None:
-    """
-    Print raw data output to stdout (classpath, dependency lists, etc.).
-
-    This is for machine-readable output that should never be styled or prefixed.
-
-    Args:
-        data: Raw data to print
-        separator: Optional separator to print after data
-    """
-    print(data)
-    if separator:
-        print(separator)
 
 
 def print_table_header(title: str, width: int = 70, char: str = "=") -> None:

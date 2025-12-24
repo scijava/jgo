@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import click
+import rich_click as click
 
 from ...util import is_info_enabled, setup_logging
 
@@ -17,11 +17,11 @@ if TYPE_CHECKING:
 _log = logging.getLogger("jgo")
 
 
-@click.command(help="Resolve dependencies and build environment")
+@click.command(help="[green]Resolve[/] dependencies and [green]build[/] environment")
 @click.option(
     "--force",
     is_flag=True,
-    help="Force rebuild even if cached",
+    help="Force rebuild even if [yellow]cached[/]",
 )
 @click.pass_context
 def sync(ctx, force):

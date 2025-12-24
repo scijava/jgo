@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import click
+import rich_click as click
 
 from ...util import is_debug_enabled, setup_logging
 
@@ -17,25 +17,25 @@ _log = logging.getLogger("jgo")
 
 
 @click.command(
-    help="Run a Java application from Maven coordinates or jgo.toml",
-    epilog="TIP: Use 'jgo --dry-run run' to see the command without executing it.",
+    help="Run a Java application from [cyan]Maven coordinates[/] or [cyan]jgo.toml[/]",
+    epilog="[dim]TIP: Use [yellow]jgo --dry-run run[/] to see the command without executing it.[/]",
     context_settings=dict(ignore_unknown_options=True, allow_interspersed_args=False),
 )
 @click.option(
     "--main-class",
     metavar="CLASS",
-    help="Main class to run (supports auto-completion for simple names)",
+    help="Main class to run (supports [green]auto-completion[/] for simple names)",
 )
 @click.option(
     "--entrypoint",
     metavar="NAME",
-    help="Run specific entrypoint from jgo.toml",
+    help="Run specific entrypoint from [cyan]jgo.toml[/]",
 )
 @click.option(
     "--add-classpath",
     multiple=True,
     metavar="PATH",
-    help="Append to classpath (JARs, directories, etc.)",
+    help="Append to classpath ([dim]JARs, directories, etc.[/])",
 )
 @click.argument("endpoint", required=False)
 @click.argument("remaining", nargs=-1, type=click.UNPROCESSED)

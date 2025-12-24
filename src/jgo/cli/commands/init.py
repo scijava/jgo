@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-import click
+import rich_click as click
 
 from ...util import setup_logging
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 _log = logging.getLogger("jgo")
 
 
-@click.command(help="Create a new jgo.toml environment file")
+@click.command(help="Create a new [cyan]jgo.toml[/] environment file")
 @click.argument("endpoint", required=False)
 @click.pass_context
 def init(ctx, endpoint):

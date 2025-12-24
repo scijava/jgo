@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-import click
+import rich_click as click
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
@@ -13,12 +13,12 @@ if TYPE_CHECKING:
 _log = logging.getLogger("jgo")
 
 
-@click.command(help="Remove dependencies from jgo.toml")
+@click.command(help="Remove dependencies from [cyan]jgo.toml[/]")
 @click.argument("coordinates", nargs=-1, required=True)
 @click.option(
     "--no-sync",
     is_flag=True,
-    help="Don't automatically sync after removing dependencies",
+    help="Don't automatically [yellow]sync[/] after removing dependencies",
 )
 @click.pass_context
 def remove(ctx, coordinates, no_sync):

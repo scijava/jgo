@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import click
+import rich_click as click
 
 from ...util import is_info_enabled, setup_logging
 

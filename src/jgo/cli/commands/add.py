@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-import click
+import rich_click as click
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
@@ -13,12 +13,12 @@ if TYPE_CHECKING:
 _log = logging.getLogger("jgo")
 
 
-@click.command(help="Add dependencies to jgo.toml")
+@click.command(help="Add dependencies to [cyan]jgo.toml[/]")
 @click.argument("coordinates", nargs=-1, required=True)
 @click.option(
     "--no-sync",
     is_flag=True,
-    help="Don't automatically sync after adding dependencies",
+    help="Don't automatically [yellow]sync[/] after adding dependencies",
 )
 @click.pass_context
 def add(ctx, coordinates, no_sync):
