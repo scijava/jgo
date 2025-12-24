@@ -305,7 +305,7 @@ Global Options:
 1. **Create subcommand framework**
    - New file: `src/jgo/cli/subcommands.py` or package `src/jgo/cli/subcommands/`
    - Update `parser.py` to use `argparse.ArgumentParser.add_subparsers()`
-   - Detect legacy endpoint syntax and inject `run` command
+   - Detect shorthand endpoint syntax and inject `run` command
 
 2. **Implement `run` command**
    - Move existing endpoint execution logic into `run` subcommand
@@ -447,7 +447,7 @@ class JgoArgumentParser:
         return parser
     
     def parse_args(self, args=None):
-        # Detect legacy endpoint syntax
+        # Detect shorthand endpoint syntax
         if args is None:
             args = sys.argv[1:]
         

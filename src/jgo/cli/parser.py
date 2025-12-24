@@ -174,16 +174,46 @@ class JgoArgumentParser:
             return "unknown"
 
 
-# Custom Click group that handles legacy endpoint syntax
+# Custom Click group that handles shorthand endpoint syntax and shortcuts
 class JgoGroup(click.Group):
-    """Custom group that auto-detects legacy endpoint syntax."""
+    """Custom group that auto-detects shorthand endpoint syntax and shortcuts."""
 
     def invoke(self, ctx):
-        """Override to handle legacy endpoint detection."""
-        # If we have args and first arg contains ':', inject 'run' command
-        if ctx.protected_args and ":" in ctx.protected_args[0]:
-            # Legacy endpoint syntax - inject 'run'
+        """
+        Override to handle shorthand endpoint detection and bare shortcuts.
+
+        Resolution policy:
+        1. Built-in commands take precedence
+        2. If first arg contains ':', treat as endpoint and inject 'run'
+        3. If first arg is a configured shortcut (and not a command), inject 'run'
+        4. Otherwise, fall through to normal Click behavior
+        """
+        if not ctx.protected_args:
+            return super().invoke(ctx)
+
+        first_arg = ctx.protected_args[0]
+
+        # Check if it's a built-in command (takes precedence)
+        if first_arg in self.commands:
+            return super().invoke(ctx)
+
+        # Check if it's an endpoint (contains ':')
+        if ":" in first_arg:
             ctx.protected_args.insert(0, "run")
+            return super().invoke(ctx)
+
+        # Check if it's a configured shortcut
+        try:
+            from ..config.settings import GlobalSettings
+
+            settings = GlobalSettings.load()
+            if first_arg in settings.shortcuts:
+                # It's a shortcut - inject 'run' command
+                ctx.protected_args.insert(0, "run")
+                return super().invoke(ctx)
+        except Exception:
+            # If we can't load settings, just fall through
+            pass
 
         return super().invoke(ctx)
 
