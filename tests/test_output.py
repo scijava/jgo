@@ -5,8 +5,6 @@ from __future__ import annotations
 import sys
 from unittest.mock import patch
 
-import pytest
-
 from jgo.cli.output import (
     _style_text,
     _supports_color,
@@ -19,7 +17,6 @@ from jgo.cli.output import (
     print_success,
     print_table_header,
     print_table_section,
-    print_verbose,
     print_warning,
 )
 
@@ -152,14 +149,6 @@ class TestMessageFunctions:
             assert "[DRY-RUN]" in captured.out
             assert "Would delete 5 files" in captured.out
             assert captured.err == ""
-
-    def test_print_verbose_deprecated(self, capsys):
-        """Test that print_verbose shows deprecation warning."""
-        with pytest.warns(DeprecationWarning, match="print_verbose is deprecated"):
-            print_verbose("Debug message")
-        captured = capsys.readouterr()
-        # Should print to stderr
-        assert "Debug message" in captured.err
 
 
 class TestDataOutputFunctions:

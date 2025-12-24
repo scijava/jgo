@@ -134,27 +134,6 @@ def print_dry_run(message: str) -> None:
     print_message(message, prefix=prefix)
 
 
-def print_verbose(message: str, indent: int = 0) -> None:
-    """
-    Print a verbose/debug message.
-
-    DEPRECATED: Use logger.debug() instead.
-    This function exists only for temporary compatibility during migration.
-
-    Args:
-        message: Message to print
-        indent: Number of spaces to indent (default: 0)
-    """
-    import warnings
-
-    warnings.warn(
-        "print_verbose is deprecated; use logger.debug() instead",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    print_message(message, indent=indent, file=sys.stderr)
-
-
 # === Data Output Functions ===
 
 
