@@ -1,7 +1,5 @@
 Remove or repurpose obsolete files in docs/
 
-Use consistent capitalization style for Markdown docs (excepting README.md and AGENTS.md, of course).
-
 FIX PythonResolver bugs!
 - Migrate thicket code from db-xml-maven
 
