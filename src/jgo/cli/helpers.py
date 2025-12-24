@@ -21,13 +21,25 @@ def verbose_print(args: ParsedArgs, message: str, level: int = 0):
     """
     Print message if verbose level is high enough.
 
+    DEPRECATED: Use logger.debug() instead. Will be removed in jgo 3.0.
+
     Args:
         args: Parsed arguments containing verbose level
         message: Message to print
         level: Minimum verbose level required (default: 0)
     """
+    import logging
+    import warnings
+
+    warnings.warn(
+        "verbose_print is deprecated; use logger.debug() instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
+    logger = logging.getLogger("jgo")
     if args.verbose > level:
-        print(message)
+        logger.debug(message)
 
 
 def verbose_multiline(args: ParsedArgs, messages: list[str], level: int = 0):
@@ -56,7 +68,9 @@ def handle_dry_run(args: ParsedArgs, message: str) -> bool:
         True if dry run (caller should return 0), False otherwise
     """
     if args.dry_run:
-        print(message)
+        from .output import print_dry_run
+
+        print_dry_run(message)
         return True
     return False
 

@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-import sys
+import logging
 from typing import TYPE_CHECKING
 
 import click
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
+
+_logger = logging.getLogger("jgo")
 
 
 @click.command(help="Remove dependencies from jgo.toml")
@@ -67,11 +69,9 @@ def execute(args: ParsedArgs, config: dict) -> int:
     # Get coordinates to remove
     coordinates = getattr(args, "coordinates", [])
     if not coordinates:
-        print("Error: No coordinates specified", file=sys.stderr)
-        print("Usage: jgo remove <coordinate> [<coordinate> ...]", file=sys.stderr)
+        _logger.error("No coordinates specified")
+        _logger.error("Usage: jgo remove <coordinate> [<coordinate> ...]")
         return 1
-
-    from ..helpers import verbose_print
 
     # Remove coordinates (matching by groupId:artifactId, ignoring version)
     removed_count = 0
@@ -83,7 +83,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
             coord_obj = Coordinate.parse(coord)
             prefix = f"{coord_obj.groupId}:{coord_obj.artifactId}"
         except ValueError:
-            print(f"Invalid coordinate format: {coord}", file=sys.stderr)
+            _logger.error(f"Invalid coordinate format: {coord}")
             continue
 
         # Find matching coordinates
@@ -93,13 +93,13 @@ def execute(args: ParsedArgs, config: dict) -> int:
                 spec.coordinates.remove(existing_coord)
                 removed_count += 1
                 matched = True
-                verbose_print(args, f"Removed: {existing_coord}")
+                _logger.debug(f"Removed: {existing_coord}")
 
         if not matched:
-            verbose_print(args, f"Not found: {coord}")
+            _logger.debug(f"Not found: {coord}")
 
     if removed_count == 0:
-        print("No dependencies removed", file=sys.stderr)
+        _logger.warning("No dependencies removed")
         return 0
 
     from ..helpers import handle_dry_run
@@ -112,14 +112,14 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     try:
         spec.save(spec_file)
-        print(f"Removed {removed_count} dependencies from {spec_file}")
+        _logger.info(f"Removed {removed_count} dependencies from {spec_file}")
     except Exception as e:
-        print(f"Error: Failed to save {spec_file}: {e}", file=sys.stderr)
+        _logger.error(f"Failed to save {spec_file}: {e}")
         return 1
 
     # Auto-sync unless --no-sync specified
     if not getattr(args, "no_sync", False):
-        verbose_print(args, "\nSyncing environment...")
+        _logger.debug("Syncing environment...")
         from . import sync as sync_cmd
 
         return sync_cmd.execute(args, config)

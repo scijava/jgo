@@ -1,12 +1,13 @@
 """
 Output formatting functions for CLI commands.
 
-These functions handle printing classpath, dependencies, and Java info
-in various formats.
+These functions handle printing classpath, dependencies, Java info,
+and user-facing messages in various formats with consistent styling.
 """
 
 from __future__ import annotations
 
+import os
 import sys
 from typing import TYPE_CHECKING
 
@@ -14,6 +15,218 @@ if TYPE_CHECKING:
     from ..env import Environment
     from ..maven import MavenContext
     from ..maven.core import Component
+
+
+# === Color/Style Support ===
+
+
+def _supports_color() -> bool:
+    """
+    Check if terminal supports color output.
+
+    Respects the NO_COLOR environment variable and checks if output is a TTY.
+
+    Returns:
+        True if colors should be used, False otherwise
+    """
+    # Check if NO_COLOR environment variable is set
+    if os.getenv("NO_COLOR"):
+        return False
+    # Check if output is a TTY
+    return hasattr(sys.stderr, "isatty") and sys.stderr.isatty()
+
+
+def _style_text(text: str, color: str | None = None, bold: bool = False) -> str:
+    """
+    Apply ANSI color/style codes to text if terminal supports it.
+
+    Args:
+        text: Text to style
+        color: Color name (red, green, yellow, blue, cyan, magenta)
+        bold: Whether to make text bold
+
+    Returns:
+        Styled text with ANSI codes, or plain text if colors not supported
+    """
+    if not _supports_color():
+        return text
+
+    import click
+
+    return click.style(text, fg=color, bold=bold)
+
+
+# === Message Output Functions ===
+
+
+def print_message(message: str, prefix: str = "", indent: int = 0, file=None) -> None:
+    """
+    Print a general message with optional prefix and indentation.
+
+    Used for dry-run messages, informational output, etc.
+
+    Args:
+        message: Message to print
+        prefix: Optional prefix (e.g., "DRY-RUN:")
+        indent: Number of spaces to indent (default: 0)
+        file: File to write to (default: stdout)
+    """
+    if file is None:
+        file = sys.stdout
+
+    indentation = " " * indent
+    if prefix:
+        full_message = f"{indentation}{prefix} {message}"
+    else:
+        full_message = f"{indentation}{message}"
+
+    print(full_message, file=file)
+
+
+def print_success(message: str, indent: int = 0) -> None:
+    """
+    Print a success message (green if colors supported).
+
+    Used for: "Added 5 dependencies", "Environment built successfully", etc.
+
+    Args:
+        message: Success message to print
+        indent: Number of spaces to indent (default: 0)
+    """
+    styled_msg = _style_text(message, color="green")
+    print_message(styled_msg, indent=indent)
+
+
+def print_warning(message: str, indent: int = 0) -> None:
+    """
+    Print a warning message (yellow if colors supported).
+
+    Args:
+        message: Warning message to print
+        indent: Number of spaces to indent (default: 0)
+    """
+    styled_msg = _style_text(message, color="yellow")
+    print_message(styled_msg, indent=indent, file=sys.stderr)
+
+
+def print_error(message: str, indent: int = 0) -> None:
+    """
+    Print an error message to stderr (red if colors supported).
+
+    Note: Do NOT include "Error:" prefix - this function adds it automatically.
+
+    Args:
+        message: Error message to print (without "Error:" prefix)
+        indent: Number of spaces to indent (default: 0)
+    """
+    styled_msg = _style_text(f"Error: {message}", color="red", bold=True)
+    print_message(styled_msg, indent=indent, file=sys.stderr)
+
+
+def print_dry_run(message: str) -> None:
+    """
+    Print a dry-run message.
+
+    Args:
+        message: Dry-run message (e.g., "Would add 5 dependencies")
+    """
+    prefix = _style_text("[DRY-RUN]", color="cyan", bold=True)
+    print_message(message, prefix=prefix)
+
+
+def print_verbose(message: str, indent: int = 0) -> None:
+    """
+    Print a verbose/debug message.
+
+    DEPRECATED: Use logger.debug() instead.
+    This function exists only for temporary compatibility during migration.
+
+    Args:
+        message: Message to print
+        indent: Number of spaces to indent (default: 0)
+    """
+    import warnings
+
+    warnings.warn(
+        "print_verbose is deprecated; use logger.debug() instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    print_message(message, indent=indent, file=sys.stderr)
+
+
+# === Data Output Functions ===
+
+
+def print_data(data: str, separator: str | None = None) -> None:
+    """
+    Print raw data output to stdout (classpath, dependency lists, etc.).
+
+    This is for machine-readable output that should never be styled or prefixed.
+
+    Args:
+        data: Raw data to print
+        separator: Optional separator to print after data
+    """
+    print(data)
+    if separator:
+        print(separator)
+
+
+def print_table_header(title: str, width: int = 70, char: str = "=") -> None:
+    """
+    Print a formatted table header.
+
+    Args:
+        title: Header title
+        width: Width of the header line
+        char: Character to use for the line (default: "=")
+    """
+    print(char * width)
+    print(title)
+    print(char * width)
+
+
+def print_table_section(title: str, width: int = 70, char: str = "-") -> None:
+    """
+    Print a formatted table section separator.
+
+    Args:
+        title: Section title
+        width: Width of the separator line
+        char: Character to use for the line (default: "-")
+    """
+    print(f"\n{title}")
+    print(char * width)
+
+
+def print_key_value(key: str, value: str, indent: int = 2) -> None:
+    """
+    Print a key-value pair with consistent formatting.
+
+    Args:
+        key: Key name
+        value: Value
+        indent: Number of spaces to indent (default: 2)
+    """
+    indentation = " " * indent
+    print(f"{indentation}{key}: {value}")
+
+
+def print_list_item(item: str, indent: int = 2, marker: str = "-") -> None:
+    """
+    Print a list item with consistent formatting.
+
+    Args:
+        item: Item text
+        indent: Number of spaces to indent (default: 2)
+        marker: List marker character (default: "-")
+    """
+    indentation = " " * indent
+    print(f"{indentation}{marker} {item}")
+
+
+# === Existing Data Output Functions ===
 
 
 def print_classpath(environment: Environment) -> None:

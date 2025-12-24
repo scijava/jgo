@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-import sys
+import logging
 from typing import TYPE_CHECKING
 
 import click
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
+
+_logger = logging.getLogger("jgo")
 
 
 @click.command(help="Add dependencies to jgo.toml")
@@ -67,24 +69,22 @@ def execute(args: ParsedArgs, config: dict) -> int:
     # Get coordinates to add
     coordinates = getattr(args, "coordinates", [])
     if not coordinates:
-        print("Error: No coordinates specified", file=sys.stderr)
-        print("Usage: jgo add <coordinate> [<coordinate> ...]", file=sys.stderr)
+        _logger.error("No coordinates specified")
+        _logger.error("Usage: jgo add <coordinate> [<coordinate> ...]")
         return 1
-
-    from ..helpers import verbose_print
 
     # Add coordinates
     added_count = 0
     for coord in coordinates:
         if coord in spec.coordinates:
-            verbose_print(args, f"Already present: {coord}")
+            _logger.debug(f"Already present: {coord}")
         else:
             spec.coordinates.append(coord)
             added_count += 1
-            verbose_print(args, f"Added: {coord}")
+            _logger.debug(f"Added: {coord}")
 
     if added_count == 0:
-        print("No new dependencies added", file=sys.stderr)
+        _logger.warning("No new dependencies added")
         return 0
 
     from ..helpers import handle_dry_run
@@ -95,14 +95,14 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     try:
         spec.save(spec_file)
-        print(f"Added {added_count} dependencies to {spec_file}")
+        _logger.info(f"Added {added_count} dependencies to {spec_file}")
     except Exception as e:
-        print(f"Error: Failed to save {spec_file}: {e}", file=sys.stderr)
+        _logger.error(f"Failed to save {spec_file}: {e}")
         return 1
 
     # Auto-sync unless --no-sync specified
     if not getattr(args, "no_sync", False):
-        verbose_print(args, "\nSyncing environment...")
+        _logger.debug("Syncing environment...")
         from . import sync as sync_cmd
 
         return sync_cmd.execute(args, config)

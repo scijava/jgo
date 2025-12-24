@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import sys
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -13,6 +13,8 @@ from ...util import is_info_enabled, setup_logging
 if TYPE_CHECKING:
     from ...env.lockfile import LockFile
     from ..parser import ParsedArgs
+
+_logger = logging.getLogger("jgo")
 
 
 @click.command(help="Resolve dependencies and build environment")
@@ -69,8 +71,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
         handle_dry_run,
         load_spec_file,
         print_exception_if_verbose,
-        verbose_multiline,
-        verbose_print,
     )
 
     # Get the spec file path
@@ -80,15 +80,12 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     spec_file = args.get_spec_file()
 
-    verbose_messages = [
-        f"Syncing environment from {spec_file}",
-    ]
+    _logger.debug(f"Syncing environment from {spec_file}")
     if spec.name:
-        verbose_messages.append(f"  Name: {spec.name}")
+        _logger.debug(f"  Name: {spec.name}")
     if spec.description:
-        verbose_messages.append(f"  Description: {spec.description}")
-    verbose_messages.append(f"  Dependencies: {len(spec.coordinates)}")
-    verbose_multiline(args, verbose_messages)
+        _logger.debug(f"  Description: {spec.description}")
+    _logger.debug(f"  Dependencies: {len(spec.coordinates)}")
 
     # Dry run mode
     if handle_dry_run(args, f"Would sync environment from {spec_file}"):
@@ -134,8 +131,8 @@ def execute(args: ParsedArgs, config: dict) -> int:
         # Build environment from spec
         env = builder.from_spec(spec, update=update)
 
-        verbose_print(args, f"Environment built at: {env.path}")
-        verbose_print(args, f"Classpath entries: {len(env.classpath)}")
+        _logger.debug(f"Environment built at: {env.path}")
+        _logger.debug(f"Classpath entries: {len(env.classpath)}")
 
         # Show version changes if updating and verbose
         if update and is_info_enabled() and old_lockfile:
@@ -144,7 +141,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
         return 0
 
     except Exception as e:
-        print(f"Error: Failed to build environment: {e}", file=sys.stderr)
+        _logger.error(f"Failed to build environment: {e}")
         print_exception_if_verbose(args)
         return 1
 

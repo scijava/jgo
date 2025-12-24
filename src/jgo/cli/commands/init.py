@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 import click
 
-from ...util import is_info_enabled, setup_logging
+from ...util import setup_logging
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
+
+_logger = logging.getLogger("jgo")
 
 
 @click.command(help="Create a new jgo.toml environment file")
@@ -43,7 +46,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    import sys
     from pathlib import Path
 
     from ...config import GlobalSettings
@@ -54,7 +56,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     endpoint = args.endpoint
     if not endpoint:
-        print("Error: init requires an endpoint", file=sys.stderr)
+        _logger.error("init requires an endpoint")
         return 1
 
     # Use current directory name as environment name (like pixi and uv do)
@@ -66,8 +68,8 @@ def execute(args: ParsedArgs, config: dict) -> int:
     jgoconfig = GlobalSettings(shortcuts=shortcuts)
     expanded_endpoint = jgoconfig.expand_shortcuts(endpoint)
 
-    if is_info_enabled() and expanded_endpoint != endpoint:
-        print(f"Expanded shortcuts: {endpoint} → {expanded_endpoint}", file=sys.stderr)
+    if expanded_endpoint != endpoint:
+        _logger.info(f"Expanded shortcuts: {endpoint} → {expanded_endpoint}")
 
     # Parse endpoint to extract coordinates and entrypoints
     # Support composition with '+': track original shortcut names for entrypoint naming
@@ -100,12 +102,11 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     spec.save(output_file)
 
-    if is_info_enabled():
-        print(f"Generated {output_file}")
-        if entrypoints:
-            print(
-                f"Created {len(entrypoints)} entrypoint(s): {', '.join(entrypoints.keys())}"
-            )
+    _logger.info(f"Generated {output_file}")
+    if entrypoints:
+        _logger.info(
+            f"Created {len(entrypoints)} entrypoint(s): {', '.join(entrypoints.keys())}"
+        )
 
     return 0
 
