@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 _log = logging.getLogger("jgo")
 
 
-@click.command(help="[green]Resolve[/] dependencies and [green]build[/] environment")
+@click.command(help="[green]Resolve[/] dependencies and [green]build[/] environment.")
 @click.option(
     "--force",
     is_flag=True,

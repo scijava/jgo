@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 _log = logging.getLogger("jgo")
 
 
-@click.command(help="Remove dependencies from [cyan]jgo.toml[/]")
+@click.command(help="Remove dependencies from [cyan]jgo.toml[/].")
 @click.argument("coordinates", nargs=-1, required=True)
 @click.option(
     "--no-sync",

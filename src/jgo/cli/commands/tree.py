@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 _log = logging.getLogger("jgo")
 
 
-@click.command(help="Show dependency tree")
+@click.command(help="Show dependency tree.")
 @click.argument("endpoint", required=False)
 @click.pass_context
 def tree(ctx, endpoint):

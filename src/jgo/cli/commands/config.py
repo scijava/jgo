@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 _log = logging.getLogger("jgo")
 
 
-@click.group(help="Manage jgo configuration", invoke_without_command=True)
+@click.group(help="Manage jgo configuration.", invoke_without_command=True)
 @click.pass_context
 def config(ctx):
     """
@@ -494,18 +494,18 @@ def _parse_value(value: str) -> str | int | float | bool:
 # Subcommands
 
 
-@config.command(name="list", help="List all configuration values")
+@config.command(name="list", help="List all configuration values.")
 @click.option(
     "--global",
     "global_config",
     is_flag=True,
-    help="Use global configuration (~/.jgorc)",
+    help="Use global configuration ([cyan]~/.config/jgo.conf[/]).",
 )
 @click.option(
     "--local",
     "local_config",
     is_flag=True,
-    help="Use local configuration (jgo.toml)",
+    help="Use local configuration ([cyan]jgo.toml[/]).",
 )
 @click.pass_context
 def list_cmd(ctx, global_config, local_config):
@@ -530,19 +530,19 @@ def list_cmd(ctx, global_config, local_config):
     ctx.exit(exit_code)
 
 
-@config.command(name="get", help="Get a configuration value")
+@config.command(name="get", help="Get a configuration value.")
 @click.argument("key")
 @click.option(
     "--global",
     "global_config",
     is_flag=True,
-    help="Use global configuration (~/.jgorc)",
+    help="Use global configuration ([cyan]~/.config/jgo.conf[/])",
 )
 @click.option(
     "--local",
     "local_config",
     is_flag=True,
-    help="Use local configuration (jgo.toml)",
+    help="Use local configuration ([cyan]jgo.toml[/])",
 )
 @click.pass_context
 def get_cmd(ctx, key, global_config, local_config):
@@ -567,20 +567,20 @@ def get_cmd(ctx, key, global_config, local_config):
     ctx.exit(exit_code)
 
 
-@config.command(name="set", help="Set a configuration value")
+@config.command(name="set", help="Set a configuration value.")
 @click.argument("key")
 @click.argument("value")
 @click.option(
     "--global",
     "global_config",
     is_flag=True,
-    help="Use global configuration (~/.jgorc)",
+    help="Use global configuration ([cyan]~/.config/jgo.conf[/])",
 )
 @click.option(
     "--local",
     "local_config",
     is_flag=True,
-    help="Use local configuration (jgo.toml)",
+    help="Use local configuration ([cyan]jgo.toml[/cyan])",
 )
 @click.pass_context
 def set_cmd(ctx, key, value, global_config, local_config):
@@ -605,19 +605,19 @@ def set_cmd(ctx, key, value, global_config, local_config):
     ctx.exit(exit_code)
 
 
-@config.command(name="unset", help="Remove a configuration value")
+@config.command(name="unset", help="Remove a configuration value.")
 @click.argument("key")
 @click.option(
     "--global",
     "global_config",
     is_flag=True,
-    help="Use global configuration (~/.jgorc)",
+    help="Use global configuration ([cyan]~/.config/jgo.conf[/]).",
 )
 @click.option(
     "--local",
     "local_config",
     is_flag=True,
-    help="Use local configuration (jgo.toml)",
+    help="Use local configuration ([cyan]jgo.toml[/]).",
 )
 @click.pass_context
 def unset_cmd(ctx, key, global_config, local_config):

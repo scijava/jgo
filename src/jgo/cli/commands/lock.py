@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 _log = logging.getLogger("jgo")
 
 
-@click.command(help="Update jgo.lock.toml without building environment")
+@click.command(help="Update [cyan]jgo.lock.toml[/] without building environment.")
 @click.option(
     "--check",
     is_flag=True,

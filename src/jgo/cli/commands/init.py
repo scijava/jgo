@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 _log = logging.getLogger("jgo")
 
 
-@click.command(help="Create a new [cyan]jgo.toml[/] environment file")
+@click.command(help="Create a new [cyan]jgo.toml[/] environment file.")
 @click.argument("endpoint", required=False)
 @click.pass_context
 def init(ctx, endpoint):

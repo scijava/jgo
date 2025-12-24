@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 _log = logging.getLogger("jgo")
 
 
-@click.command(help="List available versions of an artifact")
+@click.command(help="List available versions of an artifact.")
 @click.argument("coordinate", required=True)
 @click.pass_context
 def versions(ctx, coordinate):

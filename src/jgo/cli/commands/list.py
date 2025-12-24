@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 _log = logging.getLogger("jgo")
 
 
-@click.command(name="list", help="List resolved dependencies (flat list)")
+@click.command(name="list", help="List resolved dependencies (flat list).")
 @click.argument("endpoint", required=False)
 @click.option(
     "--direct", is_flag=True, help="Show only direct dependencies (non-transitive)"

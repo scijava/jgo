@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 _log = logging.getLogger("jgo")
 
 
-@click.command(help="Search for artifacts in [magenta]Maven repositories[/]")
+@click.command(help="Search for artifacts in [magenta]Maven repositories[/].")
 @click.option(
     "--limit",
     type=int,

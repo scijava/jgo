@@ -226,7 +226,7 @@ def global_options(f):
         "-v",
         "--verbose",
         count=True,
-        help="Verbose output (can be repeated: -vv, -vvv)",
+        help="Verbose output (can be repeated: -vv, -vvv).",
     )(f)
     f = click.option("-q", "--quiet", is_flag=True, help="Suppress all output.")(f)
     f = click.option(
@@ -234,7 +234,7 @@ def global_options(f):
         "--file",
         type=click.Path(path_type=Path),
         metavar="FILE",
-        help="Use specific environment file (default: jgo.toml).",
+        help="Use specific environment file (default: [cyan]jgo.toml[/]).",
     )(f)
     f = click.option(
         "--dry-run",
@@ -247,33 +247,33 @@ def global_options(f):
         "-u",
         "--update",
         is_flag=True,
-        help="Update cached environment. [env: JGO_UPDATE]",
+        help="Update cached environment. [env: [red]JGO_UPDATE[/]]",
         envvar="JGO_UPDATE",
     )(f)
     f = click.option(
         "--offline",
         is_flag=True,
-        help="Work offline, don't download. [env: JGO_OFFLINE]",
+        help="Work offline, don't download. [env: [red]JGO_OFFLINE[/]]",
         envvar="JGO_OFFLINE",
     )(f)
     f = click.option(
         "--no-cache",
         is_flag=True,
-        help="Skip cache entirely, always rebuild. [env: JGO_NO_CACHE]",
+        help="Skip cache entirely, always rebuild. [env: [red]JGO_NO_CACHE[/]]",
         envvar="JGO_NO_CACHE",
     )(f)
     f = click.option(
         "--cache-dir",
         type=click.Path(path_type=Path),
         metavar="PATH",
-        help="Override cache directory. [env: JGO_CACHE_DIR]",
+        help="Override cache directory. [env: [red]JGO_CACHE_DIR[/]]",
         envvar="JGO_CACHE_DIR",
     )(f)
     f = click.option(
         "--repo-cache",
         type=click.Path(path_type=Path),
         metavar="PATH",
-        help="Override Maven repo cache. [env: M2_REPO]",
+        help="Override Maven repo cache. [env: [red]M2_REPO[/]]",
         envvar="M2_REPO",
     )(f)
 
@@ -306,7 +306,7 @@ def global_options(f):
         "--java-version",
         type=int,
         metavar="VERSION",
-        help="Force specific Java version (e.g., 17). [env: JAVA_VERSION]",
+        help="Force specific Java version (e.g., 17). [env: [red]JAVA_VERSION[/]]",
         envvar="JAVA_VERSION",
     )(f)
     f = click.option(
@@ -357,11 +357,11 @@ def global_options(f):
     cls=JgoGroup,
     invoke_without_command=True,
     context_settings=dict(ignore_unknown_options=True, allow_interspersed_args=False),
-    help="""[bold]Environment manager for Java programs.[/]
+    help="""[bold]Environment manager and launcher for Java programs.[/]
 
-Launch Java applications directly from [cyan]Maven coordinates[/],
+Launch Java applications directly from [bold magenta]Maven coordinates[/],
 build reproducible environments, manage Java versions,
-and resolve dependencies -- [green]without manual installation[/].""",
+and resolve dependencies -- [bold]without manual installation[/].""",
 )
 @global_options
 @click.pass_context
@@ -398,8 +398,8 @@ cli.add_command(update)
 
 
 @cli.group(
-    help="Show information about environment or artifact",
-    epilog="TIP: To see the launch command, use: jgo --dry-run run <endpoint>",
+    help="Show information about environment or artifact.",
+    epilog="[dim]TIP: To see the launch command, use: [yellow]jgo --dry-run run <endpoint>[/]",
 )
 @click.pass_context
 def info(ctx):
@@ -438,7 +438,7 @@ info.add_command(pom)
 info.add_command(versions)
 
 
-@cli.command(help="Display jgo's version")
+@cli.command(help="Display jgo's version.")
 def version():
     """Display jgo's version."""
     parser = JgoArgumentParser()

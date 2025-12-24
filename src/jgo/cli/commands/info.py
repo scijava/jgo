@@ -10,7 +10,7 @@ import rich_click as click
 _log = logging.getLogger("jgo")
 
 
-@click.command(help="Show classpath")
+@click.command(help="Show classpath.")
 @click.argument("endpoint", required=False)
 @click.pass_context
 def classpath(ctx, endpoint):
@@ -46,7 +46,7 @@ def classpath(ctx, endpoint):
     ctx.exit(0)
 
 
-@click.command(help="Show dependency tree")
+@click.command(help="Show dependency tree.")
 @click.argument("endpoint", required=False)
 @click.pass_context
 def deptree(ctx, endpoint):
@@ -93,10 +93,10 @@ def deptree(ctx, endpoint):
     ctx.exit(0)
 
 
-@click.command(help="Show flat list of dependencies")
+@click.command(help="Show flat list of dependencies.")
 @click.argument("endpoint", required=False)
 @click.option(
-    "--direct", is_flag=True, help="Show only direct dependencies (non-transitive)"
+    "--direct", is_flag=True, help="Show only direct dependencies (non-transitive)."
 )
 @click.pass_context
 def deplist(ctx, endpoint, direct):
@@ -145,7 +145,7 @@ def deplist(ctx, endpoint, direct):
     ctx.exit(0)
 
 
-@click.command(help="Show Java version requirements")
+@click.command(help="Show Java version requirements.")
 @click.argument("endpoint", required=False)
 @click.pass_context
 def javainfo(ctx, endpoint):
@@ -181,7 +181,7 @@ def javainfo(ctx, endpoint):
     ctx.exit(0)
 
 
-@click.command(help="Show entrypoints from jgo.toml")
+@click.command(help="Show entrypoints from [cyan]jgo.toml[/].")
 @click.pass_context
 def entrypoints(ctx):
     """Show available entrypoints defined in jgo.toml."""
@@ -211,7 +211,7 @@ def entrypoints(ctx):
     ctx.exit(0)
 
 
-@click.command(help="Show JAR manifest")
+@click.command(help="Show JAR manifest.")
 @click.argument("endpoint", required=True)
 @click.option("--raw", is_flag=True, help="Show raw manifest contents")
 @click.pass_context
@@ -281,7 +281,7 @@ def manifest(ctx, endpoint, raw):
         ctx.exit(1)
 
 
-@click.command(help="Show POM information")
+@click.command(help="Show POM content.")
 @click.argument("endpoint", required=True)
 @click.pass_context
 def pom(ctx, endpoint):

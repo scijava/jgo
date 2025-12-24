@@ -17,7 +17,7 @@ _log = logging.getLogger("jgo")
 
 
 @click.command(
-    help="Run a Java application from [cyan]Maven coordinates[/] or [cyan]jgo.toml[/]",
+    help="Run a Java application from [magenta]Maven coordinates[/] or [cyan]jgo.toml[/].",
     epilog="[dim]TIP: Use [yellow]jgo --dry-run run[/] to see the command without executing it.[/]",
     context_settings=dict(ignore_unknown_options=True, allow_interspersed_args=False),
 )

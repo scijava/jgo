@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 _log = logging.getLogger("jgo")
 
 
-@click.command(name="shortcut", help="Manage global endpoint shortcuts")
+@click.command(name="shortcut", help="Manage global endpoint shortcuts.")
 @click.option(
     "--remove",
     "-r",

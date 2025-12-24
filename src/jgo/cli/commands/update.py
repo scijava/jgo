@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     pass
 
 
-@click.command(help="Update dependencies to latest versions")
+@click.command(help="Update dependencies to latest versions.")
 @click.option(
     "--force",
     is_flag=True,
