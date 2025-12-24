@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import configparser
+import logging
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -15,6 +16,8 @@ if TYPE_CHECKING:
     from click import Context
 
     from ..parser import ParsedArgs
+
+_logger = logging.getLogger("jgo")
 
 
 @click.command(name="shortcut", help="Manage global endpoint shortcuts")
@@ -136,7 +139,7 @@ def execute(
         return _add_shortcut(config_file, name, endpoint, args)
 
     # Should not reach here
-    print("Error: Invalid arguments", file=sys.stderr)
+    _logger.error("Invalid arguments")
     return 1
 
 
@@ -174,7 +177,7 @@ def _show_shortcut(config_file: Path, config: dict, name: str, args: ParsedArgs)
     shortcuts = config.get("shortcuts", {})
 
     if name not in shortcuts:
-        print(f"Error: Shortcut '{name}' not found", file=sys.stderr)
+        _logger.error(f"Shortcut '{name}' not found")
         print("Use 'jgo config shortcut' to list all shortcuts", file=sys.stderr)
         return 1
 
@@ -187,7 +190,7 @@ def _add_shortcut(config_file: Path, name: str, endpoint: str, args: ParsedArgs)
     """Add or update a shortcut."""
     # Validate shortcut name
     if not name or not name[0].isalnum():
-        print(f"Error: Invalid shortcut name '{name}'", file=sys.stderr)
+        _logger.error(f"Invalid shortcut name '{name}'")
         print("Shortcut names must start with a letter or number", file=sys.stderr)
         return 1
 
@@ -229,18 +232,18 @@ def _add_shortcut(config_file: Path, name: str, endpoint: str, args: ParsedArgs)
 def _remove_shortcut(config_file: Path, name: str, args: ParsedArgs) -> int:
     """Remove a shortcut."""
     if not config_file.exists():
-        print(f"Error: No configuration file found at {config_file}", file=sys.stderr)
+        _logger.error(f"No configuration file found at {config_file}")
         return 1
 
     parser = configparser.ConfigParser()
     parser.read(config_file)
 
     if not parser.has_section("shortcuts"):
-        print("Error: No shortcuts configured", file=sys.stderr)
+        _logger.error("No shortcuts configured")
         return 1
 
     if not parser.has_option("shortcuts", name):
-        print(f"Error: Shortcut '{name}' not found", file=sys.stderr)
+        _logger.error(f"Shortcut '{name}' not found")
         return 1
 
     # Dry run

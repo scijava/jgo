@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-import sys
+import logging
 from pathlib import Path
 
 import click
+
+_logger = logging.getLogger("jgo")
 
 
 @click.command(help="Show classpath")
@@ -30,13 +32,13 @@ def classpath(ctx, endpoint):
     if args.is_spec_mode():
         spec_file = args.get_spec_file()
         if not spec_file.exists():
-            print(f"Error: {spec_file} not found", file=sys.stderr)
+            _logger.error(f"{spec_file} not found")
             ctx.exit(1)
         spec = EnvironmentSpec.load(spec_file)
         environment = builder.from_spec(spec, update=args.update)
     else:
         if not endpoint:
-            print("Error: No endpoint specified", file=sys.stderr)
+            _logger.error("No endpoint specified")
             ctx.exit(1)
         environment = builder.from_endpoint(endpoint, update=args.update)
 
@@ -68,7 +70,7 @@ def deptree(ctx, endpoint):
     if args.is_spec_mode():
         spec_file = args.get_spec_file()
         if not spec_file.exists():
-            print(f"Error: {spec_file} not found", file=sys.stderr)
+            _logger.error(f"{spec_file} not found")
             ctx.exit(1)
         spec = EnvironmentSpec.load(spec_file)
         components = []
@@ -82,7 +84,7 @@ def deptree(ctx, endpoint):
         boms = None  # No BOM management for spec mode
     else:
         if not endpoint:
-            print("Error: No endpoint specified", file=sys.stderr)
+            _logger.error("No endpoint specified")
             ctx.exit(1)
         components, coordinates, _ = builder._parse_endpoint(endpoint)
         boms = filter_managed_components(components, coordinates)
@@ -118,7 +120,7 @@ def deplist(ctx, endpoint, direct):
     if args.is_spec_mode():
         spec_file = args.get_spec_file()
         if not spec_file.exists():
-            print(f"Error: {spec_file} not found", file=sys.stderr)
+            _logger.error(f"{spec_file} not found")
             ctx.exit(1)
         spec = EnvironmentSpec.load(spec_file)
         components = []
@@ -132,7 +134,7 @@ def deplist(ctx, endpoint, direct):
         boms = None
     else:
         if not endpoint:
-            print("Error: No endpoint specified", file=sys.stderr)
+            _logger.error("No endpoint specified")
             ctx.exit(1)
         components, coordinates, _ = builder._parse_endpoint(endpoint)
         boms = filter_managed_components(components, coordinates)
@@ -165,13 +167,13 @@ def javainfo(ctx, endpoint):
     if args.is_spec_mode():
         spec_file = args.get_spec_file()
         if not spec_file.exists():
-            print(f"Error: {spec_file} not found", file=sys.stderr)
+            _logger.error(f"{spec_file} not found")
             ctx.exit(1)
         spec = EnvironmentSpec.load(spec_file)
         environment = builder.from_spec(spec, update=args.update)
     else:
         if not endpoint:
-            print("Error: No endpoint specified", file=sys.stderr)
+            _logger.error("No endpoint specified")
             ctx.exit(1)
         environment = builder.from_endpoint(endpoint, update=args.update)
 
@@ -192,7 +194,7 @@ def entrypoints(ctx):
     spec_file = args.file or Path("jgo.toml")
 
     if not spec_file.exists():
-        print(f"Error: {spec_file} not found", file=sys.stderr)
+        _logger.error(f"{spec_file} not found")
         ctx.exit(1)
 
     spec = EnvironmentSpec.load(spec_file)
@@ -247,25 +249,25 @@ def manifest(ctx, endpoint, raw):
         jar_path = artifact.resolve()
 
         if not jar_path:
-            print(f"Error: Could not resolve artifact: {endpoint}", file=sys.stderr)
+            _logger.error(f"Could not resolve artifact: {endpoint}")
             ctx.exit(1)
 
         # Verify it's a valid JAR file
         if not zipfile.is_zipfile(jar_path):
-            print(f"Error: Not a valid JAR file: {jar_path}", file=sys.stderr)
+            _logger.error(f"Not a valid JAR file: {jar_path}")
             ctx.exit(1)
 
         # Read and display manifest
         if raw:
             manifest_content = read_raw_manifest(jar_path)
             if manifest_content is None:
-                print(f"Error: No MANIFEST.MF found in {jar_path}", file=sys.stderr)
+                _logger.error(f"No MANIFEST.MF found in {jar_path}")
                 ctx.exit(1)
             print(manifest_content, end="")
         else:
             manifest_dict = parse_manifest(jar_path)
             if manifest_dict is None:
-                print(f"Error: No MANIFEST.MF found in {jar_path}", file=sys.stderr)
+                _logger.error(f"No MANIFEST.MF found in {jar_path}")
                 ctx.exit(1)
 
             # Display parsed manifest
@@ -275,7 +277,7 @@ def manifest(ctx, endpoint, raw):
     except SystemExit:
         raise
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        _logger.error(f"{e}")
         ctx.exit(1)
 
 
@@ -314,7 +316,7 @@ def pom(ctx, endpoint):
         pom_obj = component.pom()
 
         if not pom_obj or not pom_obj.source:
-            print(f"Error: Could not resolve POM for: {endpoint}", file=sys.stderr)
+            _logger.error(f"Could not resolve POM for: {endpoint}")
             ctx.exit(1)
 
         # Read POM content
@@ -337,5 +339,5 @@ def pom(ctx, endpoint):
     except SystemExit:
         raise
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        _logger.error(f"{e}")
         ctx.exit(1)

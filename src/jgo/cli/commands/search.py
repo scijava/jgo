@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import sys
 import urllib.parse
 import urllib.request
@@ -14,6 +15,8 @@ from ...util import is_debug_enabled, is_info_enabled, setup_logging
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
+
+_logger = logging.getLogger("jgo")
 
 
 @click.command(help="Search for artifacts in Maven repositories")
@@ -99,7 +102,7 @@ def execute(
     setup_logging(args.verbose, args.quiet)
 
     if not query:
-        print("Error: Search query is required", file=sys.stderr)
+        _logger.error("Search query is required")
         return 1
 
     # For now, only support Maven Central
@@ -135,7 +138,7 @@ def execute(
         return 0
 
     except Exception as e:
-        print(f"Error: Failed to search Maven Central: {e}", file=sys.stderr)
+        _logger.error(f"Failed to search Maven Central: {e}")
         print_exception_if_verbose(args)
         return 1
 

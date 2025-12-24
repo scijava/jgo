@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 import click
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
+
+_logger = logging.getLogger("jgo")
 
 
 @click.command(help="List available versions of an artifact")
@@ -37,14 +40,13 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    import sys
 
     from ..context import create_maven_context
     from ..helpers import parse_coordinate_safe
 
     if not args.endpoint:
-        print("Error: versions command requires a coordinate", file=sys.stderr)
-        print("Usage: jgo versions <groupId:artifactId>", file=sys.stderr)
+        _logger.error("versions command requires a coordinate")
+        _logger.error("Usage: jgo versions <groupId:artifactId>")
         return 1
 
     # Parse endpoint to get groupId and artifactId
@@ -70,6 +72,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
             print(f"No versions found for {coord.groupId}:{coord.artifactId}")
             return 0
 
+        # Data output - keep as print() for parseable output
         print(f"Available versions for {coord.groupId}:{coord.artifactId}:")
         for version in metadata.versions:
             marker = ""
@@ -80,7 +83,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
             print(f"  {version}{marker}")
 
     except Exception as e:
-        print(f"Error fetching versions: {e}", file=sys.stderr)
+        _logger.error(f"Error fetching versions: {e}")
         return 1
 
     return 0

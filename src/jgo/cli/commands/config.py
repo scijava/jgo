@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -10,6 +11,8 @@ import click
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
+
+_logger = logging.getLogger("jgo")
 
 
 @click.group(help="Manage jgo configuration", invoke_without_command=True)
@@ -70,7 +73,7 @@ def execute(
     """
     # Determine which settings/config file to use
     if local_config and global_config:
-        print("Error: Cannot use both --global and --local", file=sys.stderr)
+        _logger.error("Cannot use both --global and --local")
         return 1
 
     if local_config:
@@ -97,7 +100,7 @@ def execute(
         return _set_config(config_file, config_type, key, value, args)
 
     # Should not reach here
-    print("Error: Invalid arguments", file=sys.stderr)
+    _logger.error("Invalid arguments")
     return 1
 
 
@@ -209,22 +212,22 @@ def _get_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) -> i
         elif key == "links":
             print(settings.links)
         else:
-            print(f"Error: Unknown setting: {key}", file=sys.stderr)
+            _logger.error(f"Unknown setting: {key}")
             return 1
     elif section == "repositories":
         if key in settings.repositories:
             print(settings.repositories[key])
         else:
-            print(f"Error: Repository '{key}' not found", file=sys.stderr)
+            _logger.error(f"Repository '{key}' not found")
             return 1
     elif section == "shortcuts":
         if key in settings.shortcuts:
             print(settings.shortcuts[key])
         else:
-            print(f"Error: Shortcut '{key}' not found", file=sys.stderr)
+            _logger.error(f"Shortcut '{key}' not found")
             return 1
     else:
-        print(f"Error: Unknown section: [{section}]", file=sys.stderr)
+        _logger.error(f"Unknown section: [{section}]")
         return 1
 
     return 0
@@ -239,11 +242,11 @@ def _get_toml(config_file: Path, section: str, key: str, args: ParsedArgs) -> in
         return 1
 
     if section not in data:
-        print(f"Error: Section [{section}] not found", file=sys.stderr)
+        _logger.error(f"Section [{section}] not found")
         return 1
 
     if key not in data[section]:
-        print(f"Error: Key '{key}' not found in section [{section}]", file=sys.stderr)
+        _logger.error(f"Key '{key}' not found in section [{section}]")
         return 1
 
     value = data[section][key]
@@ -277,10 +280,10 @@ def _set_jgorc(
     # Validate section and key
     valid_settings = ("cache_dir", "repo_cache", "links")
     if section == "settings" and key not in valid_settings:
-        print(f"Error: Unknown setting: {key}", file=sys.stderr)
+        _logger.error(f"Unknown setting: {key}")
         return 1
     elif section not in ("settings", "repositories", "shortcuts"):
-        print(f"Error: Unknown section: [{section}]", file=sys.stderr)
+        _logger.error(f"Unknown section: [{section}]")
         return 1
 
     # Load existing config
@@ -391,11 +394,11 @@ def _unset_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) ->
 
     # Validate that section and key exist
     if not parser.has_section(section):
-        print(f"Error: Section [{section}] not found", file=sys.stderr)
+        _logger.error(f"Section [{section}] not found")
         return 1
 
     if not parser.has_option(section, key):
-        print(f"Error: Key '{key}' not found in section [{section}]", file=sys.stderr)
+        _logger.error(f"Key '{key}' not found in section [{section}]")
         return 1
 
     # Dry run
@@ -429,11 +432,11 @@ def _unset_toml(config_file: Path, section: str, key: str, args: ParsedArgs) -> 
         return 1
 
     if section not in data:
-        print(f"Error: Section [{section}] not found", file=sys.stderr)
+        _logger.error(f"Section [{section}] not found")
         return 1
 
     if key not in data[section]:
-        print(f"Error: Key '{key}' not found in section [{section}]", file=sys.stderr)
+        _logger.error(f"Key '{key}' not found in section [{section}]")
         return 1
 
     # Dry run
