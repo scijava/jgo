@@ -129,6 +129,14 @@ class Model:
 
         _log.debug(f"{self.gav}: dependency management injection")
 
+        # Log how many managed dependencies we have (including from BOMs)
+        if self.root_dep_mgmt:
+            _log.debug(
+                f"{self.gav}: root_dep_mgmt has {len(self.root_dep_mgmt)} entries"
+            )
+
+        _log.debug(f"{self.gav}: local dep_mgmt has {len(self.dep_mgmt)} entries")
+
         # Handles injection of dependency management into the model.
         # According to Maven semantics, dependency management provides default values for:
         # version, scope, type, classifier, exclusions, and optional flag.
@@ -149,7 +157,9 @@ class Model:
                 continue
 
             dep_ga = f"{dep.groupId}:{dep.artifactId}"
-            source = "root dependencyManagement" if root_managed else "dependencyManagement"
+            source = (
+                "root dependencyManagement" if root_managed else "dependencyManagement"
+            )
 
             # Inject version if not set, or if root_dep_mgmt overrides it
             if not dep.version:  # Check for None or empty string
@@ -174,9 +184,13 @@ class Model:
             # Inject exclusions if managed dependency has them and current doesn't
             if managed.exclusions and not dep.exclusions:
                 _log.debug(
-                    f"{self.gav}: {dep_ga}: exclusions inherited from {source}"
+                    f"{self.gav}: {dep_ga}: exclusions inherited from {source}: {managed.exclusions}"
                 )
                 dep.exclusions = managed.exclusions
+            elif managed.exclusions:
+                _log.debug(
+                    f"{self.gav}: {dep_ga}: NOT inheriting exclusions (dep already has exclusions: {dep.exclusions})"
+                )
 
         # Any dependencies that still don't have a scope get the default
         for dep in self.deps.values():
@@ -223,11 +237,12 @@ class Model:
             # At the root level, use our own dependency management for transitive deps
             root_dep_mgmt = self.dep_mgmt
 
-        # Queue for breadth-first traversal: (model, parent_dep, parent_scope)
-        # parent_dep is None for root level, used for exclusion checking
+        # Queue for breadth-first traversal: (model, parent_dep, parent_scope, accumulated_exclusions)
+        # parent_dep is None for root level
         # parent_scope is used for scope transformation
-        queue: list[tuple[Model, Dependency | None, str | None]] = [
-            (self, None, None)
+        # accumulated_exclusions tracks all exclusions from ancestors
+        queue: list[tuple[Model, Dependency | None, str | None, tuple]] = [
+            (self, None, None, tuple())
         ]
         current_depth = 0
 
@@ -235,7 +250,7 @@ class Model:
             # Process all items at current depth
             next_queue: list[tuple[Model, Dependency | None, str | None]] = []
 
-            for model, parent_dep, parent_scope in queue:
+            for model, parent_dep, parent_scope, accumulated_exclusions in queue:
                 for gact, dep in model.deps.items():
                     dep_ga = f"{dep.groupId}:{dep.artifactId}"
 
@@ -256,10 +271,17 @@ class Model:
                         _log.debug(f"{model.gav}: {dep_ga}: skipped (optional)")
                         continue
 
-                    # Check exclusions from parent
-                    if parent_dep and Model._is_excluded(dep, parent_dep.exclusions):
+                    # Check exclusions from all ancestors (not just immediate parent)
+                    if accumulated_exclusions and Model._is_excluded(
+                        dep, accumulated_exclusions
+                    ):
+                        ancestor_info = (
+                            "ancestor"
+                            if not parent_dep
+                            else f"{parent_dep.groupId}:{parent_dep.artifactId} or ancestor"
+                        )
                         _log.debug(
-                            f"{model.gav}: {dep_ga}: excluded by {parent_dep.groupId}:{parent_dep.artifactId}"
+                            f"{model.gav}: {dep_ga}: excluded by {ancestor_info}"
                         )
                         continue
 
@@ -293,11 +315,13 @@ class Model:
                                 model.context,
                                 root_dep_mgmt,
                             )
-                            next_queue.append((dep_model, dep, dep.scope))
-                        except Exception as e:
-                            _log.debug(
-                                f"Could not build model for {dep}: {e}"
+                            # Accumulate exclusions: combine ancestor exclusions with this dep's exclusions
+                            new_exclusions = accumulated_exclusions + dep.exclusions
+                            next_queue.append(
+                                (dep_model, dep, dep.scope, new_exclusions)
                             )
+                        except Exception as e:
+                            _log.debug(f"Could not build model for {dep}: {e}")
 
             # Move to next depth level
             queue = next_queue
