@@ -33,18 +33,34 @@ from .commands.versions import versions
 
 # Platform mappings: platform -> (os_name, os_family, os_arch)
 PLATFORMS: dict[str, tuple[str, str, str]] = {
+    # Linux
     "linux": ("Linux", "unix", "auto"),
     "linux-arm64": ("Linux", "unix", "aarch64"),
     "linux-x32": ("Linux", "unix", "i386"),
     "linux-x64": ("Linux", "unix", "amd64"),
+    # macOS
     "macos": ("Mac OS X", "mac", "auto"),
     "macos-arm64": ("Mac OS X", "mac", "aarch64"),
     "macos-x32": ("Mac OS X", "mac", "x86"),
     "macos-x64": ("Mac OS X", "mac", "x86_64"),
+    # Windows
     "windows": ("Windows", "windows", "auto"),
     "windows-arm64": ("Windows", "windows", "aarch64"),
     "windows-x32": ("Windows", "windows", "x86"),
     "windows-x64": ("Windows", "windows", "amd64"),
+    # BSD variants
+    "freebsd": ("FreeBSD", "unix", "auto"),
+    "freebsd-x64": ("FreeBSD", "unix", "amd64"),
+    "openbsd": ("OpenBSD", "unix", "auto"),
+    "openbsd-x64": ("OpenBSD", "unix", "amd64"),
+    "netbsd": ("NetBSD", "unix", "auto"),
+    "netbsd-x64": ("NetBSD", "unix", "amd64"),
+    # Solaris/SunOS
+    "solaris": ("SunOS", "unix", "auto"),
+    "solaris-x64": ("SunOS", "unix", "amd64"),
+    # AIX
+    "aix": ("AIX", "unix", "auto"),
+    "aix-ppc64": ("AIX", "unix", "ppc64"),
 }
 
 # Convenience aliases
