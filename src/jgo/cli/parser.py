@@ -31,6 +31,87 @@ from .commands.tree import tree
 from .commands.update import update
 from .commands.versions import versions
 
+# Platform mappings: platform -> (os_name, os_family, os_arch)
+PLATFORMS: dict[str, tuple[str, str, str]] = {
+    "linux": ("Linux", "unix", "auto"),
+    "linux-arm64": ("Linux", "unix", "aarch64"),
+    "linux-x32": ("Linux", "unix", "i386"),
+    "linux-x64": ("Linux", "unix", "amd64"),
+    "macos": ("Mac OS X", "mac", "auto"),
+    "macos-arm64": ("Mac OS X", "mac", "aarch64"),
+    "macos-x32": ("Mac OS X", "mac", "x86"),
+    "macos-x64": ("Mac OS X", "mac", "x86_64"),
+    "windows": ("Windows", "windows", "auto"),
+    "windows-arm64": ("Windows", "windows", "aarch64"),
+    "windows-x32": ("Windows", "windows", "x86"),
+    "windows-x64": ("Windows", "windows", "amd64"),
+}
+
+# Convenience aliases
+PLATFORM_ALIASES: dict[str, str] = {
+    "linux32": "linux-x32",
+    "linux64": "linux-x64",
+    "macos32": "macos-x32",
+    "macos64": "macos-x64",
+    "win32": "windows-x32",
+    "win64": "windows-x64",
+}
+
+# Windows os.arch values:
+#
+# | os.arch value | OpenJDK versions |
+# |---------------|------------------|
+# | aarch64       | 16 - 25+         |
+# | amd64         | 6 - 25+          |
+# | ia64          | 6 - 9            |
+# | x86           | 6 - 23           |
+# | unknown       | 6 - 25+          |
+#
+# As specified in the Windows java_props_md.c:
+# - https://github.com/openjdk/jdk6/blob/jdk6-b49/jdk/src/windows/native/java/lang/java_props_md.c#L858-L866
+# - https://github.com/openjdk/jdk/blob/jdk7-b147/jdk/src/windows/native/java/lang/java_props_md.c#L467-L474
+# - https://github.com/openjdk/jdk/blob/jdk8-b120/jdk/src/windows/native/java/lang/java_props_md.c#L468-L476
+# - https://github.com/openjdk/jdk/blob/jdk-9%2B181/jdk/src/java.base/windows/native/libjava/java_props_md.c#L562-L570
+# - https://github.com/openjdk/jdk/blob/jdk-10%2B46/src/java.base/windows/native/libjava/java_props_md.c#L562-L568
+# - https://github.com/openjdk/jdk/blob/jdk-11-ga/src/java.base/windows/native/libjava/java_props_md.c#L562-L568
+# - https://github.com/openjdk/jdk/blob/jdk-12-ga/src/java.base/windows/native/libjava/java_props_md.c#L573-L579
+# - https://github.com/openjdk/jdk/blob/jdk-13-ga/src/java.base/windows/native/libjava/java_props_md.c#L567-L573
+# - https://github.com/openjdk/jdk/blob/jdk-14-ga/src/java.base/windows/native/libjava/java_props_md.c#L567-L573
+# - https://github.com/openjdk/jdk/blob/jdk-15-ga/src/java.base/windows/native/libjava/java_props_md.c#L568-L574
+# - https://github.com/openjdk/jdk/blob/jdk-16-ga/src/java.base/windows/native/libjava/java_props_md.c#L568-L576
+# - https://github.com/openjdk/jdk/blob/jdk-17-ga/src/java.base/windows/native/libjava/java_props_md.c#L571-L579
+# - https://github.com/openjdk/jdk/blob/jdk-18-ga/src/java.base/windows/native/libjava/java_props_md.c#L585-L593
+# - https://github.com/openjdk/jdk/blob/jdk-19-ga/src/java.base/windows/native/libjava/java_props_md.c#L580-L588
+# - https://github.com/openjdk/jdk/blob/jdk-20-ga/src/java.base/windows/native/libjava/java_props_md.c#L580-L588
+# - https://github.com/openjdk/jdk/blob/jdk-21-ga/src/java.base/windows/native/libjava/java_props_md.c#L581-L589
+# - https://github.com/openjdk/jdk/blob/jdk-22-ga/src/java.base/windows/native/libjava/java_props_md.c#L551-L559
+# - https://github.com/openjdk/jdk/blob/jdk-23-ga/src/java.base/windows/native/libjava/java_props_md.c#L551-L559
+# - https://github.com/openjdk/jdk/blob/jdk-24-ga/src/java.base/windows/native/libjava/java_props_md.c#L553-L559
+# - https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/windows/native/libjava/java_props_md.c#L557-L563
+
+
+def expand_platform(platform: str | None) -> tuple[str | None, str | None, str | None]:
+    """
+    Expand a platform shorthand to (os_name, os_family, os_arch).
+
+    Args:
+        platform: Platform name like 'linux-x64' or alias like 'win64'
+
+    Returns:
+        Tuple of (os_name, os_family, os_arch), or (None, None, None) if not found
+    """
+    if platform is None:
+        return None, None, None
+
+    # Resolve alias first
+    platform = PLATFORM_ALIASES.get(platform, platform)
+
+    # Look up in platforms
+    if platform in PLATFORMS:
+        return PLATFORMS[platform]
+
+    return None, None, None
+
 
 class ParsedArgs:
     """
@@ -341,20 +422,30 @@ def global_options(f):
     )(f)
 
     # Profile constraints
+    all_platforms = list(PLATFORMS.keys()) + list(PLATFORM_ALIASES.keys())
+    f = click.option(
+        "--platform",
+        type=click.Choice(all_platforms),
+        metavar="PLATFORM",
+        help="Target platform for profile activation. "
+        "Sets os-name, os-family, and os-arch together. "
+        f"Choices: {', '.join(PLATFORMS.keys())}. "
+        f"Aliases: {', '.join(f'{k}={v}' for k, v in PLATFORM_ALIASES.items())}.",
+    )(f)
     f = click.option(
         "--os-name",
         metavar="NAME",
-        help="Set OS name for profile activation (e.g., 'Windows XP').",
+        help="Set OS name for profile activation (e.g., 'Linux'). Overrides --platform.",
     )(f)
     f = click.option(
         "--os-family",
         metavar="FAMILY",
-        help="Set OS family for profile activation (e.g., 'Windows').",
+        help="Set OS family for profile activation (e.g., 'unix'). Overrides --platform.",
     )(f)
     f = click.option(
         "--os-arch",
         metavar="ARCH",
-        help="Set OS architecture for profile activation (e.g., 'x86').",
+        help="Set OS architecture for profile activation (e.g., 'amd64'). Overrides --platform.",
     )(f)
     f = click.option(
         "--os-version",
@@ -604,6 +695,13 @@ def _build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, comman
                 key, value = prop.split("=", 1)
                 properties[key] = value
 
+    # Expand platform to os_name, os_family, os_arch
+    # Explicit --os-name/--os-family/--os-arch override --platform values
+    plat_name, plat_family, plat_arch = expand_platform(opts.get("platform"))
+    os_name = opts.get("os_name") or plat_name
+    os_family = opts.get("os_family") or plat_family
+    os_arch = opts.get("os_arch") or plat_arch
+
     return ParsedArgs(
         # General
         verbose=opts.get("verbose", 0),
@@ -645,9 +743,9 @@ def _build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, comman
         java_vendor=opts.get("java_vendor"),
         use_system_java=opts.get("use_system_java", False),
         # Profile constraints
-        os_name=opts.get("os_name"),
-        os_family=opts.get("os_family"),
-        os_arch=opts.get("os_arch"),
+        os_name=os_name,
+        os_family=os_family,
+        os_arch=os_arch,
         os_version=opts.get("os_version"),
         properties=properties,
         # Endpoint and args
