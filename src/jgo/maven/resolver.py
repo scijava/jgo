@@ -18,7 +18,7 @@ from .dependency_printer import (
     format_dependency_list,
     format_dependency_tree,
 )
-from .model import Model
+from .model import Model, ProfileConstraints
 from .pom import write_temp_pom
 
 if TYPE_CHECKING:
@@ -266,6 +266,9 @@ class PythonResolver(Resolver):
     Low overhead, but less feature complete than mvn.
     """
 
+    def __init__(self, profile_constraints: ProfileConstraints | None = None):
+        self.profile_constraints = profile_constraints
+
     def download(self, artifact: Artifact) -> Path | None:
         if artifact.version.endswith("-SNAPSHOT"):
             raise RuntimeError("Downloading of snapshots is not yet implemented.")
@@ -318,7 +321,9 @@ class PythonResolver(Resolver):
         boms = _resolve_boms(components, managed, boms)
 
         pom = create_pom(components, boms)
-        model = Model(pom, components[0].context)
+        model = Model(
+            pom, components[0].context, profile_constraints=self.profile_constraints
+        )
         # When transitive=False, set max_depth=1 to get one level of dependencies
         # from the synthetic wrapper (i.e., the direct dependencies of the components)
         max_depth = 1 if not transitive else None
@@ -393,7 +398,9 @@ class PythonResolver(Resolver):
                     processed.add(dep_key)
                     try:
                         dep_model = Model(
-                            dep.artifact.component.pom(), dep.artifact.component.context
+                            dep.artifact.component.pom(),
+                            dep.artifact.component.context,
+                            profile_constraints=self.profile_constraints,
                         )
                         # Only show compile/runtime dependencies transitively
                         transitive_deps = [
@@ -417,7 +424,9 @@ class PythonResolver(Resolver):
             comp_node = DependencyNode(comp_dep)
 
             # Build tree from component's dependencies (exclude test scope)
-            comp_model = Model(comp.pom(), comp.context)
+            comp_model = Model(
+                comp.pom(), comp.context, profile_constraints=self.profile_constraints
+            )
             direct_deps = [
                 dep for dep in comp_model.deps.values() if dep.scope not in ("test",)
             ]

@@ -14,6 +14,7 @@ from ..constants import DEFAULT_MAVEN_REPO, MAVEN_CENTRAL_URL
 from ..env import EnvironmentBuilder, LinkStrategy
 from ..exec import JavaRunner, JavaSource, JVMConfig
 from ..maven import MavenContext, MvnResolver, PythonResolver
+from ..maven.model import ProfileConstraints
 from ..util import is_debug_enabled, is_info_enabled
 
 if TYPE_CHECKING:
@@ -33,7 +34,15 @@ def create_maven_context(args: ParsedArgs, config: dict) -> MavenContext:
     """
     # Determine resolver
     if args.resolver == "python":
-        resolver = PythonResolver()
+        profile_constraints = ProfileConstraints(
+            jdk=str(args.java_version) if args.java_version else None,
+            os_name=args.os_name,
+            os_family=args.os_family,
+            os_arch=args.os_arch,
+            os_version=args.os_version,
+            properties=args.properties,
+        )
+        resolver = PythonResolver(profile_constraints=profile_constraints)
     elif args.resolver == "mvn":
         from jgo.util import ensure_maven_available
 
@@ -42,7 +51,17 @@ def create_maven_context(args: ParsedArgs, config: dict) -> MavenContext:
             mvn_command, update=args.update, debug=is_debug_enabled()
         )
     else:  # auto
-        resolver = PythonResolver()  # Default to pure Python
+        profile_constraints = ProfileConstraints(
+            jdk=str(args.java_version) if args.java_version else None,
+            os_name=args.os_name,
+            os_family=args.os_family,
+            os_arch=args.os_arch,
+            os_version=args.os_version,
+            properties=args.properties,
+        )
+        resolver = PythonResolver(
+            profile_constraints=profile_constraints
+        )  # Default to pure Python
 
     # Get repo cache path
     repo_cache = args.repo_cache

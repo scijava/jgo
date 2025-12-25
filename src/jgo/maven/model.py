@@ -5,6 +5,7 @@ Maven dependency model and resolution.
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass, field
 from re import findall
 from typing import TYPE_CHECKING, Iterable
 
@@ -20,6 +21,18 @@ _log = logging.getLogger(__name__)
 GACT = tuple[str, str, str, str]
 
 
+@dataclass
+class ProfileConstraints:
+    """Constraints for profile activation."""
+
+    jdk: str | None = None
+    os_name: str | None = None
+    os_family: str | None = None
+    os_arch: str | None = None
+    os_version: str | None = None
+    properties: dict[str, str] = field(default_factory=dict)
+
+
 class Model:
     """
     A minimal Maven metadata model, tracking only dependencies and properties.
@@ -30,6 +43,7 @@ class Model:
         pom: POM,
         context: MavenContext | None = None,
         root_dep_mgmt: dict[GACT, "Dependency"] | None = None,
+        profile_constraints: ProfileConstraints | None = None,
     ):
         """
         Build a Maven metadata model from the given POM.
@@ -40,11 +54,13 @@ class Model:
             root_dep_mgmt: Optional dependency management from the root project.
                 This takes precedence over the local dependency management and is used
                 to ensure consistent versions across all transitive dependencies.
+            profile_constraints: Optional constraints for profile activation.
         """
         from .core import MavenContext
 
         self.context = context or MavenContext()
         self.root_dep_mgmt = root_dep_mgmt
+        self.profile_constraints = profile_constraints
         self.gav = f"{pom.groupId}:{pom.artifactId}:{pom.version}"
         _log.debug(f"{self.gav}: begin model initialization")
 
@@ -53,7 +69,6 @@ class Model:
         self.deps: dict[GACT, Dependency] = {}
         self.dep_mgmt: dict[GACT, Dependency] = {}
         self.props: dict[str, str] = {}
-        self._merge(pom)
 
         # The following steps are adapted from the maven-model-builder:
         # https://maven.apache.org/ref/3.3.9/maven-model-builder/
@@ -62,32 +77,8 @@ class Model:
 
         _log.debug(f"{self.gav}: profile activation and injection")
 
-        # Compute active profiles.
-        active_profiles = [
-            profile
-            for profile in pom.elements("profiles/profile")
-            if Model._is_active_profile(profile)
-        ]
-
-        # Merge values from the active profiles into the model.
-        for profile in active_profiles:
-            profile_dep_els = profile.findall("dependencies/dependency")
-            profile_deps = [
-                self.context.parse_dependency_element(el) for el in profile_dep_els
-            ]
-            self._merge_deps(profile_deps)
-
-            profile_dep_mgmt_els = profile.findall(
-                "dependencyManagement/dependencies/dependency"
-            )
-            profile_dep_mgmt = [
-                self.context.parse_dependency_element(el) for el in profile_dep_mgmt_els
-            ]
-            self._merge_deps(profile_dep_mgmt, managed=True)
-
-            profile_props_els = profile.findall("properties/*")
-            profile_props = {el.tag: el.text for el in profile_props_els}
-            self._merge_props(profile_props)
+        self._inject_profiles(pom)
+        self._merge(pom)
 
         # -- PARENT RESOLUTION AND INHERITANCE ASSEMBLY --
 
@@ -96,12 +87,33 @@ class Model:
         # Merge values up the parent chain into the current model.
         parent = self.context.pom_parent(pom)
         while parent:
+            self._inject_profiles(parent)
             self._merge(parent)
             parent = self.context.pom_parent(parent)
 
         # -- MODEL INTERPOLATION --
 
         _log.debug(f"{self.gav}: model interpolation")
+
+        # Inject OS-related properties from profile constraints.
+        # These are needed for interpolating classifiers like:
+        # natives-${scijava.platform.family.longest}-${os.arch}
+        if self.profile_constraints:
+            os_props = {}
+            if self.profile_constraints.os_name:
+                os_props["os.name"] = self.profile_constraints.os_name
+            if self.profile_constraints.os_arch:
+                os_props["os.arch"] = self.profile_constraints.os_arch
+            if self.profile_constraints.os_family:
+                os_props["os.family"] = self.profile_constraints.os_family
+            if self.profile_constraints.os_version:
+                os_props["os.version"] = self.profile_constraints.os_version
+            # Also inject any explicit properties from constraints
+            for k, v in self.profile_constraints.properties.items():
+                if k not in os_props:
+                    os_props[k] = v
+            # Merge with lowest priority (don't override existing props)
+            self._merge_props(os_props)
 
         # Replace ${...} expressions in property values.
         for k in self.props:
@@ -314,6 +326,7 @@ class Model:
                                 dep.artifact.component.pom(),
                                 model.context,
                                 root_dep_mgmt,
+                                model.profile_constraints,
                             )
                             # Accumulate exclusions: combine ancestor exclusions with this dep's exclusions
                             new_exclusions = accumulated_exclusions + dep.exclusions
@@ -352,7 +365,9 @@ class Model:
             bom_pom = bom_project.at_version(dep.version).pom()
 
             # Fully build the BOM's model, agnostic of this one.
-            bom_model = Model(bom_pom, self.context)
+            bom_model = Model(
+                bom_pom, self.context, profile_constraints=self.profile_constraints
+            )
 
             # Count how many managed deps we're importing
             before_count = len(self.dep_mgmt)
@@ -427,6 +442,37 @@ class Model:
         self._merge_deps(self.context.pom_dependencies(pom))
         self._merge_deps(self.context.pom_dependencies(pom, managed=True), managed=True)
 
+    def _inject_profiles(self, pom: POM) -> None:
+        """
+        Activate and inject profiles from the given POM.
+        """
+        # Compute active profiles.
+        active_profiles = [
+            profile
+            for profile in pom.elements("profiles/profile")
+            if self._is_active_profile(profile)
+        ]
+
+        # Merge values from the active profiles into the model.
+        for profile in active_profiles:
+            profile_dep_els = profile.findall("dependencies/dependency")
+            profile_deps = [
+                self.context.parse_dependency_element(el) for el in profile_dep_els
+            ]
+            self._merge_deps(profile_deps)
+
+            profile_dep_mgmt_els = profile.findall(
+                "dependencyManagement/dependencies/dependency"
+            )
+            profile_dep_mgmt = [
+                self.context.parse_dependency_element(el) for el in profile_dep_mgmt_els
+            ]
+            self._merge_deps(profile_dep_mgmt, managed=True)
+
+            profile_props_els = profile.findall("properties/*")
+            profile_props = {el.tag: el.text for el in profile_props_els}
+            self._merge_props(profile_props)
+
     def _interpolate_deps(self, deps: dict[GACT, Dependency]) -> dict[GACT, Dependency]:
         """
         Interpolate ${...} expressions in dependency coordinates.
@@ -491,15 +537,186 @@ class Model:
             for exclusion in exclusions
         )
 
-    @staticmethod
-    def _is_active_profile(el):
+    def _is_active_profile(self, el):
         activation = el.find("activation")
         if activation is None:
             return False
 
+        profile_id_el = el.find("id")
+        profile_id = profile_id_el.text if profile_id_el is not None else "<unknown>"
+
+        # Check all conditions in the activation block.
+        # If ANY condition is met, the profile is active?
+        # Actually, Maven documentation says:
+        # "The activation element is not a list of conditions, but a list of activators.
+        # If any of the activators is triggered, the profile is active."
+        # BUT, within a single activator (like <os>), all sub-conditions must match.
+        # Wait, no. <activation> contains a list of criteria.
+        # If <activeByDefault> is true, it's active.
+        # If <jdk> matches, it's active.
+        # If <os> matches, it's active.
+        # If <property> matches, it's active.
+        # If <file> matches, it's active.
+        # So it IS an OR logic between top-level elements.
+
+        # However, the issue reported is that 'windows' profile is activated on Linux.
+        # This implies that the <os> check is returning True when it shouldn't.
+
+        # Check all conditions in the activation block.
+        # If ANY condition is met, the profile is active?
+        # Actually, Maven documentation says:
+        # "The activation element is not a list of conditions, but a list of activators.
+        # If any of the activators is triggered, the profile is active."
+        # BUT, within a single activator (like <os>), all sub-conditions must match.
+        # Wait, no. <activation> contains a list of criteria.
+        # If <activeByDefault> is true, it's active.
+        # If <jdk> matches, it's active.
+        # If <os> matches, it's active.
+        # If <property> matches, it's active.
+        # If <file> matches, it's active.
+        # So it IS an OR logic between top-level elements.
+        #
+        # However, the issue reported is that 'windows' profile is activated on Linux.
+        # This implies that the <os> check is returning True when it shouldn't.
+        #
+        # Wait, looking at the code again:
+        # The loop `for condition in activation:` iterates over children of <activation>.
+        # If ANY child matches, we return True.
+        #
+        # If a profile has:
+        # <activation>
+        #   <os>
+        #     <family>Windows</family>
+        #   </os>
+        # </activation>
+        #
+        # Then `condition` is the <os> element.
+        # We check if it matches. If so, return True.
+        #
+        # If a profile has:
+        # <activation>
+        #   <activeByDefault>true</activeByDefault>
+        #   <os>
+        #     <family>Windows</family>
+        #   </os>
+        # </activation>
+        #
+        # Then we check activeByDefault. If true, return True.
+        # Then we check os. If matches, return True.
+        #
+        # This seems correct for OR logic between activators.
+        #
+        # But wait! The `windows` profile in scijava-common (or wherever) probably looks like:
+        # <profile>
+        #   <id>windows</id>
+        #   <activation>
+        #     <os>
+        #       <family>Windows</family>
+        #     </os>
+        #   </activation>
+        # ...
+        # </profile>
+        #
+        # If I run with `--os-name Linux`, then `self.profile_constraints.os_family` is None (unless I set it).
+        # If `os_family` is None, the check:
+        #
+        # elif os_condition.tag == "family":
+        #     text = os_condition.text
+        #     if text.startswith("!"):
+        #         if self.profile_constraints.os_family == text[1:]:
+        #             match = False
+        #     elif (
+        #         self.profile_constraints.os_family
+        #         and self.profile_constraints.os_family != text
+        #     ):
+        #         match = False
+        #
+        # If `self.profile_constraints.os_family` is None (falsy), the `elif` condition is False.
+        # So `match` remains True!
+        #
+        # This is the bug. If a constraint is NOT specified in `profile_constraints`,
+        # we should probably NOT match against it?
+        #
+        # No, if I don't specify `--os-family`, I probably don't want to restrict based on it?
+        # But here we are checking if the *profile* requires a specific family.
+        # If the profile requires "Windows", and I haven't told jgo what my OS family is,
+        # should it match?
+        #
+        # If I say `--os-name Linux`, I haven't explicitly said "My family is NOT Windows".
+        # But usually "Linux" implies family "Unix" or similar.
+        #
+        # If the user provides *any* OS info, we should probably assume they are providing *complete* OS info
+        # for the purpose of matching?
+        #
+        # Or rather: if the profile *requires* a value for a field, and we don't have it,
+        # we can't say it matches.
+        #
+        # So:
+        # if os_condition.tag == "family":
+        #    if not self.profile_constraints.os_family:
+        #        # We don't know our OS family, so we can't satisfy this condition?
+        #        # Or should we assume mismatch?
+        #        # If I run on Linux, I might not know my family is "unix".
+        #        # But I definitely know it's not "Windows".
+        #
+        # If the user supplies `--os-name Linux`, they are providing partial info.
+        #
+        # Let's look at how `mvn` does it. It detects the OS properties from Java system properties.
+        # `os.name`, `os.arch`, `os.version`.
+        # `os.family` is derived.
+        #
+        # If we are simulating this, we need to be careful.
+        #
+        # If `self.profile_constraints.os_family` is None, it means "unknown".
+        # If the profile says `<family>Windows</family>`, and we have "unknown" family,
+        # should we match?
+        #
+        # If we match, we might activate Windows profiles on Linux (as seen).
+        # If we don't match, we might fail to activate a profile that should be active.
+        #
+        # Given the user explicitly passed `--os-name Linux`, they are trying to simulate a specific environment.
+        # If they didn't pass `--os-family`, maybe we should try to derive it?
+        # Or just assume that if a profile requires a family, and we didn't provide one, it's a mismatch.
+        #
+        # Let's try changing the logic to: if the profile has a condition on a field,
+        # and we have a value for that field, check it.
+        # If we *don't* have a value for that field, what then?
+        #
+        # If I say `--os-name Linux`, and the profile wants `<family>Windows</family>`.
+        # I have `os_name="Linux"`, `os_family=None`.
+        # The profile checks `family`. I have None.
+        # Current logic: `if (None and None != "Windows"):` -> False. Match stays True.
+        #
+        # If I change it to:
+        # `if self.profile_constraints.os_family != text:`
+        # Then `None != "Windows"` is True. Match becomes False.
+        #
+        # But what if the profile wants `<family>!Windows</family>`?
+        # `text` is "!Windows".
+        # `if self.profile_constraints.os_family == "Windows":` -> `None == "Windows"` -> False. Match stays True.
+        # This seems correct: if I don't know my family, I can't say it IS Windows, so "Not Windows" is a safe bet?
+        # Or is it? "Not Windows" usually means "I know it is something else".
+        #
+        # If I have NO os info at all, `self.profile_constraints` might be None (handled at top).
+        # Or it might be all Nones.
+        #
+        # If I have all Nones, and profile wants "Windows".
+        # `None != "Windows"` -> Match = False.
+        # So an empty constraint set would match nothing that requires specific values.
+        # This seems safer than matching everything.
+        #
+        # What about negation?
+        # Profile: `!Windows`. Constraint: `None`.
+        # `None == "Windows"` is False. Match stays True.
+        # So "unknown" matches "!Windows". This seems acceptable.
+        #
+        # So the fix is to remove the `self.profile_constraints.os_field and` check.
+        # Just compare the values directly, treating None as a distinct value that won't equal any string.
+
         for condition in activation:
             if condition.tag == "activeByDefault":
                 if condition.text == "true":
+                    _log.debug(f"Profile '{profile_id}' activated by activeByDefault")
                     return True
 
             elif condition.tag == "jdk":
@@ -507,21 +724,71 @@ class Model:
                 pass
 
             elif condition.tag == "os":
+                if not self.profile_constraints:
+                    continue
+
                 # <name>Windows XP</name>
                 # <family>Windows</family>
                 # <arch>x86</arch>
                 # <version>5.1.2600</version>
-                # TODO: The db.xml generator would benefit from being able to glean
-                # platform-specific dependencies. We can support it in the PythonResolver
-                # by inventing our own `platforms` field in the Dependency class and
-                # changing this method to return a list of platforms rather than True.
-                # But the MvnResolver won't be able to populate it naively.
-                pass
+                match = True
+                for os_condition in condition:
+                    if os_condition.tag == "name":
+                        # Maven uses ! to negate
+                        text = os_condition.text
+                        if text.startswith("!"):
+                            if self.profile_constraints.os_name == text[1:]:
+                                match = False
+                        elif self.profile_constraints.os_name != text:
+                            match = False
+                    elif os_condition.tag == "family":
+                        text = os_condition.text
+                        if text.startswith("!"):
+                            if self.profile_constraints.os_family == text[1:]:
+                                match = False
+                        elif self.profile_constraints.os_family != text:
+                            match = False
+                    elif os_condition.tag == "arch":
+                        text = os_condition.text
+                        if text.startswith("!"):
+                            if self.profile_constraints.os_arch == text[1:]:
+                                match = False
+                        elif self.profile_constraints.os_arch != text:
+                            match = False
+                    elif os_condition.tag == "version":
+                        text = os_condition.text
+                        if text.startswith("!"):
+                            if self.profile_constraints.os_version == text[1:]:
+                                match = False
+                        elif self.profile_constraints.os_version != text:
+                            match = False
+                if match:
+                    _log.debug(f"Profile '{profile_id}' activated by os")
+                    return True
 
             elif condition.tag == "property":
+                if not self.profile_constraints:
+                    continue
+
                 # <name>sparrow-type</name>
                 # <value>African</value>
-                pass
+                name = condition.find("name").text
+                value = condition.find("value")
+                value = value.text if value is not None else None
+
+                if name in self.profile_constraints.properties:
+                    if value is None:
+                        # Property existence check
+                        _log.debug(
+                            f"Profile '{profile_id}' activated by property {name}"
+                        )
+                        return True
+                    elif self.profile_constraints.properties[name] == value:
+                        # Property value check
+                        _log.debug(
+                            f"Profile '{profile_id}' activated by property {name}={value}"
+                        )
+                        return True
 
             elif condition.tag == "file":
                 # <file>

@@ -32,7 +32,7 @@ class TestPropertyInterpolation:
         component_simple = maven.project("org.scijava", "pom-scijava").at_version(
             "35.1.1"
         )
-        model_simple = Model(component_simple.pom())
+        model_simple = Model(component_simple.pom(), maven)
         self.assert_model_interpolated(model_simple)
 
         # Test with MvnResolver (mvn-based)
@@ -41,7 +41,7 @@ class TestPropertyInterpolation:
         component_syscall = maven_syscall.project(
             "org.scijava", "pom-scijava"
         ).at_version("35.1.1")
-        model_syscall = Model(component_syscall.pom())
+        model_syscall = Model(component_syscall.pom(), maven_syscall)
         self.assert_model_interpolated(model_syscall)
 
         # Ensure both resolvers produce identical results
@@ -121,7 +121,7 @@ class TestPropertyInterpolationEdgeCases:
         """
         maven = MavenContext()
         component = maven.project("org.scijava", "pom-scijava").at_version("35.1.1")
-        model = Model(component.pom())
+        model = Model(component.pom(), maven)
 
         managed_deps = list(model.dep_mgmt.values())
         assert len(managed_deps) > 0, "No managed dependencies found"

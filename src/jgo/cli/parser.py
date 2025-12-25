@@ -78,6 +78,12 @@ class ParsedArgs:
         java_version: int | None = None,
         java_vendor: str | None = None,
         use_system_java: bool = False,
+        # Profile constraints
+        os_name: str | None = None,
+        os_family: str | None = None,
+        os_arch: str | None = None,
+        os_version: str | None = None,
+        properties: dict[str, str] | None = None,
         # Endpoint and args
         endpoint: str | None = None,
         jvm_args: list[str] | None = None,
@@ -124,6 +130,12 @@ class ParsedArgs:
         self.java_version = java_version
         self.java_vendor = java_vendor
         self.use_system_java = use_system_java
+        # Profile constraints
+        self.os_name = os_name
+        self.os_family = os_family
+        self.os_arch = os_arch
+        self.os_version = os_version
+        self.properties = properties or {}
         # Endpoint and args
         self.endpoint = endpoint
         self.jvm_args = jvm_args or []
@@ -326,6 +338,36 @@ def global_options(f):
         "use_system_java",
         is_flag=True,
         help="Use system Java instead of downloading Java on demand.",
+    )(f)
+
+    # Profile constraints
+    f = click.option(
+        "--os-name",
+        metavar="NAME",
+        help="Set OS name for profile activation (e.g., 'Windows XP').",
+    )(f)
+    f = click.option(
+        "--os-family",
+        metavar="FAMILY",
+        help="Set OS family for profile activation (e.g., 'Windows').",
+    )(f)
+    f = click.option(
+        "--os-arch",
+        metavar="ARCH",
+        help="Set OS architecture for profile activation (e.g., 'x86').",
+    )(f)
+    f = click.option(
+        "--os-version",
+        metavar="VERSION",
+        help="Set OS version for profile activation (e.g., '5.1.2600').",
+    )(f)
+    f = click.option(
+        "--property",
+        "-D",
+        "properties",
+        multiple=True,
+        metavar="KEY=VALUE",
+        help="Set property for profile activation.",
     )(f)
 
     # Advanced options
@@ -554,6 +596,14 @@ def _build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, comman
                 name, url = repo.split("=", 1)
                 repositories[name] = url
 
+    # Parse properties from KEY=VALUE format
+    properties = {}
+    if opts.get("properties"):
+        for prop in opts["properties"]:
+            if "=" in prop:
+                key, value = prop.split("=", 1)
+                properties[key] = value
+
     return ParsedArgs(
         # General
         verbose=opts.get("verbose", 0),
@@ -594,6 +644,12 @@ def _build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, comman
         java_version=opts.get("java_version"),
         java_vendor=opts.get("java_vendor"),
         use_system_java=opts.get("use_system_java", False),
+        # Profile constraints
+        os_name=opts.get("os_name"),
+        os_family=opts.get("os_family"),
+        os_arch=opts.get("os_arch"),
+        os_version=opts.get("os_version"),
+        properties=properties,
         # Endpoint and args
         endpoint=endpoint,
         jvm_args=jvm_args or [],
