@@ -31,6 +31,7 @@ class ProfileConstraints:
     os_arch: str | None = None
     os_version: str | None = None
     properties: dict[str, str] = field(default_factory=dict)
+    lenient: bool = False
 
 
 class Model:
@@ -156,6 +157,10 @@ class Model:
         # IMPORTANT: Root dependency management (from the wrapper/entry point) takes
         # precedence over local dependency management. This ensures that the root project's
         # version constraints are applied consistently across all transitive dependencies.
+        lenient = (
+            self.profile_constraints.lenient if self.profile_constraints else False
+        )
+        deps_to_remove = []
         for gact, dep in self.deps.items():
             # First check root_dep_mgmt (highest priority), then local dep_mgmt
             root_managed = self.root_dep_mgmt.get(gact) if self.root_dep_mgmt else None
@@ -165,6 +170,10 @@ class Model:
             if managed is None:
                 # No managed version available
                 if not dep.version:  # Check for None or empty string
+                    if lenient:
+                        _log.warning(f"No version available for dependency {dep}")
+                        deps_to_remove.append(gact)
+                        continue
                     raise ValueError(f"No version available for dependency {dep}")
                 continue
 
@@ -203,6 +212,10 @@ class Model:
                 _log.debug(
                     f"{self.gav}: {dep_ga}: NOT inheriting exclusions (dep already has exclusions: {dep.exclusions})"
                 )
+
+        # Remove bad dependencies that couldn't be resolved (only in lenient mode)
+        for gact in deps_to_remove:
+            del self.deps[gact]
 
         # Any dependencies that still don't have a scope get the default
         for dep in self.deps.values():
@@ -294,6 +307,18 @@ class Model:
                         )
                         _log.debug(
                             f"{model.gav}: {dep_ga}: excluded by {ancestor_info}"
+                        )
+                        continue
+
+                    # Skip dependencies with uninterpolated properties in lenient mode
+                    lenient = (
+                        model.profile_constraints.lenient
+                        if model.profile_constraints
+                        else False
+                    )
+                    if lenient and Model._has_uninterpolated_properties(dep):
+                        _log.warning(
+                            f"{model.gav}: {dep_ga}: skipped (uninterpolated properties in {dep})"
                         )
                         continue
 
@@ -526,6 +551,18 @@ class Model:
             new_deps[new_gact] = dep
 
         return new_deps
+
+    @staticmethod
+    def _has_uninterpolated_properties(dep: Dependency) -> bool:
+        """Check if dependency has uninterpolated ${...} expressions in coordinates."""
+        coords = [
+            dep.groupId,
+            dep.artifactId,
+            dep.version,
+            dep.classifier,
+            dep.type,
+        ]
+        return any("${" in str(c) for c in coords if c)
 
     @staticmethod
     def _is_excluded(dep: Dependency, exclusions: Iterable[Project]):

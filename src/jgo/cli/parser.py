@@ -165,6 +165,8 @@ class ParsedArgs:
         os_arch: str | None = None,
         os_version: str | None = None,
         properties: dict[str, str] | None = None,
+        # Lenient mode
+        lenient: bool = False,
         # Endpoint and args
         endpoint: str | None = None,
         jvm_args: list[str] | None = None,
@@ -217,6 +219,8 @@ class ParsedArgs:
         self.os_arch = os_arch
         self.os_version = os_version
         self.properties = properties or {}
+        # Lenient mode
+        self.lenient = lenient
         # Endpoint and args
         self.endpoint = endpoint
         self.jvm_args = jvm_args or []
@@ -467,6 +471,13 @@ def global_options(f):
         type=click.Choice(["hard", "soft", "copy", "auto"]),
         default="auto",
         help="How to link JARs: hard, soft, copy, or auto (default)",
+    )(f)
+    f = click.option(
+        "--lenient",
+        is_flag=True,
+        help="Warn instead of failing on unresolved dependencies.",
+        envvar="JGO_LENIENT",
+        show_envvar=True,
     )(f)
     f = click.option(
         "--ignore-config", is_flag=True, help="Ignore ~/.jgorc configuration file."
@@ -748,6 +759,8 @@ def _build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, comman
         os_arch=os_arch,
         os_version=opts.get("os_version"),
         properties=properties,
+        # Lenient mode
+        lenient=opts.get("lenient", False),
         # Endpoint and args
         endpoint=endpoint,
         jvm_args=jvm_args or [],
