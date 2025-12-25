@@ -118,5 +118,34 @@ Tests are in the `tests/` directory:
 - `test_run.py`: Integration tests for running jgo
 - `test_managed.py`: Tests for dependency management mode
 - `test_parsington.py`: Tests for parsing endpoint strings
+- `test_thicket.py`: Tests for complex POM hierarchy resolution
 
 Tests use pytest. The project uses `uv` for dependency management.
+
+### Thicket Test Fixture
+
+The "thicket" is a complex generated hierarchy of Maven POMs used to test jgo's Maven model building:
+
+**Location:** `tests/fixtures/thicket/`
+- `generator.py`: Generates complex POM hierarchies with configurable random seed
+- `__init__.py`: Exports `generate_thicket()` function
+
+**What it tests:**
+- Multi-level parent POM inheritance (up to 4 levels)
+- BOM imports and transitive BOM imports (up to 3 per POM)
+- Property-based versioning and interpolation
+- Complex dependency management merging
+
+**How it works:**
+- POMs are automatically generated during test runs via a pytest session-scoped fixture in `tests/conftest.py`
+- Uses a fixed random seed (42) for reproducible test results
+- No manual setup required - just run `bin/test.sh`
+- POMs are generated in a temporary directory and cleaned up automatically
+
+**Regenerating with different seeds:**
+```bash
+# From project root
+python -m tests.fixtures.thicket.generator 123 /tmp/thicket-test
+```
+
+This ensures tests are fully integrated with the test suite and require no manual intervention.

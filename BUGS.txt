@@ -1,8 +1,5 @@
 Remove or repurpose obsolete files in docs/
 
-FIX PythonResolver bugs!
-- Migrate thicket code from db-xml-maven
-
 Review all print commands -- which ones should be using _log instead?
 
 Add support for module paths
