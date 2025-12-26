@@ -31,6 +31,59 @@ from .commands.tree import tree
 from .commands.update import update
 from .commands.versions import versions
 
+
+def detect_os_properties() -> tuple[str, str, str]:
+    """
+    Detect current platform as (os_name, os_family, os_arch).
+
+    Returns values that match Maven's OS property conventions for use in
+    profile activation.
+    """
+    import platform
+
+    system = platform.system()
+    machine = platform.machine()
+
+    # Map system -> (os_name, os_family)
+    # Match Maven's OS family conventions from plexus-utils
+    if system == "Linux":
+        os_name, os_family = "Linux", "unix"
+    elif system == "Darwin":
+        os_name, os_family = "Mac OS X", "mac"
+    elif system == "Windows":
+        os_name, os_family = "Windows", "windows"
+    elif system == "FreeBSD":
+        os_name, os_family = "FreeBSD", "unix"
+    elif system == "OpenBSD":
+        os_name, os_family = "OpenBSD", "unix"
+    elif system == "NetBSD":
+        os_name, os_family = "NetBSD", "unix"
+    elif system in ("SunOS", "Solaris"):
+        os_name, os_family = "SunOS", "unix"
+    elif system == "AIX":
+        os_name, os_family = "AIX", "unix"
+    else:
+        # Unknown system - use the raw value
+        os_name, os_family = system or "Unknown", "unknown"
+
+    # Map machine -> os_arch (Python -> Java conventions)
+    # Java uses different arch names than Python in some cases
+    arch_map = {
+        "x86_64": "amd64",  # Linux 64-bit
+        "AMD64": "amd64",  # Windows 64-bit
+        "arm64": "aarch64",  # macOS ARM (M1/M2/M3)
+        "aarch64": "aarch64",  # Linux ARM
+        "i386": "i386",  # Linux 32-bit
+        "i486": "i386",
+        "i586": "i386",
+        "i686": "i386",
+        "x86": "x86",  # Windows 32-bit
+    }
+    os_arch = arch_map.get(machine, machine)
+
+    return os_name, os_family, os_arch
+
+
 # Platform mappings: platform -> (os_name, os_family, os_arch)
 PLATFORMS: dict[str, tuple[str, str, str]] = {
     # Linux
@@ -123,10 +176,7 @@ def expand_platform(platform: str | None) -> tuple[str | None, str | None, str |
     platform = PLATFORM_ALIASES.get(platform, platform)
 
     # Look up in platforms
-    if platform in PLATFORMS:
-        return PLATFORMS[platform]
-
-    return None, None, None
+    return PLATFORMS.get(platform) or (None, None, None)
 
 
 class ParsedArgs:
@@ -455,17 +505,17 @@ def global_options(f):
     f = click.option(
         "--os-name",
         metavar="NAME",
-        help="Set OS name for profile activation (e.g., 'Linux'). Overrides --platform.",
+        help="Set OS name for profile activation (e.g., 'Linux', 'Windows'). Use 'auto' to auto-detect. Overrides --platform.",
     )(f)
     f = click.option(
         "--os-family",
         metavar="FAMILY",
-        help="Set OS family for profile activation (e.g., 'unix'). Overrides --platform.",
+        help="Set OS family for profile activation (e.g., 'unix', 'windows'). Use 'auto' to auto-detect. Overrides --platform.",
     )(f)
     f = click.option(
         "--os-arch",
         metavar="ARCH",
-        help="Set OS architecture for profile activation (e.g., 'amd64'). Overrides --platform.",
+        help="Set OS architecture for profile activation (e.g., 'amd64', 'aarch64'). Use 'auto' to auto-detect. Overrides --platform.",
     )(f)
     f = click.option(
         "--os-version",
@@ -722,12 +772,23 @@ def _build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, comman
                 key, value = prop.split("=", 1)
                 properties[key] = value
 
-    # Expand platform to os_name, os_family, os_arch
-    # Explicit --os-name/--os-family/--os-arch override --platform values
+    # Expand platform to os_name, os_family, os_arch.
+    # Explicit --os-name/--os-family/--os-arch override --platform values.
     plat_name, plat_family, plat_arch = expand_platform(opts.get("platform"))
     os_name = opts.get("os_name") or plat_name
     os_family = opts.get("os_family") or plat_family
     os_arch = opts.get("os_arch") or plat_arch
+
+    # Populate remaining None and "auto" values from the current system.
+    # This ensures we always have concrete values for profile activation,
+    # matching Maven's behavior where OS properties are always populated.
+    detected_name, detected_family, detected_arch = detect_os_properties()
+    if os_name is None or os_name == "auto":
+        os_name = detected_name
+    if os_family is None or os_family == "auto":
+        os_family = detected_family
+    if os_arch is None or os_arch == "auto":
+        os_arch = detected_arch
 
     return ParsedArgs(
         # General
