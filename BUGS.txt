@@ -1,3 +1,6 @@
+MvnResolver passes -Dscope=runtime to mvn dependency:list and dependency:tree,
+but we still see a weird junit test dep in sc.fiji:fiji's dependency tree. Why?
+
 Remove or repurpose obsolete files in docs/
 
 Review all print commands -- which ones should be using _log instead?
@@ -8,7 +11,7 @@ Decide about remaining `~/.jgorc` references throughout the codebase
 
 No API for managing jgo entrypoints
 
-Terms `endpoint` and `entrypoint` are confusingly similar -- any recourse, or no?
-
 What is the difference between `jgo -u` and `jgo update`? Do we need both?
 - For non-project mode, `jgo -u` seems needed for whether to update hashed env...
+
+pom-scijava bug: java3d-core 1.7.2 depends on gluegen-rt-main and jogl-all-main, and java3d-utils depends on joal-main; the `-main` artifacts each bring in *all* platform JARs :-(
