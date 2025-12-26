@@ -611,13 +611,15 @@ class Model:
                 try:
                     from .version import (
                         parse_java_version,
-                        parse_version_range,
-                        version_matches_range,
+                        parse_jdk_activation_range,
+                        version_matches_jdk_range,
                     )
 
                     current_version = parse_java_version(self.profile_constraints.jdk)
-                    lower, upper, lower_inc, upper_inc = parse_version_range(jdk_spec)
-                    matches = version_matches_range(
+                    lower, upper, lower_inc, upper_inc = parse_jdk_activation_range(
+                        jdk_spec
+                    )
+                    matches = version_matches_jdk_range(
                         current_version, lower, upper, lower_inc, upper_inc
                     )
 

@@ -6,12 +6,15 @@ Handles finding or downloading the appropriate Java executable.
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 from enum import Enum
 from pathlib import Path
 
 import cjdk
+
+from jgo.maven.version import parse_java_version
 
 
 class JavaSource(Enum):
@@ -199,13 +202,11 @@ class JavaLocator:
             # Java version output goes to stderr
             version_output = result.stderr
 
-            # Parse version string
+            # Parse version string from output
             # Examples:
             #   "java version "1.8.0_292""
             #   "openjdk version "11.0.11" 2021-04-20"
             #   "openjdk version "17.0.1" 2021-10-19"
-            import re
-
             match = re.search(r'version "([^"]+)"', version_output)
             if not match:
                 raise RuntimeError(
@@ -214,15 +215,9 @@ class JavaLocator:
 
             version_str = match.group(1)
 
-            # Parse major version
-            # Handle both old format (1.8.x) and new format (11.x, 17.x)
-            parts = version_str.split(".")
-            if parts[0] == "1":
-                # Old format: 1.8.x -> version 8
-                return int(parts[1])
-            else:
-                # New format: 17.x -> version 17
-                return int(parts[0])
+            # Use shared Java version parser
+            java_version = parse_java_version(version_str)
+            return java_version.major
 
         except subprocess.TimeoutExpired:
             raise RuntimeError(f"Timeout while checking Java version at {java_path}")
