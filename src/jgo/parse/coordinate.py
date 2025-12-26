@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from typing import Literal
 
 
 @dataclass
@@ -37,6 +38,7 @@ class Coordinate:
     - scope: The dependency scope (e.g., 'compile', 'runtime', 'test')
     - optional: Whether this is an optional dependency
     - raw: Maven-specific resolution mode (None=auto, True=raw, False=managed)
+    - placement: Module path placement (None=auto, "class-path", "module-path")
     """
 
     groupId: str
@@ -47,6 +49,7 @@ class Coordinate:
     scope: str | None = None
     optional: bool = False
     raw: bool | None = None
+    placement: Literal["class-path", "module-path"] | None = None
 
     def __str__(self) -> str:
         """Return string representation using coord2str."""
@@ -59,6 +62,7 @@ class Coordinate:
             self.scope,
             self.optional,
             self.raw,
+            self.placement,
         )
 
     @classmethod
@@ -98,6 +102,7 @@ class Coordinate:
             scope=parsed["scope"],
             optional=parsed["optional"] or False,
             raw=parsed["raw"],
+            placement=parsed.get("placement"),
         )
 
 
@@ -110,6 +115,7 @@ def coord2str(
     scope: str | None = None,
     optional: bool = False,
     raw: bool | None = None,
+    placement: str | None = None,
 ) -> str:
     """
     Convert Maven coordinate components to a string.
@@ -123,6 +129,7 @@ def coord2str(
         scope: The dependency scope (optional)
         optional: Whether this is an optional dependency
         raw: Whether to use raw/strict resolution (appends ! if True)
+        placement: Module path placement ("class-path" or "module-path")
 
     Returns:
         A formatted coordinate string (e.g., "g:a:p:c:v:s" or "g:a:v!" for raw)
@@ -149,7 +156,13 @@ def coord2str(
 
     result = ":".join(parts)
 
-    # Append ! for raw/strict resolution
+    # Append placement suffix (before raw flag)
+    if placement == "class-path":
+        result += "(c)"
+    elif placement == "module-path":
+        result += "(m)"
+
+    # Append ! for raw/strict resolution (comes last)
     if raw:
         result += "!"
 
@@ -172,6 +185,22 @@ def _parse_coordinate_dict(coordinate: str) -> dict[str, str | None]:
     elif coordinate.endswith("!"):
         coordinate = coordinate[:-1]  # Strip the ! suffix
         raw = True
+
+    # Check for module placement suffix: (c), (cp), (m), (mp), (p)
+    # Must come after ! handling but before splitting on :
+    placement = None
+    placement_suffixes = [
+        ("(cp)", "class-path"),
+        ("(c)", "class-path"),
+        ("(mp)", "module-path"),
+        ("(m)", "module-path"),
+        ("(p)", "module-path"),
+    ]
+    for suffix, value in placement_suffixes:
+        if coordinate.endswith(suffix):
+            coordinate = coordinate[: -len(suffix)]
+            placement = value
+            break
 
     parts = coordinate.split(":")
     if len(parts) < 2:
@@ -325,4 +354,5 @@ def _parse_coordinate_dict(coordinate: str) -> dict[str, str | None]:
         "scope": scope,
         "optional": optional,
         "raw": raw,
+        "placement": placement,
     }

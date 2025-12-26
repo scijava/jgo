@@ -7,6 +7,7 @@ execution.
 
 from __future__ import annotations
 
+import zipfile
 from pathlib import Path
 
 from .bytecode import detect_environment_java_version
@@ -135,3 +136,83 @@ class Environment:
         if self.lockfile:
             return self.lockfile.link_strategy
         return None
+
+    @property
+    def jars_dir(self) -> Path:
+        """Directory containing class-path JARs."""
+        return self.path / "jars"
+
+    @property
+    def modules_dir(self) -> Path:
+        """Directory containing module-path JARs."""
+        return self.path / "modules"
+
+    @property
+    def all_jars(self) -> list[Path]:
+        """All JAR files in this environment (both jars/ and modules/)."""
+        jars = []
+        if self.jars_dir.exists():
+            jars.extend(sorted(self.jars_dir.glob("*.jar")))
+        if self.modules_dir.exists():
+            jars.extend(sorted(self.modules_dir.glob("*.jar")))
+        return jars
+
+    @property
+    def class_path_jars(self) -> list[Path]:
+        """JARs in the jars/ directory (class-path)."""
+        if not self.jars_dir.exists():
+            return []
+        return sorted(self.jars_dir.glob("*.jar"))
+
+    @property
+    def module_path_jars(self) -> list[Path]:
+        """JARs in the modules/ directory (module-path)."""
+        if not self.modules_dir.exists():
+            return []
+        return sorted(self.modules_dir.glob("*.jar"))
+
+    @property
+    def has_modules(self) -> bool:
+        """True if environment has any modular JARs."""
+        return self.modules_dir.exists() and any(self.modules_dir.glob("*.jar"))
+
+    @property
+    def has_classpath(self) -> bool:
+        """True if environment has any classpath JARs."""
+        return self.jars_dir.exists() and any(self.jars_dir.glob("*.jar"))
+
+    def get_module_for_main_class(self, main_class: str) -> tuple[str | None, bool]:
+        """
+        Find the module containing a main class.
+
+        Args:
+            main_class: Fully qualified class name
+
+        Returns:
+            (module_name, is_modular) - module_name is None if not in modular JAR
+        """
+        # Convert class name to internal path
+        class_path = main_class.replace(".", "/") + ".class"
+
+        for jar in self.module_path_jars:
+            try:
+                with zipfile.ZipFile(jar) as zf:
+                    if class_path in zf.namelist():
+                        # Found it - get module name from lockfile or detect
+                        lockfile = self.lockfile
+                        if lockfile:
+                            for dep in lockfile.dependencies:
+                                if jar.name.startswith(
+                                    f"{dep.artifactId}-{dep.version}"
+                                ):
+                                    if dep.module_name:
+                                        return dep.module_name, True
+                        # Fallback: detect module name
+                        from .jar_util import detect_module_info
+
+                        info = detect_module_info(jar)
+                        return info.module_name, True
+            except (zipfile.BadZipFile, IOError):
+                continue
+
+        return None, False

@@ -28,6 +28,9 @@ class LockedDependency(TOMLSerializableMixin, FieldValidatorMixin):
         packaging: str = "jar",
         classifier: str | None = None,
         sha256: str | None = None,
+        is_modular: bool = False,
+        module_name: str | None = None,
+        placement: str | None = None,
     ):
         self.groupId = groupId
         self.artifactId = artifactId
@@ -35,6 +38,9 @@ class LockedDependency(TOMLSerializableMixin, FieldValidatorMixin):
         self.packaging = packaging
         self.classifier = classifier
         self.sha256 = sha256
+        self.is_modular = is_modular
+        self.module_name = module_name
+        self.placement = placement  # "class-path", "module-path", or None (auto)
 
     @classmethod
     def from_dependency(cls, dep: Dependency) -> "LockedDependency":
@@ -74,6 +80,13 @@ class LockedDependency(TOMLSerializableMixin, FieldValidatorMixin):
             data["classifier"] = self.classifier
         if self.sha256:
             data["sha256"] = self.sha256
+        # Only include module info if modular (sparse representation)
+        if self.is_modular:
+            data["is_modular"] = True
+            if self.module_name:
+                data["module_name"] = self.module_name
+        if self.placement:
+            data["placement"] = self.placement
         return data
 
     @classmethod
@@ -86,6 +99,9 @@ class LockedDependency(TOMLSerializableMixin, FieldValidatorMixin):
             packaging=data.get("packaging", "jar"),
             classifier=data.get("classifier"),
             sha256=data.get("sha256"),
+            is_modular=data.get("is_modular", False),
+            module_name=data.get("module_name"),
+            placement=data.get("placement"),
         )
 
     def __repr__(self) -> str:

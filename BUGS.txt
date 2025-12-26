@@ -5,8 +5,6 @@ Remove or repurpose obsolete files in docs/
 
 Review all print commands -- which ones should be using _log instead?
 
-Add support for module paths
-
 Decide about remaining `~/.jgorc` references throughout the codebase
 
 No API for managing jgo entrypoints

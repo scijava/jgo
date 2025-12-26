@@ -13,13 +13,16 @@ from typing import TYPE_CHECKING
 from ..constants import DEFAULT_JGO_CACHE
 from ..parse.coordinate import Coordinate
 from .environment import Environment
-from .jar_util import autocomplete_main_class, detect_main_class_from_jar
+from .jar_util import (
+    autocomplete_main_class,
+    detect_main_class_from_jar,
+    detect_module_info,
+)
 from .linking import LinkStrategy, link_file
-from .lockfile import LockFile, compute_spec_hash
+from .lockfile import LockedDependency, LockFile, compute_sha256, compute_spec_hash
 
 if TYPE_CHECKING:
     from ..maven import Component, MavenContext
-    from ..maven.core import Dependency
     from .spec import EnvironmentSpec
 
 
@@ -56,7 +59,7 @@ def is_coordinate_reference(entrypoint_value: str) -> bool:
 
 
 def infer_main_class_from_coordinates(
-    coord_str: str, components: list[Component], jars_dir: Path
+    coord_str: str, components: list[Component], jars_dirs: Path | list[Path]
 ) -> str | None:
     """
     Infer main class from a coordinate string.
@@ -66,23 +69,32 @@ def infer_main_class_from_coordinates(
     Args:
         coord_str: Coordinate string (e.g., "org.python:jython-slim" or "org.foo:foo+org.bar:bar")
         components: List of Maven components (parallel to coord parts)
-        jars_dir: Directory containing JAR files
+        jars_dirs: Directory or list of directories containing JAR files
 
     Returns:
         Inferred main class, or None if no Main-Class found
     """
+    # Normalize to list
+    if isinstance(jars_dirs, Path):
+        dirs = [jars_dirs]
+    else:
+        dirs = list(jars_dirs)
+
     coord_parts = coord_str.split("+")
 
     for i, coord_part in enumerate(coord_parts):
         coord_part = coord_part.strip()
         coord = Coordinate.parse(coord_part)
 
-        # Find matching JAR in environment
-        for jar_path in jars_dir.glob("*.jar"):
-            if coord.artifactId in jar_path.name:
-                main_class = detect_main_class_from_jar(jar_path)
-                if main_class:
-                    return main_class
+        # Find matching JAR in environment (search all directories)
+        for d in dirs:
+            if not d.exists():
+                continue
+            for jar_path in d.glob("*.jar"):
+                if coord.artifactId in jar_path.name:
+                    main_class = detect_main_class_from_jar(jar_path)
+                    if main_class:
+                        return main_class
 
     return None
 
@@ -198,21 +210,29 @@ class EnvironmentBuilder:
                 return environment
             # Otherwise fall through to rebuild
 
-        # Build environment and get resolved dependencies
-        resolved_deps = self._build_environment(environment, components, main_class)
-        jars_dir = environment.path / "jars"
+        # Build environment and get locked dependencies
+        locked_deps = self._build_environment(environment, components, main_class)
 
         # Determine main class (auto-complete if needed)
+        # Check both jars/ and modules/ directories for the primary artifact
         final_main_class = None
+        primary_jar = None
+        for dir_path in [environment.jars_dir, environment.modules_dir]:
+            candidate = dir_path / primary.artifact().filename
+            if candidate.exists():
+                primary_jar = candidate
+                break
+
         if main_class:
+            # Search both jars/ and modules/ directories for auto-completion
             final_main_class = autocomplete_main_class(
-                main_class, primary.artifactId, jars_dir
+                main_class,
+                primary.artifactId,
+                [environment.jars_dir, environment.modules_dir],
             )
-        else:
+        elif primary_jar:
             # Auto-detect from primary component JAR
-            primary_jar = jars_dir / primary.artifact().filename
-            if primary_jar.exists():
-                final_main_class = detect_main_class_from_jar(primary_jar)
+            final_main_class = detect_main_class_from_jar(primary_jar)
 
         # Create entrypoints dict if we have a main class
         entrypoints = {}
@@ -223,8 +243,8 @@ class EnvironmentBuilder:
 
         # Generate and save lockfile
         lock_path = environment.path / "jgo.lock.toml"
-        lockfile = LockFile.from_resolved_dependencies(
-            dependencies=resolved_deps,
+        lockfile = LockFile(
+            dependencies=locked_deps,
             min_java_version=environment.min_java_version,
             entrypoints=entrypoints,
             default_entrypoint=default_entrypoint,
@@ -290,13 +310,13 @@ class EnvironmentBuilder:
                 return environment
             # Otherwise fall through to rebuild
 
-        # Build environment and get resolved dependencies
-        resolved_deps = self._build_environment(environment, components, None)
+        # Build environment and get locked dependencies
+        locked_deps = self._build_environment(environment, components, None)
 
         # Infer concrete entrypoints from spec
-        jars_dir = environment.path / "jars"
+        # Search both jars/ and modules/ directories
         concrete_entrypoints = self._infer_concrete_entrypoints(
-            spec, components, jars_dir
+            spec, components, [environment.jars_dir, environment.modules_dir]
         )
 
         # Compute spec hash for staleness detection (from root jgo.toml if it exists)
@@ -309,10 +329,10 @@ class EnvironmentBuilder:
             spec.save(spec_path)
             spec_hash = compute_spec_hash(spec_path)
 
-        # Generate lock file from resolved dependencies
+        # Generate lock file from locked dependencies
         lock_path = environment.path / "jgo.lock.toml"
-        lockfile = LockFile.from_resolved_dependencies(
-            dependencies=resolved_deps,
+        lockfile = LockFile(
+            dependencies=locked_deps,
             environment_name=spec.name,
             java_version=java_version or spec.java_version,
             java_vendor=spec.java_vendor,
@@ -340,7 +360,7 @@ class EnvironmentBuilder:
         return hashlib.sha256(combined.encode()).hexdigest()[:16]
 
     def _infer_concrete_entrypoints(
-        self, spec: EnvironmentSpec, components: list[Component], jars_dir: Path
+        self, spec: EnvironmentSpec, components: list[Component], jars_dirs: list[Path]
     ) -> dict[str, str]:
         """
         Infer concrete main classes from spec entrypoints.
@@ -352,7 +372,7 @@ class EnvironmentBuilder:
         Args:
             spec: Environment specification
             components: List of Maven components
-            jars_dir: Directory containing JAR files
+            jars_dirs: List of directories containing JAR files
 
         Returns:
             Dictionary of entrypoint names to concrete main class names
@@ -363,7 +383,7 @@ class EnvironmentBuilder:
             if is_coordinate_reference(value):
                 # Coordinate reference - infer from JARs
                 main_class = infer_main_class_from_coordinates(
-                    value, components, jars_dir
+                    value, components, jars_dirs
                 )
                 if main_class:
                     concrete_entrypoints[name] = main_class
@@ -372,7 +392,7 @@ class EnvironmentBuilder:
                 # Class name - auto-complete if needed
                 primary = components[0]
                 main_class = autocomplete_main_class(
-                    value, primary.artifactId, jars_dir
+                    value, primary.artifactId, jars_dirs
                 )
                 concrete_entrypoints[name] = main_class
 
@@ -383,9 +403,13 @@ class EnvironmentBuilder:
         environment: Environment,
         components: list[Component],
         main_class: str | None,
-    ) -> list[Dependency]:
+    ) -> list[LockedDependency]:
         """
         Build the environment by resolving and linking JARs.
+
+        JARs are separated into two directories based on module detection:
+        - jars/: Non-modular JARs (class-path)
+        - modules/: Modular JARs (module-path)
 
         Args:
             environment: Environment to build
@@ -393,21 +417,14 @@ class EnvironmentBuilder:
             main_class: Main class (unused, kept for signature compatibility)
 
         Returns:
-            List of resolved dependencies (for lock file generation)
+            List of locked dependencies with module info (for lock file generation)
         """
         # Create directories
         environment.path.mkdir(parents=True, exist_ok=True)
         jars_dir = environment.path / "jars"
+        modules_dir = environment.path / "modules"
         jars_dir.mkdir(exist_ok=True)
-
-        # First, link the components themselves
-        for component in components:
-            artifact = component.artifact()
-            source_path = artifact.resolve()
-            dest_path = jars_dir / artifact.filename
-
-            if not dest_path.exists():
-                link_file(source_path, dest_path, self.link_strategy)
+        modules_dir.mkdir(exist_ok=True)
 
         # Resolve all dependencies in one shot using wrapper POM
         # Use managed components from endpoint parsing (stored in _current_boms)
@@ -425,20 +442,82 @@ class EnvironmentBuilder:
             boms=boms,
         )
 
+        # Track locked dependencies with module info
+        locked_deps: list[LockedDependency] = []
+
+        # First, link the components themselves
+        for component in components:
+            artifact = component.artifact()
+            source_path = artifact.resolve()
+
+            # Detect module info
+            module_info = detect_module_info(source_path)
+
+            # Determine target directory
+            target_dir = modules_dir if module_info.is_modular else jars_dir
+            dest_path = target_dir / artifact.filename
+
+            if not dest_path.exists():
+                link_file(source_path, dest_path, self.link_strategy)
+
+            # Create locked dependency with module info
+            sha256 = compute_sha256(source_path) if source_path.exists() else None
+            locked_deps.append(
+                LockedDependency(
+                    groupId=artifact.groupId,
+                    artifactId=artifact.artifactId,
+                    version=artifact.version,
+                    packaging=artifact.packaging,
+                    classifier=artifact.classifier,
+                    sha256=sha256,
+                    is_modular=module_info.is_modular,
+                    module_name=module_info.module_name,
+                )
+            )
+
+        # Track which artifacts we've already processed (from components)
+        processed = {(c.groupId, c.artifactId, c.version) for c in components}
+
         # Link/copy dependency JARs
         for dep in all_deps:
             if dep.scope not in ("compile", "runtime"):
                 continue  # Skip test deps, etc.
 
             artifact = dep.artifact
+            key = (artifact.groupId, artifact.artifactId, artifact.version)
+            if key in processed:
+                continue  # Already handled as a component
+            processed.add(key)
+
             source_path = artifact.resolve()
-            dest_path = jars_dir / artifact.filename
+
+            # Detect module info
+            module_info = detect_module_info(source_path)
+
+            # Determine target directory
+            target_dir = modules_dir if module_info.is_modular else jars_dir
+            dest_path = target_dir / artifact.filename
 
             if not dest_path.exists():
                 link_file(source_path, dest_path, self.link_strategy)
 
-        # Return dependencies for lock file generation
-        return all_deps
+            # Create locked dependency with module info
+            sha256 = compute_sha256(source_path) if source_path.exists() else None
+            locked_deps.append(
+                LockedDependency(
+                    groupId=artifact.groupId,
+                    artifactId=artifact.artifactId,
+                    version=artifact.version,
+                    packaging=artifact.packaging,
+                    classifier=artifact.classifier,
+                    sha256=sha256,
+                    is_modular=module_info.is_modular,
+                    module_name=module_info.module_name,
+                )
+            )
+
+        # Return locked dependencies for lock file generation
+        return locked_deps
 
     def _parse_endpoint(
         self, endpoint: str

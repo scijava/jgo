@@ -223,6 +223,7 @@ def _run_spec(args: ParsedArgs, config: dict) -> int:
         additional_classpath=args.classpath_append,
         print_command=debug,
         dry_run=args.dry_run,
+        module_mode=args.module_mode,
     )
 
     return result.returncode
@@ -289,6 +290,7 @@ def _run_endpoint(args: ParsedArgs, config: dict) -> int:
         additional_classpath=args.classpath_append,
         print_command=debug,
         dry_run=args.dry_run,
+        module_mode=args.module_mode,
     )
 
     return result.returncode

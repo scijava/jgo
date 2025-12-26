@@ -52,6 +52,7 @@ class JavaRunner:
         additional_classpath: list[str] | None = None,
         print_command: bool = False,
         dry_run: bool = False,
+        module_mode: str = "auto",
     ) -> subprocess.CompletedProcess:
         """
         Run a Java program from an environment.
@@ -66,6 +67,7 @@ class JavaRunner:
                 directories, etc.)
             print_command: If True, print the java command being executed
             dry_run: If True, print the command but don't execute it
+            module_mode: Module mode - "auto", "class-path-only", or "module-path-only"
 
         Returns:
             CompletedProcess from subprocess.run
@@ -81,10 +83,32 @@ class JavaRunner:
                 "ensure environment has a detected main class."
             )
 
-        # Get classpath
-        classpath = environment.classpath
-        if not classpath:
-            raise RuntimeError(f"No JARs found in environment: {environment.path}")
+        # Determine module/classpath usage based on mode
+        modules_dir = environment.modules_dir
+        has_classpath = environment.has_classpath
+        has_modules = environment.has_modules
+
+        if module_mode == "class-path-only":
+            # Force all JARs to classpath
+            use_modules = False
+            use_classpath = True
+            # Use all JARs from both directories for classpath
+            classpath = environment.all_jars
+        elif module_mode == "module-path-only":
+            # Force all JARs to module-path
+            use_modules = True
+            use_classpath = False
+            classpath = []
+        else:  # "auto"
+            use_modules = has_modules
+            use_classpath = has_classpath
+            classpath = environment.class_path_jars
+
+        if not use_modules and not use_classpath and not classpath:
+            # Fallback to old behavior for environments without modules dir
+            classpath = environment.classpath
+            if not classpath:
+                raise RuntimeError(f"No JARs found in environment: {environment.path}")
 
         # Locate Java executable
         locator = JavaLocator(
@@ -111,15 +135,35 @@ class JavaRunner:
         if additional_jvm_args:
             cmd.extend(additional_jvm_args)
 
-        # Add classpath (include additional classpath if provided)
-        all_classpath = list(classpath)
-        if additional_classpath:
-            all_classpath.extend(Path(p) for p in additional_classpath)
-        classpath_str = self._build_classpath(all_classpath)
-        cmd.extend(["-cp", classpath_str])
+        # Add module-path (directory, not enumerated JARs)
+        if use_modules and modules_dir.exists():
+            cmd.extend(["--module-path", str(modules_dir)])
+            # Add all modules from the module-path
+            cmd.extend(["--add-modules", "ALL-MODULE-PATH"])
 
-        # Add main class
-        cmd.append(effective_main_class)
+        # Add classpath
+        if use_classpath or classpath:
+            all_classpath = list(classpath)
+            if additional_classpath:
+                all_classpath.extend(Path(p) for p in additional_classpath)
+            if all_classpath:
+                classpath_str = self._build_classpath(all_classpath)
+                cmd.extend(["-cp", classpath_str])
+
+        # Determine if main class is in modular JAR
+        module_name = None
+        is_modular_main = False
+        if use_modules:
+            module_name, is_modular_main = environment.get_module_for_main_class(
+                effective_main_class
+            )
+
+        if is_modular_main and module_name:
+            # Use --module for modular main class
+            cmd.extend(["--module", f"{module_name}/{effective_main_class}"])
+        else:
+            # Traditional main class on command line
+            cmd.append(effective_main_class)
 
         # Add application arguments
         if app_args:

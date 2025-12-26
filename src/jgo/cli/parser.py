@@ -233,6 +233,9 @@ class ParsedArgs:
         properties: dict[str, str] | None = None,
         # Lenient mode
         lenient: bool = False,
+        # Module mode
+        class_path_only: bool = False,
+        module_path_only: bool = False,
         # Endpoint and args
         endpoint: str | None = None,
         jvm_args: list[str] | None = None,
@@ -287,12 +290,24 @@ class ParsedArgs:
         self.properties = properties or {}
         # Lenient mode
         self.lenient = lenient
+        # Module mode
+        self.class_path_only = class_path_only
+        self.module_path_only = module_path_only
         # Endpoint and args
         self.endpoint = endpoint
         self.jvm_args = jvm_args or []
         self.app_args = app_args or []
         # Command (for new command-based interface)
         self.command = command
+
+    @property
+    def module_mode(self) -> str:
+        """Derive module mode from flags."""
+        if self.class_path_only:
+            return "class-path-only"
+        elif self.module_path_only:
+            return "module-path-only"
+        return "auto"
 
     def is_spec_mode(self) -> bool:
         """Check if running in spec file mode (jgo.toml)."""
@@ -545,6 +560,19 @@ def global_options(f):
         envvar="JGO_LENIENT",
         show_envvar=True,
     )(f)
+
+    # Module path options
+    f = click.option(
+        "--class-path-only",
+        is_flag=True,
+        help="Force all JARs to classpath (disable module detection).",
+    )(f)
+    f = click.option(
+        "--module-path-only",
+        is_flag=True,
+        help="Force all JARs to module-path (treat as modular).",
+    )(f)
+
     f = click.option(
         "--ignore-config", is_flag=True, help="Ignore ~/.jgorc configuration file."
     )(f)
@@ -838,6 +866,9 @@ def _build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, comman
         properties=properties,
         # Lenient mode
         lenient=opts.get("lenient", False),
+        # Module mode
+        class_path_only=opts.get("class_path_only", False),
+        module_path_only=opts.get("module_path_only", False),
         # Endpoint and args
         endpoint=endpoint,
         jvm_args=jvm_args or [],
