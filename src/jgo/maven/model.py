@@ -5,6 +5,8 @@ Maven dependency model and resolution.
 from __future__ import annotations
 
 import logging
+import os
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from re import findall
 from typing import TYPE_CHECKING, Iterable
@@ -31,6 +33,8 @@ class ProfileConstraints:
     os_arch: str | None = None
     os_version: str | None = None
     properties: dict[str, str] = field(default_factory=dict)
+    file_exists: Callable[[str], bool] = field(default=os.path.exists)
+    basedir: str | None = None
     lenient: bool = False
 
 
@@ -109,6 +113,8 @@ class Model:
                 os_props["os.family"] = self.profile_constraints.os_family
             if self.profile_constraints.os_version:
                 os_props["os.version"] = self.profile_constraints.os_version
+            if self.profile_constraints.basedir:
+                os_props["basedir"] = self.profile_constraints.basedir
             # Also inject any explicit properties from constraints
             for k, v in self.profile_constraints.properties.items():
                 if k not in os_props:
@@ -591,8 +597,45 @@ class Model:
 
             elif condition.tag == "jdk":
                 # <jdk>[1.3,1.6)</jdk>
-                # TODO: Tricky...
-                pass
+
+                if not self.profile_constraints or not self.profile_constraints.jdk:
+                    continue
+
+                jdk_spec = condition.text
+                if not jdk_spec:
+                    continue
+
+                # Handle negation
+                negated = jdk_spec.startswith("!")
+                if negated:
+                    jdk_spec = jdk_spec[1:]
+
+                try:
+                    from .version import (
+                        parse_java_version,
+                        parse_version_range,
+                        version_matches_range,
+                    )
+
+                    current_version = parse_java_version(self.profile_constraints.jdk)
+                    lower, upper, lower_inc, upper_inc = parse_version_range(jdk_spec)
+                    matches = version_matches_range(
+                        current_version, lower, upper, lower_inc, upper_inc
+                    )
+
+                    if negated:
+                        matches = not matches
+
+                    if matches:
+                        _log.debug(
+                            f"Profile '{profile_id}' activated by jdk {condition.text}"
+                        )
+                        return True
+                except ValueError as e:
+                    _log.warning(
+                        f"Invalid JDK version specification '{condition.text}': {e}"
+                    )
+                    continue
 
             elif condition.tag == "os":
                 # <name>Windows XP</name>
@@ -667,7 +710,33 @@ class Model:
                 # <file>
                 # <exists>${basedir}/file2.properties</exists>
                 # <missing>${basedir}/file1.properties</missing>
-                pass
+
+                if not self.profile_constraints:
+                    continue
+
+                # Check for <exists> condition
+                exists_el = condition.find("exists")
+                if exists_el is not None and exists_el.text:
+                    # Interpolate the path
+                    file_path = Model._evaluate(exists_el.text, self.props)
+                    # Check if file exists using the injected function
+                    if self.profile_constraints.file_exists(file_path):
+                        _log.debug(
+                            f"Profile '{profile_id}' activated by file exists: {file_path}"
+                        )
+                        return True
+
+                # Check for <missing> condition
+                missing_el = condition.find("missing")
+                if missing_el is not None and missing_el.text:
+                    # Interpolate the path
+                    file_path = Model._evaluate(missing_el.text, self.props)
+                    # Check if file is missing using the injected function
+                    if not self.profile_constraints.file_exists(file_path):
+                        _log.debug(
+                            f"Profile '{profile_id}' activated by file missing: {file_path}"
+                        )
+                        return True
 
         return False
 
