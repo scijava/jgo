@@ -34,7 +34,7 @@ class ProfileConstraints:
     os_version: str | None = None
     properties: dict[str, str] = field(default_factory=dict)
     file_exists: Callable[[str], bool] = field(default=os.path.exists)
-    basedir: str | None = None
+    basedir: str = "."
     lenient: bool = False
 
 
@@ -596,8 +596,6 @@ class Model:
                     return True
 
             elif condition.tag == "jdk":
-                # <jdk>[1.3,1.6)</jdk>
-
                 if not self.profile_constraints or not self.profile_constraints.jdk:
                     continue
 

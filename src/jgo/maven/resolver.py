@@ -598,6 +598,7 @@ class MvnResolver(Resolver):
             "-f",
             str(temp_pom),
             f"-Dmaven.repo.local={context.repo_cache}",
+            "-Dscope=runtime",
         )
 
         # Parse Maven's dependency:list output format:
@@ -686,6 +687,7 @@ class MvnResolver(Resolver):
             "-f",
             str(temp_pom),
             f"-Dmaven.repo.local={context.repo_cache}",
+            "-Dscope=runtime",
         )
 
         # Parse the tree output

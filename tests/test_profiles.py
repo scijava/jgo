@@ -414,14 +414,14 @@ def test_profile_activation_file_basedir_interpolation():
     assert checked_path == "/home/user/project/pom.xml"
 
 
-def test_profile_activation_file_basedir_uninterpolated():
-    """Test that ${basedir} remains uninterpolated when not provided."""
+def test_profile_activation_file_basedir_default():
+    """Test that ${basedir} uses default value \".\" when not explicitly set."""
     profile = ET.Element("profile")
     activation = ET.SubElement(profile, "activation")
     file_elem = ET.SubElement(activation, "file")
     ET.SubElement(file_elem, "exists").text = "${basedir}/pom.xml"
 
-    # No basedir in constraints
+    # Use default basedir (which is now ".")
     checked_path = None
 
     def mock_exists(path):
@@ -434,5 +434,5 @@ def test_profile_activation_file_basedir_uninterpolated():
 
     model._is_active_profile(profile)
 
-    # Should check the literal un-interpolated path
-    assert checked_path == "${basedir}/pom.xml"
+    # Should interpolate basedir to "."
+    assert checked_path == "./pom.xml"
