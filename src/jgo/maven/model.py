@@ -590,17 +590,19 @@ class Model:
                     return True
 
             elif condition.tag == "jdk":
+                # <jdk>[1.3,1.6)</jdk>
                 # TODO: Tricky...
                 pass
 
             elif condition.tag == "os":
-                if not self.profile_constraints:
-                    continue
-
                 # <name>Windows XP</name>
                 # <family>Windows</family>
                 # <arch>x86</arch>
                 # <version>5.1.2600</version>
+
+                if not self.profile_constraints:
+                    continue
+
                 match = True
                 for os_condition in condition:
                     if os_condition.tag == "name":
@@ -637,11 +639,12 @@ class Model:
                     return True
 
             elif condition.tag == "property":
+                # <name>sparrow-type</name>
+                # <value>African</value>
+
                 if not self.profile_constraints:
                     continue
 
-                # <name>sparrow-type</name>
-                # <value>African</value>
                 name = condition.find("name").text
                 value = condition.find("value")
                 value = value.text if value is not None else None
