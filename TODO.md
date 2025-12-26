@@ -6,8 +6,8 @@ This document tracks remaining work for the jgo 2.0.0 release.
 
 These items **must** be completed before releasing 2.0.0:
 
-- [ ] **CLI Command-Based Interface**: Finalize command-based CLI design (`jgo run`, `jgo add`, etc.) - see `docs/CLI-REDESIGN.md`
-- [ ] **Dependency Resolution**: `PythonResolver` and `MvnResolver` must produce the same dependency graphs in both managed and no-managed modes.
+- [x] **CLI Command-Based Interface**: Finalize command-based CLI design (`jgo run`, `jgo add`, etc.) - see `docs/CLI-REDESIGN.md`
+- [x] **Dependency Resolution**: `PythonResolver` and `MvnResolver` must produce the same dependency graphs in both managed and no-managed modes.
 - [ ] **Documentation**: Write user-facing documentation (see Documentation section below)
 - [ ] **CHANGELOG.md**: Create comprehensive changelog documenting all changes from 1.x
 - [ ] **README.md**: Update with jgo 2.0 features and architecture
@@ -16,21 +16,21 @@ These items **must** be completed before releasing 2.0.0:
 
 ## 📚 Documentation (Blocker)
 
-Documentation to write in `docs/`:
+Documentation to write as part of a comprehensive ReadTheDocs site in `doc/`:
 
-- [ ] **User Guide** (`docs/user-guide.md`)
+- [ ] **User Guide** (`doc/user-guide.md`)
   - Installation
   - Quick start examples
   - CLI command reference (new command-based interface)
   - jgo.toml specification and usage
   - Common recipes and patterns
 
-- [ ] **Migration Guide** (`docs/migration-guide.md`)
+- [ ] **Migration Guide** (`doc/migration-guide.md`)
   - Already exists, needs review and polish
   - Add more examples of common migration patterns
   - Document cache directory migration strategy
 
-- [ ] **Architecture Overview** (`docs/architecture.md`)
+- [ ] **Architecture Overview** (`doc/architecture.md`)
   - Three-layer architecture explanation
   - When to use each layer directly
   - Integration points between layers
@@ -62,12 +62,6 @@ Documentation to write in `docs/`:
 
 These can be deferred to 2.1.0 or later:
 
-### Classifier Support
-**Files**: `src/jgo/env/builder.py:132,316,321,332`
-**Issue**: Component class doesn't support Maven classifiers (e.g., `natives-linux`)
-**Impact**: Cannot use artifacts with classifiers in jgo.toml
-**Priority**: Medium - needed for LWJGL and other native libraries
-
 ### SNAPSHOT Improvements
 **Files**: `src/jgo/maven/core.py:226,436`
 **Issue**: SNAPSHOT locking to exact timestamps not fully implemented
@@ -92,18 +86,6 @@ These can be deferred to 2.1.0 or later:
 **Impact**: No checksum verification during download
 **Priority**: Low - integrity is less critical for Maven Central
 
-### Dependency Management Edge Cases
-**Files**: `src/jgo/maven/model.py:323,331`
-**Issue**: Complex dependency management scenarios not fully handled
-**Impact**: Rare resolution issues with complex BOMs
-**Priority**: Low - works for typical cases
-
-### Code Repetition in CLI Layer
-**File**: `src/jgo/cli/commands.py:196-324`
-**Issue**: Repetitive code: `_cmd_run_spec()` and `_cmd_run_endpoint()`
-**Impact**: Convoluted codepaths are harder to maintain
-**Priority**: Low - minor under the hood refactoring
-
 ## ✨ Future Enhancements (Post-2.0.0)
 
 Ideas for future releases (not tracked in this file, move to GitHub issues):
@@ -115,8 +97,6 @@ Ideas for future releases (not tracked in this file, move to GitHub issues):
 - (MEDIUM) Version ranges with semantic versioning
   - E.g. report on dependency divergence in desired scenarios (e.g. two different major versions)
 - (LOW) Checksum verification for jgo.lock.toml
-- (LOW) Plugin system for custom resolvers
-  - Might introduce a potential security risk?
 
 See also [FUTURE.md](docs/FUTURE.md).
 
