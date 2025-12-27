@@ -257,6 +257,64 @@ def test_environment_min_java_version_scans_modules():
         ), f"Expected Java 17 from jars/ directory, got {version2}"
 
 
+def test_lockfile_staleness_detection():
+    """Test that lockfile staleness is detected when spec changes."""
+    from jgo.env.lockfile import compute_spec_hash
+    from jgo.env.spec import EnvironmentSpec
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        # Create environment directory
+        env_path = Path(tmp_dir) / "env"
+        env_path.mkdir()
+        env = Environment(env_path)
+
+        # Create a jgo.toml spec file in environment directory (ad-hoc mode)
+        spec_path = env_path / "jgo.toml"
+        spec = EnvironmentSpec(
+            name="test-env",
+            coordinates=["org.example:artifact:1.0.0"],
+        )
+        spec.save(spec_path)
+
+        # Create jars directory so environment is valid
+        jars_dir = env_path / "jars"
+        jars_dir.mkdir()
+        (jars_dir / "test.jar").touch()
+
+        # Create initial lockfile with spec hash
+        initial_hash = compute_spec_hash(spec_path)
+        lockfile = LockFile(
+            dependencies=[],
+            spec_hash=initial_hash,
+        )
+        lockfile.save(env.lock_path)
+
+        # Create builder and verify environment is valid (not stale)
+        maven = MavenContext()
+        builder = EnvironmentBuilder(context=maven, cache_dir=Path(tmp_dir))
+
+        # Lockfile matches spec - should be valid
+        assert builder._is_lockfile_stale(env) is False
+        assert builder._is_environment_valid(env, update=False, check_staleness=True)
+
+        # Modify the spec file (add a dependency)
+        spec.coordinates.append("org.example:another:2.0.0")
+        spec.save(spec_path)
+
+        # Reload environment (simulates fresh read)
+        env = Environment(env_path)
+
+        # Lockfile hash no longer matches - should be stale
+        assert builder._is_lockfile_stale(env) is True
+        assert (
+            builder._is_environment_valid(env, update=False, check_staleness=True)
+            is False
+        )
+
+        # But without staleness check, environment is still valid (has JARs)
+        assert builder._is_environment_valid(env, update=False, check_staleness=False)
+
+
 if __name__ == "__main__":
     test_environment_creation()
     test_environment_classpath()
@@ -267,4 +325,5 @@ if __name__ == "__main__":
     test_link_file()
     test_environment_min_java_version()
     test_environment_min_java_version_scans_modules()
+    test_lockfile_staleness_detection()
     print("All tests passed!")

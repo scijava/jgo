@@ -300,8 +300,7 @@ class EnvironmentBuilder:
 
         # Check if environment exists and is valid
         environment = Environment(workspace_path)
-        if self._is_environment_valid(environment, update):
-            # TODO: Validate lockfile is not stale
+        if self._is_environment_valid(environment, update, check_staleness=True):
             return environment
 
         # Build environment and get locked dependencies
@@ -359,8 +358,38 @@ class EnvironmentBuilder:
         if lock_path.exists():
             lock_path.unlink()
 
+    def _is_lockfile_stale(self, environment: Environment) -> bool:
+        """
+        Check if lockfile is stale (spec has changed since lockfile was generated).
+
+        Args:
+            environment: Environment to check
+
+        Returns:
+            True if lockfile is stale and rebuild needed, False otherwise
+        """
+        lockfile = environment.lockfile
+        if not lockfile or not lockfile.spec_hash:
+            # No lockfile or no spec hash - can't validate staleness
+            return False
+
+        # Compute current spec hash
+        root_spec_path = Path("jgo.toml")
+        if root_spec_path.exists():
+            current_hash = compute_spec_hash(root_spec_path)
+        else:
+            # Check for spec in environment directory (ad-hoc mode)
+            spec_path = environment.path / "jgo.toml"
+            if not spec_path.exists():
+                # No spec file - can't validate staleness
+                return False
+            current_hash = compute_spec_hash(spec_path)
+
+        # Compare hashes
+        return current_hash != lockfile.spec_hash
+
     def _is_environment_valid(
-        self, environment: Environment, update: bool
+        self, environment: Environment, update: bool, check_staleness: bool = False
     ) -> bool:
         """
         Check if cached environment is valid and can be reused.
@@ -368,6 +397,7 @@ class EnvironmentBuilder:
         Args:
             environment: Environment to validate
             update: If True, force rebuild (returns False)
+            check_staleness: If True, also check if spec-based lockfile is stale
 
         Returns:
             True if environment can be reused, False if rebuild needed
@@ -376,7 +406,14 @@ class EnvironmentBuilder:
             return False
 
         # Validate environment has JARs
-        return bool(environment.classpath)
+        if not environment.classpath:
+            return False
+
+        # Check if lockfile is stale (only for spec-based environments)
+        if check_staleness and self._is_lockfile_stale(environment):
+            return False
+
+        return True
 
     def _cache_key(self, components: list[Component]) -> str:
         """Generate a stable hash for a set of components."""
