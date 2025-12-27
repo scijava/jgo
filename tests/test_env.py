@@ -177,6 +177,86 @@ def test_environment_min_java_version():
         assert env2.min_java_version == 17
 
 
+def test_environment_min_java_version_scans_modules():
+    """Test that min_java_version scans both jars/ and modules/ directories."""
+    import struct
+    import zipfile
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        env_path = Path(tmp_dir) / "test_env"
+        env = Environment(env_path)
+
+        # Create both jars/ and modules/ directories
+        jars_dir = env_path / "jars"
+        modules_dir = env_path / "modules"
+        jars_dir.mkdir(parents=True)
+        modules_dir.mkdir(parents=True)
+
+        # Create a JAR in jars/ with Java 8 bytecode (major version 52)
+        jar_path = jars_dir / "old.jar"
+        with zipfile.ZipFile(jar_path, "w") as jar:
+            class_bytes = (
+                struct.pack(">I", 0xCAFEBABE)
+                + struct.pack(">H", 0)
+                + struct.pack(">H", 52)
+                + struct.pack(">H", 0)
+            )
+            jar.writestr("Old.class", class_bytes)
+
+        # Create a JAR in modules/ with Java 11 bytecode (major version 55)
+        module_jar_path = modules_dir / "modern.jar"
+        with zipfile.ZipFile(module_jar_path, "w") as jar:
+            class_bytes = (
+                struct.pack(">I", 0xCAFEBABE)
+                + struct.pack(">H", 0)
+                + struct.pack(">H", 55)
+                + struct.pack(">H", 0)
+            )
+            jar.writestr("Modern.class", class_bytes)
+
+        # Should detect Java 11 (highest version from both directories)
+        version = env.min_java_version
+        assert (
+            version == 11
+        ), f"Expected Java 11 from modules/ directory, got {version}"
+
+        # Test the reverse: higher version in jars/, lower in modules/
+        env2_path = Path(tmp_dir) / "test_env2"
+        env2 = Environment(env2_path)
+        jars_dir2 = env2_path / "jars"
+        modules_dir2 = env2_path / "modules"
+        jars_dir2.mkdir(parents=True)
+        modules_dir2.mkdir(parents=True)
+
+        # Java 17 in jars/
+        jar_path2 = jars_dir2 / "newer.jar"
+        with zipfile.ZipFile(jar_path2, "w") as jar:
+            class_bytes = (
+                struct.pack(">I", 0xCAFEBABE)
+                + struct.pack(">H", 0)
+                + struct.pack(">H", 61)
+                + struct.pack(">H", 0)
+            )
+            jar.writestr("Newer.class", class_bytes)
+
+        # Java 8 in modules/
+        module_jar_path2 = modules_dir2 / "legacy.jar"
+        with zipfile.ZipFile(module_jar_path2, "w") as jar:
+            class_bytes = (
+                struct.pack(">I", 0xCAFEBABE)
+                + struct.pack(">H", 0)
+                + struct.pack(">H", 52)
+                + struct.pack(">H", 0)
+            )
+            jar.writestr("Legacy.class", class_bytes)
+
+        # Should detect Java 17 (highest version from both directories)
+        version2 = env2.min_java_version
+        assert (
+            version2 == 17
+        ), f"Expected Java 17 from jars/ directory, got {version2}"
+
+
 if __name__ == "__main__":
     test_environment_creation()
     test_environment_classpath()
@@ -186,4 +266,5 @@ if __name__ == "__main__":
     test_link_strategy_enum()
     test_link_file()
     test_environment_min_java_version()
+    test_environment_min_java_version_scans_modules()
     print("All tests passed!")

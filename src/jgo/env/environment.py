@@ -127,8 +127,11 @@ class Environment:
             return self.lockfile.min_java_version
 
         # Detect from bytecode (not cached - lockfile should have it)
-        jars_dir = self.path / "jars"
-        return detect_environment_java_version(jars_dir)
+        # Need to scan BOTH jars/ and modules/ directories
+        jars_version = detect_environment_java_version(self.path / "jars")
+        modules_version = detect_environment_java_version(self.path / "modules")
+
+        return max(jars_version or 0, modules_version or 0) or None
 
     @property
     def link_strategy(self) -> str | None:

@@ -203,12 +203,8 @@ class EnvironmentBuilder:
 
         # Check if environment exists and is valid
         environment = Environment(workspace_path)
-        if workspace_path.exists() and not update:
-            # Validate environment has JARs
-            if environment.classpath:
-                # Environment is valid, use cached build
-                return environment
-            # Otherwise fall through to rebuild
+        if self._is_environment_valid(environment, update):
+            return environment
 
         # Build environment and get locked dependencies
         locked_deps = self._build_environment(environment, components, main_class)
@@ -242,7 +238,8 @@ class EnvironmentBuilder:
             default_entrypoint = "main"
 
         # Generate and save lockfile
-        lock_path = environment.path / "jgo.lock.toml"
+        self._clear_lockfile_cache(environment)
+
         lockfile = LockFile(
             dependencies=locked_deps,
             min_java_version=environment.min_java_version,
@@ -250,7 +247,7 @@ class EnvironmentBuilder:
             default_entrypoint=default_entrypoint,
             link_strategy=self.link_strategy.name,
         )
-        lockfile.save(lock_path)
+        lockfile.save(environment.lock_path)
 
         return environment
 
@@ -303,12 +300,9 @@ class EnvironmentBuilder:
 
         # Check if environment exists and is valid
         environment = Environment(workspace_path)
-        if workspace_path.exists() and not update:
-            # Validate environment has JARs
-            if environment.classpath:
-                # TODO: Validate lockfile is not stale
-                return environment
-            # Otherwise fall through to rebuild
+        if self._is_environment_valid(environment, update):
+            # TODO: Validate lockfile is not stale
+            return environment
 
         # Build environment and get locked dependencies
         locked_deps = self._build_environment(environment, components, None)
@@ -330,7 +324,8 @@ class EnvironmentBuilder:
             spec_hash = compute_spec_hash(spec_path)
 
         # Generate lock file from locked dependencies
-        lock_path = environment.path / "jgo.lock.toml"
+        self._clear_lockfile_cache(environment)
+
         lockfile = LockFile(
             dependencies=locked_deps,
             environment_name=spec.name,
@@ -342,12 +337,46 @@ class EnvironmentBuilder:
             spec_hash=spec_hash,
             link_strategy=self.link_strategy.name,
         )
-        lockfile.save(lock_path)
+        lockfile.save(environment.lock_path)
 
         # In project mode, don't copy jgo.toml (root is source of truth)
         # In ad-hoc mode, save a copy for reference (already done above if needed)
 
         return environment
+
+    def _clear_lockfile_cache(self, environment: Environment) -> None:
+        """
+        Clear cached lockfile to force fresh bytecode detection.
+
+        Called before regenerating lockfile to ensure min_java_version
+        is detected from actual JARs, not stale cached values.
+
+        Args:
+            environment: Environment whose lockfile should be cleared
+        """
+        environment._lockfile = None
+        lock_path = environment.lock_path
+        if lock_path.exists():
+            lock_path.unlink()
+
+    def _is_environment_valid(
+        self, environment: Environment, update: bool
+    ) -> bool:
+        """
+        Check if cached environment is valid and can be reused.
+
+        Args:
+            environment: Environment to validate
+            update: If True, force rebuild (returns False)
+
+        Returns:
+            True if environment can be reused, False if rebuild needed
+        """
+        if not environment.path.exists() or update:
+            return False
+
+        # Validate environment has JARs
+        return bool(environment.classpath)
 
     def _cache_key(self, components: list[Component]) -> str:
         """Generate a stable hash for a set of components."""
