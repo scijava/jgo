@@ -327,7 +327,7 @@ class PythonResolver(Resolver):
         # When transitive=False, set max_depth=1 to get one level of dependencies
         # from the synthetic wrapper (i.e., the direct dependencies of the components)
         max_depth = 1 if not transitive else None
-        deps = model.dependencies(max_depth=max_depth)
+        deps, _ = model.dependencies(max_depth=max_depth)
 
         deps = _filter_component_deps(deps, components)
 
@@ -368,6 +368,9 @@ class PythonResolver(Resolver):
         """
         Get the full dependency tree as a data structure.
 
+        This implementation uses the tree built during dependency resolution,
+        ensuring perfect consistency with the dependency mediation algorithm.
+
         Args:
             components: Single component or list of components
             managed: If True and boms is None, use components as BOMs
@@ -377,64 +380,16 @@ class PythonResolver(Resolver):
             Root DependencyNode with full tree structure
         """
         components = _listify(components)
-        root = _create_root(components)
         boms = _resolve_boms(components, managed, boms)
 
-        # Track which G:A:C:T we've already processed (version not included for mediation)
-        processed = set()
+        # Build model and get dependency tree
+        pom = create_pom(components, boms)
+        model = Model(
+            pom, components[0].context, profile_constraints=self.profile_constraints
+        )
+        _, tree_root = model.dependencies()
 
-        def build_tree(deps: list[Dependency]) -> list[DependencyNode]:
-            """Recursively build dependency tree."""
-            nodes = []
-            for dep in deps:
-                # Use G:A:C:T (without version) for deduplication, like Maven does
-                dep_key = (dep.groupId, dep.artifactId, dep.classifier, dep.type)
-
-                # Create node
-                node = DependencyNode(dep)
-
-                # Recursively process children if not already seen
-                if dep_key not in processed:
-                    processed.add(dep_key)
-                    try:
-                        dep_model = Model(
-                            dep.artifact.component.pom(),
-                            dep.artifact.component.context,
-                            profile_constraints=self.profile_constraints,
-                        )
-                        # Only show compile/runtime dependencies transitively
-                        transitive_deps = [
-                            d
-                            for d in dep_model.deps.values()
-                            if d.scope in ("compile", "runtime") and not d.optional
-                        ]
-                        if transitive_deps:
-                            node.children = build_tree(transitive_deps)
-                    except Exception as e:
-                        _log.debug(f"Could not resolve dependencies for {dep}: {e}")
-
-                nodes.append(node)
-
-            return nodes
-
-        # Add components as direct children of root
-        for comp in components:
-            comp_artifact = comp.artifact()
-            comp_dep = Dependency(comp_artifact)
-            comp_node = DependencyNode(comp_dep)
-
-            # Build tree from component's dependencies (exclude test scope)
-            comp_model = Model(
-                comp.pom(), comp.context, profile_constraints=self.profile_constraints
-            )
-            direct_deps = [
-                dep for dep in comp_model.deps.values() if dep.scope not in ("test",)
-            ]
-            comp_node.children = build_tree(direct_deps)
-
-            root.children.append(comp_node)
-
-        return root
+        return tree_root
 
 
 class MvnResolver(Resolver):

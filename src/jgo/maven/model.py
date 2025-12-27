@@ -15,7 +15,7 @@ from .core import Dependency, MavenContext, Project
 from .pom import POM
 
 if TYPE_CHECKING:
-    pass
+    from .dependency_printer import DependencyNode
 
 _log = logging.getLogger(__name__)
 
@@ -63,6 +63,7 @@ class Model:
         """
         from .core import MavenContext
 
+        self.pom = pom
         self.context = context or MavenContext()
         self.root_dep_mgmt = root_dep_mgmt
         self.profile_constraints = profile_constraints
@@ -235,12 +236,15 @@ class Model:
         resolved: dict[GACT, Dependency] | None = None,
         root_dep_mgmt: dict[GACT, Dependency] | None = None,
         max_depth: int | None = None,
-    ) -> list[Dependency]:
+    ) -> tuple[list[Dependency], DependencyNode]:
         """
         Compute the component's list of dependencies, including transitive dependencies.
 
         Uses breadth-first traversal (nearest-wins algorithm) to match Maven's behavior.
         Dependencies at depth N are all processed before moving to depth N+1.
+
+        The dependency tree is built during traversal, capturing the exact parent-child
+        relationships as they are discovered by the resolution algorithm.
 
         Args:
             resolved:
@@ -257,9 +261,26 @@ class Model:
                 components). 0 would mean no dependencies at all.
 
         Returns:
-            The list of Dependency objects.
+            A tuple of (dependency_list, dependency_tree) where:
+            - dependency_list: The flat list of resolved Dependency objects
+            - dependency_tree: DependencyNode representing the root with children populated
         """
+        from .dependency_printer import DependencyNode
+
         all_deps: dict[GACT, Dependency] = {}
+
+        # Build dependency tree during traversal
+        # Create root node from this model's POM
+        root_artifact = (
+            self.context.project(self.pom.groupId, self.pom.artifactId)
+            .at_version(self.pom.version)
+            .artifact(packaging="pom")
+        )
+        root_dep = Dependency(root_artifact)
+        tree_root = DependencyNode(root_dep)
+
+        # Map from GACT to DependencyNode for building parent-child relationships
+        nodes: dict[GACT, DependencyNode] = {}
 
         # Determine whether we are currently diving into transitive dependencies.
         recursing: bool = resolved is not None
@@ -332,6 +353,24 @@ class Model:
                     resolved[gact] = dep
                     all_deps[gact] = dep
 
+                    # Build tree node and establish parent-child relationship
+                    node = DependencyNode(dep)
+                    nodes[gact] = node
+
+                    if parent_dep is None:
+                        # Root level dependency - add as child of tree root
+                        tree_root.children.append(node)
+                    else:
+                        # Child of parent_dep - add to parent's children
+                        parent_gact = (
+                            parent_dep.groupId,
+                            parent_dep.artifactId,
+                            parent_dep.classifier,
+                            parent_dep.type,
+                        )
+                        if parent_gact in nodes:
+                            nodes[parent_gact].children.append(node)
+
                     # Apply scope transformation based on parent scope
                     original_scope = dep.scope
                     if parent_scope == "runtime":
@@ -372,7 +411,7 @@ class Model:
             current_depth += 1
             recursing = True  # After first level, we're always recursing
 
-        return list(all_deps.values())
+        return list(all_deps.values()), tree_root
 
     def _import_boms(self, candidates: dict[GACT, Dependency]) -> None:
         """
