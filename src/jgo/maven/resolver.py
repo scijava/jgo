@@ -463,6 +463,45 @@ class MvnResolver(Resolver):
         )
         return temp_pom
 
+    def _filter_dep_scopes(
+        self, deps: list[Dependency], scopes: str | list[str]
+    ) -> list[Dependency]:
+        """
+        Filter dependencies to include only specified scopes.
+
+        This method filters Maven dependency results to match the desired scope(s),
+        compensating for Maven's quirky -Dscope behavior (which includes test-scoped
+        direct dependencies even when -Dscope=runtime is specified:
+        apache/maven#10874, apache/maven-dependency-tree#54).
+
+        Args:
+            deps: List of dependencies to filter
+            scopes: Scope name or list of scope names to include.
+                Special scope values:
+                - "runtime": includes compile, runtime, provided (default for jgo)
+                - "compile": includes compile, provided
+                - "test": includes compile, runtime, provided, test
+                Or pass an explicit list like ["compile", "runtime"]
+
+        Returns:
+            Filtered list including only dependencies with specified scopes
+        """
+        # Expand scope shortcuts to full scope lists
+        if isinstance(scopes, str):
+            if scopes == "runtime":
+                scope_list = ["compile", "runtime", "provided"]
+            elif scopes == "compile":
+                scope_list = ["compile", "provided"]
+            elif scopes == "test":
+                scope_list = ["compile", "runtime", "provided", "test"]
+            else:
+                # Single scope name
+                scope_list = [scopes]
+        else:
+            scope_list = scopes
+
+        return [dep for dep in deps if dep.scope in scope_list]
+
     def _filter_maven_output(self, output: str, log_debug: bool = True) -> list[str]:
         """Filter Maven output to extract [INFO] lines."""
         lines = []
@@ -625,7 +664,9 @@ class MvnResolver(Resolver):
             # Create dependency object from coordinate
             dependencies.append(dep)
 
-        return _filter_component_deps(dependencies, components)
+        filtered = _filter_component_deps(dependencies, components)
+        # Filter to runtime scopes only (compensate for Maven's -Dscope quirk)
+        return self._filter_dep_scopes(filtered, "runtime")
 
     def get_dependency_list(
         self,
@@ -739,6 +780,11 @@ class MvnResolver(Resolver):
             # Parse G:A:P[:C]:V[:S] format using Coordinate
             dep = self._parse_maven_coordinate(clean_content, context)
             if not dep:
+                continue
+
+            # Filter out test-scoped dependencies to match PythonResolver behavior
+            # (compensates for Maven's -Dscope quirk)
+            if dep.scope == "test":
                 continue
 
             node = DependencyNode(dep)
