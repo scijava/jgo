@@ -85,30 +85,30 @@ class JavaRunner:
 
         # Determine module/classpath usage based on mode
         modules_dir = environment.modules_dir
+        jars_dir = environment.jars_dir
         has_classpath = environment.has_classpath
         has_modules = environment.has_modules
 
         if module_mode == "class-path-only":
-            # Force all JARs to classpath
+            # Force all JARs to classpath (both jars/ and modules/ directories)
             use_modules = False
             use_classpath = True
-            # Use all JARs from both directories for classpath
-            classpath = environment.all_jars
+            classpath_dirs = (
+                [jars_dir, modules_dir] if modules_dir.exists() else [jars_dir]
+            )
         elif module_mode == "module-path-only":
             # Force all JARs to module-path
             use_modules = True
             use_classpath = False
-            classpath = []
+            classpath_dirs = []
         else:  # "auto"
             use_modules = has_modules
             use_classpath = has_classpath
-            classpath = environment.class_path_jars
+            # Only use jars/ directory for classpath (modules go to module-path)
+            classpath_dirs = [jars_dir] if use_classpath else []
 
-        if not use_modules and not use_classpath and not classpath:
-            # Fallback to old behavior for environments without modules dir
-            classpath = environment.classpath
-            if not classpath:
-                raise RuntimeError(f"No JARs found in environment: {environment.path}")
+        if not use_modules and not use_classpath and not classpath_dirs:
+            raise RuntimeError(f"No JARs found in environment: {environment.path}")
 
         # Locate Java executable
         locator = JavaLocator(
@@ -124,6 +124,10 @@ class JavaRunner:
         )
         java_path = locator.locate(min_version=min_version)
 
+        # Check Java version to determine if module-path is supported
+        actual_java_version = locator._get_java_version(java_path)
+        supports_modules = actual_java_version >= 9
+
         # Build command
         cmd = [str(java_path)]
 
@@ -136,14 +140,23 @@ class JavaRunner:
             cmd.extend(additional_jvm_args)
 
         # Add module-path (directory, not enumerated JARs)
-        if use_modules and modules_dir.exists():
+        # Only use module-path if Java 9+ and modules are present
+        if use_modules and modules_dir.exists() and supports_modules:
             cmd.extend(["--module-path", str(modules_dir)])
             # Add all modules from the module-path
             cmd.extend(["--add-modules", "ALL-MODULE-PATH"])
+        elif use_modules and not supports_modules:
+            # Java 8 or earlier - fall back to classpath for modular JARs
+            use_modules = False
+            use_classpath = True
+            classpath_dirs = (
+                [jars_dir, modules_dir] if modules_dir.exists() else [jars_dir]
+            )
 
         # Add classpath
-        if use_classpath or classpath:
-            all_classpath = list(classpath)
+        if use_classpath or classpath_dirs:
+            # Start with environment directories, then add user-specified paths
+            all_classpath = list(classpath_dirs)
             if additional_classpath:
                 all_classpath.extend(Path(p) for p in additional_classpath)
             if all_classpath:
@@ -256,15 +269,22 @@ class JavaRunner:
         except Exception as e:
             raise RuntimeError(f"Failed to execute Java program: {e}")
 
-    def _build_classpath(self, jar_paths: list[Path]) -> str:
+    def _build_classpath(self, paths: list[Path]) -> str:
         """
-        Build classpath string from JAR paths.
+        Build classpath string from paths.
+
+        For directories, appends '/*' to include all JARs (Java classpath wildcard).
+        For files, includes them as-is. Preserves order of paths.
 
         Args:
-            jar_paths: List of JAR file paths
+            paths: List of directories (to be wildcarded) or file paths
 
         Returns:
             Classpath string with platform-appropriate separator
         """
         separator = ";" if sys.platform == "win32" else ":"
-        return separator.join(str(p) for p in jar_paths)
+
+        def format_path(path: Path) -> str:
+            return str(path / "*") if path.is_dir() else str(path)
+
+        return separator.join(format_path(path) for path in paths)
