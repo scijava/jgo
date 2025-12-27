@@ -1,6 +1,3 @@
-MvnResolver passes -Dscope=runtime to mvn dependency:list and dependency:tree,
-but we still see a weird junit test dep in sc.fiji:fiji's dependency tree. Why?
-
 $ jgo -u org.scijava:scijava-ops-engine:1.0.0
 RuntimeError: Artifact  org.scijava:scijava-function:jar:1.0.0 not found in remote repositories {'central': 'https://repo.maven.apache.org/maven2', 'scijava.public': 'https://maven.scijava.org/content/groups/public'}
 But!
