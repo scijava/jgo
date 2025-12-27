@@ -140,14 +140,27 @@ def looks_like_classifier(s: str) -> bool:
         False if the string does not match any such pattern
     """
     classifier_patterns = [
+        # Native library prefix (e.g., natives-linux)
         r"^natives-",
-        r"^sources$",
-        r"^javadoc$",
-        r"^tests$",
-        r"-(x86_64|amd64|arm64|aarch64|i386|i686|armv7|armhf)",
-        r"-(linux|windows|macos|osx|darwin|freebsd|solaris)",
-        r"^shaded$",
-        r"^uber$",
+        # Standard Maven classifiers that are always classifiers
+        r"^(sources|javadoc|tests)$",
+        # Less common but legitimate standalone classifiers
+        r"^(shaded|uber|universal)$",
+        # Common OS/platform names as standalone classifiers
+        # Based on empirical evidence from Maven Central (JavaFX, etc.)
+        r"^(linux|windows|win|macos|mac)$",
+        # Common architecture names as standalone classifiers
+        r"^(x86_64|amd64|i386|i486|i586|i686|ia64)$",  # x86 family
+        r"^(arm|arm64|aarch64|aarch_64|armv6|armv6hf|armv7|armhf)$",  # ARM family
+        r"^(ppc|ppc64|ppc64le|powerpc)$",  # PowerPC family
+        # Architecture patterns with hyphen or underscore prefix (e.g., linux-x86_64)
+        r"[-_](x86_64|amd64|i386|i486|i586|i686|ia64)",  # x86 family
+        r"[-_](arm|arm64|aarch64|aarch_64|armv6|armv6hf|armv7|armhf)",  # ARM family
+        r"[-_](ppc|ppc64|ppc64le|powerpc)",  # PowerPC family
+        # OS patterns with hyphen or underscore prefix (e.g., natives-linux)
+        r"[-_](linux|windows|win|macos|mac|osx|darwin|freebsd|solaris|android)",
+        # Underscore variants for platform combos (e.g., linux_64)
+        r"_(32|64)$",
     ]
     return any(re.search(pattern, s, re.IGNORECASE) for pattern in classifier_patterns)
 

@@ -147,18 +147,58 @@ class TestLooksLikeClassifier:
         assert not looks_like_classifier("test")  # Not exactly "tests"
         assert not looks_like_classifier("shade")  # Not exactly "shaded"
 
-    def test_not_classifiers_standalone_os_arch(self):
-        """Standalone OS/arch names without hyphen prefix should not match."""
-        # OS names alone don't match (need hyphen prefix)
-        assert not looks_like_classifier("linux")
-        assert not looks_like_classifier("windows")
-        assert not looks_like_classifier("darwin")
-        assert not looks_like_classifier("freebsd")
-        # Architecture names alone don't match (need hyphen prefix)
-        assert not looks_like_classifier("x86_64")
-        assert not looks_like_classifier("amd64")
-        assert not looks_like_classifier("arm64")
-        assert not looks_like_classifier("aarch64")
+    def test_not_classifiers_artifact_id_components(self):
+        """
+        Tokens that appear in artifact IDs, not as classifiers.
+
+        These are commonly found as parts of artifact names like:
+        - netty-all, groovy-all (NOT artifactId-version-all.jar)
+        - antlr-runtime, antlr4-runtime (NOT artifactId-version-runtime.jar)
+        - jline-native (NOT artifactId-version-native.jar)
+        """
+        assert not looks_like_classifier("all")  # netty-all, groovy-all
+        assert not looks_like_classifier("runtime")  # antlr-runtime, antlr4-runtime
+        assert not looks_like_classifier(
+            "native"
+        )  # jline-native (singular, not natives-)
+        assert not looks_like_classifier("classes")  # netty-tcnative-classes
+        assert not looks_like_classifier("dependencies")  # resteasy-dependencies
+
+    def test_not_classifiers_version_qualifiers(self):
+        """
+        Tokens that appear as version qualifiers, not classifiers.
+
+        Examples from actual Maven repos:
+        - guava-33.4.8-android (android is part of version, NOT classifier)
+        - guava-33.4.8-jre (jre is part of version, NOT classifier)
+        - htrace-4.1.0-incubating (incubating is part of version)
+
+        Verified: maven.scijava.org finds NO examples of "android" as classifier,
+        but DOES find "linux" as classifier (e.g., javafx-fxml-23.0.2-linux.jar).
+        """
+        assert not looks_like_classifier("jre")  # guava uses as version: 33.4.8-jre
+        assert not looks_like_classifier("incubating")  # Apache: 4.1.0-incubating
+
+    def test_not_classifiers_project_specific(self):
+        """Project-specific strings that aren't general classifiers."""
+        # Project/library names
+        assert not looks_like_classifier("guava")
+        assert not looks_like_classifier("fiji4")
+        assert not looks_like_classifier("scijava")
+        assert not looks_like_classifier("swing")
+
+        # Git commit hashes
+        assert not looks_like_classifier("c034a77")
+        assert not looks_like_classifier("cb22e71335")
+
+        # Version-like suffixes
+        assert not looks_like_classifier("mk1")
+        assert not looks_like_classifier("release3")
+
+        # Too specific/niche
+        assert not looks_like_classifier("no_aop")
+        assert not looks_like_classifier("noaop")
+        assert not looks_like_classifier("inv")
 
     def test_not_classifiers_empty_string(self):
         """Empty string is not a classifier."""
@@ -168,6 +208,66 @@ class TestLooksLikeClassifier:
         """Edge cases for natives- prefix."""
         assert looks_like_classifier("natives-")  # Just the prefix
         assert looks_like_classifier("natives-custom")  # With custom suffix
+
+    def test_additional_architectures(self):
+        """Additional architecture patterns found in the wild."""
+        # x86 32-bit variants
+        assert looks_like_classifier("lib-i586")
+        assert looks_like_classifier("app-i486")
+
+        # ARM variants
+        assert looks_like_classifier("lib-arm")
+        assert looks_like_classifier("lib-armv6")
+        assert looks_like_classifier("raspbian-armv6hf")
+        assert looks_like_classifier("lib-aarch_64")  # Underscore variant
+
+        # PowerPC
+        assert looks_like_classifier("lib-ppc")
+        assert looks_like_classifier("lib-ppc64")
+        assert looks_like_classifier("lib-ppc64le")
+        assert looks_like_classifier("lib-powerpc")
+
+        # Itanium
+        assert looks_like_classifier("lib-ia64")
+
+    def test_additional_os_platforms(self):
+        """Additional OS platforms found in the wild."""
+        # These work as standalone classifiers (confirmed in JavaFX)
+        assert looks_like_classifier("mac")
+        assert looks_like_classifier("win")
+
+        # These only work with prefixes (natives-, or -arch)
+        assert looks_like_classifier("natives-android")  # gluegen-rt
+        assert looks_like_classifier("osx-x86_64")  # netty
+        assert looks_like_classifier("natives-solaris")  # gluegen-rt
+
+        # Standalone forms that don't exist (only in compounds)
+        assert not looks_like_classifier(
+            "android"
+        )  # Only in Guava as version: 33.4.8-android
+        assert not looks_like_classifier("osx")  # Only in compounds: osx-x86_64
+        assert not looks_like_classifier(
+            "solaris"
+        )  # Only with natives-: natives-solaris-amd64
+        assert not looks_like_classifier("darwin")  # Not found in Maven Central
+        assert not looks_like_classifier("freebsd")  # Not found in Maven Central
+
+    def test_standalone_platform_classifiers(self):
+        """Standalone classifiers for platforms."""
+        # Universal/cross-platform
+        assert looks_like_classifier("universal")
+
+        # Note: 'all', 'runtime', 'native', 'classes', 'dependencies' are typically
+        # artifact ID components (e.g., netty-all, antlr-runtime, jline-native)
+        # not classifiers, so they are intentionally NOT matched
+
+    def test_underscore_separators(self):
+        """Classifiers using underscores instead of hyphens."""
+        assert looks_like_classifier("linux_64")
+        assert looks_like_classifier("linux_32")
+        assert looks_like_classifier("natives_linux")
+        assert looks_like_classifier("lib_aarch_64")
+        assert looks_like_classifier("app_x86_64")
 
     def test_real_world_examples(self):
         """Real-world classifier examples from Maven Central."""
@@ -185,6 +285,50 @@ class TestLooksLikeClassifier:
         assert looks_like_classifier("sources")
         assert looks_like_classifier("javadoc")
         assert looks_like_classifier("tests")
+
+        # From actual .m2/repository analysis - confirmed classifiers
+        assert looks_like_classifier("aarch_64")  # Arch (gluegen-rt)
+        assert looks_like_classifier("aarch64")  # Arch (gluegen-rt)
+        assert looks_like_classifier(
+            "amd64"
+        )  # Arch (gluegen-rt-2.6.0-natives-linux-amd64.jar)
+        assert looks_like_classifier(
+            "arm64"
+        )  # Arch (openblas-0.3.26-1.5.10-macosx-arm64.jar)
+        assert looks_like_classifier("armv6")  # Arch
+        assert looks_like_classifier("armv6hf")  # Arch
+        assert looks_like_classifier(
+            "i586"
+        )  # Arch (gluegen-rt-2.3.2-natives-linux-i586.jar)
+        assert looks_like_classifier(
+            "javadoc"
+        )  # Standard (scijava-common-2.89.0-javadoc.jar)
+        assert looks_like_classifier(
+            "linux"
+        )  # OS standalone (javafx-fxml-23.0.2-linux.jar)
+        assert looks_like_classifier("linux_64")  # OS+arch combo
+        assert looks_like_classifier(
+            "mac"
+        )  # OS standalone (javafx-fxml-23.0.2-mac.jar)
+        assert looks_like_classifier(
+            "macos"
+        )  # OS (lwjgl-openvr-3.3.3-natives-macos.jar)
+        assert looks_like_classifier("shaded")  # Build type
+        assert looks_like_classifier("sources")  # Standard (scifio-0.46.0-sources.jar)
+        assert looks_like_classifier(
+            "tests"
+        )  # Standard (scifio-labeling-0.3.2-SNAPSHOT-tests.jar)
+        assert looks_like_classifier("uber")  # Build type
+        assert looks_like_classifier("universal")  # Cross-platform
+        assert looks_like_classifier(
+            "win"
+        )  # OS standalone (javafx-fxml-23.0.2-win.jar)
+        assert looks_like_classifier(
+            "windows"
+        )  # OS (lwjgl-openvr-3.3.3-natives-windows.jar)
+        assert looks_like_classifier(
+            "x86_64"
+        )  # Arch (netty-epoll-4.1.75.Final-linux-x86_64.jar)
 
 
 class TestLooksLikeMainClass:
