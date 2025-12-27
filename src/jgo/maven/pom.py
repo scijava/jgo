@@ -11,6 +11,12 @@ from xml.etree import ElementTree
 from ..parse.coordinate import Coordinate
 
 
+def _text(el: ElementTree.Element, path: str | None = None) -> str | None:
+    """Get/find element text and strip whitespace."""
+    text = el.text if path is None else el.findtext(path)
+    return None if text is None else text.strip()
+
+
 def parse_dependency_element_to_coordinate(
     el: ElementTree.Element,
 ) -> tuple[Coordinate, list[tuple[str, str]]]:
@@ -26,17 +32,17 @@ def parse_dependency_element_to_coordinate(
     Returns:
         Tuple of (Coordinate object, list of exclusion (groupId, artifactId) tuples)
     """
-    groupId = el.findtext("groupId")
-    artifactId = el.findtext("artifactId")
-    version = el.findtext("version")  # NB: Might be None, which means managed.
-    classifier = el.findtext("classifier")
-    packaging = el.findtext("type")
-    scope = el.findtext("scope")
-    optional = el.findtext("optional") == "true"
+    groupId = _text(el, "groupId")
+    artifactId = _text(el, "artifactId")
+    version = _text(el, "version")  # NB: Might be None, which means managed.
+    classifier = _text(el, "classifier")
+    packaging = _text(el, "type")
+    scope = _text(el, "scope")
+    optional = _text(el, "optional") == "true"
 
     # Parse exclusions as list of (groupId, artifactId) tuples
     exclusions = [
-        (ex.findtext("groupId"), ex.findtext("artifactId"))
+        (_text(ex, "groupId"), _text(ex, "artifactId"))
         for ex in el.findall("exclusions/exclusion")
     ]
 
@@ -89,12 +95,12 @@ class XML:
         return els[0] if els else None
 
     def values(self, path: str) -> list[str]:
-        return [el.text for el in self.elements(path)]
+        return [_text(el) for el in self.elements(path)]
 
     def value(self, path: str) -> str | None:
         el = self.element(path)
         # NB: Be careful: childless ElementTree.Element objects are falsy!
-        return None if el is None else el.text
+        return None if el is None else _text(el)
 
     @staticmethod
     def _strip_ns(el: ElementTree.Element) -> None:
@@ -174,20 +180,20 @@ class POM(XML):
             person: dict[str, Any] = {}
             for child in el:
                 if len(child) == 0:
-                    person[child.tag] = child.text
+                    person[child.tag] = _text(child)
                 else:
                     if child.tag == "properties":
                         for grand in child:
-                            person[grand.tag] = grand.text
+                            person[grand.tag] = _text(grand)
                     else:
-                        person[child.tag] = [grand.text for grand in child]
+                        person[child.tag] = [_text(grand) for grand in child]
             people.append(person)
         return people
 
     @property
     def properties(self) -> dict[str, str]:
         """Dictionary of key/value pairs from the POM's <properties>."""
-        return {el.tag: el.text for el in self.elements("properties/*")}
+        return {el.tag: _text(el) for el in self.elements("properties/*")}
 
 
 def write_pom(pom: POM, dest: Path | str) -> None:
