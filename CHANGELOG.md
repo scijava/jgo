@@ -156,7 +156,7 @@ See git history for changes in jgo 1.x series.
 
 ## Migration from 1.x to 2.0
 
-See [docs/MIGRATION.md](docs/MIGRATION.md) for detailed migration instructions.
+See [docs/migration.md](docs/migration.md) for detailed migration instructions.
 
 ### Quick Migration Checklist
 

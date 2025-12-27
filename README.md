@@ -25,7 +25,7 @@ jgo org.python:jython-standalone:2.7.3
 - **🐍 Pure Python resolver**: No Maven installation required for basic operations
 - **🔧 Powerful Python API**: Fine-grained control over dependency resolution and execution
 
-See [docs/MIGRATION.md](docs/MIGRATION.md) for migration from jgo 1.x.
+See [docs/migration.md](docs/migration.md) for migration from jgo 1.x.
 
 ## Quick Start
 
@@ -321,7 +321,7 @@ tracker for more discussion of this issue.
 ## Documentation
 
 - **[User Guide](docs/user-guide.md)** - Comprehensive guide covering installation, CLI reference, Python API, and common recipes
-- **[Migration Guide](docs/MIGRATION.md)** - Upgrading from jgo 1.x to 2.0
+- **[Migration Guide](docs/migration.md)** - Upgrading from jgo 1.x to 2.0
 - **[Architecture](docs/architecture.md)** - Understanding the three-layer design
 - **[API Reference](docs/)** - Use `help(jgo)` in Python for detailed API documentation
 - **[TODO](TODO.md)** - Current development status and roadmap

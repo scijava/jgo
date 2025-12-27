@@ -96,7 +96,7 @@ See Also
 --------
 - User Guide: docs/user-guide.md
 - Architecture: docs/architecture.md
-- Migration Guide: docs/MIGRATION.md (for upgrading from jgo 1.x)
+- Migration Guide: docs/migration.md (for upgrading from jgo 1.x)
 - GitHub: https://github.com/apposed/jgo
 """
 
