@@ -1,0 +1,20 @@
+$ jgo -u org.scijava:scijava-ops-engine:1.0.0
+RuntimeError: Artifact  org.scijava:scijava-function:jar:1.0.0 not found in remote repositories {'central': 'https://repo.maven.apache.org/maven2', 'scijava.public': 'https://maven.scijava.org/content/groups/public'}
+But!
+$ jgo -u org.scijava:scijava-function:1.0.0
+Error: Could not find or load main class org.scijava.function.Main
+Caused by: java.lang.ClassNotFoundException: org.scijava.function.Main
+So the artifact does exist! What's going on?
+
+Remove or repurpose obsolete files in docs/
+
+Review all print commands -- which ones should be using _log instead?
+
+Decide about remaining `~/.jgorc` references throughout the codebase
+
+No API for managing jgo entrypoints
+
+What is the difference between `jgo -u` and `jgo update`? Do we need both?
+- For non-project mode, `jgo -u` seems needed for whether to update hashed env...
+
+pom-scijava bug: java3d-core 1.7.2 depends on gluegen-rt-main and jogl-all-main, and java3d-utils depends on joal-main; the `-main` artifacts each bring in *all* platform JARs :-(

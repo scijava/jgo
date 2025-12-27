@@ -1,0 +1,89 @@
+"""jgo versions - List available versions of an artifact"""
+
+from __future__ import annotations
+
+import logging
+from typing import TYPE_CHECKING
+
+import rich_click as click
+
+if TYPE_CHECKING:
+    from ..parser import ParsedArgs
+
+_log = logging.getLogger("jgo")
+
+
+@click.command(help="List available versions of an artifact.")
+@click.argument("coordinate", required=True)
+@click.pass_context
+def versions(ctx, coordinate):
+    """List available versions of a Maven artifact."""
+    from ...config import GlobalSettings
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    config = GlobalSettings.load_from_opts(opts)
+    args = _build_parsed_args(opts, endpoint=coordinate, command="versions")
+
+    exit_code = execute(args, config.to_dict())
+    ctx.exit(exit_code)
+
+
+def execute(args: ParsedArgs, config: dict) -> int:
+    """
+    Execute the versions command.
+
+    Args:
+        args: Parsed command line arguments
+        config: Global settings
+
+    Returns:
+        Exit code (0 for success, non-zero for failure)
+    """
+
+    from ..context import create_maven_context
+    from ..helpers import parse_coordinate_safe
+
+    if not args.endpoint:
+        _log.error("versions command requires a coordinate")
+        _log.error("Usage: jgo versions <groupId:artifactId>")
+        return 1
+
+    # Parse endpoint to get groupId and artifactId
+    coord, exit_code = parse_coordinate_safe(
+        args.endpoint, "Invalid format. Need at least groupId:artifactId"
+    )
+    if exit_code != 0:
+        return exit_code
+
+    # Create maven context
+    context = create_maven_context(args, config)
+
+    # Get project and fetch versions
+    project = context.project(coord.groupId, coord.artifactId)
+
+    try:
+        # Update metadata from remote
+        project.update()
+
+        # Get available versions
+        metadata = project.metadata
+        if not metadata or not metadata.versions:
+            print(f"No versions found for {coord.groupId}:{coord.artifactId}")
+            return 0
+
+        # Data output - keep as print() for parseable output
+        print(f"Available versions for {coord.groupId}:{coord.artifactId}:")
+        for version in metadata.versions:
+            marker = ""
+            if metadata.release and version == metadata.release:
+                marker = " (release)"
+            elif metadata.latest and version == metadata.latest:
+                marker = " (latest)"
+            print(f"  {version}{marker}")
+
+    except Exception as e:
+        _log.error(f"Error fetching versions: {e}")
+        return 1
+
+    return 0

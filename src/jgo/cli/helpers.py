@@ -1,0 +1,176 @@
+"""
+Common helper functions for CLI subcommands.
+
+This module consolidates repeated patterns across subcommand implementations
+to reduce duplication and improve consistency.
+"""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..env import EnvironmentSpec
+    from ..parse.coordinate import Coordinate
+    from .parser import ParsedArgs
+
+
+def verbose_print(args: ParsedArgs, message: str, level: int = 0):
+    """
+    Print message if verbose level is high enough.
+
+    DEPRECATED: Use logger.debug() instead. Will be removed in jgo 3.0.
+
+    Args:
+        args: Parsed arguments containing verbose level
+        message: Message to print
+        level: Minimum verbose level required (default: 0)
+    """
+    import logging
+    import warnings
+
+    warnings.warn(
+        "verbose_print is deprecated; use logger.debug() instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
+    logger = logging.getLogger("jgo")
+    if args.verbose > level:
+        logger.debug(message)
+
+
+def verbose_multiline(args: ParsedArgs, messages: list[str], level: int = 0):
+    """
+    Print multiple messages if verbose level is high enough.
+
+    Args:
+        args: Parsed arguments containing verbose level
+        messages: List of messages to print
+        level: Minimum verbose level required (default: 0)
+    """
+    if args.verbose > level:
+        for msg in messages:
+            print(msg)
+
+
+def handle_dry_run(args: ParsedArgs, message: str) -> bool:
+    """
+    Check if in dry run mode and print message if so.
+
+    Args:
+        args: Parsed arguments containing dry_run flag
+        message: Message to print in dry run mode
+
+    Returns:
+        True if dry run (caller should return 0), False otherwise
+    """
+    if args.dry_run:
+        from .output import print_dry_run
+
+        print_dry_run(message)
+        return True
+    return False
+
+
+def load_spec_file(args: ParsedArgs) -> tuple[EnvironmentSpec | None, int]:
+    """
+    Load environment spec file with error handling.
+
+    Args:
+        args: Parsed arguments containing spec file path
+
+    Returns:
+        Tuple of (spec, exit_code). If successful, exit_code is 0.
+        If failed, spec is None and exit_code is 1.
+    """
+    from ..env import EnvironmentSpec
+
+    spec_file = args.get_spec_file()
+    if not spec_file.exists():
+        print(f"Error: {spec_file} does not exist", file=sys.stderr)
+        print("Run 'jgo init' to create a new environment file first.", file=sys.stderr)
+        return None, 1
+
+    try:
+        spec = EnvironmentSpec.load(spec_file)
+        return spec, 0
+    except Exception as e:
+        print(f"Error: Failed to load {spec_file}: {e}", file=sys.stderr)
+        return None, 1
+
+
+def parse_config_key(key: str, default_section: str = "settings") -> tuple[str, str]:
+    """
+    Parse a config key into section and key name.
+
+    Args:
+        key: Key in format "section.key" or just "key"
+        default_section: Default section if not specified (default: "settings")
+
+    Returns:
+        Tuple of (section, key_name)
+    """
+    if "." in key:
+        return tuple(key.split(".", 1))
+    return default_section, key
+
+
+def load_toml_file(config_file: Path) -> dict | None:
+    """
+    Load TOML file.
+
+    Args:
+        config_file: Path to TOML file
+
+    Returns:
+        Parsed TOML data as dict, or None if file doesn't exist
+    """
+    from ..util.toml import tomllib
+
+    if not config_file.exists():
+        return None
+
+    with open(config_file, "rb") as f:
+        return tomllib.load(f)
+
+
+def parse_coordinate_safe(
+    endpoint: str, error_msg: str = "Invalid endpoint format"
+) -> tuple[Coordinate | None, int]:
+    """
+    Parse coordinate with error handling.
+
+    Args:
+        endpoint: Coordinate string to parse
+        error_msg: Custom error message prefix
+
+    Returns:
+        Tuple of (coordinate, exit_code). If successful, exit_code is 0.
+        If failed, coordinate is None and exit_code is 1.
+    """
+    try:
+        from ..parse.coordinate import Coordinate
+
+        coord = Coordinate.parse(endpoint)
+        return coord, 0
+    except ValueError:
+        print(f"Error: {error_msg}: {endpoint}", file=sys.stderr)
+        print("Expected: groupId:artifactId[:version]", file=sys.stderr)
+        return None, 1
+
+
+def print_exception_if_verbose(args: ParsedArgs, level: int = 1):
+    """
+    Print full traceback if verbose level is high enough.
+
+    Args:
+        args: Parsed arguments containing verbose level
+        level: Minimum verbose level required (default: 1)
+    """
+    if args.verbose > level:
+        import traceback
+
+        traceback.print_exc()

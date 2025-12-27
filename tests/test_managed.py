@@ -9,8 +9,8 @@ import unittest
 import jgo
 from jgo.jgo import InvalidEndpoint
 
-_logger = logging.getLogger(__name__)
-_logger.level = logging.INFO
+_log = logging.getLogger(__name__)
+_log.level = logging.INFO
 
 SJC_VERSION = "2.87.0"
 SJC_OPTIONAL_VERSION = "1.0.0"

@@ -1,0 +1,39 @@
+# Example jgo.toml - Environment specification for jgo
+#
+# This file defines a reproducible Java environment that can be
+# committed to version control. Run `jgo` in this directory to
+# automatically build and activate the environment.
+
+[environment]
+name = "imagej-analysis"
+description = "ImageJ with Python scripting for image analysis"
+
+# Java version requirements (optional)
+[java]
+version = "17"         # Specific version, or ">=11", "11-17", or "auto" (default)
+vendor = "adoptium"    # Optional: adoptium, zulu, etc.
+
+# Additional Maven repositories (optional)
+[repositories]
+scijava = "https://maven.scijava.org/content/groups/public"
+
+# Dependencies - list of Maven coordinates
+[dependencies]
+coordinates = [
+    "net.imagej:imagej:2.15.0",
+    "org.scijava:scripting-jython:1.0.0",
+]
+
+# Maven-style exclusions (G:A only, no version)
+exclusions = ["org.scijava:scijava-common"]
+
+# Entry points - different ways to run the environment
+[entrypoints]
+imagej = "net.imagej.Main"
+repl = "org.scijava.script.ScriptREPL"
+default = "imagej"  # Which entry point to use by default
+
+# Settings (optional)
+[settings]
+links = "hard"      # hard, soft, copy, or auto
+cache_dir = ".jgo"  # Override cache directory (default: .jgo in project mode)

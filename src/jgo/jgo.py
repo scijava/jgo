@@ -1,3 +1,9 @@
+"""
+DEPRECATED library functions from jgo v1.x.
+Preserved here only for backwards compatibility.
+This file will be removed in jgo 3.0.0.
+"""
+
 import argparse
 import configparser
 import glob
@@ -8,6 +14,7 @@ import re
 import shutil
 import subprocess
 import sys
+import warnings
 import zipfile
 from pathlib import Path
 
@@ -26,7 +33,7 @@ from pathlib import Path
 
 _classpath_separator = ";" if os.name == "nt" else ":"
 
-_logger = logging.getLogger(os.getenv("JGO_LOGGER_NAME", "jgo"))
+_log = logging.getLogger(os.getenv("JGO_LOGGER_NAME", "jgo"))
 
 
 def classpath_separator():
@@ -204,7 +211,7 @@ def executable_path(tool):
 
 
 def link(source, link_name, link_type="auto"):
-    _logger.debug(
+    _log.debug(
         "Linking source %s to target %s with link_type %s", source, link_name, link_type
     )
     if link_type.lower() == "soft":
@@ -249,7 +256,7 @@ def m2_repo() -> Path:
 
 
 def m2_path():
-    _logger.warning(
+    _log.warning(
         "The m2_path() function is deprecated and will be removed in the future. "
         "Please use either m2_repo() or m2_home() to obtain Maven directory paths."
     )
@@ -273,7 +280,7 @@ def launch_java(
         raise ExecutableNotFound("java", os.getenv("PATH"))
 
     cp = classpath_separator().join([os.path.join(jar_dir, "*")] + additional_jars)
-    _logger.debug("class path: %s", cp)
+    _log.debug("class path: %s", cp)
     jvm_args = tuple(arg for arg in jvm_args) if jvm_args else tuple()
     return subprocess.run(
         (java, "-cp", cp) + jvm_args + (main_class,) + app_args,
@@ -285,7 +292,7 @@ def launch_java(
 
 def run_and_combine_outputs(command, *args):
     command_string = (command,) + args
-    _logger.debug(f"Executing: {command_string}")
+    _log.debug(f"Executing: {command_string}")
     return subprocess.check_output(command_string, stderr=subprocess.STDOUT)
 
 
@@ -407,6 +414,12 @@ and it will be auto-completed.
 
 
 def _jgo_main(argv=sys.argv[1:], stdout=None, stderr=None):
+    warnings.warn(
+        "jgo.main() is deprecated. Use the new jgo API: jgo.run()",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     LOG_FORMAT = "%(levelname)s %(asctime)s: %(message)s"
 
     if not ("-q" in argv or "--quiet" in argv):
@@ -427,7 +440,7 @@ def _jgo_main(argv=sys.argv[1:], stdout=None, stderr=None):
 
     except NoEndpointProvided:
         parser.print_usage()
-        _logger.error(
+        _log.error(
             "No endpoint provided. Run `jgo --help' for a detailed help message."
         )
         return 254
@@ -443,6 +456,8 @@ def jgo_cache_dir_environment_variable():
 
 
 def default_config():
+    # DEPRECATED: Use GlobalSettings._default_config() instead (see src/jgo/config/settings.py)
+    # This function is kept for backward compatibility with jgo 1.x and will be removed in 3.0
     config = configparser.ConfigParser()
 
     # settings
@@ -465,13 +480,15 @@ def default_config():
 
 
 def expand_coordinate(coordinate, shortcuts={}):
+    # DEPRECATED: Use GlobalSettings.expand_shortcuts() instead (see src/jgo/config/settings.py)
+    # This function is kept for backward compatibility with jgo 1.x and will be removed in 3.0
     was_changed = True
     used_shortcuts = set()
     while was_changed:
         matched_shortcut = False
         for shortcut, replacement in shortcuts.items():
             if shortcut not in used_shortcuts and coordinate.startswith(shortcut):
-                _logger.debug(
+                _log.debug(
                     "Replacing %s with %s in %s.", shortcut, replacement, coordinate
                 )
                 coordinate = coordinate.replace(shortcut, replacement)
@@ -479,7 +496,7 @@ def expand_coordinate(coordinate, shortcuts={}):
                 used_shortcuts.add(shortcut)
         was_changed = matched_shortcut
 
-    _logger.debug("Returning expanded coordinate %s.", coordinate)
+    _log.debug("Returning expanded coordinate %s.", coordinate)
     return coordinate
 
 
@@ -558,6 +575,13 @@ def resolve_dependencies(
     shortcuts={},
     verbose=0,
 ):
+    warnings.warn(
+        "jgo.resolve_dependencies() is deprecated. "
+        "Use the new jgo API: jgo.build() or jgo.resolve()",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     endpoint_strings = split_endpoint_string(endpoint_string)
     endpoints = endpoints_from_strings(endpoint_strings, shortcuts=shortcuts)
     primary_endpoint = endpoints[0]
@@ -582,7 +606,7 @@ def resolve_dependencies(
     if not update_cache:
         return primary_endpoint, workspace
 
-    _logger.info(
+    _log.info(
         "First time start-up may be slow. "
         "Downloaded dependencies will be cached "
         "for shorter start-up times in subsequent executions."
@@ -657,21 +681,21 @@ def resolve_dependencies(
         mvn = executable_path_or_raise("mvn")
         mvn_out = run_and_combine_outputs(mvn, *mvn_args)
     except subprocess.CalledProcessError as e:
-        _logger.error("Failed to bootstrap the artifact.")
-        _logger.error("")
+        _log.error("Failed to bootstrap the artifact.")
+        _log.error("")
 
-        _logger.error("Possible solutions:")
-        _logger.error(
+        _log.error("Possible solutions:")
+        _log.error(
             "* Double check the endpoint for correctness (https://search.maven.org/)."
         )
-        _logger.error(
+        _log.error(
             "* Add needed repositories to ~/.jgorc [repositories] block (see README)."
         )
-        _logger.error(
+        _log.error(
             "* Try with an explicit version number (release metadata might be wrong)."
         )
-        _logger.error("")
-        _logger.error("Full Maven error output:")
+        _log.error("")
+        _log.error("Full Maven error output:")
         err_lines = []
         if e.stdout:
             err_lines += e.stdout.decode().splitlines()
@@ -679,10 +703,10 @@ def resolve_dependencies(
             err_lines += e.stderr.decode().splitlines()
         for line in err_lines:
             if line.startswith("[ERROR]"):
-                _logger.error("\t%s", line)
+                _log.error("\t%s", line)
             else:
-                _logger.debug("\t%s", line)
-        _logger.error("")
+                _log.debug("\t%s", line)
+        _log.error("")
 
         raise e
 
@@ -697,7 +721,7 @@ def resolve_dependencies(
             and not re.match(".*\\[DEBUG\\]", line)
             and not re.match(".*:provided", line)
         ):
-            _logger.debug("Relevant mvn output: %s", line)
+            _log.debug("Relevant mvn output: %s", line)
 
             split_line = info_regex.sub("", line).split(":")
             split_line_len = len(split_line)
@@ -745,7 +769,7 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
 
     if os.getenv(jgo_cache_dir_environment_variable()) is not None:
         cache_dir = os.getenv(jgo_cache_dir_environment_variable())
-        _logger.debug("Setting cache dir from environment: %s", cache_dir)
+        _log.debug("Setting cache dir from environment: %s", cache_dir)
         config.set("settings", "cacheDir", cache_dir)
 
     settings = config["settings"]
@@ -767,7 +791,7 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
         logging.getLogger().setLevel(logging.getLevelName(args.log_level))
 
     if args.additional_jars is not None and len(args.additional_jars) > 0:
-        _logger.warning(
+        _log.warning(
             "The -a, --additional-jars option has been deprecated and will be removed "
             "in the future. Please use `mvn install:install-file' instead to make "
             "relevant JARS available in your local Maven repository and pass "
@@ -775,7 +799,7 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
         )
 
     if args.verbose > 0:
-        _logger.setLevel(logging.DEBUG)
+        _log.setLevel(logging.DEBUG)
 
     if args.link_type is not None:
         config.set("settings", "links", args.link_type)
@@ -786,9 +810,9 @@ def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
     for repository in args.repository:
         repositories[repository.split("=")[0]] = repository.split("=")[1]
 
-    _logger.debug("Using settings:     %s", dict(settings))
-    _logger.debug("Using repositories: %s", dict(repositories))
-    _logger.debug("Using shortcuts:    %s", dict(shortcuts))
+    _log.debug("Using settings:     %s", dict(settings))
+    _log.debug("Using repositories: %s", dict(repositories))
+    _log.debug("Using shortcuts:    %s", dict(shortcuts))
 
     if args.force_update:
         args.update_cache = True
@@ -848,12 +872,12 @@ def _run(
             .replace(Endpoint.VERSION_RELEASE, "*")
             .replace(Endpoint.VERSION_LATEST, "*")
         )
-        _logger.info(
+        _log.info(
             f"Inferring main class from manifest of {primary_endpoint.jar_name()}"
             f" using glob '{glob_pattern}'"
         )
         jar_paths = sorted(glob.glob(os.path.join(workspace, glob_pattern)))
-        _logger.debug(f"Using first jar from matching jars {jar_paths}")
+        _log.debug(f"Using first jar from matching jars {jar_paths}")
         jar_path = jar_paths[0]
         with zipfile.ZipFile(jar_path) as jar_file:
             with jar_file.open("META-INF/MANIFEST.MF") as manifest:
@@ -866,7 +890,7 @@ def _run(
                         break
         if not main_class:
             raise NoMainClassInManifest(jar_path)
-        _logger.info("Inferred main class: %s", main_class)
+        _log.info("Inferred main class: %s", main_class)
     else:
         main_class = primary_endpoint.main_class
 

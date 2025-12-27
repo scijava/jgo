@@ -1,0 +1,648 @@
+"""jgo config - Manage jgo configuration"""
+
+from __future__ import annotations
+
+import logging
+import sys
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+import rich_click as click
+
+if TYPE_CHECKING:
+    from ..parser import ParsedArgs
+
+_log = logging.getLogger("jgo")
+
+
+@click.group(help="Manage jgo configuration.", invoke_without_command=True)
+@click.pass_context
+def config(ctx):
+    """
+    Manage jgo configuration.
+
+    Use subcommands to manage configuration:
+      list      - List all configuration values
+      get       - Get a specific configuration value
+      set       - Set a configuration value
+      unset     - Remove a configuration value
+      shortcut  - Manage endpoint shortcuts
+
+    EXAMPLES:
+      jgo config list                         # Show all config
+      jgo config get cache_dir                # Show cache_dir value
+      jgo config get settings.cache_dir       # Show cache_dir from settings section
+      jgo config set cache_dir ~/.jgo         # Set cache_dir
+      jgo config set repositories.central URL # Set repository URL
+      jgo config unset cache_dir              # Remove cache_dir setting
+      jgo config --global set cache_dir ~/.jgo # Set in global config
+      jgo config --local set cache_dir .jgo   # Set in local config
+      jgo config shortcut list                # List all shortcuts
+    """
+    # If no subcommand, show help
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+        ctx.exit(0)
+
+
+def execute(
+    args: ParsedArgs,
+    config: dict,
+    key: str | None = None,
+    value: str | None = None,
+    unset: str | None = None,
+    list_all: bool = False,
+    global_config: bool = False,
+    local_config: bool = False,
+) -> int:
+    """
+    Execute the config command.
+
+    Args:
+        args: Parsed command line arguments
+        config: Global settings
+        key: Configuration key to get/set
+        value: Value to set (only used with key)
+        unset: Key to unset
+        list_all: Whether to list all configuration
+        global_config: Whether to use global settings
+        local_config: Whether to use local config (jgo.toml)
+
+    Returns:
+        Exit code (0 for success, non-zero for failure)
+    """
+    # Determine which settings/config file to use
+    if local_config and global_config:
+        _log.error("Cannot use both --global and --local")
+        return 1
+
+    if local_config:
+        config_file = args.get_spec_file()
+        config_type = "local"
+    else:
+        # Default to global settings
+        from ...config.manager import get_settings_path
+
+        config_file = get_settings_path()
+        config_type = "global"
+
+    # Handle different operations
+    if unset:
+        return _unset_config(config_file, config_type, unset, args)
+
+    if list_all or (key is None and value is None):
+        return _list_config(config_file, config_type, args)
+
+    if key and value is None:
+        return _get_config(config_file, config_type, key, args)
+
+    if key and value:
+        return _set_config(config_file, config_type, key, value, args)
+
+    # Should not reach here
+    _log.error("Invalid arguments")
+    return 1
+
+
+def _list_config(config_file: Path, config_type: str, args: ParsedArgs) -> int:
+    """List all configuration values."""
+    if not config_file.exists():
+        print(f"No {config_type} configuration file found at {config_file}")
+        return 0
+
+    if config_type == "global":
+        return _list_jgorc(config_file, args)
+    else:
+        return _list_toml(config_file, args)
+
+
+def _list_jgorc(config_file: Path, args: ParsedArgs) -> int:
+    """List all configuration from global settings file."""
+    from ...config import GlobalSettings
+
+    settings = GlobalSettings.load(config_file)
+
+    print(f"Configuration from {config_file}:")
+    print()
+
+    # Print [settings] section
+    print("[settings]")
+    print(f"  cache_dir = {settings.cache_dir}")
+    print(f"  repo_cache = {settings.repo_cache}")
+    print(f"  links = {settings.links}")
+    print()
+
+    # Print [repositories] section if any
+    if settings.repositories:
+        print("[repositories]")
+        for name, url in settings.repositories.items():
+            print(f"  {name} = {url}")
+        print()
+
+    # Print [shortcuts] section if any
+    if settings.shortcuts:
+        print("[shortcuts]")
+        for name, replacement in settings.shortcuts.items():
+            print(f"  {name} = {replacement}")
+        print()
+
+    return 0
+
+
+def _list_toml(config_file: Path, args: ParsedArgs) -> int:
+    """List all configuration from jgo.toml file."""
+    from ..helpers import load_toml_file
+
+    data = load_toml_file(config_file)
+    if data is None:
+        return 1
+
+    print(f"Configuration from {config_file}:")
+    print()
+
+    # Show settings section
+    if "settings" in data:
+        print("[settings]")
+        for key, value in data["settings"].items():
+            print(f"  {key} = {value}")
+        print()
+
+    # Show repositories
+    if "repositories" in data:
+        print("[repositories]")
+        for key, value in data["repositories"].items():
+            print(f"  {key} = {value}")
+        print()
+
+    return 0
+
+
+def _get_config(config_file: Path, config_type: str, key: str, args: ParsedArgs) -> int:
+    """Get a specific configuration value."""
+    from ..helpers import parse_config_key
+
+    if not config_file.exists():
+        print(
+            f"Error: No {config_type} configuration file found at {config_file}",
+            file=sys.stderr,
+        )
+        return 1
+
+    # Parse key as section.key or just key
+    section, key_name = parse_config_key(key)
+
+    if config_type == "global":
+        return _get_jgorc(config_file, section, key_name, args)
+    else:
+        return _get_toml(config_file, section, key_name, args)
+
+
+def _get_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) -> int:
+    """Get value from global settings file."""
+    from ...config import GlobalSettings
+
+    settings = GlobalSettings.load(config_file)
+
+    # Get value based on section
+    if section == "settings":
+        if key == "cache_dir":
+            print(settings.cache_dir)
+        elif key == "repo_cache":
+            print(settings.repo_cache)
+        elif key == "links":
+            print(settings.links)
+        else:
+            _log.error(f"Unknown setting: {key}")
+            return 1
+    elif section == "repositories":
+        if key in settings.repositories:
+            print(settings.repositories[key])
+        else:
+            _log.error(f"Repository '{key}' not found")
+            return 1
+    elif section == "shortcuts":
+        if key in settings.shortcuts:
+            print(settings.shortcuts[key])
+        else:
+            _log.error(f"Shortcut '{key}' not found")
+            return 1
+    else:
+        _log.error(f"Unknown section: [{section}]")
+        return 1
+
+    return 0
+
+
+def _get_toml(config_file: Path, section: str, key: str, args: ParsedArgs) -> int:
+    """Get value from jgo.toml file."""
+    from ..helpers import load_toml_file
+
+    data = load_toml_file(config_file)
+    if data is None:
+        return 1
+
+    if section not in data:
+        _log.error(f"Section [{section}] not found")
+        return 1
+
+    if key not in data[section]:
+        _log.error(f"Key '{key}' not found in section [{section}]")
+        return 1
+
+    value = data[section][key]
+    print(value)
+    return 0
+
+
+def _set_config(
+    config_file: Path, config_type: str, key: str, value: str, args: ParsedArgs
+) -> int:
+    """Set a configuration value."""
+    from ..helpers import parse_config_key
+
+    # Parse key as section.key or just key
+    section, key_name = parse_config_key(key)
+
+    if config_type == "global":
+        return _set_jgorc(config_file, section, key_name, value, args)
+    else:
+        return _set_toml(config_file, section, key_name, value, args)
+
+
+def _set_jgorc(
+    config_file: Path, section: str, key: str, value: str, args: ParsedArgs
+) -> int:
+    """Set value in global settings file."""
+    import configparser
+
+    from ..helpers import handle_dry_run, verbose_print
+
+    # Validate section and key
+    valid_settings = ("cache_dir", "repo_cache", "links")
+    if section == "settings" and key not in valid_settings:
+        _log.error(f"Unknown setting: {key}")
+        return 1
+    elif section not in ("settings", "repositories", "shortcuts"):
+        _log.error(f"Unknown section: [{section}]")
+        return 1
+
+    # Load existing config
+    parser = configparser.ConfigParser()
+    if config_file.exists():
+        parser.read(config_file)
+
+    # Create section if it doesn't exist
+    if not parser.has_section(section):
+        parser.add_section(section)
+
+    # Set value
+    parser.set(section, key, value)
+
+    # Dry run
+    if handle_dry_run(args, f"Would set [{section}] {key} = {value} in {config_file}"):
+        return 0
+
+    # Write to file
+    config_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(config_file, "w") as f:
+        parser.write(f)
+
+    verbose_print(args, f"Set [{section}] {key} = {value} in {config_file}")
+
+    return 0
+
+
+def _set_toml(
+    config_file: Path, section: str, key: str, value: str, args: ParsedArgs
+) -> int:
+    """Set value in jgo.toml file."""
+    import tomli_w
+
+    from ..helpers import handle_dry_run, load_toml_file, verbose_print
+
+    # Read existing file
+    data = load_toml_file(config_file)
+    if data is None:
+        print(
+            f"Error: No local configuration file found at {config_file}",
+            file=sys.stderr,
+        )
+        print("Run 'jgo init' to create a new environment file first.", file=sys.stderr)
+        return 1
+
+    # Create section if it doesn't exist
+    if section not in data:
+        data[section] = {}
+
+    # Set value (try to parse as number/bool if possible)
+    parsed_value = _parse_value(value)
+    data[section][key] = parsed_value
+
+    # Dry run
+    if handle_dry_run(
+        args, f"Would set [{section}] {key} = {parsed_value} in {config_file}"
+    ):
+        return 0
+
+    # Write to file
+    with open(config_file, "wb") as f:
+        tomli_w.dump(data, f)
+
+    verbose_print(args, f"Set [{section}] {key} = {parsed_value} in {config_file}")
+
+    return 0
+
+
+def _unset_config(
+    config_file: Path, config_type: str, key: str, args: ParsedArgs
+) -> int:
+    """Unset a configuration value."""
+    from ..helpers import parse_config_key
+
+    if not config_file.exists():
+        print(
+            f"Error: No {config_type} configuration file found at {config_file}",
+            file=sys.stderr,
+        )
+        return 1
+
+    # Parse key as section.key or just key
+    section, key_name = parse_config_key(key)
+
+    if config_type == "global":
+        return _unset_jgorc(config_file, section, key_name, args)
+    else:
+        return _unset_toml(config_file, section, key_name, args)
+
+
+def _unset_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) -> int:
+    """Unset value in global settings file."""
+    import configparser
+
+    from ..helpers import handle_dry_run, verbose_print
+
+    if not config_file.exists():
+        print(
+            f"Error: No configuration file found at {config_file}",
+            file=sys.stderr,
+        )
+        return 1
+
+    # Load existing config
+    parser = configparser.ConfigParser()
+    parser.read(config_file)
+
+    # Validate that section and key exist
+    if not parser.has_section(section):
+        _log.error(f"Section [{section}] not found")
+        return 1
+
+    if not parser.has_option(section, key):
+        _log.error(f"Key '{key}' not found in section [{section}]")
+        return 1
+
+    # Dry run
+    if handle_dry_run(args, f"Would remove [{section}] {key} from {config_file}"):
+        return 0
+
+    # Remove option
+    parser.remove_option(section, key)
+
+    # Remove section if empty
+    if not parser.options(section):
+        parser.remove_section(section)
+
+    # Write to file
+    with open(config_file, "w") as f:
+        parser.write(f)
+
+    verbose_print(args, f"Removed [{section}] {key} from {config_file}")
+
+    return 0
+
+
+def _unset_toml(config_file: Path, section: str, key: str, args: ParsedArgs) -> int:
+    """Unset value in jgo.toml file."""
+    import tomli_w
+
+    from ..helpers import handle_dry_run, load_toml_file, verbose_print
+
+    data = load_toml_file(config_file)
+    if data is None:
+        return 1
+
+    if section not in data:
+        _log.error(f"Section [{section}] not found")
+        return 1
+
+    if key not in data[section]:
+        _log.error(f"Key '{key}' not found in section [{section}]")
+        return 1
+
+    # Dry run
+    if handle_dry_run(args, f"Would remove [{section}] {key} from {config_file}"):
+        return 0
+
+    # Remove key
+    del data[section][key]
+
+    # Remove section if empty
+    if not data[section]:
+        del data[section]
+
+    # Write to file
+    with open(config_file, "wb") as f:
+        tomli_w.dump(data, f)
+
+    verbose_print(args, f"Removed [{section}] {key} from {config_file}")
+
+    return 0
+
+
+def _parse_value(value: str) -> str | int | float | bool:
+    """
+    Parse a string value to its appropriate type.
+
+    Args:
+        value: String value to parse
+
+    Returns:
+        Parsed value (str, int, float, or bool)
+    """
+    # Try bool
+    if value.lower() in ("true", "yes", "on"):
+        return True
+    if value.lower() in ("false", "no", "off"):
+        return False
+
+    # Try int
+    try:
+        return int(value)
+    except ValueError:
+        pass
+
+    # Try float
+    try:
+        return float(value)
+    except ValueError:
+        pass
+
+    # Return as string
+    return value
+
+
+# Subcommands
+
+
+@config.command(name="list", help="List all configuration values.")
+@click.option(
+    "--global",
+    "global_config",
+    is_flag=True,
+    help="Use global configuration ([cyan]~/.config/jgo.conf[/]).",
+)
+@click.option(
+    "--local",
+    "local_config",
+    is_flag=True,
+    help="Use local configuration ([cyan]jgo.toml[/]).",
+)
+@click.pass_context
+def list_cmd(ctx, global_config, local_config):
+    """List all configuration values."""
+    from ...config import GlobalSettings
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    config = GlobalSettings.load_from_opts(opts)
+    args = _build_parsed_args(opts, command="config")
+
+    exit_code = execute(
+        args,
+        config.to_dict(),
+        key=None,
+        value=None,
+        unset=None,
+        list_all=True,
+        global_config=global_config,
+        local_config=local_config,
+    )
+    ctx.exit(exit_code)
+
+
+@config.command(name="get", help="Get a configuration value.")
+@click.argument("key")
+@click.option(
+    "--global",
+    "global_config",
+    is_flag=True,
+    help="Use global configuration ([cyan]~/.config/jgo.conf[/])",
+)
+@click.option(
+    "--local",
+    "local_config",
+    is_flag=True,
+    help="Use local configuration ([cyan]jgo.toml[/])",
+)
+@click.pass_context
+def get_cmd(ctx, key, global_config, local_config):
+    """Get a configuration value."""
+    from ...config import GlobalSettings
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    config = GlobalSettings.load_from_opts(opts)
+    args = _build_parsed_args(opts, command="config")
+
+    exit_code = execute(
+        args,
+        config.to_dict(),
+        key=key,
+        value=None,
+        unset=None,
+        list_all=False,
+        global_config=global_config,
+        local_config=local_config,
+    )
+    ctx.exit(exit_code)
+
+
+@config.command(name="set", help="Set a configuration value.")
+@click.argument("key")
+@click.argument("value")
+@click.option(
+    "--global",
+    "global_config",
+    is_flag=True,
+    help="Use global configuration ([cyan]~/.config/jgo.conf[/])",
+)
+@click.option(
+    "--local",
+    "local_config",
+    is_flag=True,
+    help="Use local configuration ([cyan]jgo.toml[/cyan])",
+)
+@click.pass_context
+def set_cmd(ctx, key, value, global_config, local_config):
+    """Set a configuration value."""
+    from ...config import GlobalSettings
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    config = GlobalSettings.load_from_opts(opts)
+    args = _build_parsed_args(opts, command="config")
+
+    exit_code = execute(
+        args,
+        config.to_dict(),
+        key=key,
+        value=value,
+        unset=None,
+        list_all=False,
+        global_config=global_config,
+        local_config=local_config,
+    )
+    ctx.exit(exit_code)
+
+
+@config.command(name="unset", help="Remove a configuration value.")
+@click.argument("key")
+@click.option(
+    "--global",
+    "global_config",
+    is_flag=True,
+    help="Use global configuration ([cyan]~/.config/jgo.conf[/]).",
+)
+@click.option(
+    "--local",
+    "local_config",
+    is_flag=True,
+    help="Use local configuration ([cyan]jgo.toml[/]).",
+)
+@click.pass_context
+def unset_cmd(ctx, key, global_config, local_config):
+    """Remove a configuration value."""
+    from ...config import GlobalSettings
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    config = GlobalSettings.load_from_opts(opts)
+    args = _build_parsed_args(opts, command="config")
+
+    exit_code = execute(
+        args,
+        config.to_dict(),
+        key=None,
+        value=None,
+        unset=key,
+        list_all=False,
+        global_config=global_config,
+        local_config=local_config,
+    )
+    ctx.exit(exit_code)
+
+
+# Import and register shortcut subcommand
+from .config_shortcut import shortcut  # noqa: E402
+
+config.add_command(shortcut)

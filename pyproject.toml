@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jgo"
-version = "1.1.1.dev0"
+version = "2.0.0.dev0"
 description = "Launch Java code from Python and the CLI, installation-free."
 license = "Unlicense"
 authors = [{name = "SciJava developers", email = "ctrueden@wisc.edu"}]
@@ -35,29 +35,34 @@ classifiers = [
 
 requires-python = ">=3.9"
 dependencies = [
+  "cjdk>=0.4.0",
   "psutil",
+  "requests",
+  "rich>=14.2.0",
+  "rich-click>=1.9.5",
+  "semver>=3.0.0",
+  "tomli>=2.0.0; python_version<'3.11'",
+  "tomli-w>=1.0.0",
 ]
 
 [dependency-groups]
 dev = [
     "build",
-    "ruff",
-    "pre-commit",
-    "pyflakes",
+    "mypy",
     "pytest",
-    "pytest-cov",
+    "ruff",
     "validate-pyproject[all]",
 ]
 
 [project.scripts]
-jgo = "jgo:main"
+jgo = "jgo.__main__:main"
 
 [project.urls]
-homepage = "https://github.com/scijava/jgo"
-documentation = "https://github.com/scijava/jgo/blob/main/README.md"
-source = "https://github.com/scijava/jgo"
+homepage = "https://github.com/apposed/jgo"
+documentation = "https://github.com/apposed/jgo/blob/main/README.md"
+source = "https://github.com/apposed/jgo"
 download = "https://pypi.org/project/jgo/"
-tracker = "https://github.com/scijava/jgo/issues"
+tracker = "https://github.com/apposed/jgo/issues"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -79,3 +84,8 @@ extend-ignore = ["E203"]
 [tool.ruff.lint.per-file-ignores]
 # Ignore `E402` (import violations) in all `__init__.py` files, and in `path/to/file.py`.
 "__init__.py" = ["E402", "F401"]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
