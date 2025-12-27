@@ -19,7 +19,12 @@ import re
 import warnings
 from dataclasses import dataclass
 
-from .coordinate import Coordinate, _parse_coordinate_dict
+from .coordinate import (
+    Coordinate,
+    _parse_coordinate_dict,
+    looks_like_main_class,
+    looks_like_version,
+)
 
 
 def _normalize_endpoint_syntax(endpoint: str) -> tuple[str, bool]:
@@ -185,22 +190,29 @@ def _parse_endpoint_dict(endpoint: str) -> dict:
             continue
 
         # Check for deprecated :MainClass format in first coordinate
-        # (This is the only remaining deprecated format to handle here)
+        # Use stronger checks: Java identifier grammar definitively rules out non-classes
         if len(coordinates) == 0 and main_class is None:
             tokens = part.split(":")
             if len(tokens) >= 3:
                 last_token = tokens[-1]
-                if "." in last_token or (last_token and last_token[0].isupper()):
-                    if not re.search(r"\d", last_token):
-                        deprecated_format = True
-                        warnings.warn(
-                            "The ':mainClass' syntax is deprecated. "
-                            "Use 'coord1+coord2@mainClass' instead.",
-                            DeprecationWarning,
-                            stacklevel=2,
-                        )
-                        main_class = last_token
-                        part = ":".join(tokens[:-1])
+
+                # If it cannot be a Java class (violates identifier rules), skip
+                if not looks_like_main_class(last_token):
+                    pass
+                # If it looks like a version, skip
+                elif looks_like_version(last_token):
+                    pass
+                # Otherwise, check deprecated main class pattern heuristics
+                elif "." in last_token or (last_token and last_token[0].isupper()):
+                    deprecated_format = True
+                    warnings.warn(
+                        "The ':mainClass' syntax is deprecated. "
+                        "Use 'coord1+coord2@mainClass' instead.",
+                        DeprecationWarning,
+                        stacklevel=2,
+                    )
+                    main_class = last_token
+                    part = ":".join(tokens[:-1])
 
         # Parse coordinate (handles the ! suffix internally)
         try:

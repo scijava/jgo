@@ -106,6 +106,90 @@ class Coordinate:
         )
 
 
+def looks_like_version(s: str) -> bool:
+    """
+    Check if string looks like a version (starts with digit or is a special keyword).
+
+    This is a heuristic, which cannot guarantee certainty either way.
+
+    Args:
+        s: The string to examine
+
+    Returns:
+        True if the string starts with a digit, or is one of LATEST, RELEASE, or MANAGED
+        False if the string does not start with a digit and is not a special keyword
+    """
+    # Special version keywords
+    if s.upper() in ("LATEST", "RELEASE", "MANAGED"):
+        return True
+    # Standard versions start with a digit
+    return bool(s and s[0].isdigit())
+
+
+def looks_like_classifier(s: str) -> bool:
+    """
+    Check if string looks like a classifier based on common patterns.
+
+    This is a heuristic, which cannot guarantee certainty either way.
+
+    Args:
+        s: The string to examine
+
+    Returns:
+        True if the string matches a known pattern in the wild for classifiers
+        False if the string does not match any such pattern
+    """
+    classifier_patterns = [
+        r"^natives-",
+        r"^sources$",
+        r"^javadoc$",
+        r"^tests$",
+        r"-(x86_64|amd64|arm64|aarch64|i386|i686|armv7|armhf)",
+        r"-(linux|windows|macos|osx|darwin|freebsd|solaris)",
+        r"^shaded$",
+        r"^uber$",
+    ]
+    return any(re.search(pattern, s, re.IGNORECASE) for pattern in classifier_patterns)
+
+
+def looks_like_main_class(s: str) -> bool:
+    """
+    Check if string could be a valid Java main class name.
+
+    A valid Java class name follows identifier rules for each dot-separated token:
+    - Must start with a letter, $, or _
+    - Can contain letters, digits, $, or _
+    - Cannot start with a digit
+
+    Args:
+        s: The string to examine
+
+    Returns:
+        True if the string follows Java identifier grammar (might be a class)
+        False if it violates Java identifier rules (definitely NOT a class)
+    """
+    if not s:
+        return False
+
+    # Split by dots for package-qualified names
+    tokens = s.split(".")
+
+    for token in tokens:
+        if not token:  # Empty token (e.g., "com..Main")
+            return False
+
+        # First character: must be letter, $, or _
+        if not (token[0].isalpha() or token[0] in ("$", "_")):
+            return False
+
+        # Remaining characters: letters, digits, $, or _
+        for ch in token[1:]:
+            if not (ch.isalnum() or ch in ("$", "_")):
+                return False
+
+    return True
+
+
 def coord2str(
     groupId: str,
     artifactId: str,
@@ -230,26 +314,6 @@ def _parse_coordinate_dict(coordinate: str) -> dict[str, str | None]:
         "bundle",
     }
     scope_values = {"compile", "provided", "runtime", "test", "system", "import"}
-
-    def looks_like_version(s: str) -> bool:
-        """Check if string looks like a version (contains digits)."""
-        return bool(re.search(r"\d", s))
-
-    def looks_like_classifier(s: str) -> bool:
-        """Check if string looks like a classifier based on common patterns."""
-        classifier_patterns = [
-            r"^natives-",
-            r"^sources$",
-            r"^javadoc$",
-            r"^tests$",
-            r"-(x86_64|amd64|arm64|aarch64|i386|i686|armv7|armhf)",
-            r"-(linux|windows|macos|osx|darwin|freebsd|solaris)",
-            r"^shaded$",
-            r"^uber$",
-        ]
-        return any(
-            re.search(pattern, s, re.IGNORECASE) for pattern in classifier_patterns
-        )
 
     # Always first two parts
     groupId = parts[0]
