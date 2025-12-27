@@ -23,6 +23,7 @@ For simple/low-level data structures without Maven logic, see the jgo.parse subp
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from hashlib import md5, sha1
 from os import environ
 from pathlib import Path
@@ -668,6 +669,23 @@ class Dependency:
         assert isinstance(version, str)
         self.artifact.component.version = version
         self.artifact.component._resolved_version = None
+
+
+@dataclass
+class DependencyNode:
+    """
+    Represents a dependency in a dependency tree.
+
+    This data structure is built during dependency resolution and captures
+    the parent-child relationships discovered by the breadth-first traversal.
+    It's also used for formatting dependency lists and trees.
+    """
+
+    dep: Dependency
+    children: list["DependencyNode"] = field(default_factory=list)
+
+    def __str__(self):
+        return str(self.dep)
 
 
 def create_pom(components: list[Component], boms: list[Component] | None) -> POM:

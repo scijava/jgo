@@ -9,13 +9,10 @@ import os
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from re import findall
-from typing import TYPE_CHECKING, Iterable
+from typing import Iterable
 
-from .core import Dependency, MavenContext, Project
+from .core import Dependency, DependencyNode, MavenContext, Project
 from .pom import POM
-
-if TYPE_CHECKING:
-    from .dependency_printer import DependencyNode
 
 _log = logging.getLogger(__name__)
 
@@ -265,8 +262,6 @@ class Model:
             - dependency_list: The flat list of resolved Dependency objects
             - dependency_tree: DependencyNode representing the root with children populated
         """
-        from .dependency_printer import DependencyNode
-
         all_deps: dict[GACT, Dependency] = {}
 
         # Build dependency tree during traversal

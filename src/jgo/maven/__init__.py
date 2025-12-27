@@ -14,6 +14,7 @@ from .core import (
     Artifact,
     Component,
     Dependency,
+    DependencyNode,
     MavenContext,
     Project,
 )
@@ -29,6 +30,7 @@ __all__ = [
     "Component",
     "Artifact",
     "Dependency",
+    "DependencyNode",
     "XML",
     # Resolvers
     "Resolver",

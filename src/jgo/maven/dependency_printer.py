@@ -1,64 +1,13 @@
 """
 Dependency printing utilities.
 
-Provides common data structures and formatting logic for dependency lists and trees,
+Provides formatting logic for dependency lists and trees,
 used by both PythonResolver and MvnResolver to ensure consistent output.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-
-from . import Dependency
-
-
-@dataclass
-class DependencyNode:
-    """
-    Represents a dependency in a dependency tree or list.
-
-    This is a common data structure returned by both PythonResolver and MvnResolver,
-    allowing for consistent formatting regardless of the resolution mechanism.
-    """
-
-    dep: Dependency
-    children: list["DependencyNode"] = field(default_factory=list)
-
-    def __str__(self):
-        return str(self.dep)
-        # return self.coordinate_string()
-
-    def coordinate_string(self, include_scope: bool = True) -> str:
-        # FIXME: Reconcile with Dependency __str__
-        """
-        Format this node as a Maven coordinate string.
-
-        Args:
-            include_scope: Whether to include the scope suffix (e.g., ":runtime")
-
-        Returns:
-            Formatted coordinate string like "groupId:artifactId:packaging[:classifier]:version[:scope]"
-        """
-        parts = [self.dep.groupId, self.dep.artifactId, self.dep.artifact.packaging]
-
-        # Add classifier if present
-        if self.dep.classifier:
-            parts.append(self.dep.classifier)
-
-        # Add version
-        parts.append(self.dep.version)
-
-        coord = ":".join(parts)
-
-        # Add scope suffix if requested and scope is not compile (default)
-        if include_scope and self.dep.scope and self.dep.scope != "compile":
-            coord += f":{self.dep.scope}"
-
-        # Add optional marker if applicable
-        if self.dep.optional:
-            coord += " (optional)"
-
-        return coord
+from .core import DependencyNode
 
 
 def format_dependency_list(
@@ -96,8 +45,7 @@ def format_dependency_list(
 
     # Print dependencies with indentation
     for dep in dependencies:
-        coord = dep.coordinate_string(include_scope=True)
-        lines.append(f"   {coord}")
+        lines.append(f"   {dep}")
 
     return "\n".join(lines)
 
@@ -127,11 +75,7 @@ def format_dependency_tree(root: DependencyNode) -> str:
             extension = "    " if is_last_child else "│   "
 
             # Format node
-            coord = node.coordinate_string(include_scope=False)
-
-            # Add scope if not compile
-            if node.dep.scope and node.dep.scope != "compile":
-                coord += f":{node.dep.scope}"
+            coord = str(node)
 
             # Add optional marker
             if node.dep.optional:
