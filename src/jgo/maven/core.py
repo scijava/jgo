@@ -34,7 +34,7 @@ from ..parse.coordinate import Coordinate, coord2str
 from ..util.io import binary, text
 
 if TYPE_CHECKING:
-    from .metadata import Metadata
+    from .metadata import Metadata, SnapshotMetadataXML
     from .pom import POM
     from .resolver import Resolver
 
@@ -385,6 +385,7 @@ class Component:
         self.project = project
         self.version = version
         self._resolved_version = None
+        self._snapshot_metadata: SnapshotMetadataXML | None = None
 
     def __eq__(self, other):
         return (
@@ -445,6 +446,88 @@ class Component:
 
         # Version is already concrete
         return self.version
+
+    @property
+    def snapshot_metadata(self) -> SnapshotMetadataXML | None:
+        """
+        Get SNAPSHOT metadata for this component version.
+        Only applicable for SNAPSHOT versions.
+
+        Returns:
+            SnapshotMetadataXML if this is a SNAPSHOT version, None otherwise.
+        """
+        if not self.resolved_version.endswith("-SNAPSHOT"):
+            return None
+
+        if self._snapshot_metadata is None:
+            import logging
+
+            from .metadata import SnapshotMetadataXML
+
+            _log = logging.getLogger(__name__)
+
+            # Load from cache if available
+            cache_dir = self.context.repo_cache / self.path_prefix
+            paths = (
+                list(cache_dir.glob("maven-metadata*.xml"))
+                if cache_dir.exists()
+                else []
+            )
+
+            if paths:
+                # Use most recent metadata
+                newest = max(paths, key=lambda p: p.stat().st_mtime)
+                _log.debug(f"Loading SNAPSHOT metadata from {newest}")
+                self._snapshot_metadata = SnapshotMetadataXML(newest)
+            else:
+                _log.debug(f"No cached SNAPSHOT metadata found in {cache_dir}")
+
+        return self._snapshot_metadata
+
+    def update_snapshot_metadata(self) -> None:
+        """
+        Fetch SNAPSHOT metadata from remote repositories.
+        Similar to Project.update() but for version-level metadata.
+        """
+        if not self.resolved_version.endswith("-SNAPSHOT"):
+            return
+
+        import logging
+
+        import requests
+
+        _log = logging.getLogger(__name__)
+
+        cache_dir = self.context.repo_cache / self.path_prefix
+        cache_dir.mkdir(parents=True, exist_ok=True)
+
+        _log.debug(f"Fetching SNAPSHOT metadata for {self}")
+
+        # Try to fetch maven-metadata.xml from each remote repository
+        found = False
+        for repo_name, repo_url in self.context.remote_repos.items():
+            # Convert Path to forward-slash string for URL
+            path_str = str(self.path_prefix).replace("\\", "/")
+            metadata_url = f"{repo_url}/{path_str}/maven-metadata.xml"
+            try:
+                _log.debug(f"Trying {metadata_url}")
+                response = requests.get(metadata_url)
+                if response.status_code == 200:
+                    # Save to local cache with repo name suffix
+                    metadata_file = cache_dir / f"maven-metadata-{repo_name}.xml"
+                    metadata_file.write_bytes(response.content)
+                    _log.info(
+                        f"Downloaded SNAPSHOT metadata for {self} from {repo_name}"
+                    )
+                    found = True
+            except Exception as e:
+                _log.debug(f"Failed to fetch SNAPSHOT metadata from {repo_name}: {e}")
+
+        if not found:
+            _log.warning(f"No SNAPSHOT metadata found for {self} in any repository")
+
+        # Force reload of metadata
+        self._snapshot_metadata = None
 
     @property
     def path_prefix(self) -> Path:
@@ -541,18 +624,47 @@ class Artifact:
         - g=org.python a=jython v=2.7.0 -> jython-2.7.0.jar
         - g=org.lwjgl a=lwjgl v=3.3.1 c=natives-linux -> lwjgl-3.3.1-natives-linux.jar
         - g=org.scijava a=scijava-common v=2.94.2 p=pom -> scijava-common-2.94.2.pom
+        - SNAPSHOT: my-lib-1.0-20230706.150124-1.jar (timestamped for download)
         """
+        version = (
+            self.component.resolved_version
+        )  # Use resolved version (LATEST -> actual version)
+
+        # For SNAPSHOTs, get the timestamped version
+        if version.endswith("-SNAPSHOT"):
+            metadata = self.component.snapshot_metadata
+            if metadata:
+                timestamped = metadata.get_timestamped_version(
+                    packaging=self.packaging, classifier=self.classifier
+                )
+                if timestamped:
+                    version = timestamped
+
         classifier_suffix = f"-{self.classifier}" if self.classifier else ""
-        return f"{self.artifactId}-{self.component.resolved_version}{classifier_suffix}.{self.packaging}"
+        return f"{self.artifactId}-{version}{classifier_suffix}.{self.packaging}"
+
+    @property
+    def cached_filename(self) -> str:
+        """
+        Filename used in the local cache.
+        For SNAPSHOTs, this uses the SNAPSHOT version, not the timestamped version.
+        E.g., my-lib-1.0-SNAPSHOT.jar (not my-lib-1.0-20230706.150124-1.jar)
+        """
+        version = self.component.resolved_version  # Use resolved version (LATEST -> SNAPSHOT)
+        classifier_suffix = f"-{self.classifier}" if self.classifier else ""
+        return f"{self.artifactId}-{version}{classifier_suffix}.{self.packaging}"
 
     @property
     def cached_path(self) -> Path | None:
         """
         Path to the artifact in the linked context's local repository cache.
         Might not actually exist! This just returns where it *would be* if present.
+
+        For SNAPSHOT versions, uses the SNAPSHOT version in the filename,
+        not the timestamped version (follows Maven convention).
         """
         return (
-            self.context.repo_cache / self.component.path_prefix / self.filename
+            self.context.repo_cache / self.component.path_prefix / self.cached_filename
             if self.context.repo_cache
             else None
         )
@@ -574,11 +686,52 @@ class Artifact:
 
         # Check any locally available Maven repository storage directories.
         for base in self.context.local_repos:
-            # TODO: Be smarter than this when version is a SNAPSHOT,
-            # because local repo storage has timestamped SNAPSHOT filenames.
-            p = base / self.component.path_prefix / self.filename
-            if p.exists():
-                return p
+            if self.version.endswith("-SNAPSHOT"):
+                # For SNAPSHOTs in local storage, look for timestamped files
+                # Pattern: artifactId-baseVersion-timestamp-buildNumber-classifier.packaging
+                # Example: my-lib-1.0-20230706.150124-1.jar
+
+                # First try with resolved timestamped filename if we have metadata
+                p = base / self.component.path_prefix / self.filename
+                if p.exists():
+                    return p
+
+                # Fallback: search for any timestamped version in the directory
+                # This handles cases where local storage has a different timestamp
+                snapshot_dir = base / self.component.path_prefix
+                if snapshot_dir.exists():
+                    # Extract base version (e.g., "1.0" from "1.0-SNAPSHOT")
+                    base_version = self.version[:-9]  # Remove "-SNAPSHOT"
+                    classifier_suffix = f"-{self.classifier}" if self.classifier else ""
+
+                    # Pattern: artifactId-baseVersion-timestamp-buildNumber[-classifier].packaging
+                    import re
+
+                    pattern = re.compile(
+                        rf"{re.escape(self.artifactId)}-"
+                        rf"{re.escape(base_version)}-"
+                        r"\d{8}\.\d{6}-\d+"
+                        rf"{re.escape(classifier_suffix)}"
+                        rf"\.{re.escape(self.packaging)}"
+                    )
+
+                    # Find matching files, use newest
+                    matching_files = [
+                        f
+                        for f in snapshot_dir.glob(
+                            f"{self.artifactId}-*.{self.packaging}"
+                        )
+                        if pattern.match(f.name)
+                    ]
+
+                    if matching_files:
+                        # Return the most recently modified file
+                        return max(matching_files, key=lambda f: f.stat().st_mtime)
+            else:
+                # Non-SNAPSHOT: use exact filename
+                p = base / self.component.path_prefix / self.filename
+                if p.exists():
+                    return p
 
         # Artifact was not found locally; need to download it.
         return self.context.resolver.download(self)

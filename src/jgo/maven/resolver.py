@@ -270,11 +270,27 @@ class PythonResolver(Resolver):
         self.profile_constraints = profile_constraints
 
     def download(self, artifact: Artifact) -> Path | None:
-        if artifact.version.endswith("-SNAPSHOT"):
-            raise RuntimeError("Downloading of snapshots is not yet implemented.")
+        # For SNAPSHOT versions, ensure we have the metadata first
+        is_snapshot = artifact.version.endswith("-SNAPSHOT")
+        if is_snapshot:
+            # Check if we already have metadata cached
+            if not artifact.component.snapshot_metadata:
+                # Try to fetch metadata from remote repos
+                artifact.component.update_snapshot_metadata()
+
+            # If still no metadata, we might be dealing with a remote repo
+            # that doesn't have the artifact yet
+            if not artifact.component.snapshot_metadata:
+                _log.warning(
+                    f"No SNAPSHOT metadata found for {artifact.component}. "
+                    "Attempting download with SNAPSHOT version..."
+                )
 
         for remote_repo in artifact.context.remote_repos.values():
-            url = f"{remote_repo}/{artifact.component.path_prefix}/{artifact.filename}"
+            # Convert Path to forward-slash string for URL
+            path_str = str(artifact.component.path_prefix).replace("\\", "/")
+            url = f"{remote_repo}/{path_str}/{artifact.filename}"
+            _log.debug(f"Trying {url}")
             response: requests.Response = requests.get(url)
             if response.status_code == 200:
                 # Artifact downloaded successfully.
@@ -286,7 +302,10 @@ class PythonResolver(Resolver):
                 cached_file.parent.mkdir(parents=True, exist_ok=True)
                 with open(cached_file, "wb") as f:
                     f.write(response.content)
-                _log.debug(f"Downloaded {url} to {cached_file}")
+                if is_snapshot:
+                    _log.info(f"Downloaded SNAPSHOT {artifact} to {cached_file}")
+                else:
+                    _log.debug(f"Downloaded {artifact} to {cached_file}")
                 return cached_file
 
         raise RuntimeError(

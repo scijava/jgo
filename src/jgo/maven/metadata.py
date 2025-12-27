@@ -72,10 +72,10 @@ class MetadataXML(XML, Metadata):
 
     @property
     def latest(self) -> str | None:
-        # WARNING: The <latest> value is often wrong, for reasons I don't know.
-        # However, the last <version> under <versions> has the correct value.
-        # Consider using lastVersion instead of latest.
-        return self.value("versioning/latest")
+        # NOTE: Maven's <latest> XML tag is often wrong, for reasons unknown.
+        # We return lastVersion instead, which is the last entry in <versions>.
+        # This gives the actual latest version rather than the unreliable XML tag.
+        return self.lastVersion
 
     @property
     def versions(self) -> list[str]:
@@ -88,6 +88,61 @@ class MetadataXML(XML, Metadata):
     @property
     def release(self) -> str | None:
         return self.value("versioning/release")
+
+
+class SnapshotMetadataXML(MetadataXML):
+    """
+    Convenience wrapper around a SNAPSHOT version's maven-metadata.xml document.
+
+    This metadata file is located at the version level:
+    e.g., groupId/artifactId/1.0-SNAPSHOT/maven-metadata.xml
+
+    It contains timestamped build information for SNAPSHOT artifacts.
+    """
+
+    @property
+    def snapshot_timestamp(self) -> str | None:
+        """Get the snapshot timestamp (e.g., '20230706.150124')."""
+        return self.value("versioning/snapshot/timestamp")
+
+    @property
+    def snapshot_build_number(self) -> int | None:
+        """Get the snapshot build number (e.g., 1)."""
+        value = self.value("versioning/snapshot/buildNumber")
+        return int(value) if value else None
+
+    def get_timestamped_version(
+        self, packaging: str = "jar", classifier: str = ""
+    ) -> str | None:
+        """
+        Get the timestamped version for a specific artifact type.
+
+        Args:
+            packaging: The artifact packaging/extension (e.g., 'jar', 'pom')
+            classifier: Optional classifier (e.g., 'sources', 'javadoc')
+
+        Returns:
+            Timestamped version string (e.g., '2.94.3-20230706.150124-1'),
+            or None if not found.
+        """
+        # First try to find exact match in snapshotVersions
+        for el in self.elements("versioning/snapshotVersions/snapshotVersion"):
+            ext = el.findtext("extension") or ""
+            clf = el.findtext("classifier") or ""
+            if ext == packaging and clf == classifier:
+                return el.findtext("value")
+
+        # Fallback: construct from snapshot timestamp and buildNumber
+        timestamp = self.snapshot_timestamp
+        build_num = self.snapshot_build_number
+        version = self.value("version")
+
+        if timestamp and build_num is not None and version:
+            if version.endswith("-SNAPSHOT"):
+                base = version[:-9]  # Remove "-SNAPSHOT"
+                return f"{base}-{timestamp}-{build_num}"
+
+        return None
 
 
 class Metadatas(Metadata):
