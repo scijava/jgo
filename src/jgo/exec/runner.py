@@ -109,14 +109,18 @@ class JavaRunner:
             elif has_classpath:
                 # Non-modular app - everything on classpath
                 use_classpath = True
-                classpath_dirs = [jars_dir, modules_dir] if modules_dir.exists() else [jars_dir]
+                classpath_dirs = (
+                    [jars_dir, modules_dir] if modules_dir.exists() else [jars_dir]
+                )
             else:
                 # Pure modular app (no non-modularizable JARs)
                 use_classpath = False
                 classpath_dirs = []
 
         if use_classpath and module_mode == "module-path-only":
-            raise RuntimeError(f"Cannot use module-path-only due to non-modularizable JARs in {jars_dir}")
+            raise RuntimeError(
+                f"Cannot use module-path-only due to non-modularizable JARs in {jars_dir}"
+            )
 
         if not use_modules and not use_classpath:
             raise RuntimeError(f"No JARs found in environment: {environment.path}")

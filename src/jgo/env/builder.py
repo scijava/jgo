@@ -12,8 +12,8 @@ from typing import TYPE_CHECKING
 
 from ..constants import DEFAULT_JGO_CACHE
 from ..parse.coordinate import Coordinate
-from .environment import Environment
 from .bytecode import detect_jar_java_version
+from .environment import Environment
 from .jar_util import (
     autocomplete_main_class,
     classify_jar,

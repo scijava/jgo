@@ -216,9 +216,7 @@ def test_environment_min_java_version_scans_modules():
 
         # Should detect Java 11 (highest version from both directories)
         version = env.min_java_version
-        assert (
-            version == 11
-        ), f"Expected Java 11 from modules/ directory, got {version}"
+        assert version == 11, f"Expected Java 11 from modules/ directory, got {version}"
 
         # Test the reverse: higher version in jars/, lower in modules/
         env2_path = Path(tmp_dir) / "test_env2"
@@ -252,9 +250,7 @@ def test_environment_min_java_version_scans_modules():
 
         # Should detect Java 17 (highest version from both directories)
         version2 = env2.min_java_version
-        assert (
-            version2 == 17
-        ), f"Expected Java 17 from jars/ directory, got {version2}"
+        assert version2 == 17, f"Expected Java 17 from jars/ directory, got {version2}"
 
 
 def test_lockfile_staleness_detection():

@@ -650,7 +650,9 @@ class Artifact:
         For SNAPSHOTs, this uses the SNAPSHOT version, not the timestamped version.
         E.g., my-lib-1.0-SNAPSHOT.jar (not my-lib-1.0-20230706.150124-1.jar)
         """
-        version = self.component.resolved_version  # Use resolved version (LATEST -> SNAPSHOT)
+        version = (
+            self.component.resolved_version
+        )  # Use resolved version (LATEST -> SNAPSHOT)
         classifier_suffix = f"-{self.classifier}" if self.classifier else ""
         return f"{self.artifactId}-{version}{classifier_suffix}.{self.packaging}"
 
