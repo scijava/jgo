@@ -22,21 +22,69 @@ class ModuleInfo:
     is_automatic: bool  # True if using Automatic-Module-Name (no module-info.class)
 
 
-def has_module_info(jar_path: Path) -> bool:
+def get_module_info_paths(jar_path: Path) -> dict[int | None, str]:
     """
-    Check if JAR contains module-info.class at its root.
+    Get all available module-info.class paths in a JAR with their Java versions.
 
     Args:
         jar_path: Path to JAR file
 
     Returns:
-        True if module-info.class exists at JAR root
+        Dictionary mapping Java version to module-info.class path:
+        - None: module-info.class at root (base version)
+        - int: Java version for META-INF/versions/N/module-info.class
+
+    Examples:
+        >>> get_module_info_paths(Path("regular.jar"))
+        {None: "module-info.class"}
+        >>> get_module_info_paths(Path("snakeyaml-2.0.jar"))
+        {9: "META-INF/versions/9/module-info.class"}
+        >>> get_module_info_paths(Path("multi.jar"))
+        {None: "module-info.class", 9: "META-INF/versions/9/module-info.class", 11: "META-INF/versions/11/module-info.class"}
     """
+    paths = {}
     try:
         with zipfile.ZipFile(jar_path) as jar:
-            return "module-info.class" in jar.namelist()
+            namelist = jar.namelist()
+
+            # Check root
+            if "module-info.class" in namelist:
+                paths[None] = "module-info.class"
+
+            # Check multi-release JAR versioned directories
+            for name in namelist:
+                if name.startswith("META-INF/versions/") and name.endswith(
+                    "/module-info.class"
+                ):
+                    try:
+                        parts = name.split("/")
+                        if len(parts) >= 4:  # META-INF, versions, N, module-info.class
+                            version = int(parts[2])
+                            paths[version] = name
+                    except ValueError:
+                        continue
+
     except (zipfile.BadZipFile, FileNotFoundError):
-        return False
+        pass
+
+    return paths
+
+
+def has_module_info(jar_path: Path) -> bool:
+    """
+    Check if JAR contains module-info.class at its root or in versioned directories.
+
+    Supports both:
+    - Regular modular JARs: module-info.class at root
+    - Multi-release JARs: META-INF/versions/N/module-info.class
+
+    Args:
+        jar_path: Path to JAR file
+
+    Returns:
+        True if module-info.class exists at JAR root or in versioned directory
+    """
+    return bool(get_module_info_paths(jar_path))
 
 
 def get_automatic_module_name(jar_path: Path) -> str | None:
@@ -53,22 +101,89 @@ def get_automatic_module_name(jar_path: Path) -> str | None:
     return manifest.get("Automatic-Module-Name") if manifest else None
 
 
-def parse_module_name_from_descriptor(jar_path: Path) -> str | None:
+def _find_module_info_path(
+    jar_path: Path, java_version: int | None = None
+) -> str | None:
+    """
+    Find the appropriate module-info.class path for a target Java version.
+
+    For multi-release JARs, selects the versioned module-info.class that best
+    matches the target Java version:
+    - Uses the highest version <= target Java version
+    - Falls back to root module-info.class if no suitable version found
+    - For Java < 9 or None, prefers root over versioned
+
+    Args:
+        jar_path: Path to JAR file
+        java_version: Target Java version (e.g., 11, 17). If None, uses highest available.
+
+    Returns:
+        Path to module-info.class within the JAR, or None if not found
+
+    Examples:
+        >>> _find_module_info_path(Path("snakeyaml-2.0.jar"), java_version=11)
+        "META-INF/versions/9/module-info.class"  # Uses version 9 (highest <= 11)
+        >>> _find_module_info_path(Path("snakeyaml-2.0.jar"), java_version=8)
+        None  # Java 8 doesn't support modules
+    """
+    paths = get_module_info_paths(jar_path)
+    if not paths:
+        return None
+
+    # If Java version not specified or < 9, prefer root (Java 8 doesn't support modules)
+    if java_version is None or java_version < 9:
+        # Return root if available, otherwise highest versioned (for detection purposes)
+        if None in paths:
+            return paths[None]
+        if paths:
+            max_version = max(v for v in paths.keys() if v is not None)
+            return paths[max_version]
+        return None
+
+    # Java 9+: prefer root first (most compatible), then highest version <= java_version
+    if None in paths:
+        return paths[None]
+
+    # Find highest versioned module-info that's <= target Java version
+    suitable_versions = [v for v in paths.keys() if v is not None and v <= java_version]
+    if suitable_versions:
+        best_version = max(suitable_versions)
+        return paths[best_version]
+
+    # No suitable version found - use lowest available version as fallback
+    # (Better than nothing, Java will error if truly incompatible)
+    versioned_keys = [v for v in paths.keys() if v is not None]
+    if versioned_keys:
+        return paths[min(versioned_keys)]
+
+    return None
+
+
+def parse_module_name_from_descriptor(
+    jar_path: Path, java_version: int | None = None
+) -> str | None:
     """
     Extract module name from module-info.class bytecode.
 
     The module-info.class file is a standard class file with a Module attribute.
     The module name is stored as a CONSTANT_Module_info entry in the constant pool.
 
+    Supports both regular modular JARs and multi-release JARs.
+
     Args:
         jar_path: Path to JAR file
+        java_version: Target Java version for selecting appropriate module-info in multi-release JARs
 
     Returns:
         Module name if parseable, None otherwise
     """
+    module_info_path = _find_module_info_path(jar_path, java_version)
+    if not module_info_path:
+        return None
+
     try:
         with zipfile.ZipFile(jar_path) as jar:
-            with jar.open("module-info.class") as f:
+            with jar.open(module_info_path) as f:
                 data = f.read()
                 return _parse_module_name(data)
     except (zipfile.BadZipFile, KeyError, FileNotFoundError):
@@ -202,7 +317,7 @@ def _parse_module_name(class_bytes: bytes) -> str | None:
     return None
 
 
-def detect_module_info(jar_path: Path) -> ModuleInfo:
+def detect_module_info(jar_path: Path, java_version: int | None = None) -> ModuleInfo:
     """
     Detect module information for a JAR.
 
@@ -213,12 +328,13 @@ def detect_module_info(jar_path: Path) -> ModuleInfo:
 
     Args:
         jar_path: Path to JAR file
+        java_version: Target Java version for selecting appropriate module-info in multi-release JARs
 
     Returns:
         ModuleInfo with detection results
     """
     if has_module_info(jar_path):
-        module_name = parse_module_name_from_descriptor(jar_path)
+        module_name = parse_module_name_from_descriptor(jar_path, java_version)
         return ModuleInfo(is_modular=True, module_name=module_name, is_automatic=False)
 
     auto_name = get_automatic_module_name(jar_path)
@@ -411,6 +527,9 @@ def classify_jar(jar_path: Path, jar_executable: Path) -> int:
     Uses the `jar` tool from a JDK 9+ to analyze the JAR and determine its
     module type according to JPMS (Java Platform Module System).
 
+    Supports multi-release JARs by automatically retrying with --release flag
+    when needed.
+
     Args:
         jar_path: Path to the JAR file to classify
         jar_executable: Path to the `jar` executable (from JDK 9+)
@@ -431,6 +550,8 @@ def classify_jar(jar_path: Path, jar_executable: Path) -> int:
         3  # Can derive "commons.io" from filename
         >>> classify_jar(Path("compiler-interface-1.3.5.jar"), Path("/usr/lib/jvm/java-11/bin/jar"))
         4  # "compiler.interface" is invalid (interface is keyword)
+        >>> classify_jar(Path("snakeyaml-2.0.jar"), Path("/usr/lib/jvm/java-11/bin/jar"))
+        1  # Multi-release JAR with module-info in META-INF/versions/9/
     """
     try:
         result = subprocess.run(
@@ -444,24 +565,73 @@ def classify_jar(jar_path: Path, jar_executable: Path) -> int:
         # jar tool not available or timed out - assume non-modularizable
         return 4
 
+    output = result.stdout.strip()
+    stderr = result.stderr.strip()
+
+    # Check if this is a multi-release JAR requiring --release flag
+    # Example output: "releases: 9\n\nNo root module descriptor, specify --release"
+    if "No root module descriptor" in output and "specify --release" in output:
+        # Extract the release version from output (e.g., "releases: 9")
+        release_version = None
+        for line in output.split("\n"):
+            if line.startswith("releases:"):
+                try:
+                    # Parse "releases: 9" or "releases: 9 10 11"
+                    versions = line.split(":", 1)[1].strip().split()
+                    if versions:
+                        # Use the first (lowest) version that has the module descriptor
+                        release_version = versions[0]
+                        break
+                except (IndexError, ValueError):
+                    pass
+
+        if release_version:
+            # Retry with --release flag
+            try:
+                result = subprocess.run(
+                    [
+                        str(jar_executable),
+                        "--describe-module",
+                        "--file",
+                        str(jar_path),
+                        "--release",
+                        release_version,
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                    check=False,
+                )
+                output = result.stdout.strip()
+                stderr = result.stderr.strip()
+            except (subprocess.TimeoutExpired, FileNotFoundError):
+                return 4
+
     # Check for errors in stderr indicating JPMS issues
-    if result.returncode != 0 or result.stderr:
-        stderr = result.stderr.lower()
+    if result.returncode != 0 or stderr:
+        stderr_lower = stderr.lower()
         # Check for specific JPMS errors
-        if "invalid module name" in stderr or "not a java identifier" in stderr:
+        if (
+            "invalid module name" in stderr_lower
+            or "not a java identifier" in stderr_lower
+        ):
             return 4
-        if "provider class" in stderr and "not in jar" in stderr:
+        if "provider class" in stderr_lower and "not in jar" in stderr_lower:
             # InvalidModuleDescriptorException (e.g., xalan case)
             return 4
         # Other errors - assume non-modularizable
         if result.returncode != 0:
             return 4
 
-    output = result.stdout.strip()
-
     # Type 1: Explicit module (has module-info.class)
     # Example: "org.objectweb.asm@9.7 jar:file:///path/to/asm-9.7.jar!/module-info.class"
-    if "!/module-info.class" in output or ("jar:file:" in output and "@" in output):
+    # Multi-release: "org.yaml.snakeyaml@2.0 jar:file:///.../snakeyaml-2.0.jar/!META-INF/versions/9/module-info.class"
+    if "!/module-info.class" in output or (
+        "!/META-INF/versions/" in output and "/module-info.class" in output
+    ):
+        return 1
+    # Alternative format without path separator
+    if "jar:file:" in output and "@" in output and " automatic" not in output:
         return 1
 
     # Type 3: Derivable automatic module (check BEFORE type 2!)

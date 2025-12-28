@@ -9,6 +9,7 @@ from jgo.env.jar_util import (
     ModuleInfo,
     detect_module_info,
     get_automatic_module_name,
+    get_module_info_paths,
     has_module_info,
     parse_module_name_from_descriptor,
 )
@@ -108,6 +109,93 @@ def create_legacy_jar() -> bytes:
     return jar_buffer.getvalue()
 
 
+def create_multirelease_jar(module_name: str = "multi.release.module") -> bytes:
+    """
+    Create a multi-release JAR with module-info.class in versioned directory.
+
+    This simulates JARs like snakeyaml-2.0.jar that have their module-info.class
+    in META-INF/versions/N/ instead of at the root.
+    """
+    # Minimal module-info.class bytecode (same as create_jar_with_module_info)
+    class_bytes = bytearray()
+    class_bytes.extend(b"\xca\xfe\xba\xbe")  # Magic
+    class_bytes.extend(b"\x00\x00")  # Minor version
+    class_bytes.extend(b"\x00\x35")  # Major version (53 = Java 9)
+    class_bytes.extend(b"\x00\x04")  # Constant pool count
+
+    # Entry 1: CONSTANT_Utf8_info for module name
+    module_name_bytes = module_name.encode("utf-8")
+    class_bytes.append(1)
+    class_bytes.extend(len(module_name_bytes).to_bytes(2, "big"))
+    class_bytes.extend(module_name_bytes)
+
+    # Entry 2: CONSTANT_Module_info
+    class_bytes.append(19)
+    class_bytes.extend(b"\x00\x01")
+
+    # Entry 3: CONSTANT_Utf8_info for "module-info"
+    class_name = b"module-info"
+    class_bytes.append(1)
+    class_bytes.extend(len(class_name).to_bytes(2, "big"))
+    class_bytes.extend(class_name)
+
+    # Access flags, this_class, super_class, etc.
+    class_bytes.extend(b"\x80\x00")  # ACC_MODULE
+    class_bytes.extend(b"\x00\x00")  # this_class
+    class_bytes.extend(b"\x00\x00")  # super_class
+    class_bytes.extend(b"\x00\x00")  # interfaces_count
+    class_bytes.extend(b"\x00\x00")  # fields_count
+    class_bytes.extend(b"\x00\x00")  # methods_count
+    class_bytes.extend(b"\x00\x00")  # attributes_count
+
+    # Create multi-release JAR
+    jar_buffer = io.BytesIO()
+    with zipfile.ZipFile(jar_buffer, "w", zipfile.ZIP_DEFLATED) as jar:
+        # Mark as multi-release JAR in manifest
+        manifest = "Manifest-Version: 1.0\nMulti-Release: true\n"
+        jar.writestr("META-INF/MANIFEST.MF", manifest)
+
+        # Add module-info.class in versioned directory (Java 9)
+        jar.writestr("META-INF/versions/9/module-info.class", bytes(class_bytes))
+
+        # Add some dummy content
+        jar.writestr("com/example/Test.class", b"dummy class content")
+
+    return jar_buffer.getvalue()
+
+
+# =============================================================================
+# get_module_info_paths() tests
+# =============================================================================
+
+
+def test_get_module_info_paths_regular_jar(tmp_path):
+    """Test get_module_info_paths with regular modular JAR."""
+    jar_path = tmp_path / "modular.jar"
+    jar_path.write_bytes(create_jar_with_module_info("test.module"))
+
+    paths = get_module_info_paths(jar_path)
+    assert paths == {None: "module-info.class"}
+
+
+def test_get_module_info_paths_multirelease_jar(tmp_path):
+    """Test get_module_info_paths with multi-release JAR."""
+    jar_path = tmp_path / "multirelease.jar"
+    jar_path.write_bytes(create_multirelease_jar("test.module"))
+
+    paths = get_module_info_paths(jar_path)
+    assert paths == {9: "META-INF/versions/9/module-info.class"}
+
+
+def test_get_module_info_paths_legacy_jar(tmp_path):
+    """Test get_module_info_paths with legacy JAR (no module-info)."""
+    jar_path = tmp_path / "legacy.jar"
+    jar_path.write_bytes(create_legacy_jar())
+
+    paths = get_module_info_paths(jar_path)
+    assert paths == {}
+
+
 # =============================================================================
 # has_module_info() tests
 # =============================================================================
@@ -150,6 +238,14 @@ def test_has_module_info_with_invalid_zip(tmp_path):
     jar_path.write_bytes(b"not a zip file")
 
     assert has_module_info(jar_path) is False
+
+
+def test_has_module_info_with_multirelease_jar(tmp_path):
+    """Test that has_module_info returns True for multi-release JAR."""
+    jar_path = tmp_path / "multirelease.jar"
+    jar_path.write_bytes(create_multirelease_jar("test.multirelease"))
+
+    assert has_module_info(jar_path) is True
 
 
 # =============================================================================
@@ -202,6 +298,14 @@ def test_parse_module_name_from_descriptor_no_module_info(tmp_path):
     assert parse_module_name_from_descriptor(jar_path) is None
 
 
+def test_parse_module_name_from_descriptor_multirelease(tmp_path):
+    """Test parsing module name from multi-release JAR."""
+    jar_path = tmp_path / "multirelease.jar"
+    jar_path.write_bytes(create_multirelease_jar("org.yaml.snakeyaml"))
+
+    assert parse_module_name_from_descriptor(jar_path) == "org.yaml.snakeyaml"
+
+
 # =============================================================================
 # detect_module_info() tests
 # =============================================================================
@@ -237,6 +341,17 @@ def test_detect_module_info_legacy(tmp_path):
     info = detect_module_info(jar_path)
     assert info.is_modular is False
     assert info.module_name is None
+    assert info.is_automatic is False
+
+
+def test_detect_module_info_multirelease(tmp_path):
+    """Test detect_module_info with multi-release JAR."""
+    jar_path = tmp_path / "multirelease.jar"
+    jar_path.write_bytes(create_multirelease_jar("org.yaml.snakeyaml"))
+
+    info = detect_module_info(jar_path)
+    assert info.is_modular is True
+    assert info.module_name == "org.yaml.snakeyaml"
     assert info.is_automatic is False
 
 
