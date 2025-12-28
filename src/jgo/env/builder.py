@@ -13,8 +13,10 @@ from typing import TYPE_CHECKING
 from ..constants import DEFAULT_JGO_CACHE
 from ..parse.coordinate import Coordinate
 from .environment import Environment
+from .bytecode import detect_jar_java_version
 from .jar_util import (
     autocomplete_main_class,
+    classify_jar,
     detect_main_class_from_jar,
     detect_module_info,
 )
@@ -511,22 +513,66 @@ class EnvironmentBuilder:
         # Track locked dependencies with module info
         locked_deps: list[LockedDependency] = []
 
+        # Collect all artifact paths to determine min Java version
+        # We need to know the target Java version before classifying JARs
+        all_artifact_paths = []
+        for component in components:
+            artifact = component.artifact()
+            all_artifact_paths.append(artifact.resolve())
+        for dep in all_deps:
+            if dep.scope in ("compile", "runtime"):
+                all_artifact_paths.append(dep.artifact.resolve())
+
+        # Determine minimum Java version by scanning all JARs
+        min_java_version = None
+        for jar_path in all_artifact_paths:
+            if jar_path.exists():
+                version = detect_jar_java_version(jar_path)
+                if version:
+                    min_java_version = max(min_java_version or 0, version)
+
+        # Get JDK for module classification (only if Java 9+)
+        jar_tool = None
+        if min_java_version and min_java_version >= 9:
+            try:
+                from ..exec.java_source import JavaLocator, JavaSource
+
+                locator = JavaLocator(java_source=JavaSource.AUTO, verbose=False)
+                java_path = locator.locate(min_version=min_java_version)
+                jar_tool = java_path.parent / "jar"
+                if not jar_tool.exists():
+                    # No jar tool available - fall back to simple detection
+                    jar_tool = None
+            except Exception:
+                # Failed to get JDK - fall back to simple detection
+                jar_tool = None
+
         # First, link the components themselves
         for component in components:
             artifact = component.artifact()
             source_path = artifact.resolve()
 
-            # Detect module info
-            module_info = detect_module_info(source_path)
+            # Classify JAR for module compatibility
+            if jar_tool:
+                # Java 9+ with jar tool - use precise classification
+                jar_type = classify_jar(source_path, jar_tool)
+                # Types 1/2/3 are modularizable, type 4 is not
+                target_dir = modules_dir if jar_type in (1, 2, 3) else jars_dir
+            else:
+                # Java 8 or no jar tool - use simple heuristic
+                module_info = detect_module_info(source_path)
+                target_dir = modules_dir if module_info.is_modular else jars_dir
+                jar_type = None  # Not classified
 
-            # Determine target directory
-            target_dir = modules_dir if module_info.is_modular else jars_dir
             dest_path = target_dir / artifact.filename
 
             if not dest_path.exists():
                 link_file(source_path, dest_path, self.link_strategy)
 
-            # Create locked dependency with module info
+            # For lockfile, we still need module_info for backward compat
+            module_info = detect_module_info(source_path)
+
+            # Create locked dependency with module info and classification
             sha256 = compute_sha256(source_path) if source_path.exists() else None
             locked_deps.append(
                 LockedDependency(
@@ -538,6 +584,7 @@ class EnvironmentBuilder:
                     sha256=sha256,
                     is_modular=module_info.is_modular,
                     module_name=module_info.module_name,
+                    jar_type=jar_type,
                 )
             )
 
@@ -557,17 +604,27 @@ class EnvironmentBuilder:
 
             source_path = artifact.resolve()
 
-            # Detect module info
-            module_info = detect_module_info(source_path)
+            # Classify JAR for module compatibility
+            if jar_tool:
+                # Java 9+ with jar tool - use precise classification
+                jar_type = classify_jar(source_path, jar_tool)
+                # Types 1/2/3 are modularizable, type 4 is not
+                target_dir = modules_dir if jar_type in (1, 2, 3) else jars_dir
+            else:
+                # Java 8 or no jar tool - use simple heuristic
+                module_info = detect_module_info(source_path)
+                target_dir = modules_dir if module_info.is_modular else jars_dir
+                jar_type = None  # Not classified
 
-            # Determine target directory
-            target_dir = modules_dir if module_info.is_modular else jars_dir
             dest_path = target_dir / artifact.filename
 
             if not dest_path.exists():
                 link_file(source_path, dest_path, self.link_strategy)
 
-            # Create locked dependency with module info
+            # For lockfile, we still need module_info for backward compat
+            module_info = detect_module_info(source_path)
+
+            # Create locked dependency with module info and classification
             sha256 = compute_sha256(source_path) if source_path.exists() else None
             locked_deps.append(
                 LockedDependency(
@@ -579,6 +636,7 @@ class EnvironmentBuilder:
                     sha256=sha256,
                     is_modular=module_info.is_modular,
                     module_name=module_info.module_name,
+                    jar_type=jar_type,
                 )
             )
 

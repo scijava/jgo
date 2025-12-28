@@ -31,6 +31,7 @@ class LockedDependency(TOMLSerializableMixin, FieldValidatorMixin):
         is_modular: bool = False,
         module_name: str | None = None,
         placement: str | None = None,
+        jar_type: int | None = None,
     ):
         self.groupId = groupId
         self.artifactId = artifactId
@@ -41,6 +42,7 @@ class LockedDependency(TOMLSerializableMixin, FieldValidatorMixin):
         self.is_modular = is_modular
         self.module_name = module_name
         self.placement = placement  # "class-path", "module-path", or None (auto)
+        self.jar_type = jar_type  # 1=explicit module, 2=automatic with name, 3=derivable, 4=non-modularizable, None=not analyzed
 
     @classmethod
     def from_dependency(cls, dep: Dependency) -> "LockedDependency":
@@ -87,6 +89,8 @@ class LockedDependency(TOMLSerializableMixin, FieldValidatorMixin):
                 data["module_name"] = self.module_name
         if self.placement:
             data["placement"] = self.placement
+        if self.jar_type is not None:
+            data["jar_type"] = self.jar_type
         return data
 
     @classmethod
@@ -102,6 +106,7 @@ class LockedDependency(TOMLSerializableMixin, FieldValidatorMixin):
             is_modular=data.get("is_modular", False),
             module_name=data.get("module_name"),
             placement=data.get("placement"),
+            jar_type=data.get("jar_type"),
         )
 
     def __repr__(self) -> str:

@@ -96,18 +96,29 @@ class JavaRunner:
             classpath_dirs = (
                 [jars_dir, modules_dir] if modules_dir.exists() else [jars_dir]
             )
-        elif module_mode == "module-path-only":
-            # Force all JARs to module-path
-            use_modules = True
-            use_classpath = False
-            classpath_dirs = []
-        else:  # "auto"
+        else:  # "auto" (module-path-only is now same as auto)
+            # Smart mode: Use modules if available, but also include jars/ for non-modularizable JARs
             use_modules = has_modules
-            use_classpath = has_classpath
-            # Only use jars/ directory for classpath (modules go to module-path)
-            classpath_dirs = [jars_dir] if use_classpath else []
 
-        if not use_modules and not use_classpath and not classpath_dirs:
+            # When using modules, we may still need classpath for non-modularizable JARs
+            # Always include jars/ if it exists, even when using modules
+            if has_modules and has_classpath:
+                # Modular app with some non-modularizable JARs
+                use_classpath = True
+                classpath_dirs = [jars_dir]
+            elif has_classpath:
+                # Non-modular app - everything on classpath
+                use_classpath = True
+                classpath_dirs = [jars_dir, modules_dir] if modules_dir.exists() else [jars_dir]
+            else:
+                # Pure modular app (no non-modularizable JARs)
+                use_classpath = False
+                classpath_dirs = []
+
+        if use_classpath and module_mode == "module-path-only":
+            raise RuntimeError(f"Cannot use module-path-only due to non-modularizable JARs in {jars_dir}")
+
+        if not use_modules and not use_classpath:
             raise RuntimeError(f"No JARs found in environment: {environment.path}")
 
         # Locate Java executable

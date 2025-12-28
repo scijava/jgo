@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import re
 import struct
+import subprocess
 import warnings
 import zipfile
 from dataclasses import dataclass
@@ -401,3 +402,82 @@ def autocomplete_main_class(
         stacklevel=3,
     )
     return main_class
+
+
+def classify_jar(jar_path: Path, jar_executable: Path) -> int:
+    """
+    Classify a JAR file's module compatibility using `jar --describe-module`.
+
+    Uses the `jar` tool from a JDK 9+ to analyze the JAR and determine its
+    module type according to JPMS (Java Platform Module System).
+
+    Args:
+        jar_path: Path to the JAR file to classify
+        jar_executable: Path to the `jar` executable (from JDK 9+)
+
+    Returns:
+        JAR type classification:
+        1: Explicit module (has module-info.class)
+        2: Automatic module with name (has Automatic-Module-Name in manifest)
+        3: Derivable automatic module (filename produces valid module name)
+        4: Non-modularizable (invalid module name or other JPMS issues)
+
+    Examples:
+        >>> classify_jar(Path("asm-9.7.jar"), Path("/usr/lib/jvm/java-11/bin/jar"))
+        1  # Has module-info.class
+        >>> classify_jar(Path("args4j-2.33.jar"), Path("/usr/lib/jvm/java-11/bin/jar"))
+        2  # Has Automatic-Module-Name
+        >>> classify_jar(Path("commons-io-2.11.0.jar"), Path("/usr/lib/jvm/java-11/bin/jar"))
+        3  # Can derive "commons.io" from filename
+        >>> classify_jar(Path("compiler-interface-1.3.5.jar"), Path("/usr/lib/jvm/java-11/bin/jar"))
+        4  # "compiler.interface" is invalid (interface is keyword)
+    """
+    try:
+        result = subprocess.run(
+            [str(jar_executable), "--describe-module", "--file", str(jar_path)],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        # jar tool not available or timed out - assume non-modularizable
+        return 4
+
+    # Check for errors in stderr indicating JPMS issues
+    if result.returncode != 0 or result.stderr:
+        stderr = result.stderr.lower()
+        # Check for specific JPMS errors
+        if "invalid module name" in stderr or "not a java identifier" in stderr:
+            return 4
+        if "provider class" in stderr and "not in jar" in stderr:
+            # InvalidModuleDescriptorException (e.g., xalan case)
+            return 4
+        # Other errors - assume non-modularizable
+        if result.returncode != 0:
+            return 4
+
+    output = result.stdout.strip()
+
+    # Type 1: Explicit module (has module-info.class)
+    # Example: "org.objectweb.asm@9.7 jar:file:///path/to/asm-9.7.jar!/module-info.class"
+    if "!/module-info.class" in output or ("jar:file:" in output and "@" in output):
+        return 1
+
+    # Type 3: Derivable automatic module (check BEFORE type 2!)
+    # Example: "No module descriptor found. Derived automatic module.\n\nmines.jtk@20151125 automatic"
+    if "No module descriptor found" in output:
+        if "Derived automatic module" in output:
+            return 3
+        else:
+            # Derivation failed - non-modularizable
+            return 4
+
+    # Type 2: Automatic module with Automatic-Module-Name
+    # Example: "args4j@2.33 automatic"
+    # This check comes AFTER type 3 to avoid false matches
+    if " automatic" in output and "@" in output:
+        return 2
+
+    # Unknown output format - conservatively assume non-modularizable
+    return 4
