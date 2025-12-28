@@ -137,7 +137,7 @@ def _parse_endpoint_with_shortcuts(
         original_parts = expanded_parts  # Fall back to using expanded parts
 
     coordinates = []
-    entrypoints = {}
+    entrypoints: dict[str, str] = {}
     default_entrypoint = None
 
     for orig_part, exp_part in zip(original_parts, expanded_parts):

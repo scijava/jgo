@@ -129,6 +129,9 @@ class Endpoint:
         if isinstance(endpoint, cls):
             return endpoint
 
+        # At this point, endpoint must be a str
+        assert isinstance(endpoint, str), "endpoint must be str after isinstance check"
+
         # Normalize deprecated @ syntax
         normalized, was_deprecated_at = _normalize_endpoint_syntax(endpoint)
 
@@ -183,7 +186,7 @@ def _parse_endpoint_dict(endpoint: str) -> dict:
 
     # Split coordinates by +
     coord_parts = coordinates_part.split("+")
-    coordinates = []
+    coordinates: list[dict[str, str | None | bool]] = []
 
     for part in coord_parts:
         if not part:

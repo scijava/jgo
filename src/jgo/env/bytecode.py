@@ -233,7 +233,7 @@ def analyze_jar_bytecode(jar_path: Path) -> dict:
     if not jar_path.exists():
         return {}
 
-    version_counts = Counter()
+    version_counts: Counter[int] = Counter()
     skipped = []
     class_versions = []  # List of (class_name, major_version) tuples
 

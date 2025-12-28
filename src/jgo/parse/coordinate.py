@@ -92,17 +92,32 @@ class Coordinate:
         """
         if isinstance(coordinate, cls):
             return coordinate
+        # At this point, coordinate must be a str
+        assert isinstance(coordinate, str), "coordinate must be str after isinstance check"
         parsed = _parse_coordinate_dict(coordinate)
+        group_id = parsed["groupId"]
+        artifact_id = parsed["artifactId"]
+        if not isinstance(group_id, str) or not isinstance(artifact_id, str):
+            raise ValueError("groupId and artifactId must be strings")
+        optional_val = parsed["optional"]
+        raw_val = parsed["raw"]
+        placement_val = parsed.get("placement")
+
+        # Type-narrow placement_val
+        placement_final: Literal["class-path", "module-path"] | None = None
+        if isinstance(placement_val, str) and placement_val in ("class-path", "module-path"):
+            placement_final = placement_val  # type: ignore[assignment]
+
         return cls(
-            groupId=parsed["groupId"],
-            artifactId=parsed["artifactId"],
-            version=parsed["version"],
-            classifier=parsed["classifier"],
-            packaging=parsed["packaging"],
-            scope=parsed["scope"],
-            optional=parsed["optional"] or False,
-            raw=parsed["raw"],
-            placement=parsed.get("placement"),
+            groupId=group_id,
+            artifactId=artifact_id,
+            version=parsed["version"] if isinstance(parsed["version"], str) else None,
+            classifier=parsed["classifier"] if isinstance(parsed["classifier"], str) else None,
+            packaging=parsed["packaging"] if isinstance(parsed["packaging"], str) else None,
+            scope=parsed["scope"] if isinstance(parsed["scope"], str) else None,
+            optional=bool(optional_val) if optional_val else False,
+            raw=raw_val if isinstance(raw_val, bool) else None,
+            placement=placement_final,
         )
 
 
@@ -266,7 +281,7 @@ def coord2str(
     return result
 
 
-def _parse_coordinate_dict(coordinate: str) -> dict[str, str | None]:
+def _parse_coordinate_dict(coordinate: str) -> dict[str, str | None | bool]:
     """
     Parse a Maven coordinate string into a dictionary.
 

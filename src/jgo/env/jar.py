@@ -42,7 +42,7 @@ def get_module_info_paths(jar_path: Path) -> dict[int | None, str]:
         >>> get_module_info_paths(Path("multi.jar"))
         {None: "module-info.class", 9: "META-INF/versions/9/module-info.class", 11: "META-INF/versions/11/module-info.class"}
     """
-    paths = {}
+    paths: dict[int | None, str] = {}
     try:
         with zipfile.ZipFile(jar_path) as jar:
             namelist = jar.namelist()
@@ -309,10 +309,12 @@ def _parse_module_name(class_bytes: bytes) -> str | None:
     for entry in constant_pool:
         if entry and entry[0] == "Module":
             name_index = entry[1]
-            if 0 < name_index < len(constant_pool):
+            if isinstance(name_index, int) and 0 < name_index < len(constant_pool):
                 name_entry = constant_pool[name_index]
                 if name_entry and name_entry[0] == "Utf8":
-                    return name_entry[1]
+                    utf8_value = name_entry[1]
+                    if isinstance(utf8_value, str):
+                        return utf8_value
 
     return None
 
@@ -375,12 +377,12 @@ def parse_manifest(jar_path: Path) -> dict[str, str] | None:
         with zipfile.ZipFile(jar_path) as jar_file:
             try:
                 with jar_file.open("META-INF/MANIFEST.MF") as manifest:
-                    manifest_dict = {}
-                    current_key = None
-                    current_value = []
+                    manifest_dict: dict[str, str] = {}
+                    current_key: str | None = None
+                    current_value: list[str] = []
 
-                    for line in manifest.readlines():
-                        line = line.decode("utf-8").rstrip("\r\n")
+                    for raw_line in manifest.readlines():
+                        line = raw_line.decode("utf-8").rstrip("\r\n")
 
                         # Line continuation (starts with space)
                         if line.startswith(" ") and current_key:

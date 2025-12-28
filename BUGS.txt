@@ -6,6 +6,9 @@ Decide about remaining `~/.jgorc` references throughout the codebase
 
 No API for managing jgo entrypoints
 
+Do we still need --module-path-only flag?
+- I lean toward yes, for symmetry, better PoLA adherence, and fail-fast when JAR(s) are non-modularizable.
+
 What is the difference between `jgo -u` and `jgo update`? Do we need both?
 - For non-project mode, `jgo -u` seems needed for whether to update hashed env...
 

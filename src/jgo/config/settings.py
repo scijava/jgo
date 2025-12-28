@@ -208,11 +208,13 @@ class GlobalSettings:
         repo_cache = settings.repo_cache
 
         # Check environment variables
-        if os.getenv("JGO_CACHE_DIR"):
-            cache_dir = Path(os.getenv("JGO_CACHE_DIR")).expanduser()
+        jgo_cache_env = os.getenv("JGO_CACHE_DIR")
+        if jgo_cache_env:
+            cache_dir = Path(jgo_cache_env).expanduser()
 
-        if os.getenv("M2_REPO"):
-            repo_cache = Path(os.getenv("M2_REPO")).expanduser()
+        m2_repo_env = os.getenv("M2_REPO")
+        if m2_repo_env:
+            repo_cache = Path(m2_repo_env).expanduser()
 
         return cls(
             cache_dir=cache_dir,
