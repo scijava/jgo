@@ -730,9 +730,8 @@ def help(ctx, commands):
 
         # If this is the last command, show its help
         if i == len(commands) - 1:
-            # Get the help text without triggering Click's exit mechanism
-            cmd_ctx = click.Context(cmd, info_name=cmd_name, parent=current_ctx)
-            click.echo(cmd.get_help(cmd_ctx))
+            # Invoke the command with --help to trigger rich-click's help rendering
+            cmd.main(["--help"], standalone_mode=False, parent=current_ctx)
             return
 
         # Otherwise, navigate deeper if it's a group
