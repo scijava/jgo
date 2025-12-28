@@ -5,7 +5,7 @@ Tests for JAR module detection functionality.
 import io
 import zipfile
 
-from jgo.env.jar_util import (
+from jgo.env.jar import (
     ModuleInfo,
     detect_module_info,
     get_automatic_module_name,

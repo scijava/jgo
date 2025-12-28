@@ -211,7 +211,7 @@ class Environment:
                                     if dep.module_name:
                                         return dep.module_name, True
                         # Fallback: detect module name
-                        from .jar_util import detect_module_info
+                        from .jar import detect_module_info
 
                         info = detect_module_info(jar)
                         return info.module_name, True

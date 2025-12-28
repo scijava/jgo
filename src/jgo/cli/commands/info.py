@@ -220,7 +220,7 @@ def manifest(ctx, endpoint, raw):
     import zipfile
 
     from ...config import GlobalSettings
-    from ...env.jar_util import parse_manifest, read_raw_manifest
+    from ...env.jar import parse_manifest, read_raw_manifest
     from ..context import create_maven_context
     from ..helpers import parse_coordinate_safe
     from ..parser import _build_parsed_args

@@ -14,7 +14,7 @@ from ..constants import DEFAULT_JGO_CACHE
 from ..parse.coordinate import Coordinate
 from .bytecode import detect_jar_java_version
 from .environment import Environment
-from .jar_util import (
+from .jar import (
     autocomplete_main_class,
     classify_jar,
     detect_main_class_from_jar,
