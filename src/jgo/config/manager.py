@@ -22,11 +22,24 @@ def get_settings_path() -> Path:
     Get the settings file path using XDG Base Directory standard.
 
     Returns:
-        Path to settings file:
-        - ~/.config/jgo.conf if it exists, else ~/.jgorc
+        Path to settings file with the following precedence:
+        - ~/.config/jgo.conf if it exists (preferred location)
+        - ~/.jgorc if it exists (legacy backward compatibility)
+        - ~/.config/jgo.conf otherwise (default for new installations)
     """
     xdg_path = xdg_settings_path()
-    return xdg_path if xdg_path.exists() else legacy_settings_path()
+    legacy_path = legacy_settings_path()
+
+    # Prefer XDG if it exists
+    if xdg_path.exists():
+        return xdg_path
+
+    # Fall back to legacy if it exists (backward compatibility)
+    if legacy_path.exists():
+        return legacy_path
+
+    # Default to XDG for new installations
+    return xdg_path
 
 
 def get_settings_display_name(path: Path) -> str:
