@@ -48,10 +48,16 @@ dependencies = [
 [dependency-groups]
 dev = [
     "build",
-    "mypy",
     "pytest",
     "ruff",
     "validate-pyproject[all]",
+]
+mypy = [
+    "mypy",
+    "types-Pygments",
+    "types-colorama",
+    "types-psutil",
+    "types-requests",
 ]
 
 [project.scripts]
