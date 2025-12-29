@@ -7,6 +7,8 @@ from pathlib import Path
 
 import rich_click as click
 
+from ...parse.coordinate import Coordinate
+
 _log = logging.getLogger("jgo")
 
 
@@ -51,46 +53,7 @@ def classpath(ctx, endpoint):
 @click.pass_context
 def deptree(ctx, endpoint):
     """Show the dependency tree for the given endpoint."""
-    from ...config import GlobalSettings
-    from ...env import EnvironmentSpec
-    from ...env.builder import filter_managed_components
-    from ...parse.coordinate import Coordinate
-    from ..context import create_environment_builder, create_maven_context
-    from ..output import print_dependencies
-    from ..parser import _build_parsed_args
-
-    opts = ctx.obj
-    config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
-
-    context = create_maven_context(args, config.to_dict())
-    builder = create_environment_builder(args, config.to_dict(), context)
-
-    # Parse coordinates into components
-    if args.is_spec_mode():
-        spec_file = args.get_spec_file()
-        if not spec_file.exists():
-            _log.error(f"{spec_file} not found")
-            ctx.exit(1)
-        spec = EnvironmentSpec.load(spec_file)
-        components = []
-        for coord_str in spec.coordinates:
-            coord = Coordinate.parse(coord_str)
-            version = coord.version or "RELEASE"
-            component = context.project(coord.groupId, coord.artifactId).at_version(
-                version
-            )
-            components.append(component)
-        boms = None  # No BOM management for spec mode
-    else:
-        if not endpoint:
-            _log.error("No endpoint specified")
-            ctx.exit(1)
-        components, coordinates, _ = builder._parse_endpoint(endpoint)
-        boms = filter_managed_components(components, coordinates)
-
-    print_dependencies(components, context, boms=boms, list_mode=False)
-    ctx.exit(0)
+    _print_deps(ctx, endpoint, list_mode=False)
 
 
 @click.command(help="Show flat list of dependencies.")
@@ -101,48 +64,7 @@ def deptree(ctx, endpoint):
 @click.pass_context
 def deplist(ctx, endpoint, direct):
     """Show a flat list of all dependencies for the given endpoint."""
-    from ...config import GlobalSettings
-    from ...env import EnvironmentSpec
-    from ...env.builder import filter_managed_components
-    from ...parse.coordinate import Coordinate
-    from ..context import create_environment_builder, create_maven_context
-    from ..output import print_dependencies
-    from ..parser import _build_parsed_args
-
-    opts = ctx.obj
-    config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
-
-    context = create_maven_context(args, config.to_dict())
-    builder = create_environment_builder(args, config.to_dict(), context)
-
-    # Parse coordinates into components
-    if args.is_spec_mode():
-        spec_file = args.get_spec_file()
-        if not spec_file.exists():
-            _log.error(f"{spec_file} not found")
-            ctx.exit(1)
-        spec = EnvironmentSpec.load(spec_file)
-        components = []
-        for coord_str in spec.coordinates:
-            coord = Coordinate.parse(coord_str)
-            version = coord.version or "RELEASE"
-            component = context.project(coord.groupId, coord.artifactId).at_version(
-                version
-            )
-            components.append(component)
-        boms = None
-    else:
-        if not endpoint:
-            _log.error("No endpoint specified")
-            ctx.exit(1)
-        components, coordinates, _ = builder._parse_endpoint(endpoint)
-        boms = filter_managed_components(components, coordinates)
-
-    print_dependencies(
-        components, context, boms=boms, list_mode=True, direct_only=direct
-    )
-    ctx.exit(0)
+    _print_deps(ctx, endpoint, list_mode=True)
 
 
 @click.command(help="Show Java version requirements.")
@@ -222,7 +144,6 @@ def manifest(ctx, endpoint, raw):
     from ...config import GlobalSettings
     from ...env.jar import parse_manifest, read_raw_manifest
     from ..context import create_maven_context
-    from ..helpers import parse_coordinate_safe
     from ..parser import _build_parsed_args
 
     opts = ctx.obj
@@ -234,9 +155,8 @@ def manifest(ctx, endpoint, raw):
         maven_context = create_maven_context(args, config.to_dict())
 
         # Parse endpoint to get G:A:V
-        coord, exit_code = parse_coordinate_safe(endpoint)
-        if exit_code != 0:
-            ctx.exit(exit_code)
+        # FIXME: Multi-coordinate endpoints!
+        coord = _parse_coord_or_die(ctx, endpoint)
         version = coord.version or "RELEASE"
 
         # Get component
@@ -290,7 +210,6 @@ def pom(ctx, endpoint):
 
     from ...config import GlobalSettings
     from ..context import create_maven_context
-    from ..helpers import parse_coordinate_safe
     from ..parser import _build_parsed_args
 
     opts = ctx.obj
@@ -302,9 +221,8 @@ def pom(ctx, endpoint):
         maven_context = create_maven_context(args, config.to_dict())
 
         # Parse endpoint to get G:A:V
-        coord, exit_code = parse_coordinate_safe(endpoint)
-        if exit_code != 0:
-            ctx.exit(exit_code)
+        # FIXME: Multi-coordinate endpoints!
+        coord = _parse_coord_or_die(ctx, endpoint)
         version = coord.version or "RELEASE"
 
         # Get component
@@ -341,3 +259,56 @@ def pom(ctx, endpoint):
     except Exception as e:
         _log.error(f"{e}")
         ctx.exit(1)
+
+
+def _parse_coord_or_die(ctx, coord_str: str) -> Coordinate:
+    """Parses a string to a Coordinate, guaranteeing non-None."""
+    try:
+        return Coordinate.parse(coord_str)
+    except ValueError:
+        _log.exception(f"Invalid coordinate string: {coord_str}")
+        ctx.exit(1)
+        raise  # NB: Won't reach here, but it satisfies static type checkers.
+
+
+def _print_deps(ctx, endpoint, list_mode: bool):
+    """Common logic for deptree and deplist."""
+    from ...config import GlobalSettings
+    from ...env import EnvironmentSpec
+    from ...env.builder import filter_managed_components
+    from ..context import create_environment_builder, create_maven_context
+    from ..output import print_dependencies
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    config = GlobalSettings.load_from_opts(opts)
+    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+
+    context = create_maven_context(args, config.to_dict())
+    builder = create_environment_builder(args, config.to_dict(), context)
+
+    # Parse coordinates into components
+    if args.is_spec_mode():
+        spec_file = args.get_spec_file()
+        if not spec_file.exists():
+            _log.error(f"{spec_file} not found")
+            ctx.exit(1)
+        spec = EnvironmentSpec.load(spec_file)
+        components = []
+        for coord_str in spec.coordinates:
+            coord = _parse_coord_or_die(ctx, coord_str)
+            version = coord.version or "RELEASE"
+            component = context.project(coord.groupId, coord.artifactId).at_version(
+                version
+            )
+            components.append(component)
+        boms = None  # No BOM management for spec mode
+    else:
+        if not endpoint:
+            _log.error("No endpoint specified")
+            ctx.exit(1)
+        components, coordinates, _ = builder._parse_endpoint(endpoint)
+        boms = filter_managed_components(components, coordinates)
+
+    print_dependencies(components, context, boms=boms, list_mode=list_mode)
+    ctx.exit(0)

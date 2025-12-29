@@ -41,8 +41,8 @@ def execute(args: ParsedArgs, config: dict) -> int:
         Exit code (0 for success, non-zero for failure)
     """
 
+    from ...parse.coordinate import Coordinate
     from ..context import create_maven_context
-    from ..helpers import parse_coordinate_safe
 
     if not args.endpoint:
         _log.error("versions command requires a coordinate")
@@ -50,11 +50,11 @@ def execute(args: ParsedArgs, config: dict) -> int:
         return 1
 
     # Parse endpoint to get groupId and artifactId
-    coord, exit_code = parse_coordinate_safe(
-        args.endpoint, "Invalid format. Need at least groupId:artifactId"
-    )
-    if exit_code != 0:
-        return exit_code
+    try:
+        coord = Coordinate.parse(args.endpoint)
+    except ValueError:
+        _log.error("Invalid format. Need at least groupId:artifactId")
+        return 1
 
     # Create maven context
     context = create_maven_context(args, config)

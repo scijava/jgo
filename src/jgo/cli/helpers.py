@@ -8,13 +8,11 @@ to reduce duplication and improve consistency.
 from __future__ import annotations
 
 import logging
-import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..env import EnvironmentSpec
-    from ..parse.coordinate import Coordinate
     from .parser import ParsedArgs
 
 _log = logging.getLogger("jgo")
@@ -144,31 +142,6 @@ def load_toml_file(config_file: Path) -> dict | None:
 
     with open(config_file, "rb") as f:
         return tomllib.load(f)
-
-
-def parse_coordinate_safe(
-    endpoint: str, error_msg: str = "Invalid endpoint format"
-) -> tuple[Coordinate | None, int]:
-    """
-    Parse coordinate with error handling.
-
-    Args:
-        endpoint: Coordinate string to parse
-        error_msg: Custom error message prefix
-
-    Returns:
-        Tuple of (coordinate, exit_code). If successful, exit_code is 0.
-        If failed, coordinate is None and exit_code is 1.
-    """
-    try:
-        from ..parse.coordinate import Coordinate
-
-        coord = Coordinate.parse(endpoint)
-        return coord, 0
-    except ValueError:
-        print(f"Error: {error_msg}: {endpoint}", file=sys.stderr)
-        print("Expected: groupId:artifactId[:version]", file=sys.stderr)
-        return None, 1
 
 
 def print_exception_if_verbose(args: ParsedArgs, level: int = 1):
