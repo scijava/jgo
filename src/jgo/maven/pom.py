@@ -78,14 +78,14 @@ class XML:
 
     def __init__(self, source: Path | str):
         self.source = source
-        self.tree: ElementTree.ElementTree = (
+        self.tree = (
             ElementTree.ElementTree(ElementTree.fromstring(source))
             if isinstance(source, str)
             else ElementTree.parse(source)
         )
         XML._strip_ns(self.tree.getroot())
 
-    def dump(self, el: ElementTree.Element = None) -> str:
+    def dump(self, el: ElementTree.Element | None = None) -> str:
         """
         Get a string representation of the given XML element.
 
@@ -93,12 +93,12 @@ class XML:
             el: Element to stringify, or None to stringify the root node.
 
         Returns:
-            The XML as a string.
+            The XML as a string, empty string if no element is given and the tree has no root.
         """
         # NB: Be careful: childless ElementTree.Element objects are falsy!
         if el is None:
             el = self.tree.getroot()
-        return ElementTree.tostring(el).decode()
+        return "" if el is None else ElementTree.tostring(el).decode()
 
     def elements(self, path: str) -> list[ElementTree.Element]:
         return self.tree.findall(path)
@@ -108,7 +108,7 @@ class XML:
         assert len(els) <= 1
         return els[0] if els else None
 
-    def values(self, path: str) -> list[str]:
+    def values(self, path: str) -> list[str | None]:
         return [_text(el) for el in self.elements(path)]
 
     def value(self, path: str) -> str | None:
@@ -117,11 +117,13 @@ class XML:
         return None if el is None else _text(el)
 
     @staticmethod
-    def _strip_ns(el: ElementTree.Element) -> None:
+    def _strip_ns(el: ElementTree.Element | None) -> None:
         """
         Remove namespace prefixes from elements and attributes.
         Credit: https://stackoverflow.com/a/32552776/1207769
         """
+        if el is None:
+            return
         if el.tag.startswith("{"):
             el.tag = el.tag[el.tag.find("}") + 1 :]
         for k in list(el.attrib.keys()):
@@ -207,11 +209,11 @@ class POM(XML):
     @property
     def properties(self) -> dict[str, str]:
         """Dictionary of key/value pairs from the POM's <properties>."""
-        return {el.tag: _text(el) for el in self.elements("properties/*")}
+        return {el.tag: _text(el) or "" for el in self.elements("properties/*")}
 
 
 def write_pom(pom: POM, dest: Path | str) -> None:
-    Path(dest).write_text(pom.source)
+    Path(dest).write_text(pom.dump())
 
 
 def write_temp_pom(pom: POM) -> Path:
