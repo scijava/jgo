@@ -17,6 +17,21 @@ def _text(el: ElementTree.Element, path: str | None = None) -> str | None:
     return None if text is None else text.strip()
 
 
+def _text_or_die(el: ElementTree.Element, path: str) -> str:
+    text = _text(el, path)
+    if text is None:
+        raise RuntimeError("{path} element not found")
+    return text
+
+
+def _groupId(el: ElementTree.Element) -> str:
+    return _text_or_die(el, "groupId")
+
+
+def _artifactId(el: ElementTree.Element) -> str:
+    return _text_or_die(el, "artifactId")
+
+
 def parse_dependency_element_to_coordinate(
     el: ElementTree.Element,
 ) -> tuple[Coordinate, list[tuple[str, str]]]:
@@ -32,8 +47,8 @@ def parse_dependency_element_to_coordinate(
     Returns:
         Tuple of (Coordinate object, list of exclusion (groupId, artifactId) tuples)
     """
-    groupId = _text(el, "groupId")
-    artifactId = _text(el, "artifactId")
+    groupId = _groupId(el)
+    artifactId = _artifactId(el)
     version = _text(el, "version")  # NB: Might be None, which means managed.
     classifier = _text(el, "classifier")
     packaging = _text(el, "type")
@@ -42,8 +57,7 @@ def parse_dependency_element_to_coordinate(
 
     # Parse exclusions as list of (groupId, artifactId) tuples
     exclusions = [
-        (_text(ex, "groupId"), _text(ex, "artifactId"))
-        for ex in el.findall("exclusions/exclusion")
+        (_groupId(ex), _artifactId(ex)) for ex in el.findall("exclusions/exclusion")
     ]
 
     coord = Coordinate(
