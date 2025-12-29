@@ -32,6 +32,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install uv
 
+      - name: Set up prysk
+        run: |
+          uv tool install prysk
+
       - name: Run tests
         shell: bash
         run: |

@@ -1,11 +1,43 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 dir=$(dirname "$0")
 cd "$dir/.."
 
-if [ $# -gt 0 ]
-then
-  uv run python -m pytest -v -p no:faulthandler $@
+pytest_args=()
+prysk_args=()
+
+if [ $# -eq 0 ]; then
+  # No args: run both on tests directory
+  pytest_args+=("tests")
+  prysk_args+=("tests")
 else
-  uv run python -m pytest -v -p no:faulthandler tests/
+  # Partition args: .py and ::* go to pytest, .t to prysk, others to both
+  for arg in "$@"; do
+    case "$arg" in
+      *.py|*::*)
+        pytest_args+=("$arg")
+        ;;
+      *.t)
+        prysk_args+=("$arg")
+        ;;
+      *)
+        # Flags or directories - add to both
+        pytest_args+=("$arg")
+        prysk_args+=("$arg")
+        ;;
+    esac
+  done
+fi
+
+# Run pytest if we have args
+if [ ${#pytest_args[@]} -gt 0 ]; then
+  uv run python -m pytest -v -p no:faulthandler "${pytest_args[@]}"
+fi
+
+# Run prysk if we have args and prysk is installed
+if [ ${#prysk_args[@]} -gt 0 ] && command -v prysk; then
+  # NB: We cannot add prysk to pyproject.toml because
+  # prysk depends on an incompatible version of rich.
+  # Use `uv tool install prysk` instead.
+  prysk -v "${prysk_args[@]}"
 fi
