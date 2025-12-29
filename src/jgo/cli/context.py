@@ -15,9 +15,10 @@ from ..env import EnvironmentBuilder, LinkStrategy
 from ..exec import JavaRunner, JavaSource, JVMConfig
 from ..maven import MavenContext, MvnResolver, PythonResolver
 from ..maven.model import ProfileConstraints
-from ..util import is_debug_enabled, is_info_enabled
+from ..util import ensure_maven_available, is_debug_enabled, is_info_enabled
 
 if TYPE_CHECKING:
+    from ..maven import Resolver
     from .parser import ParsedArgs
 
 
@@ -43,10 +44,8 @@ def create_maven_context(args: ParsedArgs, config: dict) -> MavenContext:
             properties=args.properties,
             lenient=args.lenient,
         )
-        resolver = PythonResolver(profile_constraints=profile_constraints)
+        resolver: Resolver = PythonResolver(profile_constraints=profile_constraints)
     elif args.resolver == "mvn":
-        from jgo.util import ensure_maven_available
-
         mvn_command = ensure_maven_available()
         resolver = MvnResolver(
             mvn_command, update=args.update, debug=is_debug_enabled()
