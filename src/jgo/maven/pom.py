@@ -119,18 +119,21 @@ class XML:
     @staticmethod
     def _strip_ns(el: ElementTree.Element | None) -> None:
         """
-        Remove namespace prefixes from elements and attributes.
+        Remove namespace prefixes from element tags.
+
+        This makes XPath queries simpler (no need to handle namespaces),
+        but preserves namespace prefixes in attributes so that the XML
+        remains valid when written back out.
+
         Credit: https://stackoverflow.com/a/32552776/1207769
         """
         if el is None:
             return
         if el.tag.startswith("{"):
             el.tag = el.tag[el.tag.find("}") + 1 :]
-        for k in list(el.attrib.keys()):
-            if k.startswith("{"):
-                k2 = k[k.find("}") + 1 :]
-                el.attrib[k2] = el.attrib[k]
-                del el.attrib[k]
+        # Note: We intentionally do NOT strip namespace prefixes from attributes.
+        # Attributes like xsi:schemaLocation need to keep their namespace prefix
+        # for the XML to remain valid when written back out.
         for child in el:
             XML._strip_ns(child)
 
