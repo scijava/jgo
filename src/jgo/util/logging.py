@@ -5,16 +5,21 @@ Provides structured logging with verbosity levels.
 """
 
 import logging
-import sys
+
+from rich.console import Console
+from rich.logging import RichHandler
 
 
-def setup_logging(verbose: int = 0, quiet: bool = False) -> logging.Logger:
+def setup_logging(
+    verbose: int = 0, quiet: bool = False, color: str = "auto"
+) -> logging.Logger:
     """
     Setup logging for jgo.
 
     Args:
         verbose: Verbosity level (0 = WARNING, 1 = INFO, 2+ = DEBUG)
         quiet: If True, suppress all output
+        color: Color mode: "auto", "always", or "never"
 
     Returns:
         Configured logger instance
@@ -36,17 +41,31 @@ def setup_logging(verbose: int = 0, quiet: bool = False) -> logging.Logger:
 
     logger.setLevel(level)
 
-    # Create console handler
-    handler = logging.StreamHandler(sys.stderr)
+    # Configure console with color settings
+    if color == "never":
+        console = Console(stderr=True, no_color=True)
+    elif color == "always":
+        console = Console(stderr=True, force_terminal=True)
+    else:  # "auto"
+        console = Console(stderr=True)
+
+    # Create Rich handler for colored, formatted log output
+    handler = RichHandler(
+        console=console,
+        show_time=False,
+        show_path=(verbose >= 2),  # Show module:line in debug mode
+        markup=True,  # Allow rich markup in log messages
+        rich_tracebacks=True,  # Better exception formatting
+    )
     handler.setLevel(level)
 
-    # Create formatter
+    # Create formatter - RichHandler adds level colors automatically
     if verbose >= 2:
-        # Debug mode: include module name and line number
-        formatter = logging.Formatter("%(levelname)s [%(name)s:%(lineno)d] %(message)s")
+        # Debug mode: RichHandler's show_path will display [name:lineno]
+        formatter = logging.Formatter("%(message)s")
     elif verbose >= 1:
-        # Info mode: include level
-        formatter = logging.Formatter("%(levelname)s: %(message)s")
+        # Info mode: show level name
+        formatter = logging.Formatter("%(message)s")
     else:
         # Warning/error mode: just the message
         formatter = logging.Formatter("%(message)s")

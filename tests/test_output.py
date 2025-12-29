@@ -6,14 +6,12 @@ import sys
 
 from jgo.cli.output import (
     print_dry_run,
-    print_error,
     print_key_value,
     print_list_item,
     print_message,
     print_success,
     print_table_header,
     print_table_section,
-    print_warning,
 )
 
 
@@ -64,29 +62,6 @@ class TestMessageFunctions:
         print_success("Operation successful", indent=2)
         captured = capsys.readouterr()
         assert "  Operation successful" in captured.out
-
-    def test_print_warning(self, capsys):
-        """Test warning message printing to stderr."""
-        print_warning("Warning message")
-        captured = capsys.readouterr()
-        assert captured.out == ""
-        assert "Warning message" in captured.err
-
-    def test_print_error(self, capsys):
-        """Test error message printing to stderr with prefix."""
-        print_error("Something failed")
-        captured = capsys.readouterr()
-        assert captured.out == ""
-        assert "Error: Something failed" in captured.err
-
-    def test_print_error_no_double_prefix(self, capsys):
-        """Test that error prefix is not duplicated."""
-        # User should NOT include "Error:" in message
-        print_error("File not found")
-        captured = capsys.readouterr()
-        # Should have exactly one "Error:" prefix
-        assert captured.err == "Error: File not found\n"
-        assert captured.err.count("Error:") == 1
 
     def test_print_dry_run(self, capsys):
         """Test dry-run message with prefix."""
@@ -172,7 +147,7 @@ class TestIntegration:
     def test_multiple_messages_different_streams(self, capsys):
         """Test that stdout and stderr are properly separated."""
         print_message("stdout message")
-        print_error("stderr message")
+        print_message("stderr message", file=sys.stderr)
         print_success("another stdout")
 
         captured = capsys.readouterr()
@@ -180,10 +155,10 @@ class TestIntegration:
         # Check stdout contains only stdout messages
         assert "stdout message" in captured.out
         assert "another stdout" in captured.out
-        assert "Error:" not in captured.out
+        assert "stderr message" not in captured.out
 
         # Check stderr contains only stderr messages
-        assert "Error: stderr message" in captured.err
+        assert "stderr message" in captured.err
         assert "stdout message" not in captured.err
 
     def test_formatted_table_output(self, capsys):

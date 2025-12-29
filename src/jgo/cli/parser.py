@@ -409,6 +409,14 @@ def global_options(f):
     )(f)
     f = click.option("-q", "--quiet", is_flag=True, help="Suppress all output.")(f)
     f = click.option(
+        "--color",
+        type=click.Choice(["auto", "always", "never"]),
+        default="auto",
+        help="Control colored output: auto (default, color if TTY), always (force color), never (disable color).",
+        envvar="COLOR",
+        show_envvar=True,
+    )(f)
+    f = click.option(
         "-f",
         "--file",
         type=click.Path(path_type=Path),
@@ -618,10 +626,25 @@ def cli(ctx, **kwargs):
     - Command mode: jgo <command> [options]
     - Legacy endpoint mode: jgo <endpoint> [options]
     """
-    # Setup logging based on verbose/quiet flags FIRST
+    # Configure Rich console color settings based on flags
+    from rich.console import Console
+
+    from . import output
+
+    color = kwargs.get("color", "auto")
+
+    if color == "never":
+        output._console = Console(no_color=True)
+        output._err_console = Console(stderr=True, no_color=True)
+    elif color == "always":
+        output._console = Console(force_terminal=True)
+        output._err_console = Console(stderr=True, force_terminal=True)
+    # else: "auto" - use defaults (Rich handles TTY detection automatically)
+
+    # Setup logging based on verbose/quiet/color flags
     verbose = kwargs.get("verbose", 0)
     quiet = kwargs.get("quiet", False)
-    setup_logging(verbose, quiet)
+    setup_logging(verbose, quiet, color=color)
 
     # Store global options in context for subcommands
     ctx.ensure_object(dict)

@@ -66,32 +66,6 @@ def print_success(message: str, indent: int = 0) -> None:
     _console.print(f"{indentation}{message}", highlight=False)
 
 
-def print_warning(message: str, indent: int = 0) -> None:
-    """
-    Print a warning message (yellow if colors supported).
-
-    Args:
-        message: Warning message to print
-        indent: Number of spaces to indent (default: 0)
-    """
-    indentation = " " * indent
-    _err_console.print(f"{indentation}{message}", highlight=False)
-
-
-def print_error(message: str, indent: int = 0) -> None:
-    """
-    Print an error message to stderr (red if colors supported).
-
-    Note: Do NOT include "Error:" prefix - this function adds it automatically.
-
-    Args:
-        message: Error message to print (without "Error:" prefix)
-        indent: Number of spaces to indent (default: 0)
-    """
-    indentation = " " * indent
-    _err_console.print(f"{indentation}[bold red]Error: {message}", highlight=False)
-
-
 def print_dry_run(message: str) -> None:
     """
     Print a dry-run message.
@@ -197,19 +171,35 @@ def print_dependencies(
         direct_only: If True and list_mode is True, show only direct dependencies
     """
     if list_mode:
-        output = context.resolver.print_dependency_list(
+        # Flat list mode - use Rich for colored output
+        from ..maven.dependency_printer import format_dependency_list_rich
+
+        # Get the dependency list
+        root, deps = context.resolver.get_dependency_list(
             components,
             managed=bool(boms),
             boms=boms,
             transitive=not direct_only,
         )
+
+        # Format and print using Rich
+        lines = format_dependency_list_rich(root, deps)
+        for line in lines:
+            _console.print(line, highlight=False)
     else:
-        output = context.resolver.print_dependency_tree(
+        # Tree mode - use Rich Tree for beautiful colored output
+        from ..maven.dependency_printer import format_dependency_tree_rich
+
+        # Get the dependency tree
+        tree = context.resolver.get_dependency_tree(
             components,
             managed=bool(boms),
             boms=boms,
         )
-    print(output)
+
+        # Format and print using Rich
+        rich_tree = format_dependency_tree_rich(tree)
+        _console.print(rich_tree)
 
 
 def print_java_info(environment: Environment) -> None:
@@ -219,6 +209,9 @@ def print_java_info(environment: Environment) -> None:
     Args:
         environment: The resolved environment
     """
+    from rich.panel import Panel
+    from rich.table import Table
+
     from jgo.env.bytecode import (
         analyze_jar_bytecode,
         bytecode_to_java_version,
@@ -227,17 +220,18 @@ def print_java_info(environment: Environment) -> None:
 
     jars_dir = environment.path / "jars"
     if not jars_dir.exists():
-        print("No JARs directory found", file=sys.stderr)
+        _err_console.print("[red]No JARs directory found[/]")
         return
 
     jar_files = sorted(jars_dir.glob("*.jar"))
     if not jar_files:
-        print("No JARs in environment", file=sys.stderr)
+        _err_console.print("[red]No JARs in environment[/]")
         return
 
-    print(f"Environment: {environment.path}")
-    print(f"JARs directory: {jars_dir}")
-    print(f"Total JARs: {len(jar_files)}\n")
+    # Print environment info
+    _console.print(f"\n[bold]Environment:[/] {environment.path}")
+    _console.print(f"[bold]JARs directory:[/] {jars_dir}")
+    _console.print(f"[bold]Total JARs:[/] {len(jar_files)}\n")
 
     # Analyze each JAR
     jar_analyses = []
@@ -254,54 +248,73 @@ def print_java_info(environment: Environment) -> None:
     # Sort by Java version (highest first)
     jar_analyses.sort(key=lambda x: x[1]["java_version"], reverse=True)
 
-    # Print summary
+    # Print summary in a panel
     lts_version = round_to_lts(overall_max_java) if overall_max_java else None
-    print("=" * 70)
-    print("JAVA VERSION REQUIREMENTS")
-    print("=" * 70)
-    print(f"Detected minimum Java version: {overall_max_java}")
+    summary_text = f"[bold cyan]Minimum Java version:[/] {overall_max_java}\n"
     if lts_version != overall_max_java:
-        print(f"Rounded to LTS: {lts_version}")
+        summary_text += f"[bold cyan]Rounded to LTS:[/] {lts_version}"
     else:
-        print("(already an LTS version)")
-    print()
+        summary_text += "[dim](already an LTS version)[/]"
 
-    # Print per-JAR analysis
-    print("=" * 70)
-    print("PER-JAR ANALYSIS")
-    print("=" * 70)
+    summary_panel = Panel(
+        summary_text,
+        title="[bold]Java Version Requirements[/]",
+        border_style="cyan",
+    )
+    _console.print(summary_panel)
+
+    # Print per-JAR analysis in a table
+    table = Table(title="Per-JAR Analysis", show_header=True, header_style="bold cyan")
+    table.add_column("JAR", style="bold", no_wrap=False, max_width=40)
+    table.add_column("Java Version", justify="right", style="green")
+    table.add_column("Max Bytecode", justify="right")
+    table.add_column("Class Count", justify="right")
+
     for jar_name, analysis in jar_analyses:
         java_ver = analysis["java_version"]
         max_bytecode = analysis["max_version"]
         version_counts = analysis["version_counts"]
+        total_classes = sum(version_counts.values())
 
-        print(f"\n{jar_name}")
-        print(f"  Required Java version: {java_ver} (bytecode {max_bytecode})")
+        table.add_row(
+            jar_name,
+            str(java_ver),
+            str(max_bytecode),
+            str(total_classes),
+        )
 
-        # Show distribution
-        print("  Bytecode version distribution:")
-        for bytecode_ver in sorted(version_counts.keys(), reverse=True):
-            count = version_counts[bytecode_ver]
-            java_v = bytecode_to_java_version(bytecode_ver)
-            print(f"    Java {java_v:2d} (bytecode {bytecode_ver}): {count:5d} classes")
+    _console.print(table)
 
-        # Show high-version classes if not all the same
+    # Print detailed breakdown for JARs with mixed bytecode versions
+    _console.print("\n[bold]Bytecode Version Details:[/]")
+    for jar_name, analysis in jar_analyses[:10]:  # Show first 10 for brevity
+        java_ver = analysis["java_version"]
+        version_counts = analysis["version_counts"]
+
+        # Only show details if there are multiple bytecode versions
         if len(version_counts) > 1:
+            _console.print(f"\n[cyan]{jar_name}[/]")
+
+            # Show distribution
+            for bytecode_ver in sorted(version_counts.keys(), reverse=True):
+                count = version_counts[bytecode_ver]
+                java_v = bytecode_to_java_version(bytecode_ver)
+                _console.print(
+                    f"  Java {java_v:2d} (bytecode {bytecode_ver}): {count:5d} classes"
+                )
+
+            # Show high-version classes if applicable
             high_classes = analysis["high_version_classes"]
             max_ver = high_classes[0][1] if high_classes else None
             high_ver_only = [
                 (name, ver) for name, ver in high_classes if ver == max_ver
             ]
             if high_ver_only and len(high_ver_only) <= 5:
-                print(f"  Classes requiring Java {java_ver}:")
+                _console.print(f"  [dim]Classes requiring Java {java_ver}:[/]")
                 for class_name, _ in high_ver_only:
-                    print(f"    - {class_name}")
+                    _console.print(f"    - {class_name}")
 
-        # Show skipped files if any
-        skipped = analysis.get("skipped", [])
-        if skipped:
-            print(f"  Skipped files (sample): {len(skipped)} files")
-            for s in skipped[:3]:
-                print(f"    - {s}")
-
-    print("\n" + "=" * 70)
+    if len(jar_analyses) > 10:
+        _console.print(
+            f"\n[dim]... and {len(jar_analyses) - 10} more JARs (showing first 10)[/]"
+        )
