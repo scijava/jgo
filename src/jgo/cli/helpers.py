@@ -7,6 +7,7 @@ to reduce duplication and improve consistency.
 
 from __future__ import annotations
 
+import logging
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -15,6 +16,8 @@ if TYPE_CHECKING:
     from ..env import EnvironmentSpec
     from ..parse.coordinate import Coordinate
     from .parser import ParsedArgs
+
+_log = logging.getLogger("jgo")
 
 
 def verbose_print(args: ParsedArgs, message: str, level: int = 0):
@@ -75,31 +78,37 @@ def handle_dry_run(args: ParsedArgs, message: str) -> bool:
     return False
 
 
-def load_spec_file(args: ParsedArgs) -> tuple[EnvironmentSpec | None, int]:
+def load_spec_file(args: ParsedArgs) -> EnvironmentSpec:
     """
-    Load environment spec file with error handling.
+    Load environment spec file.
 
     Args:
         args: Parsed arguments containing spec file path
 
     Returns:
-        Tuple of (spec, exit_code). If successful, exit_code is 0.
-        If failed, spec is None and exit_code is 1.
+        Loaded environment spec
+
+    Raises:
+        FileNotFoundError: If spec file does not exist
+        ValueError: If spec file is invalid or cannot be parsed
     """
     from ..env import EnvironmentSpec
 
     spec_file = args.get_spec_file()
     if not spec_file.exists():
-        print(f"Error: {spec_file} does not exist", file=sys.stderr)
-        print("Run 'jgo init' to create a new environment file first.", file=sys.stderr)
-        return None, 1
+        _log.error(f"{spec_file} does not exist")
+        _log.info("Run 'jgo init' to create a new environment file first.")
+        raise FileNotFoundError(
+            f"{spec_file} does not exist. Run 'jgo init' to create a new environment file first."
+        )
 
     try:
         spec = EnvironmentSpec.load(spec_file)
-        return spec, 0
+        _log.debug(f"Loaded spec file from {spec_file}")
+        return spec
     except Exception as e:
-        print(f"Error: Failed to load {spec_file}: {e}", file=sys.stderr)
-        return None, 1
+        _log.error(f"Failed to load {spec_file}: {e}")
+        raise ValueError(f"Failed to load {spec_file}: {e}") from e
 
 
 def parse_config_key(key: str, default_section: str = "settings") -> tuple[str, str]:

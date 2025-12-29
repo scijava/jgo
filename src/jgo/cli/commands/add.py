@@ -60,11 +60,13 @@ def execute(args: ParsedArgs, config: dict) -> int:
     # Get the spec file path
     from ..helpers import load_spec_file
 
-    spec, exit_code = load_spec_file(args)
-    if exit_code != 0:
-        return exit_code
-
     spec_file = args.get_spec_file()
+
+    try:
+        spec = load_spec_file(args)
+    except (FileNotFoundError, ValueError) as e:
+        _log.debug(f"Failed to load spec file: {e}")
+        return 1
 
     # Get coordinates to add
     coordinates = getattr(args, "coordinates", [])

@@ -345,6 +345,78 @@ class EnvironmentBuilder:
 
         return environment
 
+    def resolve_lockfile(
+        self,
+        spec: EnvironmentSpec,
+        java_version: str | None = None,
+    ) -> LockFile:
+        """
+        Resolve dependencies and create lockfile without materializing environment.
+
+        This is used by 'jgo lock' to update jgo.lock.toml without building
+        the environment directory with linked JARs.
+
+        Args:
+            spec: Environment specification
+            java_version: Resolved Java version from cjdk (for lockfile)
+
+        Returns:
+            LockFile with resolved dependencies and entrypoints
+        """
+        import tempfile
+
+        # Parse coordinates into components
+        components = []
+        for coord_str in spec.coordinates:
+            coord = Coordinate.parse(coord_str)
+            version = coord.version or "RELEASE"
+
+            component = self.context.project(
+                coord.groupId, coord.artifactId
+            ).at_version(version)
+            components.append(component)
+
+        # Create a temporary environment directory for dependency resolution
+        # This downloads JARs to Maven cache but doesn't link them permanently
+        with tempfile.TemporaryDirectory() as tmp:
+            temp_env = Environment(Path(tmp))
+            temp_env.path.mkdir(parents=True, exist_ok=True)
+            temp_env.jars_dir.mkdir(exist_ok=True)
+            temp_env.modules_dir.mkdir(exist_ok=True)
+
+            # Resolve dependencies (downloads to Maven cache, links to temp dir)
+            locked_deps = self._build_environment(temp_env, components, None)
+
+            # Infer concrete entrypoints from spec
+            concrete_entrypoints = self._infer_concrete_entrypoints(
+                spec, components, [temp_env.jars_dir, temp_env.modules_dir]
+            )
+
+            # Get min Java version from temp environment
+            min_java_version = temp_env.min_java_version
+
+        # Compute spec hash for staleness detection
+        root_spec_path = Path("jgo.toml")
+        if root_spec_path.exists():
+            spec_hash = compute_spec_hash(root_spec_path)
+        else:
+            spec_hash = None
+
+        # Create and return lockfile
+        lockfile = LockFile(
+            dependencies=locked_deps,
+            environment_name=spec.name,
+            java_version=java_version or spec.java_version,
+            java_vendor=spec.java_vendor,
+            min_java_version=min_java_version,
+            entrypoints=concrete_entrypoints,
+            default_entrypoint=spec.default_entrypoint,
+            spec_hash=spec_hash,
+            link_strategy=self.link_strategy.name,
+        )
+
+        return lockfile
+
     def _clear_lockfile_cache(self, environment: Environment) -> None:
         """
         Clear cached lockfile to force fresh bytecode detection.
