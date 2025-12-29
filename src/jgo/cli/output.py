@@ -10,60 +10,19 @@ from __future__ import annotations
 import sys
 from typing import TYPE_CHECKING
 
-from rich.console import Console
-
 if TYPE_CHECKING:
     from ..env import Environment
     from ..maven import MavenContext
     from ..maven.core import Component
 
+# Import shared console instances (configured at startup)
+from ..util.console import get_console, get_err_console
 
-# === Console Instances ===
-
-# Create console instances that automatically handle color detection
-# They respect NO_COLOR env var and TTY detection
-_console = Console()  # For stdout
-_err_console = Console(stderr=True)  # For stderr
+_console = get_console()
+_err_console = get_err_console()
 
 
 # === Message Output Functions ===
-
-
-def print_message(message: str, prefix: str = "", indent: int = 0, file=None) -> None:
-    """
-    Print a general message with optional prefix and indentation.
-
-    Used for dry-run messages, informational output, etc.
-
-    Args:
-        message: Message to print
-        prefix: Optional prefix (e.g., "DRY-RUN:")
-        indent: Number of spaces to indent (default: 0)
-        file: File to write to (default: stdout)
-    """
-    console = _err_console if file is sys.stderr else _console
-    indentation = " " * indent
-
-    if prefix:
-        full_message = f"{indentation}{prefix} {message}"
-    else:
-        full_message = f"{indentation}{message}"
-
-    console.print(full_message, highlight=False)
-
-
-def print_success(message: str, indent: int = 0) -> None:
-    """
-    Print a success message (green if colors supported).
-
-    Used for: "Added 5 dependencies", "Environment built successfully", etc.
-
-    Args:
-        message: Success message to print
-        indent: Number of spaces to indent (default: 0)
-    """
-    indentation = " " * indent
-    _console.print(f"{indentation}{message}", highlight=False)
 
 
 def print_dry_run(message: str) -> None:
@@ -79,62 +38,6 @@ def print_dry_run(message: str) -> None:
 # === Data Output Functions ===
 
 
-def print_table_header(title: str, width: int = 70, char: str = "=") -> None:
-    """
-    Print a formatted table header.
-
-    Args:
-        title: Header title
-        width: Width of the header line
-        char: Character to use for the line (default: "=")
-    """
-    print(char * width)
-    print(title)
-    print(char * width)
-
-
-def print_table_section(title: str, width: int = 70, char: str = "-") -> None:
-    """
-    Print a formatted table section separator.
-
-    Args:
-        title: Section title
-        width: Width of the separator line
-        char: Character to use for the line (default: "-")
-    """
-    print(f"\n{title}")
-    print(char * width)
-
-
-def print_key_value(key: str, value: str, indent: int = 2) -> None:
-    """
-    Print a key-value pair with consistent formatting.
-
-    Args:
-        key: Key name
-        value: Value
-        indent: Number of spaces to indent (default: 2)
-    """
-    indentation = " " * indent
-    print(f"{indentation}{key}: {value}")
-
-
-def print_list_item(item: str, indent: int = 2, marker: str = "-") -> None:
-    """
-    Print a list item with consistent formatting.
-
-    Args:
-        item: Item text
-        indent: Number of spaces to indent (default: 2)
-        marker: List marker character (default: "-")
-    """
-    indentation = " " * indent
-    print(f"{indentation}{marker} {item}")
-
-
-# === Existing Data Output Functions ===
-
-
 def print_classpath(environment: Environment) -> None:
     """
     Print environment classpath.
@@ -144,12 +47,12 @@ def print_classpath(environment: Environment) -> None:
     """
     classpath = environment.classpath
     if not classpath:
-        print("No JARs in classpath", file=sys.stderr)
+        _err_console.print("[red]No JARs in classpath[/]")
         return
 
     separator = ";" if sys.platform == "win32" else ":"
     classpath_str = separator.join(str(p) for p in classpath)
-    print(classpath_str)
+    _console.print(classpath_str, highlight=False)
 
 
 def print_dependencies(

@@ -626,25 +626,18 @@ def cli(ctx, **kwargs):
     - Command mode: jgo <command> [options]
     - Legacy endpoint mode: jgo <endpoint> [options]
     """
-    # Configure Rich console color settings based on flags
-    from rich.console import Console
-
-    from . import output
+    # Configure console and logging based on CLI flags
+    from ..util.console import setup_consoles
 
     color = kwargs.get("color", "auto")
-
-    if color == "never":
-        output._console = Console(no_color=True)
-        output._err_console = Console(stderr=True, no_color=True)
-    elif color == "always":
-        output._console = Console(force_terminal=True)
-        output._err_console = Console(stderr=True, force_terminal=True)
-    # else: "auto" - use defaults (Rich handles TTY detection automatically)
-
-    # Setup logging based on verbose/quiet/color flags
-    verbose = kwargs.get("verbose", 0)
     quiet = kwargs.get("quiet", False)
-    setup_logging(verbose, quiet, color=color)
+    verbose = kwargs.get("verbose", 0)
+
+    # Setup console instances (for both data output and logging)
+    setup_consoles(color=color, quiet=quiet)
+
+    # Setup logging (uses console from setup_consoles)
+    setup_logging(verbose=verbose)
 
     # Store global options in context for subcommands
     ctx.ensure_object(dict)

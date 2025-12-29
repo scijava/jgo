@@ -6,23 +6,24 @@ Provides structured logging with verbosity levels.
 
 import logging
 
-from rich.console import Console
 from rich.logging import RichHandler
 
+from .console import get_err_console
 
-def setup_logging(
-    verbose: int = 0, quiet: bool = False, color: str = "auto"
-) -> logging.Logger:
+
+def setup_logging(verbose: int = 0) -> logging.Logger:
     """
     Setup logging for jgo.
 
     Args:
         verbose: Verbosity level (0 = WARNING, 1 = INFO, 2+ = DEBUG)
-        quiet: If True, suppress all output
-        color: Color mode: "auto", "always", or "never"
 
     Returns:
         Configured logger instance
+
+    Note:
+        Console configuration (color, quiet) is handled by console.setup_consoles().
+        This function only configures log levels and formatting.
     """
     logger = logging.getLogger("jgo")
 
@@ -30,9 +31,7 @@ def setup_logging(
     logger.handlers = []
 
     # Determine log level
-    if quiet:
-        level = logging.CRITICAL + 1  # Suppress all output
-    elif verbose == 0:
+    if verbose == 0:
         level = logging.WARNING
     elif verbose == 1:
         level = logging.INFO
@@ -41,13 +40,8 @@ def setup_logging(
 
     logger.setLevel(level)
 
-    # Configure console with color settings
-    if color == "never":
-        console = Console(stderr=True, no_color=True)
-    elif color == "always":
-        console = Console(stderr=True, force_terminal=True)
-    else:  # "auto"
-        console = Console(stderr=True)
+    # Use the shared stderr console configured by console.setup_consoles()
+    console = get_err_console()
 
     # Create Rich handler for colored, formatted log output
     handler = RichHandler(
