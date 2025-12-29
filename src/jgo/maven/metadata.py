@@ -79,7 +79,7 @@ class MetadataXML(XML, Metadata):
 
     @property
     def versions(self) -> list[str]:
-        return self.values("versioning/versions/version")
+        return self.values("versioning/versions/version") or []
 
     @property
     def lastVersion(self) -> str | None:
