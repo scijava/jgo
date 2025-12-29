@@ -94,6 +94,7 @@ def test_run_with_main_class_after_init():
                     entrypoint=None,
                     resolver="python",
                     repo_cache=tmp_path / ".m2" / "repository",
+                    cache_dir=tmp_path / ".jgo",  # Use temp directory for cache
                 )
 
                 # Mock the run method to return success
@@ -150,6 +151,7 @@ def test_run_endpoint_with_main_class():
             entrypoint=None,
             resolver="python",
             repo_cache=tmp_path / ".m2" / "repository",
+            cache_dir=tmp_path / ".jgo",  # Use temp directory for cache
         )
 
         # This should work (baseline)
