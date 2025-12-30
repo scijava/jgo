@@ -107,6 +107,7 @@ from pathlib import Path
 
 from .config import GlobalSettings, JgoConfig  # JgoConfig is deprecated alias
 from .constants import MAVEN_CENTRAL_URL
+from .constants import VERSION as __version__
 from .env import Environment, EnvironmentBuilder, LinkStrategy
 from .exec import JavaRunner, JavaSource, JVMConfig
 from .jgo import (
@@ -319,6 +320,8 @@ def resolve(
 
 
 __all__ = (
+    # Package metadata
+    "__version__",
     # New 2.0 API
     "run",
     "build",

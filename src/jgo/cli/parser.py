@@ -8,6 +8,7 @@ from pathlib import Path
 
 import rich_click as click
 
+from ..constants import VERSION
 from ..util import setup_logging
 from .commands.add import add
 from .commands.config import config
@@ -324,35 +325,6 @@ class ParsedArgs:
         return self.file or Path("jgo.toml")
 
 
-class JgoArgumentParser:
-    """Compatibility shim for version lookup."""
-
-    def _get_version(self) -> str:
-        """Get jgo version from package metadata."""
-        try:
-            # Try importlib.metadata (Python 3.8+)
-            from importlib.metadata import version
-
-            return version("jgo")
-        except Exception:
-            # Fallback: read from pyproject.toml
-            try:
-                from pathlib import Path
-
-                from ..util.toml import tomllib
-
-                pyproject = (
-                    Path(__file__).parent.parent.parent.parent / "pyproject.toml"
-                )
-                if pyproject.exists():
-                    with open(pyproject, "rb") as f:
-                        data = tomllib.load(f)
-                        return data.get("project", {}).get("version", "unknown")
-            except Exception:
-                pass
-            return "unknown"
-
-
 # Custom Click group that handles shorthand endpoint syntax and shortcuts
 class JgoGroup(click.RichGroup):
     """Custom group that auto-detects shorthand endpoint syntax and shortcuts."""
@@ -590,8 +562,7 @@ def global_options(f):
     # Version flag
     def _print_version(ctx, param, value):
         if value:
-            parser = JgoArgumentParser()
-            click.echo(f"jgo {parser._get_version()}")
+            click.echo(f"jgo {VERSION}")
             ctx.exit(0)
 
     f = click.option(
@@ -707,8 +678,7 @@ info.add_command(versions)
 @cli.command(help="Display jgo's version.")
 def version():
     """Display jgo's version."""
-    parser = JgoArgumentParser()
-    click.echo(f"jgo {parser._get_version()}")
+    click.echo(f"jgo {VERSION}")
 
 
 @cli.command(

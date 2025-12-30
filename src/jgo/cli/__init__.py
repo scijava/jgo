@@ -9,10 +9,9 @@ from .context import (
     create_java_runner,
     create_maven_context,
 )
-from .parser import JgoArgumentParser, ParsedArgs
+from .parser import ParsedArgs
 
 __all__ = [
-    "JgoArgumentParser",
     "ParsedArgs",
     "create_environment_builder",
     "create_java_runner",

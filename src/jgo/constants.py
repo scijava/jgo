@@ -7,6 +7,32 @@ Centralizes hardcoded paths and URLs to avoid duplication across the codebase.
 import os
 from pathlib import Path
 
+
+def _get_version() -> str:
+    """Get jgo version from package metadata."""
+    try:
+        # Try importlib.metadata (Python 3.8+)
+        from importlib.metadata import version
+
+        return version("jgo")
+    except Exception:
+        # Fallback: read from pyproject.toml
+        try:
+            from .util.toml import tomllib
+
+            pyproject = Path(__file__).parent.parent.parent / "pyproject.toml"
+            if pyproject.exists():
+                with open(pyproject, "rb") as f:
+                    data = tomllib.load(f)
+                    return data.get("project", {}).get("version", "unknown")
+        except Exception:
+            pass
+        return "unknown"
+
+
+# Package version
+VERSION = _get_version()
+
 # Maven repository URLs
 MAVEN_CENTRAL_URL = "https://repo.maven.apache.org/maven2"
 
