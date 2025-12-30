@@ -179,10 +179,31 @@ class EnvironmentBuilder:
         # This allows auto-detection from the JAR manifest if not cached
         environment = self.from_components(components, update=update, main_class=None)
 
+        # Auto-complete main class overrides (both CLI and endpoint)
+        primary = components[0]
+        autocompleted_cli_main = None
+        autocompleted_parsed_main = None
+
+        if main_class:
+            autocompleted_cli_main = autocomplete_main_class(
+                main_class,
+                primary.artifactId,
+                [environment.jars_dir, environment.modules_dir],
+            )
+
+        if parsed_main_class:
+            autocompleted_parsed_main = autocomplete_main_class(
+                parsed_main_class,
+                primary.artifactId,
+                [environment.jars_dir, environment.modules_dir],
+            )
+
         # Apply runtime override with priority: CLI main class > endpoint main class > auto-detected
         # This ensures explicitly specified main classes override cached auto-detected classes
         environment._runtime_main_class = (
-            main_class or parsed_main_class or environment.main_class
+            autocompleted_cli_main
+            or autocompleted_parsed_main
+            or environment.main_class
         )
 
         return environment

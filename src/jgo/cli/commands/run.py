@@ -264,6 +264,7 @@ def _run_endpoint(args: ParsedArgs, config: dict) -> int:
     environment = builder.from_endpoint(
         args.endpoint,
         update=args.update,
+        main_class=args.main_class,
     )
 
     # If --print-classpath, just print and exit
@@ -280,8 +281,8 @@ def _run_endpoint(args: ParsedArgs, config: dict) -> int:
     _log.info("Running Java application...")
 
     runner = create_java_runner(args, config, spec=None)
-    # CLI main_class override takes precedence, otherwise use environment's main class
-    main_class_to_use = args.main_class or environment.main_class
+    # Use environment's main class (which includes auto-completed CLI override if provided)
+    main_class_to_use = environment.main_class
     result = runner.run(
         environment=environment,
         main_class=main_class_to_use,
