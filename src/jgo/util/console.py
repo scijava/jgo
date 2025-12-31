@@ -5,6 +5,8 @@ Provides centralized Rich Console instances for all output (logging and data).
 Consoles are configured once at startup based on CLI flags.
 """
 
+from __future__ import annotations
+
 from rich.console import Console
 
 # Module-level console instances
