@@ -49,12 +49,12 @@ Test --main-class flag.
 Test --dry-run shows java command without executing.
 
   $ jgo --dry-run run org.python:jython-standalone:2.7.4 -- --version
-  */bin/java -XX:+UseG1GC -Xmx*G -cp */jars/*:*/modules/* org.python.util.jython --version (glob)
+  */bin/java -XX:+UseG1GC -Xmx*G -cp */jars/\*:*/modules/\* org.python.util.jython --version (glob)
 
 Test multiple endpoints with +.
 
   $ jgo --dry-run run org.python:jython-standalone:2.7.4+com.google.guava:guava:33.0.0-jre -- --version
-  */bin/java -XX:+UseG1GC -Xmx*G -cp */jars/*:*/modules/* org.python.util.jython --version (glob)
+  */bin/java -XX:+UseG1GC -Xmx*G -cp */jars/\*:*/modules/\* org.python.util.jython --version (glob)
 
 Test --offline flag (should use cache).
 
@@ -64,16 +64,16 @@ Test --offline flag (should use cache).
 Test --update flag forces cache refresh.
 
   $ jgo --update --dry-run run org.python:jython-standalone:2.7.4 -- --version
-  */bin/java -XX:+UseG1GC -Xmx*G -cp */jars/*:*/modules/* org.python.util.jython --version (glob)
+  */bin/java -XX:+UseG1GC -Xmx*G -cp */jars/\*:*/modules/\* org.python.util.jython --version (glob)
 
 Test --verbose flag.
 
   $ jgo -v run org.python:jython-standalone:2.7.4 -- --version
-  INFO     Building environment for org.python:jython-standalone:2.7.4...
-  INFO     Running Java application...
-  Obtaining Java * automatically... (glob)
-  Using Java * (*) at */bin/java (glob)
-  */bin/java -XX:+UseG1GC -Xmx*G -cp */jars/*:*/modules/* org.python.util.jython --version (glob)
+  INFO     Building environment for org.python:jython-standalone:2.7.4...         
+  INFO     Running Java application...                                            
+  Obtaining Java 8 automatically...
+  Using Java 8 (zulu) at */bin/java (glob)
+  */bin/java -XX:+UseG1GC -Xmx*G -cp */jars/\*:*/modules/\* org.python.util.jython --version (glob)
   Jython 2.7.4
 
 Test --quiet flag suppresses output.
@@ -84,4 +84,4 @@ Test --quiet flag suppresses output.
 Test passing JVM args and app args.
 
   $ jgo --dry-run run org.python:jython-standalone:2.7.4 -Xmx2G -- --help
-  */bin/java -XX:+UseG1GC -Xmx*G -Xmx2G -cp */jars/*:*/modules/\* org.python.util.jython --help (glob)
+  */bin/java -XX:+UseG1GC -Xmx*G -Xmx2G -Xmx2G -cp */jars/\*:*/modules/\* org.python.util.jython --help (glob)

@@ -35,9 +35,9 @@ Test info classpath with no endpoint.
 Test info classpath with endpoint.
 
   $ jgo info classpath com.google.guava:guava:33.0.0-jre
-  */jars/j2objc-annotations-*.jar (glob)
-  */jars/jsr305-*.jar (glob)
-  */jars/listenablefuture-*.jar (glob)
+  */jars/j2objc-annotations-2.8.jar (glob)
+  */jars/jsr305-3.0.2.jar (glob)
+  */jars/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar (glob)
 
 Test info deptree with no endpoint.
 
@@ -48,15 +48,16 @@ Test info deptree with no endpoint.
 Test info deptree with endpoint.
 
   $ jgo info deptree com.google.guava:guava:33.0.0-jre
-
+  
   └── com.google.guava:guava:33.0.0-jre
-      ├── com.google.guava:failureaccess:*
-      ├── com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict (glob)
-      │   *ava (glob)
-      ├── com.google.code.findbugs:jsr305:*
-      ├── org.checkerframework:checker-qual:*
-      ├── com.google.errorprone:error_prone_annotations:*
-      └── com.google.j2objc:j2objc-annotations:*
+      ├── com.google.guava:failureaccess:1.0.2
+      ├── com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-gu
+      │   ava
+      ├── com.google.code.findbugs:jsr305:3.0.2
+      ├── org.checkerframework:checker-qual:3.41.0
+      ├── com.google.errorprone:error_prone_annotations:2.23.0
+      └── com.google.j2objc:j2objc-annotations:2.8
+
 
 Test info deplist with no endpoint.
 
@@ -68,23 +69,23 @@ Test info deplist with endpoint.
 
   $ jgo info deplist com.google.guava:guava:33.0.0-jre
   com.google.guava:guava:33.0.0-jre
-     com.google.code.findbugs:jsr305:jar:*:compile (glob)
-     com.google.errorprone:error_prone_annotations:jar:*:compile (glob)
-     com.google.guava:failureaccess:jar:*:compile (glob)
+     com.google.code.findbugs:jsr305:jar:3.0.2:compile
+     com.google.errorprone:error_prone_annotations:jar:2.23.0:compile
+     com.google.guava:failureaccess:jar:1.0.2:compile
      com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
-     com.google.j2objc:j2objc-annotations:jar:*:compile (glob)
-     org.checkerframework:checker-qual:jar:*:compile (glob)
+     com.google.j2objc:j2objc-annotations:jar:2.8:compile
+     org.checkerframework:checker-qual:jar:3.41.0:compile
 
 Test info deplist --direct flag.
 
   $ jgo info deplist --direct com.google.guava:guava:33.0.0-jre
   com.google.guava:guava:33.0.0-jre
-     com.google.code.findbugs:jsr305:jar:*:compile (glob)
-     com.google.errorprone:error_prone_annotations:jar:*:compile (glob)
-     com.google.guava:failureaccess:jar:*:compile (glob)
+     com.google.code.findbugs:jsr305:jar:3.0.2:compile
+     com.google.errorprone:error_prone_annotations:jar:2.23.0:compile
+     com.google.guava:failureaccess:jar:1.0.2:compile
      com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
-     com.google.j2objc:j2objc-annotations:jar:*:compile (glob)
-     org.checkerframework:checker-qual:jar:*:compile (glob)
+     com.google.j2objc:j2objc-annotations:jar:2.8:compile
+     org.checkerframework:checker-qual:jar:3.41.0:compile
 
 Test info javainfo with no endpoint.
 
@@ -96,64 +97,24 @@ Test info javainfo with endpoint.
 
   $ jgo info javainfo com.google.guava:guava:33.0.0-jre
   
-  Environment: 
-  */com/google/guava/guava/* (glob)
+  Environment: /home/curtis/.cache/jgo/com/google/guava/guava/465c445fba06140f
   JARs directory: 
-  */com/google/guava/guava/*/jars (glob)
-  Total JARs: 40
+  /home/curtis/.cache/jgo/com/google/guava/guava/465c445fba06140f/jars
+  Total JARs: 3
   
   ╭───────────────────────── Java Version Requirements ──────────────────────────╮
-  │ Minimum Java version: 11                                                     │
-  │ (already an LTS version)                                                     │
+  │ Minimum Java version: 7                                                      │
+  │ Rounded to LTS: 8                                                            │
   ╰──────────────────────────────────────────────────────────────────────────────╯
-                                  Per-JAR Analysis                                
-  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┓
-  ┃ JAR                              ┃ Java Version ┃ Max Bytecode ┃ Class Count ┃
-  ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━┩
-  │ scijava-collections-1.0.0.jar    │           11 │           55 │          11 │
-  │ scijava-common3-1.0.0.jar        │           11 │           55 │          23 │
-  │ scijava-concurrent-1.0.0.jar     │           11 │           55 │          10 │
-  │ scijava-discovery-1.0.0.jar      │           11 │           55 │           6 │
-  │ scijava-function-1.0.0.jar       │           11 │           55 │         360 │
-  │ scijava-meta-1.0.0.jar           │           11 │           55 │           4 │
-  │ scijava-ops-api-1.0.0.jar        │           11 │           55 │          97 │
-  │ guava-33.0.0-jre.jar      │           11 │           55 │         918 │
-  │ scijava-ops-spi-1.0.0.jar        │           11 │           55 │          11 │
-  │ scijava-priority-1.0.0.jar       │           11 │           55 │           2 │
-  │ scijava-progress-1.0.0.jar       │           11 │           55 │           4 │
-  │ scijava-struct-1.0.0.jar         │           11 │           55 │          10 │
-  │ scijava-types-1.0.0.jar          │           11 │           55 │          21 │
-  │ caffeine-2.9.3.jar               │            8 │           52 │         692 │
-  │ checker-qual-3.34.0.jar          │            8 │           52 │         359 │
-  │ commons-lang3-3.12.0.jar         │            8 │           52 │         345 │
-  │ error_prone_annotations-2.19.0.… │            8 │           52 │          27 │
-  │ guava-31.1-jre.jar               │            8 │           52 │        2008 │
-  │ imglib2-6.2.0.jar                │            8 │           52 │         758 │
-  │ imglib2-algorithm-0.14.0.jar     │            8 │           52 │         756 │
-  │ imglib2-algorithm-fft-0.2.1.jar  │            8 │           52 │           5 │
-  │ imglib2-cache-1.0.0-beta-17.jar  │            8 │           52 │         161 │
-  │ imglib2-mesh-1.0.0.jar           │            8 │           52 │          68 │
-  │ imglib2-realtransform-4.0.1.jar  │            8 │           52 │          68 │
-  │ imglib2-roi-0.14.1.jar           │            8 │           52 │         224 │
-  │ jitk-tps-3.0.3.jar               │            8 │           52 │           4 │
-  │ ojalgo-45.1.1.jar                │            8 │           52 │        1347 │
-  │ scijava-optional-1.0.1.jar       │            8 │           52 │           5 │
-  │ failureaccess-1.0.1.jar          │            7 │           51 │           2 │
-  │ j2objc-annotations-2.8.jar       │            7 │           51 │          13 │
-  │ mines-jtk-20151125.jar           │            7 │           51 │         900 │
-  │ ejml-0.25.jar                    │            6 │           50 │         162 │
-  │ jama-1.0.3.jar                   │            6 │           50 │           9 │
-  │ jply-0.2.1.jar                   │            6 │           50 │          34 │
-  │ commons-math3-3.6.1.jar          │            5 │           49 │        1301 │
-  │ jsr305-3.0.2.jar                 │            5 │           49 │          35 │
-  │ slf4j-api-1.7.36.jar             │            5 │           49 │          34 │
-  │ trove4j-3.0.3.jar                │            5 │           49 │        1595 │
-  │ joml-1.10.5.jar                  │            2 │           46 │         111 │
-  └──────────────────────────────────┴──────────────┴──────────────┴─────────────┘
+                               Per-JAR Analysis                             
+  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┓
+  ┃ JAR                        ┃ Java Version ┃ Max Bytecode ┃ Class Count ┃
+  ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━┩
+  │ j2objc-annotations-2.8.jar │            7 │           51 │          13 │
+  │ jsr305-3.0.2.jar           │            5 │           49 │          35 │
+  └────────────────────────────┴──────────────┴──────────────┴─────────────┘
   
   Bytecode Version Details:
-  
-  ... and 29 more JARs (showing first 10)
 
 Test info manifest requires endpoint.
 
@@ -172,54 +133,66 @@ Test info manifest with endpoint.
 
   $ jgo info manifest com.google.guava:guava:33.0.0-jre
   Manifest-Version: 1.0
-  Created-By: Maven JAR Plugin 3.3.0
+  Automatic-Module-Name: com.google.common
   Build-Jdk-Spec: 11
-  Class-Path: scijava-collections-1.0.0.jar scijava-common3-1.0.0.jar scijava-concurrent-1.0.0.jar scijava-function-1.0.0.jar scijava-meta-1.0.0.jar scijava-ops-api-1.0.0.jar scijava-discovery-1.0.0.jar scijava-struct-1.0.0.jar scijava-priority-1.0.0.jar scijava-progress-1.0.0.jar scijava-ops-spi-1.0.0.jar scijava-types-1.0.0.jar guava-31.1-jre.jar failureaccess-1.0.1.jar listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar jsr305-3.0.2.jar checker-qual-3.34.0.jar error_prone_annotations-2.19.0.jar j2objc-annotations-2.8.jar slf4j-api-1.7.36.jar imglib2-6.2.0.jar imglib2-algorithm-0.14.0.jar trove4j-3.0.3.jar imglib2-cache-1.0.0-beta-17.jar caffeine-2.9.3.jar scijava-optional-1.0.1.jar imglib2-algorithm-fft-0.2.1.jar mines-jtk-20151125.jar imglib2-mesh-1.0.0.jar jply-0.2.1.jar commons-lang3-3.12.0.jar imglib2-realtransform-4.0.1.jar jitk-tps-3.0.3.jar ejml-0.25.jar imglib2-roi-0.14.1.jar commons-math3-3.6.1.jar joml-1.10.5.jar ojalgo-45.1.1.jar jama-1.0.3.jar
-  Specification-Title: SciJava Ops Image
-  Specification-Version: 1.0
-  Specification-Vendor: SciJava
-  Implementation-Title: SciJava Ops Image
-  Implementation-Version: 1.0.0
-  Implementation-Vendor: SciJava
-  Main-Class: org.scijava.ops.image.About
-  Package: org.scijava.ops.image
-  Automatic-Module-Name: org.scijava.ops.image
-  Implementation-Build: 202fcef4cb3eee7ffe0c105ab2d5bc36d34c9cd1
-  Implementation-Date: 2024-06-04T01:54:54+0000
-  Premain-Class: 
+  Bundle-Description: Guava is a suite of core and expanded libraries that include    utility classes, Google's collections, I/O classes, and    much more.
+  Bundle-DocURL: https://github.com/google/guava/
+  Bundle-License: http://www.apache.org/licenses/LICENSE-2.0.txt
+  Bundle-ManifestVersion: 2
+  Bundle-Name: Guava: Google Core Libraries for Java
+  Bundle-SymbolicName: com.google.guava
+  Bundle-Version: 33.0.0.jre
+  Created-By: Apache Maven Bundle Plugin 5.1.8
+  Export-Package: com.google.common.annotations;version="33.0.0",com.google.common.base;version="33.0.0";uses:="javax.annotation",com.google.common.cache;version="33.0.0";uses:="com.google.common.base,com.google.common.collect,com.google.common.util.concurrent,javax.annotation",com.google.common.collect;version="33.0.0";uses:="com.google.common.base,javax.annotation",com.google.common.escape;version="33.0.0";uses:="com.google.common.base,javax.annotation",com.google.common.eventbus;version="33.0.0",com.google.common.graph;version="33.0.0";uses:="com.google.common.collect,javax.annotation",com.google.common.hash;version="33.0.0";uses:="com.google.common.base,javax.annotation",com.google.common.html;version="33.0.0";uses:="com.google.common.escape",com.google.common.io;version="33.0.0";uses:="com.google.common.base,com.google.common.collect,com.google.common.graph,com.google.common.hash,javax.annotation",com.google.common.math;version="33.0.0";uses:="javax.annotation",com.google.common.net;version="33.0.0";uses:="com.google.common.base,com.google.common.collect,com.google.common.escape,javax.annotation",com.google.common.primitives;version="33.0.0";uses:="com.google.common.base,javax.annotation",com.google.common.reflect;version="33.0.0";uses:="com.google.common.collect,com.google.common.io,javax.annotation",com.google.common.util.concurrent;version="33.0.0";uses:="com.google.common.base,com.google.common.collect,com.google.common.util.concurrent.internal,javax.annotation",com.google.common.xml;version="33.0.0";uses:="com.google.common.escape"
+  Import-Package: com.google.common.util.concurrent.internal;version="[1.0,2)",javax.annotation;resolution:=optional;version="[3.0,4)",javax.crypto;resolution:=optional,javax.crypto.spec;resolution:=optional,sun.misc;resolution:=optional
+  Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
+  Tool: Bnd-6.3.1.202206071316
 
 Test info manifest --raw flag.
 
   $ jgo info manifest --raw com.google.guava:guava:33.0.0-jre
   Manifest-Version: 1.0\r (esc)
-  Created-By: Maven JAR Plugin 3.3.0\r (esc)
+  Automatic-Module-Name: com.google.common\r (esc)
   Build-Jdk-Spec: 11\r (esc)
-  Class-Path: scijava-collections-1.0.0.jar scijava-common3-1.0.0.jar scij\r (esc)
-   ava-concurrent-1.0.0.jar scijava-function-1.0.0.jar scijava-meta-1.0.0.\r (esc)
-   jar scijava-ops-api-1.0.0.jar scijava-discovery-1.0.0.jar scijava-struc\r (esc)
-   t-1.0.0.jar scijava-priority-1.0.0.jar scijava-progress-1.0.0.jar scija\r (esc)
-   va-ops-spi-1.0.0.jar scijava-types-1.0.0.jar guava-31.1-jre.jar failure\r (esc)
-   access-1.0.1.jar listenablefuture-9999.0-empty-to-avoid-conflict-with-g\r (esc)
-   uava.jar jsr305-3.0.2.jar checker-qual-3.34.0.jar error_prone_annotatio\r (esc)
-   ns-2.19.0.jar j2objc-annotations-2.8.jar slf4j-api-1.7.36.jar imglib2-6\r (esc)
-   .2.0.jar imglib2-algorithm-0.14.0.jar trove4j-3.0.3.jar imglib2-cache-1\r (esc)
-   .0.0-beta-17.jar caffeine-2.9.3.jar scijava-optional-1.0.1.jar imglib2-\r (esc)
-   algorithm-fft-0.2.1.jar mines-jtk-20151125.jar imglib2-mesh-1.0.0.jar j\r (esc)
-   ply-0.2.1.jar commons-lang3-3.12.0.jar imglib2-realtransform-4.0.1.jar \r (esc)
-   jitk-tps-3.0.3.jar ejml-0.25.jar imglib2-roi-0.14.1.jar commons-math3-3\r (esc)
-   .6.1.jar joml-1.10.5.jar ojalgo-45.1.1.jar jama-1.0.3.jar\r (esc)
-  Specification-Title: SciJava Ops Image\r (esc)
-  Specification-Version: 1.0\r (esc)
-  Specification-Vendor: SciJava\r (esc)
-  Implementation-Title: SciJava Ops Image\r (esc)
-  Implementation-Version: 1.0.0\r (esc)
-  Implementation-Vendor: SciJava\r (esc)
-  Main-Class: org.scijava.ops.image.About\r (esc)
-  Package: org.scijava.ops.image\r (esc)
-  Automatic-Module-Name: org.scijava.ops.image\r (esc)
-  Implementation-Build: 202fcef4cb3eee7ffe0c105ab2d5bc36d34c9cd1\r (esc)
-  Implementation-Date: 2024-06-04T01:54:54+0000\r (esc)
-  Premain-Class: \r (esc)
+  Bundle-Description: Guava is a suite of core and expanded libraries th\r (esc)
+   at include    utility classes, Google's collections, I/O classes, and\r (esc)
+       much more.\r (esc)
+  Bundle-DocURL: https://github.com/google/guava/\r (esc)
+  Bundle-License: http://www.apache.org/licenses/LICENSE-2.0.txt\r (esc)
+  Bundle-ManifestVersion: 2\r (esc)
+  Bundle-Name: Guava: Google Core Libraries for Java\r (esc)
+  Bundle-SymbolicName: com.google.guava\r (esc)
+  Bundle-Version: 33.0.0.jre\r (esc)
+  Created-By: Apache Maven Bundle Plugin 5.1.8\r (esc)
+  Export-Package: com.google.common.annotations;version="33.0.0",com.goo\r (esc)
+   gle.common.base;version="33.0.0";uses:="javax.annotation",com.google.\r (esc)
+   common.cache;version="33.0.0";uses:="com.google.common.base,com.googl\r (esc)
+   e.common.collect,com.google.common.util.concurrent,javax.annotation",\r (esc)
+   com.google.common.collect;version="33.0.0";uses:="com.google.common.b\r (esc)
+   ase,javax.annotation",com.google.common.escape;version="33.0.0";uses:\r (esc)
+   ="com.google.common.base,javax.annotation",com.google.common.eventbus\r (esc)
+   ;version="33.0.0",com.google.common.graph;version="33.0.0";uses:="com\r (esc)
+   .google.common.collect,javax.annotation",com.google.common.hash;versi\r (esc)
+   on="33.0.0";uses:="com.google.common.base,javax.annotation",com.googl\r (esc)
+   e.common.html;version="33.0.0";uses:="com.google.common.escape",com.g\r (esc)
+   oogle.common.io;version="33.0.0";uses:="com.google.common.base,com.go\r (esc)
+   ogle.common.collect,com.google.common.graph,com.google.common.hash,ja\r (esc)
+   vax.annotation",com.google.common.math;version="33.0.0";uses:="javax.\r (esc)
+   annotation",com.google.common.net;version="33.0.0";uses:="com.google.\r (esc)
+   common.base,com.google.common.collect,com.google.common.escape,javax.\r (esc)
+   annotation",com.google.common.primitives;version="33.0.0";uses:="com.\r (esc)
+   google.common.base,javax.annotation",com.google.common.reflect;versio\r (esc)
+   n="33.0.0";uses:="com.google.common.collect,com.google.common.io,java\r (esc)
+   x.annotation",com.google.common.util.concurrent;version="33.0.0";uses\r (esc)
+   :="com.google.common.base,com.google.common.collect,com.google.common\r (esc)
+   .util.concurrent.internal,javax.annotation",com.google.common.xml;ver\r (esc)
+   sion="33.0.0";uses:="com.google.common.escape"\r (esc)
+  Import-Package: com.google.common.util.concurrent.internal;version="[1\r (esc)
+   .0,2)",javax.annotation;resolution:=optional;version="[3.0,4)",javax.\r (esc)
+   crypto;resolution:=optional,javax.crypto.spec;resolution:=optional,su\r (esc)
+   n.misc;resolution:=optional\r (esc)
+  Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"\r (esc)
+  Tool: Bnd-6.3.1.202206071316\r (esc)
   \r (esc)
 
 Test info pom requires endpoint.
@@ -239,649 +212,300 @@ Test info pom with endpoint.
 
   $ jgo info pom com.google.guava:guava:33.0.0-jre
   <?xml version="1.0" ?>
-  <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <!-- do_not_remove: published-with-gradle-metadata -->
     <modelVersion>4.0.0</modelVersion>
     <parent>
-      <groupId>org.scijava</groupId>
-      <artifactId>pom-scijava</artifactId>
-      <version>37.0.0</version>
-      <relativePath/>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava-parent</artifactId>
+      <version>33.0.0-jre</version>
     </parent>
     <artifactId>guava</artifactId>
-    <version>1.0.0</version>
-    <name>SciJava Ops Image</name>
-    <description>Image processing operations for SciJava Ops.</description>
-    <url>https://github.com/scijava/scijava</url>
-    <inceptionYear>2014</inceptionYear>
-    <organization>
-      <name>SciJava</name>
-      <url>https://scijava.org/</url>
-    </organization>
-    <licenses>
-      <license>
-        <name>Simplified BSD License</name>
-        <distribution>repo</distribution>
-      </license>
-    </licenses>
-    <developers>
-      <developer>
-        <id>ctrueden</id>
-        <name>Curtis Rueden</name>
-        <roles>
-          <role>founder</role>
-          <role>lead</role>
-          <role>debugger</role>
-          <role>reviewer</role>
-          <role>support</role>
-          <role>maintainer</role>
-        </roles>
-      </developer>
-      <developer>
-        <id>gselzer</id>
-        <name>Gabriel Selzer</name>
-        <roles>
-          <role>founder</role>
-          <role>debugger</role>
-          <role>reviewer</role>
-          <role>support</role>
-        </roles>
-      </developer>
-      <developer>
-        <id>bnorthan</id>
-        <name>Brian Northan</name>
-        <roles>
-          <role>debugger</role>
-          <role>reviewer</role>
-          <role>support</role>
-        </roles>
-      </developer>
-    </developers>
-    <contributors>
-      <!-- Co-founders -->
-      <contributor>
-        <name>Christian Birkhold</name>
-        <roles>
-          <role>founder</role>
-        </roles>
-        <properties>
-          <id>dietzc</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Martin Horn</name>
-        <roles>
-          <role>founder</role>
-        </roles>
-        <properties>
-          <id>hornm</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Johannes Schindelin</name>
-        <roles>
-          <role>founder</role>
-        </roles>
-        <properties>
-          <id>dscho</id>
-        </properties>
-      </contributor>
-      <!-- Contributors, in alphabetical order by surname. -->
-      <contributor>
-        <name>Matthias Arzt</name>
-        <properties>
-          <id>maarzt</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Tim-Oliver Buchholz</name>
-        <properties>
-          <id>tibuch</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Eric Czech</name>
-        <properties>
-          <id>eric-czech</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Barry DeZonia</name>
-        <properties>
-          <id>bdezonia</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Ellen Dobson</name>
-        <properties>
-          <id>etadobson</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Richard Domander</name>
-        <properties>
-          <id>rimadoma</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Michael Doube</name>
-        <properties>
-          <id>mdoube</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Karl Duderstadt</name>
-        <properties>
-          <id>karlduderstadt</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Jan Eglinger</name>
-        <properties>
-          <id>imagejan</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Gabriel Einsdorf</name>
-        <properties>
-          <id>gab1one</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Edward Evans</name>
-        <properties>
-          <id>elevans</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Andreas Graumann</name>
-        <properties>
-          <id>angrauma</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Robert Haase</name>
-        <properties>
-          <id>haesleinhuepf</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Jonathan Hale</name>
-        <properties>
-          <id>Squareys</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Philipp Hanslovsky</name>
-        <properties>
-          <id>hanslovsky</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Kyle Harrington</name>
-        <properties>
-          <id>kephale</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Eike Heinz</name>
-        <properties>
-          <id>EikeHeinz</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Stefan Helfrich</name>
-        <properties>
-          <id>stelfrich</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Mark Hiner</name>
-        <properties>
-          <id>hinerm</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Hadrien Mary</name>
-        <properties>
-          <id>hadim</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Dave Niles</name>
-        <properties>
-          <id>djniles</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Aparna Pal</name>
-        <properties>
-          <id>apal4</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Tobias Pietzsch</name>
-        <properties>
-          <id>tpietzsch</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Igor Pisarev</name>
-        <properties>
-          <id>igorpisarev</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Stephan Saalfeld</name>
-        <properties>
-          <id>axtimwalde</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Simon Schmid</name>
-        <properties>
-          <id>SimonSchmid</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Deborah Schmidt</name>
-        <properties>
-          <id>frauzufall</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Daniel Seebacher</name>
-        <properties>
-          <id>seebacherd</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Jean-Yves Tinevez</name>
-        <properties>
-          <id>tinevez</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Vladimir Ulman</name>
-        <properties>
-          <id>xulman</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Alison Walter</name>
-        <properties>
-          <id>awalter17</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Shulei Wang</name>
-        <properties>
-          <id>lakerwsl</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Leon Yang</name>
-        <properties>
-          <id>lnyng</id>
-        </properties>
-      </contributor>
-      <contributor>
-        <name>Michael Zinsmaier</name>
-        <properties>
-          <id>MichaelZinsmaier</id>
-        </properties>
-      </contributor>
-    </contributors>
-    <mailingLists>
-      <mailingList>
-        <name>Image.sc Forum</name>
-        <archive>https://forum.image.sc/tag/scijava</archive>
-      </mailingList>
-    </mailingLists>
-    <scm>
-      <connection>scm:git:https://github.com/scijava/scijava</connection>
-      <developerConnection>scm:git:git@github.com:scijava/scijava</developerConnection>
-      <tag>scijava-aggregator-1.0.0</tag>
-      <url>https://github.com/scijava/scijava</url>
-    </scm>
-    <issueManagement>
-      <system>GitHub Issues</system>
-      <url>https://github.com/scijava/scijava/issues</url>
-    </issueManagement>
-    <ciManagement>
-      <system>GitHub Actions</system>
-      <url>https://github.com/scijava/scijava/actions</url>
-    </ciManagement>
-    <properties>
-      <package-name>org.scijava.ops.image</package-name>
-      <main-class>org.scijava.ops.image.About</main-class>
-      <license.licenseName>bsd_2</license.licenseName>
-      <license.copyrightOwners>SciJava developers.</license.copyrightOwners>
-      <!--
-  \t\tNB: Older versions of OpenJDK 11 have a bug in the javadoc tool, (esc)
-  \t\twhich causes errors like: (esc)
-  \t\t[ERROR] javadoc: error - The code being documented uses packages (esc)
-  \t\tin the unnamed module, but the packages defined in (esc)
-  \t\thttps://github.com/scijava/scijava/apidocs/ are in named modules. (esc)
-  \t\tThe most recent version of OpenJDK 11 known to have this problem (esc)
-  \t\tis 11.0.8; the oldest version known to have fixed it is 11.0.17. (esc)
-  \t\tTherefore, we set the minimum build JDK version to 11.0.17 here. (esc)
-  \t\t--> (esc)
-      <scijava.jvm.build.version>[11.0.17,)</scijava.jvm.build.version>
-      <scijava.jvm.version>11</scijava.jvm.version>
-      <scijava.ops.parse>true</scijava.ops.parse>
-      <!-- TEMP: Until pom-scijava 38.0.0 is released. -->
-      <scijava-maven-plugin.version>3.0.0</scijava-maven-plugin.version>
-      <imglib2-mesh.version>1.0.0</imglib2-mesh.version>
-      <net.imglib2.imglib2-mesh.version>${imglib2-mesh.version}</net.imglib2.imglib2-mesh.version>
-    </properties>
+    <packaging>bundle</packaging>
+    <name>Guava: Google Core Libraries for Java</name>
+    <url>https://github.com/google/guava</url>
+    <description>
+      Guava is a suite of core and expanded libraries that include
+      utility classes, Google's collections, I/O classes, and
+      much more.
+    </description>
     <dependencies>
-      <!-- SciJava dependencies -->
       <dependency>
-        <groupId>org.scijava</groupId>
-        <artifactId>scijava-collections</artifactId>
-        <version>${project.version}</version>
+        <groupId>com.google.guava</groupId>
+        <artifactId>failureaccess</artifactId>
+        <version>1.0.2</version>
       </dependency>
       <dependency>
-        <groupId>org.scijava</groupId>
-        <artifactId>scijava-common3</artifactId>
-        <version>${project.version}</version>
+        <groupId>com.google.guava</groupId>
+        <artifactId>listenablefuture</artifactId>
+        <version>9999.0-empty-to-avoid-conflict-with-guava</version>
       </dependency>
       <dependency>
-        <groupId>org.scijava</groupId>
-        <artifactId>scijava-concurrent</artifactId>
-        <version>${project.version}</version>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>jsr305</artifactId>
       </dependency>
       <dependency>
-        <groupId>org.scijava</groupId>
-        <artifactId>scijava-function</artifactId>
-        <version>${project.version}</version>
+        <groupId>org.checkerframework</groupId>
+        <artifactId>checker-qual</artifactId>
       </dependency>
       <dependency>
-        <groupId>org.scijava</groupId>
-        <artifactId>scijava-meta</artifactId>
-        <version>${project.version}</version>
+        <groupId>com.google.errorprone</groupId>
+        <artifactId>error_prone_annotations</artifactId>
       </dependency>
       <dependency>
-        <groupId>org.scijava</groupId>
-        <artifactId>scijava-ops-api</artifactId>
-        <version>${project.version}</version>
+        <groupId>com.google.j2objc</groupId>
+        <artifactId>j2objc-annotations</artifactId>
       </dependency>
-      <dependency>
-        <groupId>org.scijava</groupId>
-        <artifactId>scijava-priority</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.scijava</groupId>
-        <artifactId>scijava-progress</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.scijava</groupId>
-        <artifactId>scijava-ops-spi</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.scijava</groupId>
-        <artifactId>scijava-types</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <!-- ImgLib2 dependencies -->
-      <dependency>
-        <groupId>net.imglib2</groupId>
-        <artifactId>imglib2</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>net.imglib2</groupId>
-        <artifactId>imglib2-algorithm</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>net.imglib2</groupId>
-        <artifactId>imglib2-algorithm-fft</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>net.imglib2</groupId>
-        <artifactId>imglib2-mesh</artifactId>
-        <!-- TEMP: until added to pom-scijava -->
-        <version>${net.imglib2.imglib2-mesh.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>net.imglib2</groupId>
-        <artifactId>imglib2-realtransform</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>net.imglib2</groupId>
-        <artifactId>imglib2-roi</artifactId>
-      </dependency>
-      <!-- Third party dependencies -->
-      <dependency>
-        <groupId>org.apache.commons</groupId>
-        <artifactId>commons-math3</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>org.joml</groupId>
-        <artifactId>joml</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>org.ojalgo</groupId>
-        <artifactId>ojalgo</artifactId>
-      </dependency>
-      <dependency>
-        <groupId>gov.nist.math</groupId>
-        <artifactId>jama</artifactId>
-      </dependency>
-      <!-- Test scope dependencies -->
-      <dependency>
-        <groupId>org.junit.jupiter</groupId>
-        <artifactId>junit-jupiter-api</artifactId>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.scijava</groupId>
-        <artifactId>scijava-ops-engine</artifactId>
-        <version>${project.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.scijava</groupId>
-        <artifactId>scijava-testutil</artifactId>
-        <version>${project.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.scijava</groupId>
-        <artifactId>scijava-common</artifactId>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>io.scif</groupId>
-        <artifactId>scifio</artifactId>
-        <scope>test</scope>
-      </dependency>
+      <!-- TODO(cpovirk): does this comment belong on the <dependency> in <profiles>? -->
+      <!-- TODO(cpovirk): want this only for dependency plugin but seems not to work there? Maven runs without failure, but the resulting Javadoc is missing the hoped-for inherited text -->
     </dependencies>
-    <repositories>
-      <repository>
-        <id>scijava.public</id>
-        <url>https://maven.scijava.org/content/groups/public</url>
-      </repository>
-    </repositories>
     <build>
+      <resources>
+        <resource>
+          <directory>..</directory>
+          <includes>
+            <include>LICENSE</include>
+            <!-- copied from the parent pom because I couldn't figure out a way to make combine.children="append" work -->
+            <include>proguard/*</include>
+          </includes>
+          <targetPath>META-INF</targetPath>
+        </resource>
+      </resources>
       <plugins>
         <plugin>
-          <artifactId>maven-compiler-plugin</artifactId>
+          <artifactId>maven-jar-plugin</artifactId>
           <configuration>
-            <annotationProcessorPaths>
-              <path>
-                <groupId>org.scijava</groupId>
-                <artifactId>scijava-ops-indexer</artifactId>
-                <version>${project.version}</version>
-              </path>
-            </annotationProcessorPaths>
-            <fork>true</fork>
-            <compilerArgs>
-              <arg>-Ascijava.ops.parse=&quot;${scijava.ops.parse}&quot;</arg>
-              <arg>-Ascijava.ops.opVersion=&quot;${project.version}&quot;</arg>
-            </compilerArgs>
+            <archive>
+              <manifestEntries>
+                <Automatic-Module-Name>com.google.common</Automatic-Module-Name>
+              </manifestEntries>
+            </archive>
           </configuration>
+        </plugin>
+        <plugin>
+          <extensions>true</extensions>
+          <groupId>org.apache.felix</groupId>
+          <artifactId>maven-bundle-plugin</artifactId>
+          <version>5.1.8</version>
+          <executions>
+            <execution>
+              <id>bundle-manifest</id>
+              <phase>process-classes</phase>
+              <goals>
+                <goal>manifest</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <instructions>
+              <Export-Package>
+                !com.google.common.base.internal,
+                !com.google.common.util.concurrent.internal,
+                com.google.common.*
+              </Export-Package>
+              <Import-Package>
+                com.google.common.util.concurrent.internal,
+                javax.annotation;resolution:=optional,
+                javax.crypto.*;resolution:=optional,
+                sun.misc.*;resolution:=optional
+              </Import-Package>
+              <Bundle-DocURL>https://github.com/google/guava/</Bundle-DocURL>
+            </instructions>
+          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+        </plugin>
+        <plugin>
+          <artifactId>maven-source-plugin</artifactId>
+        </plugin>
+        <!-- TODO(cpovirk): include JDK sources when building testlib doc, too -->
+        <plugin>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>unpack-jdk-sources</id>
+              <phase>generate-sources</phase>
+              <goals>
+                <goal>unpack-dependencies</goal>
+              </goals>
+              <configuration>
+                <includeArtifactIds>srczip</includeArtifactIds>
+                <outputDirectory>${project.build.directory}/jdk-sources</outputDirectory>
+                <silent>false</silent>
+                <!-- Exclude module-info files (since we're using -source 8 to avoid other modules problems) and FileDescriptor (which uses a language feature not available in Java 8). -->
+                <excludes>**/module-info.java,**/java/io/FileDescriptor.java</excludes>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>animal-sniffer-maven-plugin</artifactId>
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
           <configuration>
-            <links>
-              <link>https://javadoc.scijava.org/Java11/</link>
-              <link>https://javadoc.scijava.org/ImgLib2/</link>
-              <link>https://javadoc.scijava.org/Apache-Commons-Math/</link>
-              <link>https://javadoc.scijava.org/JAMA/</link>
-              <link>https://javadoc.scijava.org/JOML/</link>
-              <link>https://javadoc.scijava.org/Javassist/</link>
-              <link>https://javadoc.scijava.org/ojAlgo/</link>
-            </links>
-            <tagletArtifacts>
-              <tagletArtifact>
-                <groupId>org.scijava</groupId>
-                <artifactId>scijava-taglets</artifactId>
-                <version>${project.version}</version>
-              </tagletArtifact>
-            </tagletArtifacts>
+            <!-- TODO(cpovirk): Move this to the parent after making jdk-sources available there. -->
+            <!-- TODO(cpovirk): can we use includeDependencySources and a local com.oracle.java:jdk-lib:noversion:sources instead of all this unzipping and manual sourcepath modification? -->
+            <!-- (We need JDK *sources*, not just -link, so that {@inheritDoc} works.) -->
+            <sourcepath>${project.build.sourceDirectory}:${project.build.directory}/jdk-sources</sourcepath>
+            <!-- Passing `-subpackages com.google.common` breaks things, so we explicitly exclude everything else instead. -->
+            <!-- excludePackageNames requires specification of packages separately from "all subpackages".
+                 https://issues.apache.org/jira/browse/MJAVADOC-584 -->
+            <excludePackageNames>
+              com.azul.tooling.in,com.google.common.base.internal,com.google.common.base.internal.*,com.google.thirdparty.publicsuffix,com.google.thirdparty.publicsuffix.*,com.oracle.*,com.sun.*,java.*,javax.*,jdk,jdk.*,org.*,sun.*
+            </excludePackageNames>
+            <!-- Ignore some tags that are found in Java 11 sources but not recognized... under -source 8, I think it was? I can no longer reproduce the failure. -->
             <tags>
               <tag>
+                <name>apiNote</name>
+                <placement>X</placement>
+              </tag>
+              <tag>
                 <name>implNote</name>
-                <placement>a</placement>
-                <head>Implementation Note:</head>
+                <placement>X</placement>
+              </tag>
+              <tag>
+                <name>implSpec</name>
+                <placement>X</placement>
+              </tag>
+              <tag>
+                <name>jls</name>
+                <placement>X</placement>
+              </tag>
+              <tag>
+                <name>revised</name>
+                <placement>X</placement>
+              </tag>
+              <tag>
+                <name>spec</name>
+                <placement>X</placement>
               </tag>
             </tags>
+            <!-- TODO(cpovirk): Move this to the parent after making the package-list files available there. -->
+            <!-- We add the link ourselves, both so that we can choose Java 9 over the version that -source suggests and so that we can solve the JSR305 problem described below. -->
+            <detectJavaApiLink>false</detectJavaApiLink>
+            <offlineLinks>
+              <!-- We need local copies of some of these for 2 reasons: a User-Agent problem (https://stackoverflow.com/a/47891403/28465) and an SSL problem (https://issues.apache.org/jira/browse/MJAVADOC-507). If we choose to work around the User-Agent problem, we can go back to <links>, sidestepping the SSL problem. -->
+              <!-- Even after we stop using JSR305 annotations in our own code, we'll want this link so that NullPointerTester's docs can link to @CheckForNull and friends... at least once we start using this config for guava-testlib. -->
+              <offlineLink>
+                <url>https://static.javadoc.io/com.google.code.findbugs/jsr305/3.0.1/</url>
+                <location>${project.basedir}/javadoc-link/jsr305</location>
+              </offlineLink>
+              <offlineLink>
+                <url>https://static.javadoc.io/com.google.j2objc/j2objc-annotations/1.1/</url>
+                <location>${project.basedir}/javadoc-link/j2objc-annotations</location>
+              </offlineLink>
+              <!-- The JDK doc must be listed after JSR305 (and as an <offlineLink>, not a <link>) so that JSR305 "claims" javax.annotation. -->
+              <offlineLink>
+                <url>https://docs.oracle.com/javase/9/docs/api/</url>
+                <location>https://docs.oracle.com/javase/9/docs/api/</location>
+              </offlineLink>
+              <!-- The Checker Framework likewise would claim javax.annotations, despite providing only a subset of the JSR305 annotations, so it must likewise come after JSR305. -->
+              <offlineLink>
+                <url>https://checkerframework.org/api/</url>
+                <location>${project.basedir}/javadoc-link/checker-framework</location>
+              </offlineLink>
+            </offlineLinks>
+            <links>
+              <link>https://errorprone.info/api/latest/</link>
+            </links>
+            <overview>../overview.html</overview>
           </configuration>
         </plugin>
         <plugin>
-          <artifactId>maven-enforcer-plugin</artifactId>
+          <artifactId>maven-resources-plugin</artifactId>
           <executions>
             <execution>
-              <id>enforce-package-rules</id>
+              <id>gradle-module-metadata</id>
+              <phase>compile</phase>
               <goals>
-                <goal>enforce</goal>
+                <goal>copy-resources</goal>
               </goals>
-              <phase>test</phase>
               <configuration>
-                <rules>
-                  <NoPackageCyclesRule implementation="org.scijava.maven.plugin.enforcer.NoPackageCyclesRule"/>
-                  <NoSubpackageDependenceRule implementation="org.scijava.maven.plugin.enforcer.NoSubpackageDependenceRule"/>
-                </rules>
+                <outputDirectory>target/publish</outputDirectory>
+                <resources>
+                  <resource>
+                    <directory>.</directory>
+                    <includes>
+                      <include>module.json</include>
+                    </includes>
+                    <filtering>true</filtering>
+                  </resource>
+                </resources>
               </configuration>
             </execution>
           </executions>
         </plugin>
         <plugin>
-          <groupId>com.alexecollins.maven.plugin</groupId>
-          <artifactId>script-maven-plugin</artifactId>
-          <version>1.0.0</version>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>build-helper-maven-plugin</artifactId>
           <executions>
             <execution>
-              <id>union-metadata-indices</id>
-              <phase>process-test-classes</phase>
+              <id>attach-gradle-module-metadata</id>
               <goals>
-                <goal>execute</goal>
+                <goal>attach-artifact</goal>
               </goals>
               <configuration>
-                <language>ruby</language>
-                <script>
-  \t\t\t\t\t\t\t\t# Append the source plugin annotations to the test plugin annotations (esc)
-  \t\t\t\t\t\t\t\trequire 'set' (esc)
-  \t\t\t\t\t\t\t\t# Handle windows paths (esc)
-  \t\t\t\t\t\t\t\tbasedir = '${project.basedir}'.gsub /\\\\+/, '\\\\\\\\' (esc)
-  \t\t\t\t\t\t\t\t# Reads plugin metadata into a set of strings, one per plugin declaration. (esc)
-  \t\t\t\t\t\t\t\tdef read_plugins(path) (esc)
-  \t\t\t\t\t\t\t\tdelim = 'UNIQUE-SEQUENCE-THAT-NO-PLUGIN-WILL-EVER-USE' (esc)
-  \t\t\t\t\t\t\t\treturn File.exist?(path) ? File.read(path).sub('}{', '}' + delim + '{').split(delim).to_set : Set.new() (esc)
-  \t\t\t\t\t\t\t\tend (esc)
-  \t\t\t\t\t\t\t\t# Read in main and test scope plugin annotations. (esc)
-  \t\t\t\t\t\t\t\t['ops.yaml'].each do |pluginsPath| (esc)
-  \t\t\t\t\t\t\t\tmainPluginsPath = &quot;#{basedir}/target/classes/#{pluginsPath}&quot; (esc)
-  \t\t\t\t\t\t\t\ttestPluginsPath = &quot;#{basedir}/target/test-classes/#{pluginsPath}&quot; (esc)
-  \t\t\t\t\t\t\t\tmainPlugins = read_plugins(mainPluginsPath) (esc)
-  \t\t\t\t\t\t\t\ttestPlugins = read_plugins(testPluginsPath) (esc)
-  \t\t\t\t\t\t\t\t# Write out unioned plugin annotations to test scope plugin annotations. (esc)
-  \t\t\t\t\t\t\t\t# Without this, the test scope code does not know of the main scope plugins. (esc)
-  \t\t\t\t\t\t\t\tallPlugins = mainPlugins.union(testPlugins) (esc)
-  \t\t\t\t\t\t\t\tunless allPlugins.empty?() (esc)
-  \t\t\t\t\t\t\t\trequire 'fileutils' (esc)
-  \t\t\t\t\t\t\t\tFileUtils.mkdir_p File.dirname(testPluginsPath) (esc)
-  \t\t\t\t\t\t\t\tFile.write(testPluginsPath, allPlugins.to_a.join('')) (esc)
-  \t\t\t\t\t\t\t\tend (esc)
-  \t\t\t\t\t\t\t\tend (esc)
-  \t\t\t\t\t\t\t</script> (esc)
+                <artifacts>
+                  <artifact>
+                    <file>target/publish/module.json</file>
+                    <type>module</type>
+                  </artifact>
+                </artifacts>
               </configuration>
             </execution>
           </executions>
-          <dependencies>
-            <dependency>
-              <groupId>org.jruby</groupId>
-              <artifactId>jruby-complete</artifactId>
-              <version>9.2.11.1</version>
-              <scope>runtime</scope>
-            </dependency>
-          </dependencies>
         </plugin>
       </plugins>
     </build>
     <profiles>
       <profile>
-        <id>only-eclipse-scijava</id>
+        <id>srczip-parent</id>
         <activation>
-          <property>
-            <name>m2e.version</name>
-          </property>
+          <file>
+            <exists>${java.home}/../src.zip</exists>
+          </file>
         </activation>
+        <dependencies>
+          <dependency>
+            <groupId>jdk</groupId>
+            <artifactId>srczip</artifactId>
+            <version>999</version>
+            <scope>system</scope>
+            <systemPath>${java.home}/../src.zip</systemPath>
+            <optional>true</optional>
+          </dependency>
+        </dependencies>
+      </profile>
+      <profile>
+        <id>srczip-lib</id>
+        <activation>
+          <file>
+            <exists>${java.home}/lib/src.zip</exists>
+          </file>
+        </activation>
+        <dependencies>
+          <dependency>
+            <groupId>jdk</groupId>
+            <artifactId>srczip</artifactId>
+            <version>999</version>
+            <scope>system</scope>
+            <systemPath>${java.home}/lib/src.zip</systemPath>
+            <optional>true</optional>
+          </dependency>
+        </dependencies>
         <build>
-          <pluginManagement>
-            <plugins>
-              <!--
-  \t\t\t\t\t\tConfigure the Eclipse m2e plugin to support needed plugins. (esc)
-  \t\t\t\t\t\t--> (esc)
-              <plugin>
-                <groupId>org.eclipse.m2e</groupId>
-                <artifactId>lifecycle-mapping</artifactId>
-                <!--
-  \t\t\t\t\t\t\tNB: Eclipse cannot handle an overridden version property here! (esc)
-  \t\t\t\t\t\t\tThe version needs to stay hardcoded at 1.0.0. (esc)
-  \t\t\t\t\t\t\t--> (esc)
-                <version>1.0.0</version>
-                <configuration>
-                  <lifecycleMappingMetadata>
-                    <pluginExecutions combine.children="append">
-                      <!--
-  \t\t\t\t\t\t\t\t\t\tNB: Make Eclipse union the metadata indices on every build; see: (esc)
-  \t\t\t\t\t\t\t\t\t\thttps://www.eclipse.org/m2e/documentation/m2e-execution-not-covered.html (esc)
-  \t\t\t\t\t\t\t\t\t\t--> (esc)
-                      <pluginExecution>
-                        <pluginExecutionFilter>
-                          <groupId>com.alexecollins.maven.plugin</groupId>
-                          <artifactId>script-maven-plugin</artifactId>
-                          <versionRange>${script-maven-plugin.version}</versionRange>
-                          <goals>
-                            <goal>execute</goal>
-                          </goals>
-                        </pluginExecutionFilter>
-                        <action>
-                          <execute>
-                            <runOnConfiguration>true</runOnConfiguration>
-                            <!--
-  \t\t\t\t\t\t\t\t\t\t\t\t\tNB: You might think we could run the annotations (esc)
-  \t\t\t\t\t\t\t\t\t\t\t\t\tunion script once only, at configuration time. (esc)
-  \t\t\t\t\t\t\t\t\t\t\t\t\tUnfortunately, when configuration happens in Eclipse, (esc)
-  \t\t\t\t\t\t\t\t\t\t\t\t\tthe plugin annotations have not yet been generated. (esc)
-  \t\t\t\t\t\t\t\t\t\t\t\t\tSo let's redo the union on every incremental build. (esc)
-  \t\t\t\t\t\t\t\t\t\t\t\t\tThat'll show 'em! (esc)
-  \t\t\t\t\t\t\t\t\t\t\t\t\t--> (esc)
-                            <runOnIncremental>true</runOnIncremental>
-                          </execute>
-                        </action>
-                      </pluginExecution>
-                    </pluginExecutions>
-                  </lifecycleMappingMetadata>
-                </configuration>
-              </plugin>
-            </plugins>
-          </pluginManagement>
+          <plugins>
+            <plugin>
+              <artifactId>maven-javadoc-plugin</artifactId>
+              <configuration>
+                <!-- We need to point at the java.base subdirectory because Maven appears to assume that package foo.bar is located in foo/bar and not java.base/foo/bar when translating excludePackageNames into filenames to pass to javadoc. (Note that manually passing -exclude to javadoc appears to possibly not work at all for java.* types??) Also, referring only to java.base avoids a lot of other sources. -->
+                <sourcepath>${project.build.sourceDirectory}:${project.build.directory}/jdk-sources/java.base</sourcepath>
+              </configuration>
+            </plugin>
+          </plugins>
         </build>
       </profile>
     </profiles>
@@ -902,11 +526,107 @@ Test info versions requires coordinates.
 
 Test info versions with coordinates.
 
-  $ jgo info versions com.google.guava:guava
+  $ jgo info versions com.google.guava:guava | head -n100
   Available versions for com.google.guava:guava:
-    1.0.0 (release)
-    2.0.0-SNAPSHOT (latest)
-    2.0.0-SNAPSHOT (latest)
+    HEAD-android-SNAPSHOT
+    HEAD-jre-SNAPSHOT
+    r03
+    r05
+    r06
+    r07
+    r08
+    r09
+    10.0-rc1
+    10.0-rc2
+    10.0-rc3
+    10.0
+    10.0.1
+    11.0-rc1
+    11.0
+    11.0.1
+    11.0.2
+    11.0.2-atlassian-01
+    11.0.2-atlassian-02
+    12.0-rc1
+    12.0-rc2
+    12.0
+    12.0.1
+    13.0-rc1
+    13.0-rc2
+    13.0
+    13.0.1
+    14.0-rc1
+    14.0-rc2
+    14.0-rc3
+    14.0
+    14.0.1
+    15.0-rc1
+    15.0
+    16.0-rc1
+    16.0
+    16.0.1
+    17.0-rc1
+    17.0-rc2
+    17.0
+    18.0-rc1
+    18.0-rc2
+    18.0
+    19.0-rc1
+    19.0-rc2
+    19.0-rc3
+    19.0
+    19.0.0.jbossorg-1
+    19.0.0.jbossorg-2
+    19.0.20150826
+    20.0-rc1
+    20.0
+    20.0-hal
+    21.0-rc1
+    21.0-rc2
+    21.0
+    22.0-rc1
+    22.0-rc1-android
+    22.0
+    22.0-android
+    23.0-rc1
+    23.0-rc1-android
+    23.0
+    23.0-android
+    23.1-android
+    23.1-jre
+    23.2-android
+    23.2-jre
+    23.3-android
+    23.3-jre
+    23.4-android
+    23.4-jre
+    23.5-android
+    23.5-jre
+    23.6-android
+    23.6-jre
+    23.6.1-android
+    23.6.1-jre
+    24.0-SNAPSHOT
+    24.0-android
+    24.0-jre
+    24.1-android
+    24.1-jre
+    24.1.1-android
+    24.1.1-jre
+    25.0-android
+    25.0-jre
+    25.1-android
+    25.1-jre
+    26.0-android
+    26.0-jre
+    27.0-android
+    27.0-jre
+    27.0.1-android
+    27.0.1-jre
+    27.1-android
+    27.1-jre
+    28.0-android
+    28.0-jre
 
 Test info entrypoints without jgo.toml.
 

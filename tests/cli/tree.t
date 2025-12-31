@@ -21,7 +21,7 @@ Test tree --help shows usage.
 Test tree with endpoint.
 
   $ jgo tree org.jruby:jruby:10.0.2.0
-
+  
   └── org.jruby:jruby:10.0.2.0
       ├── org.jruby:jruby-base:10.0.2.0
       │   ├── org.ow2.asm:asm:9.7.1
@@ -50,11 +50,12 @@ Test tree with endpoint.
       │   ├── com.headius:backport9:1.13
       │   └── org.crac:crac:1.5.0
       └── org.jruby:jruby-stdlib:10.0.2.0
+
 
 Test tree with --dry-run.
 
   $ jgo --dry-run tree org.jruby:jruby:10.0.2.0
-
+  
   └── org.jruby:jruby:10.0.2.0
       ├── org.jruby:jruby-base:10.0.2.0
       │   ├── org.ow2.asm:asm:9.7.1
@@ -83,11 +84,12 @@ Test tree with --dry-run.
       │   ├── com.headius:backport9:1.13
       │   └── org.crac:crac:1.5.0
       └── org.jruby:jruby-stdlib:10.0.2.0
+
 
 Test tree with --offline (uses cache).
 
   $ jgo --offline tree org.jruby:jruby:10.0.2.0
-
+  
   └── org.jruby:jruby:10.0.2.0
       ├── org.jruby:jruby-base:10.0.2.0
       │   ├── org.ow2.asm:asm:9.7.1
@@ -116,3 +118,4 @@ Test tree with --offline (uses cache).
       │   ├── com.headius:backport9:1.13
       │   └── org.crac:crac:1.5.0
       └── org.jruby:jruby-stdlib:10.0.2.0
+
