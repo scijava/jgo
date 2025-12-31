@@ -461,7 +461,7 @@ def global_options(f):
         "-r",
         "--repository",
         multiple=True,
-        metavar="NAME=URL",
+        metavar="NAME:URL",
         help="Add remote Maven repository.",
     )(f)
     f = click.option(
@@ -799,12 +799,12 @@ def _parse_remaining(remaining):
 
 def _build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, command=None):
     """Build a ParsedArgs object from Click options."""
-    # Parse repositories from NAME=URL format
+    # Parse repositories from NAME:URL format
     repositories = {}
     if opts.get("repository"):
         for repo in opts["repository"]:
-            if "=" in repo:
-                name, url = repo.split("=", 1)
+            if ":" in repo:
+                name, url = repo.split(":", 1)
                 repositories[name] = url
 
     # Parse properties from KEY=VALUE format

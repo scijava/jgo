@@ -119,7 +119,7 @@ Test --color with different commands.
   │ --java-version          VERSION                    Force specific Java       │
   │                                                    version (e.g., 17). [env  │
   │                                                    var: JAVA_VERSION]        │
-  │ --repository        -r  NAME=URL                   Add remote Maven          │
+  │ --repository        -r  NAME:URL                   Add remote Maven          │
   │                                                    repository.               │
   │ --resolver              [auto|python|mvn]          Dependency resolver: auto │
   │                                                    (default), python, or mvn │
