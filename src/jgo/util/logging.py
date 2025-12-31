@@ -25,6 +25,8 @@ def setup_logging(verbose: int = 0) -> logging.Logger:
         Console configuration (color, quiet) is handled by console.setup_consoles().
         This function only configures log levels and formatting.
     """
+    # Note: Must use "jgo" explicitly to configure the root jgo logger,
+    # not this module's logger.
     logger = logging.getLogger("jgo")
 
     # Clear any existing handlers
@@ -90,6 +92,8 @@ def get_log_level() -> int:
     Returns:
         Current log level (e.g., logging.DEBUG, logging.INFO, logging.WARNING)
     """
+    # Note: Must use "jgo" explicitly to query the root logger's level,
+    # not this module's logger which would return NOTSET.
     return logging.getLogger("jgo").level
 
 

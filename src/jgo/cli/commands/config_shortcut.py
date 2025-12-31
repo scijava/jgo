@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
     from ..parser import ParsedArgs
 
-_log = logging.getLogger("jgo")
+_log = logging.getLogger(__name__)
 
 
 @click.command(name="shortcut", help="Manage global endpoint shortcuts.")

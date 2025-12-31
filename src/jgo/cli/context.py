@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from ..maven import Resolver
     from .parser import ParsedArgs
 
-_log = logging.getLogger("jgo")
+_log = logging.getLogger(__name__)
 
 
 def create_maven_context(args: ParsedArgs, config: dict) -> MavenContext:

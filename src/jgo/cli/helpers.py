@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from ..env import EnvironmentSpec
     from .parser import ParsedArgs
 
-_log = logging.getLogger("jgo")
+_log = logging.getLogger(__name__)
 
 
 def verbose_print(args: ParsedArgs, message: str, level: int = 0):
@@ -38,7 +38,7 @@ def verbose_print(args: ParsedArgs, message: str, level: int = 0):
         stacklevel=2,
     )
 
-    logger = logging.getLogger("jgo")
+    logger = logging.getLogger(__name__)
     if args.verbose > level:
         logger.debug(message)
 

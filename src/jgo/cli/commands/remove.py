@@ -10,7 +10,7 @@ import rich_click as click
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
-_log = logging.getLogger("jgo")
+_log = logging.getLogger(__name__)
 
 
 @click.command(help="Remove dependencies from [cyan]jgo.toml[/].")

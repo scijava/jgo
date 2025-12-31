@@ -16,7 +16,7 @@ from ...util import is_debug_enabled, is_info_enabled
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
-_log = logging.getLogger("jgo")
+_log = logging.getLogger(__name__)
 
 
 @click.command(help="Search for artifacts in [magenta]Maven repositories[/].")

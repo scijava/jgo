@@ -9,7 +9,7 @@ import rich_click as click
 
 from ...parse.coordinate import Coordinate
 
-_log = logging.getLogger("jgo")
+_log = logging.getLogger(__name__)
 
 
 @click.command(help="Show classpath.")

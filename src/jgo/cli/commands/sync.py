@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from ...env.lockfile import LockFile
     from ..parser import ParsedArgs
 
-_log = logging.getLogger("jgo")
+_log = logging.getLogger(__name__)
 
 
 @click.command(help="[green]Resolve[/] dependencies and [green]build[/] environment.")
@@ -160,7 +160,7 @@ def _show_version_changes(
 
     from ...env.lockfile import LockFile
 
-    _log = logging.getLogger("jgo")
+    _log = logging.getLogger(__name__)
 
     try:
         # Load lock files

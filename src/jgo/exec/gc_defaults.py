@@ -10,7 +10,7 @@ import logging
 from difflib import get_close_matches
 from typing import Literal
 
-_log = logging.getLogger("jgo")
+_log = logging.getLogger(__name__)
 
 
 def get_default_gc_options(java_version: int) -> list[str]:
