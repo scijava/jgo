@@ -26,6 +26,8 @@ def test_xdg_config_precedence(monkeypatch, tmp_path, caplog):
 
     # Set HOME to our test directory
     monkeypatch.setenv("HOME", str(tmp_path))
+    # Unset XDG_CONFIG_HOME so it doesn't override our test HOME
+    monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
 
     # Create XDG config location
     xdg_config_dir = tmp_path / ".config"
@@ -87,6 +89,8 @@ def test_legacy_config_fallback(monkeypatch, tmp_path):
     """Test that legacy .jgorc is used when XDG config doesn't exist."""
     # Set HOME to our test directory
     monkeypatch.setenv("HOME", str(tmp_path))
+    # Unset XDG_CONFIG_HOME to ensure clean test environment
+    monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
 
     # Create only legacy config (no XDG config)
     legacy_config = tmp_path / ".jgorc"
@@ -112,6 +116,8 @@ def test_no_config_file(monkeypatch, tmp_path):
     """Test that defaults are used when no config file exists."""
     # Set HOME to our test directory (no config files)
     monkeypatch.setenv("HOME", str(tmp_path))
+    # Unset XDG_CONFIG_HOME to ensure clean test environment
+    monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
 
     # Load config - should use defaults
     config = GlobalSettings.load()
