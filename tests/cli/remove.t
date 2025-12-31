@@ -50,10 +50,6 @@ Test remove multiple coordinates.
 Test remove with --dry-run.
 
   $ jgo add org.scijava:scijava-common:2.97.1
-  ERROR    Failed to build environment: Artifact                                  
-           org.scijava:scijava-common:pom:2.97.1 not found in remote repositories 
-           {}                                                                     
-  [1]
   $ jgo --dry-run remove org.scijava:scijava-common
   [DRY-RUN] Would remove 1 dependencies from jgo.toml
 
