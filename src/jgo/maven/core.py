@@ -376,56 +376,55 @@ class Project:
     @property
     def latest(self) -> str:
         """
-        The most recently deployed version of this project.
+        The highest version of this project across all repositories.
 
         This is jgo's smart implementation of Maven's LATEST version resolution.
 
         Algorithm:
         - For single repository: returns the <latest> tag value (or lastVersion)
         - For multiple repositories:
-          1. Finds the repository with the most recent <lastUpdated> timestamp
-          2. Returns the lastVersion from that repository
+          1. Collects all versions from all repositories
+          2. Uses Maven version ordering to find the highest version
+          (Unlike release, this INCLUDES SNAPSHOT versions)
 
         Rationale:
-        The <lastUpdated> timestamp indicates when something was deployed to that
-        repository. The lastVersion (last entry in <versions> list) is likely to
-        be what was recently deployed, though SNAPSHOTs may have been redeployed
-        without changing their position in the list.
+        LATEST means "highest version number" not "most recently deployed".
+        This handles multi-branch development correctly:
+        - If you have 2.x-SNAPSHOT (main) and 1.x-SNAPSHOT (maintenance)
+        - LATEST returns 2.x-SNAPSHOT even if 1.x was deployed more recently
+        - This avoids ping-ponging between branches based on commit timing
+
+        Limitation:
+        Projects using unconventional SNAPSHOT naming (e.g., always reusing
+        "1.x-SNAPSHOT" for current development regardless of actual version)
+        may not get expected results, as version comparison cannot determine
+        temporal relationships without external knowledge.
 
         Deviation from Maven:
-        jgo uses the same heuristic as Maven here (most recently updated repo).
-        Both have limitations when determining which specific version was just
-        deployed.
-
-        Future enhancement:
-        For full accuracy, could fetch and compare timestamps of:
-        - The lastVersion from the most recent repo
-        - All SNAPSHOT versions from that repo
-        This would require additional HTTP requests but would be definitive.
+        jgo correctly compares versions across repositories, while Maven uses
+        the most recently updated repository (same bug as with RELEASE).
 
         See docs/version-resolution.md for full details.
 
         Returns:
-            The most recently deployed version string (may be SNAPSHOT or release),
+            The highest version string (may be SNAPSHOT or release),
             or None if no versions exist.
         """
-        from datetime import datetime
+        from functools import cmp_to_key
 
         from .metadata import Metadatas
+        from .version import compare_versions
 
         # For single metadata source, use its latest tag (or fall back to lastVersion)
         if not isinstance(self.metadata, Metadatas):
             return self.metadata.latest or self.metadata.lastVersion
 
-        # For multiple repos: use lastVersion from most recently updated repo
-        if not self.metadata.metadatas:
+        # For multiple repos: find highest version (including SNAPSHOTs) across all
+        all_versions = self.metadata.versions
+        if not all_versions:
             return None
 
-        most_recent = max(
-            self.metadata.metadatas, key=lambda m: m.lastUpdated or datetime.min
-        )
-        # Use <latest> tag if present, otherwise fall back to lastVersion heuristic
-        return most_recent.latest or most_recent.lastVersion
+        return max(all_versions, key=cmp_to_key(compare_versions))
 
     def versions(
         self, releases: bool = True, snapshots: bool = False, locked: bool = False

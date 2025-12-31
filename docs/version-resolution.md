@@ -55,24 +55,36 @@ The `Project` class implements intelligent version resolution:
 
 **Deviation from Maven:** Yes, but in a way that prioritizes correctness. Maven has the same bug; jgo fixes it.
 
-#### `Project.latest` - Most Recently Deployed Version
+#### `Project.latest` - Highest Version (Including SNAPSHOTs)
 
-**Algorithm (Heuristic):**
-1. Find the repository metadata with the most recent `<lastUpdated>` timestamp
-2. Return the `<latest>` tag from that metadata
-3. If `<latest>` is absent, fall back to `lastVersion` (last entry in its `<versions>` list)
+**Algorithm:**
+1. Collect all versions from all configured repositories
+2. Use Maven version comparison to find the highest version
+3. Unlike `release`, this **includes SNAPSHOT versions**
 
 **Rationale:**
-- The `<lastUpdated>` timestamp indicates when something was deployed to that repo
-- The `<latest>` tag reflects what that repository considers latest
-- Fall back to `lastVersion` as a heuristic when the tag is missing
-- Determining the true answer requires fetching timestamps for individual artifacts (expensive)
+`LATEST` means "highest version number", not "most recently deployed". This is critical for correct multi-branch development:
 
-**Future Enhancement:**
-- Compare timestamps of `lastVersion` + all SNAPSHOT versions from that metadata
-- Requires additional HTTP requests but would be fully accurate
+Example scenario:
+- Main branch: `2.4.0-SNAPSHOT` (deployed 2025-12-28)
+- Maintenance branch: `1.23.4-SNAPSHOT` (deployed 2025-12-30)
+- Expected: `2.4.0-SNAPSHOT` (highest version, represents current development)
+- If using temporal ordering: Would ping-pong between branches based on commit timing ❌
 
-**Result:** For net.imagej:ij with recent SNAPSHOT builds on maven.scijava.org, returns `1.48q` (the lastVersion from the recently updated repo).
+**Limitation:**
+Projects using unconventional SNAPSHOT naming schemes cannot be handled correctly:
+
+Example: net.imagej:ij always uses `1.x-SNAPSHOT` for all development builds
+- `1.54p` is the newest release (Maven Central, 2025-02-18)
+- `1.x-SNAPSHOT` is current development (maven.scijava.org, 2025-12-22)
+- Version comparison: `1.x-SNAPSHOT` < `1.54p` (due to qualifier ordering)
+- jgo returns: `1.54p` (highest version by Maven ordering)
+- Expected by project: `1.x-SNAPSHOT` (most recent development build)
+- **This is unavoidable** - version comparison cannot infer temporal relationships
+
+**Result:** For most projects, returns the expected highest version. For net.imagej:ij specifically, returns `1.54p` instead of `1.x-SNAPSHOT` due to unconventional versioning.
+
+**Deviation from Maven:** Yes, same as `release` - compares versions across all repositories instead of using most recently updated repo.
 
 ## Rationale for Deviation
 
