@@ -28,8 +28,7 @@ Test list with endpoint.
      com.google.errorprone:error_prone_annotations:jar:2.19.0:compile
      com.google.guava:failureaccess:jar:1.0.1:compile
      com.google.guava:guava:jar:31.1-jre:compile
-     com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-gua
-  va:compile
+     com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
      com.google.j2objc:j2objc-annotations:jar:2.8:compile
      com.googlecode.efficient-java-matrix-library:ejml:jar:0.25:compile
      edu.mines:mines-jtk:jar:20151125:compile
@@ -73,8 +72,7 @@ Test list with --dry-run.
      com.google.errorprone:error_prone_annotations:jar:2.19.0:compile
      com.google.guava:failureaccess:jar:1.0.1:compile
      com.google.guava:guava:jar:31.1-jre:compile
-     com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-gua
-  va:compile
+     com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
      com.google.j2objc:j2objc-annotations:jar:2.8:compile
      com.googlecode.efficient-java-matrix-library:ejml:jar:0.25:compile
      edu.mines:mines-jtk:jar:20151125:compile
@@ -118,8 +116,7 @@ Test list with --offline (uses cache).
      com.google.errorprone:error_prone_annotations:jar:2.19.0:compile
      com.google.guava:failureaccess:jar:1.0.1:compile
      com.google.guava:guava:jar:31.1-jre:compile
-     com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-gua
-  va:compile
+     com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
      com.google.j2objc:j2objc-annotations:jar:2.8:compile
      com.googlecode.efficient-java-matrix-library:ejml:jar:0.25:compile
      edu.mines:mines-jtk:jar:20151125:compile

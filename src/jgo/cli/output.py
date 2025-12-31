@@ -85,10 +85,10 @@ def print_dependencies(
             transitive=not direct_only,
         )
 
-        # Format and print using Rich
+        # Format and print using Rich with soft_wrap to prevent line wrapping
         lines = format_dependency_list_rich(root, deps)
         for line in lines:
-            _console.print(line, highlight=False)
+            _console.print(line, highlight=False, soft_wrap=True)
     else:
         # Tree mode - use Rich Tree for beautiful colored output
         from ..maven.dependency_printer import format_dependency_tree_rich
