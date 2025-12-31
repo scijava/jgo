@@ -55,10 +55,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    from ...env import EnvironmentBuilder
-    from ...env.linking import LinkStrategy
     from ...env.lockfile import LockFile, compute_spec_hash
-    from ...maven import MavenContext
     from ..helpers import load_spec_file, print_exception_if_verbose
 
     # Get the spec file path
@@ -101,22 +98,13 @@ def execute(args: ParsedArgs, config: dict) -> int:
     _log.debug(f"Updating lock file for {spec_file}")
 
     try:
-        # Create Maven context
-        context = MavenContext(
-            repo_cache=args.repo_cache,
-            remote_repos=args.repositories or {},
-        )
+        from ..context import create_environment_builder, create_maven_context
 
-        # Determine link strategy (not used for lock, but required for builder)
-        link_str = args.link or "auto"
-        link_strategy = LinkStrategy[link_str.upper()]
+        # Create Maven context
+        context = create_maven_context(args, config)
 
         # Create builder
-        builder = EnvironmentBuilder(
-            context=context,
-            cache_dir=args.cache_dir,
-            link_strategy=link_strategy,
-        )
+        builder = create_environment_builder(args, config, context)
 
         # Resolve and generate lockfile without building environment
         _log.info(f"Resolving dependencies from {spec_file.name}...")

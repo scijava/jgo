@@ -60,10 +60,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    from ...env import EnvironmentBuilder
-    from ...env.linking import LinkStrategy
     from ...env.lockfile import LockFile
-    from ...maven import MavenContext
     from ..helpers import (
         handle_dry_run,
         load_spec_file,
@@ -92,22 +89,13 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     # Build environment
     try:
-        # Create Maven context
-        context = MavenContext(
-            repo_cache=args.repo_cache,
-            remote_repos=args.repositories or {},
-        )
+        from ..context import create_environment_builder, create_maven_context
 
-        # Determine link strategy
-        link_str = args.link or "auto"
-        link_strategy = LinkStrategy[link_str.upper()]
+        # Create Maven context
+        context = create_maven_context(args, config)
 
         # Create builder
-        builder = EnvironmentBuilder(
-            context=context,
-            cache_dir=args.cache_dir,
-            link_strategy=link_strategy,
-        )
+        builder = create_environment_builder(args, config, context)
 
         # Load old lock file if updating (for version change reporting)
         update = args.update or getattr(args, "force", False)
