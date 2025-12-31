@@ -39,5 +39,10 @@ if [ ${#prysk_args[@]} -gt 0 ] && command -v prysk; then
   # NB: We cannot add prysk to pyproject.toml because
   # prysk depends on an incompatible version of rich.
   # Use `uv tool install prysk` instead.
-  prysk -v "${prysk_args[@]}"
+  #
+  # We set COLOR=never by default to avoid ANSI codes in test output.
+  # This is especially important for CI, which may or may not detect
+  # as ANSI-color-compatible compared to local usage of prysk.
+  # Tests can override this (e.g., color.t does).
+  COLOR="${COLOR:-never}" prysk -v "${prysk_args[@]}"
 fi

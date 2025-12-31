@@ -26,19 +26,6 @@ Test --color=always forces ANSI color codes.
                                                                                   
   [2]
 
-Test --color=auto (default, depends on TTY).
-
-  $ jgo --color=auto remove
-                                                                                  
-   Usage: jgo remove [OPTIONS] COORDINATES...                                     
-                                                                                  
-   Try 'jgo remove --help' for help                                               
-  ╭─ Error ──────────────────────────────────────────────────────────────────────╮
-  │ Missing argument 'COORDINATES...'.                                           │
-  ╰──────────────────────────────────────────────────────────────────────────────╯
-                                                                                  
-  [2]
-
 Test --color with different commands.
 
   $ jgo --color=never help
@@ -251,13 +238,14 @@ Test --color with info commands.
 
 Test --color respects environment variable COLOR.
 
-  $ COLOR=never jgo remove
+  $ COLOR=always jgo remove
                                                                                   
-   Usage: jgo remove [OPTIONS] COORDINATES...                                     
+   \x1b[33mUsage:\x1b[0m \x1b[1mjgo remove\x1b[0m [\x1b[1;36mOPTIONS\x1b[0m] \x1b[1;36mCOORDINATES\x1b[0m...                                      (esc)
                                                                                   
-   Try 'jgo remove --help' for help                                               
-  ╭─ Error ──────────────────────────────────────────────────────────────────────╮
-  │ Missing argument 'COORDINATES...'.                                           │
-  ╰──────────────────────────────────────────────────────────────────────────────╯
+  \x1b[2m \x1b[0m\x1b[2mTry \x1b[0m\x1b[1;2;36m'jgo remove --help'\x1b[0m\x1b[2m for help\x1b[0m\x1b[2m                                              \x1b[0m\x1b[2m \x1b[0m (esc)
+  \x1b[31m╭─\x1b[0m\x1b[31m Error \x1b[0m\x1b[31m─────────────────────────────────────────────────────────────────────\x1b[0m\x1b[31m─╮\x1b[0m (esc)
+  \x1b[31m│\x1b[0m Missing argument 'COORDINATES...'.                                           \x1b[31m│\x1b[0m (esc)
+  \x1b[31m╰──────────────────────────────────────────────────────────────────────────────╯\x1b[0m (esc)
                                                                                   
   [2]
+
