@@ -50,9 +50,9 @@ def print_classpath(environment: Environment) -> None:
         _err_console.print("[red]No JARs in classpath[/]")
         return
 
-    separator = ";" if sys.platform == "win32" else ":"
-    classpath_str = separator.join(str(p) for p in classpath)
-    _console.print(classpath_str, highlight=False)
+    # Print one classpath element per line (raw output, no Rich formatting)
+    for jar_path in classpath:
+        print(jar_path)
 
 
 def print_dependencies(
