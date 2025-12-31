@@ -7,10 +7,13 @@ Supports jgo settings files with backward compatibility to jgo 1.x.
 from __future__ import annotations
 
 import configparser
+import logging
 import os
 from pathlib import Path
 
 from .manager import get_settings_path
+
+_log = logging.getLogger(__name__)
 
 
 def config_file_path() -> Path:
@@ -84,12 +87,17 @@ class GlobalSettings:
         if settings_file is None:
             settings_file = get_settings_path()
 
+        _log.debug(f"Loading settings from: {settings_file}")
+
         # Start with defaults
         settings = cls._default_config()
 
         # Load from file if it exists
         if settings_file.exists():
+            _log.debug(f"Settings file exists, loading: {settings_file}")
             settings = cls._load_from_file(settings_file, settings)
+        else:
+            _log.debug(f"Settings file does not exist: {settings_file}")
 
         # Override with environment variables
         settings = cls._apply_environment_variables(settings)
@@ -147,6 +155,8 @@ class GlobalSettings:
         parser = configparser.ConfigParser()
         parser.read(settings_file)
 
+        _log.debug(f"Parsing settings file: {settings_file}")
+
         # Parse [settings] section
         cache_dir = base_config.cache_dir
         repo_cache = base_config.repo_cache
@@ -159,9 +169,11 @@ class GlobalSettings:
 
             if parser.has_option("settings", "cache_dir"):
                 cache_dir = Path(parser.get("settings", "cache_dir")).expanduser()
+                _log.debug(f"Loaded cache_dir from file: {cache_dir}")
             elif parser.has_option("settings", "cacheDir"):
                 # Backward compatibility with jgo 1.x
                 cache_dir = Path(parser.get("settings", "cacheDir")).expanduser()
+                _log.debug(f"Loaded cacheDir (legacy) from file: {cache_dir}")
 
             if parser.has_option("settings", "repo_cache"):
                 repo_cache = Path(parser.get("settings", "repo_cache")).expanduser()
@@ -200,6 +212,11 @@ class GlobalSettings:
                     jvm_config["properties"][prop_key] = value
                 else:
                     jvm_config[key] = value
+
+        _log.debug(
+            f"Loaded settings: cache_dir={cache_dir}, links={links}, "
+            f"repositories={list(repositories.keys())}"
+        )
 
         return cls(
             cache_dir=cache_dir,

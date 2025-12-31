@@ -6,6 +6,7 @@ Centralizes settings file path resolution and display name logic.
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from ..constants import (
@@ -15,6 +16,8 @@ from ..constants import (
     legacy_settings_path,
     xdg_settings_path,
 )
+
+_log = logging.getLogger(__name__)
 
 
 def get_settings_path() -> Path:
@@ -30,15 +33,21 @@ def get_settings_path() -> Path:
     xdg_path = xdg_settings_path()
     legacy_path = legacy_settings_path()
 
+    _log.debug(f"XDG settings path: {xdg_path} (exists={xdg_path.exists()})")
+    _log.debug(f"Legacy settings path: {legacy_path} (exists={legacy_path.exists()})")
+
     # Prefer XDG if it exists
     if xdg_path.exists():
+        _log.debug(f"Using XDG settings file: {xdg_path}")
         return xdg_path
 
     # Fall back to legacy if it exists (backward compatibility)
     if legacy_path.exists():
+        _log.debug(f"Using legacy settings file: {legacy_path}")
         return legacy_path
 
     # Default to XDG for new installations
+    _log.debug(f"Using default XDG settings path: {xdg_path}")
     return xdg_path
 
 

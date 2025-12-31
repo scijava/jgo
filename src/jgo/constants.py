@@ -73,17 +73,36 @@ def xdg_settings_path() -> Path:
 
     Respects XDG_CONFIG_HOME environment variable if set, otherwise uses ~/.config/jgo.conf.
     """
+    import logging
+
+    _log = logging.getLogger(__name__)
+
     xdg_config_home = os.getenv("XDG_CONFIG_HOME")
+    home = Path.home()
+
+    _log.debug(f"HOME={home}, XDG_CONFIG_HOME={xdg_config_home}")
+
     if xdg_config_home:
-        return Path(xdg_config_home) / "jgo.conf"
-    return Path.home() / ".config" / "jgo.conf"
+        path = Path(xdg_config_home) / "jgo.conf"
+        _log.debug(f"Using XDG_CONFIG_HOME path: {path}")
+        return path
+
+    path = home / ".config" / "jgo.conf"
+    _log.debug(f"Using default XDG path: {path}")
+    return path
 
 
 def legacy_settings_path() -> Path:
     """
     Get legacy settings file path (~/.jgorc).
     """
-    return Path.home() / ".jgorc"
+    import logging
+
+    _log = logging.getLogger(__name__)
+
+    path = Path.home() / ".jgorc"
+    _log.debug(f"Legacy settings path: {path}")
+    return path
 
 
 # Legacy constant-style access (for backward compatibility, will be removed in 3.0)

@@ -3,7 +3,7 @@
 from jgo.config import GlobalSettings
 
 
-def test_xdg_config_precedence(monkeypatch, tmp_path):
+def test_xdg_config_precedence(monkeypatch, tmp_path, caplog):
     """Test that XDG config location takes precedence over legacy .jgorc."""
 
     # FIXME: On GitHub Actions CI, this test fails with:
@@ -18,10 +18,11 @@ def test_xdg_config_precedence(monkeypatch, tmp_path):
     # E         + /legacy/cache
     #
     # tests/test_config.py:40: AssertionError
+    import logging
     import os
 
-    if os.environ.get("GITHUB_REPOSITORY"):
-        return
+    # Enable debug logging to diagnose CI issues
+    caplog.set_level(logging.DEBUG)
 
     # Set HOME to our test directory
     monkeypatch.setenv("HOME", str(tmp_path))
@@ -54,8 +55,26 @@ legacy_repo = https://legacy.example.com/maven2
     # Load config - should prefer XDG location
     config = GlobalSettings.load()
 
+    # Print debug info for CI diagnostics
+    if os.environ.get("GITHUB_REPOSITORY"):
+        print(f"\n=== DEBUG INFO FOR CI ===")
+        print(f"tmp_path: {tmp_path}")
+        print(f"XDG file exists: {(tmp_path / '.config' / 'jgo.conf').exists()}")
+        print(f"Legacy file exists: {(tmp_path / '.jgorc').exists()}")
+        print(f"Loaded cache_dir: {config.cache_dir}")
+        print(f"Loaded links: {config.links}")
+        print(f"Loaded repositories: {config.repositories}")
+        print(f"\n=== CAPLOG DEBUG OUTPUT ===")
+        for record in caplog.records:
+            if record.levelname == "DEBUG":
+                print(f"{record.name}: {record.message}")
+        print(f"=== END DEBUG INFO ===\n")
+
     # Verify XDG config was loaded
-    assert str(config.cache_dir) == "/xdg/cache"
+    assert str(config.cache_dir) == "/xdg/cache", (
+        f"Expected XDG cache_dir '/xdg/cache' but got '{config.cache_dir}'. "
+        f"Check debug logs above for path resolution details."
+    )
     assert config.links == "soft"
     assert "xdg_repo" in config.repositories
     assert config.repositories["xdg_repo"] == "https://xdg.example.com/maven2"
