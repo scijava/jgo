@@ -12,111 +12,130 @@ Test main help output.
    installation.                                                                  
                                                                                   
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
-  │ --version                                      Show jgo version and exit.    │
-  │ --ignore-config                                Ignore ~/.jgorc configuration │
-  │                                                file.                         │
-  │ --module-path-only                             Force all JARs to module-path │
-  │                                                (treat as modular).           │
-  │ --class-path-only                              Force all JARs to classpath   │
-  │                                                (disable module detection).   │
-  │ --lenient                                      Warn instead of failing on    │
-  │                                                unresolved dependencies. [env │
-  │                                                var: JGO_LENIENT]             │
-  │ --link                  [hard|soft|copy|auto]  How to link JARs: hard, soft, │
-  │                                                copy, or auto (default)       │
-  │ --property          -D  KEY=VALUE              Set property for profile      │
-  │                                                activation.                   │
-  │ --os-version            VERSION                Set OS version for profile    │
-  │                                                activation (e.g.,             │
-  │                                                '5.1.2600').                  │
-  │ --os-arch               ARCH                   Set OS architecture for       │
-  │                                                profile activation (e.g.,     │
-  │                                                'amd64', 'aarch64'). Use      │
-  │                                                'auto' to auto-detect.        │
-  │                                                Overrides --platform.         │
-  │ --os-family             FAMILY                 Set OS family for profile     │
-  │                                                activation (e.g., 'unix',     │
-  │                                                'windows'). Use 'auto' to     │
-  │                                                auto-detect. Overrides        │
-  │                                                --platform.                   │
-  │ --os-name               NAME                   Set OS name for profile       │
-  │                                                activation (e.g., 'Linux',    │
-  │                                                'Windows'). Use 'auto' to     │
-  │                                                auto-detect. Overrides        │
-  │                                                --platform.                   │
-  │ --platform              PLATFORM               Target platform for profile   │
-  │                                                activation. Sets os-name,     │
-  │                                                os-family, and os-arch        │
-  │                                                together. Choices: linux,     │
-  │                                                linux-arm64, linux-x32,       │
-  │                                                linux-x64, macos,             │
-  │                                                macos-arm64, macos-x32,       │
-  │                                                macos-x64, windows,           │
-  │                                                windows-arm64, windows-x32,   │
-  │                                                windows-x64, freebsd,         │
-  │                                                freebsd-x64, openbsd,         │
-  │                                                openbsd-x64, netbsd,          │
-  │                                                netbsd-x64, solaris,          │
-  │                                                solaris-x64, aix, aix-ppc64.  │
-  │                                                Aliases: linux32=linux-x32,   │
-  │                                                linux64=linux-x64,            │
-  │                                                macos32=macos-x32,            │
-  │                                                macos64=macos-x64,            │
-  │                                                win32=windows-x32,            │
-  │                                                win64=windows-x64.            │
-  │ --min-heap              SIZE                   Minimum/initial heap size     │
-  │                                                (e.g., 512M, 1G).             │
-  │ --max-heap              SIZE                   Maximum heap size (e.g., 4G,  │
-  │                                                512M). Overrides              │
-  │                                                auto-detection.               │
-  │ --gc                    FLAG                   GC options. Use shorthand     │
-  │                                                (e.g., --gc=G1, --gc=Z) or    │
-  │                                                explicit form                 │
-  │                                                (--gc=-XX:+UseZGC). Special   │
-  │                                                values: 'auto' (smart         │
-  │                                                defaults), 'none' (disable GC │
-  │                                                flags). Can be repeated.      │
-  │ --system-java                                  Use system Java instead of    │
-  │                                                downloading Java on demand.   │
-  │ --java-vendor           VENDOR                 Prefer specific Java vendor   │
-  │                                                (e.g., 'adoptium', 'zulu').   │
-  │ --java-version          VERSION                Force specific Java version   │
-  │                                                (e.g., 17). [env var:         │
-  │                                                JAVA_VERSION]                 │
-  │ --repository        -r  NAME=URL               Add remote Maven repository.  │
-  │ --resolver              [auto|python|mvn]      Dependency resolver: auto     │
-  │                                                (default), python, or mvn     │
-  │ --repo-cache            PATH                   Override Maven repo cache.    │
-  │                                                [env var: M2_REPO]            │
-  │ --cache-dir             PATH                   Override cache directory.     │
-  │                                                [env var: JGO_CACHE_DIR]      │
-  │ --no-cache                                     Skip cache entirely, always   │
-  │                                                rebuild. [env var:            │
-  │                                                JGO_NO_CACHE]                 │
-  │ --offline                                      Work offline, don't download. │
-  │                                                [env var: JGO_OFFLINE]        │
-  │ --update            -u                         Update cached environment.    │
-  │                                                [env var: JGO_UPDATE]         │
-  │ --dry-run                                      Show what would be done       │
-  │                                                without doing it. Note: while │
-  │                                                this mode prevents the        │
-  │                                                primary action (e.g. running  │
-  │                                                Java, creating files), jgo    │
-  │                                                may still download            │
-  │                                                dependencies and build cached │
-  │                                                environments as needed to     │
-  │                                                report accurate information.  │
-  │ --file              -f  FILE                   Use specific environment file │
-  │                                                (default: jgo.toml).          │
-  │ --color                 [auto|always|never]    Control colored output: auto  │
-  │                                                (default, color if TTY),      │
-  │                                                always (force color), never   │
-  │                                                (disable color). [env var:    │
-  │                                                COLOR]                        │
-  │ --quiet             -q                         Suppress all output.          │
-  │ --verbose           -v  INTEGER RANGE          Verbose output (can be        │
-  │                                                repeated: -vv, -vvv).         │
-  │ --help                                         Show this message and exit.   │
+  │ --version                                          Show jgo version and      │
+  │                                                    exit.                     │
+  │ --ignore-config                                    Ignore ~/.jgorc           │
+  │                                                    configuration file.       │
+  │ --module-path-only                                 Force all JARs to         │
+  │                                                    module-path (treat as     │
+  │                                                    modular).                 │
+  │ --class-path-only                                  Force all JARs to         │
+  │                                                    classpath (disable module │
+  │                                                    detection).               │
+  │ --lenient                                          Warn instead of failing   │
+  │                                                    on unresolved             │
+  │                                                    dependencies. [env var:   │
+  │                                                    JGO_LENIENT]              │
+  │ --link                  [hard|soft|copy|auto]      How to link JARs: hard,   │
+  │                                                    soft, copy, or auto       │
+  │                                                    (default)                 │
+  │ --property          -D  KEY=VALUE                  Set property for profile  │
+  │                                                    activation.               │
+  │ --os-version            VERSION                    Set OS version for        │
+  │                                                    profile activation (e.g., │
+  │                                                    '5.1.2600').              │
+  │ --os-arch               ARCH                       Set OS architecture for   │
+  │                                                    profile activation (e.g., │
+  │                                                    'amd64', 'aarch64'). Use  │
+  │                                                    'auto' to auto-detect.    │
+  │                                                    Overrides --platform.     │
+  │ --os-family             FAMILY                     Set OS family for profile │
+  │                                                    activation (e.g., 'unix', │
+  │                                                    'windows'). Use 'auto' to │
+  │                                                    auto-detect. Overrides    │
+  │                                                    --platform.               │
+  │ --os-name               NAME                       Set OS name for profile   │
+  │                                                    activation (e.g.,         │
+  │                                                    'Linux', 'Windows'). Use  │
+  │                                                    'auto' to auto-detect.    │
+  │                                                    Overrides --platform.     │
+  │ --platform              PLATFORM                   Target platform for       │
+  │                                                    profile activation. Sets  │
+  │                                                    os-name, os-family, and   │
+  │                                                    os-arch together.         │
+  │                                                    Choices: linux,           │
+  │                                                    linux-arm64, linux-x32,   │
+  │                                                    linux-x64, macos,         │
+  │                                                    macos-arm64, macos-x32,   │
+  │                                                    macos-x64, windows,       │
+  │                                                    windows-arm64,            │
+  │                                                    windows-x32, windows-x64, │
+  │                                                    freebsd, freebsd-x64,     │
+  │                                                    openbsd, openbsd-x64,     │
+  │                                                    netbsd, netbsd-x64,       │
+  │                                                    solaris, solaris-x64,     │
+  │                                                    aix, aix-ppc64. Aliases:  │
+  │                                                    linux32=linux-x32,        │
+  │                                                    linux64=linux-x64,        │
+  │                                                    macos32=macos-x32,        │
+  │                                                    macos64=macos-x64,        │
+  │                                                    win32=windows-x32,        │
+  │                                                    win64=windows-x64.        │
+  │ --min-heap              SIZE                       Minimum/initial heap size │
+  │                                                    (e.g., 512M, 1G).         │
+  │ --max-heap              SIZE                       Maximum heap size (e.g.,  │
+  │                                                    4G, 512M). Overrides      │
+  │                                                    auto-detection.           │
+  │ --gc                    FLAG                       GC options. Use shorthand │
+  │                                                    (e.g., --gc=G1, --gc=Z)   │
+  │                                                    or explicit form          │
+  │                                                    (--gc=-XX:+UseZGC).       │
+  │                                                    Special values: 'auto'    │
+  │                                                    (smart defaults), 'none'  │
+  │                                                    (disable GC flags). Can   │
+  │                                                    be repeated.              │
+  │ --system-java                                      Use system Java instead   │
+  │                                                    of downloading Java on    │
+  │                                                    demand.                   │
+  │ --java-vendor           VENDOR                     Prefer specific Java      │
+  │                                                    vendor (e.g., 'adoptium', │
+  │                                                    'zulu').                  │
+  │ --java-version          VERSION                    Force specific Java       │
+  │                                                    version (e.g., 17). [env  │
+  │                                                    var: JAVA_VERSION]        │
+  │ --repository        -r  NAME=URL                   Add remote Maven          │
+  │                                                    repository.               │
+  │ --resolver              [auto|python|mvn]          Dependency resolver: auto │
+  │                                                    (default), python, or mvn │
+  │ --repo-cache            PATH                       Override Maven repo       │
+  │                                                    cache. [env var: M2_REPO] │
+  │ --cache-dir             PATH                       Override cache directory. │
+  │                                                    [env var: JGO_CACHE_DIR]  │
+  │ --no-cache                                         Skip cache entirely,      │
+  │                                                    always rebuild. [env var: │
+  │                                                    JGO_NO_CACHE]             │
+  │ --offline                                          Work offline, don't       │
+  │                                                    download. [env var:       │
+  │                                                    JGO_OFFLINE]              │
+  │ --update            -u                             Update cached             │
+  │                                                    environment. [env var:    │
+  │                                                    JGO_UPDATE]               │
+  │ --dry-run                                          Show what would be done   │
+  │                                                    without doing it. Note:   │
+  │                                                    while this mode prevents  │
+  │                                                    the primary action (e.g.  │
+  │                                                    running Java, creating    │
+  │                                                    files), jgo may still     │
+  │                                                    download dependencies and │
+  │                                                    build cached environments │
+  │                                                    as needed to report       │
+  │                                                    accurate information.     │
+  │ --file              -f  FILE                       Use specific environment  │
+  │                                                    file (default: jgo.toml). │
+  │ --color                 [auto|rich|styled|plain|a  Control output            │
+  │                         lways|never]               formatting: auto          │
+  │                                                    (default, detect TTY),    │
+  │                                                    rich (force color+style), │
+  │                                                    styled (bold/italic only, │
+  │                                                    no color), plain (no ANSI │
+  │                                                    codes). Aliases:          │
+  │                                                    always=rich, never=plain. │
+  │                                                    [env var: COLOR]          │
+  │ --quiet             -q                             Suppress all output.      │
+  │ --verbose           -v  INTEGER RANGE              Verbose output (can be    │
+  │                                                    repeated: -vv, -vvv).     │
+  │ --help                                             Show this message and     │
+  │                                                    exit.                     │
   ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Commands ───────────────────────────────────────────────────────────────────╮
   │ add        Add dependencies to jgo.toml.                                     │
@@ -406,111 +425,130 @@ Test no-argument help (should show main help).
    installation.                                                                  
                                                                                   
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
-  │ --version                                      Show jgo version and exit.    │
-  │ --ignore-config                                Ignore ~/.jgorc configuration │
-  │                                                file.                         │
-  │ --module-path-only                             Force all JARs to module-path │
-  │                                                (treat as modular).           │
-  │ --class-path-only                              Force all JARs to classpath   │
-  │                                                (disable module detection).   │
-  │ --lenient                                      Warn instead of failing on    │
-  │                                                unresolved dependencies. [env │
-  │                                                var: JGO_LENIENT]             │
-  │ --link                  [hard|soft|copy|auto]  How to link JARs: hard, soft, │
-  │                                                copy, or auto (default)       │
-  │ --property          -D  KEY=VALUE              Set property for profile      │
-  │                                                activation.                   │
-  │ --os-version            VERSION                Set OS version for profile    │
-  │                                                activation (e.g.,             │
-  │                                                '5.1.2600').                  │
-  │ --os-arch               ARCH                   Set OS architecture for       │
-  │                                                profile activation (e.g.,     │
-  │                                                'amd64', 'aarch64'). Use      │
-  │                                                'auto' to auto-detect.        │
-  │                                                Overrides --platform.         │
-  │ --os-family             FAMILY                 Set OS family for profile     │
-  │                                                activation (e.g., 'unix',     │
-  │                                                'windows'). Use 'auto' to     │
-  │                                                auto-detect. Overrides        │
-  │                                                --platform.                   │
-  │ --os-name               NAME                   Set OS name for profile       │
-  │                                                activation (e.g., 'Linux',    │
-  │                                                'Windows'). Use 'auto' to     │
-  │                                                auto-detect. Overrides        │
-  │                                                --platform.                   │
-  │ --platform              PLATFORM               Target platform for profile   │
-  │                                                activation. Sets os-name,     │
-  │                                                os-family, and os-arch        │
-  │                                                together. Choices: linux,     │
-  │                                                linux-arm64, linux-x32,       │
-  │                                                linux-x64, macos,             │
-  │                                                macos-arm64, macos-x32,       │
-  │                                                macos-x64, windows,           │
-  │                                                windows-arm64, windows-x32,   │
-  │                                                windows-x64, freebsd,         │
-  │                                                freebsd-x64, openbsd,         │
-  │                                                openbsd-x64, netbsd,          │
-  │                                                netbsd-x64, solaris,          │
-  │                                                solaris-x64, aix, aix-ppc64.  │
-  │                                                Aliases: linux32=linux-x32,   │
-  │                                                linux64=linux-x64,            │
-  │                                                macos32=macos-x32,            │
-  │                                                macos64=macos-x64,            │
-  │                                                win32=windows-x32,            │
-  │                                                win64=windows-x64.            │
-  │ --min-heap              SIZE                   Minimum/initial heap size     │
-  │                                                (e.g., 512M, 1G).             │
-  │ --max-heap              SIZE                   Maximum heap size (e.g., 4G,  │
-  │                                                512M). Overrides              │
-  │                                                auto-detection.               │
-  │ --gc                    FLAG                   GC options. Use shorthand     │
-  │                                                (e.g., --gc=G1, --gc=Z) or    │
-  │                                                explicit form                 │
-  │                                                (--gc=-XX:+UseZGC). Special   │
-  │                                                values: 'auto' (smart         │
-  │                                                defaults), 'none' (disable GC │
-  │                                                flags). Can be repeated.      │
-  │ --system-java                                  Use system Java instead of    │
-  │                                                downloading Java on demand.   │
-  │ --java-vendor           VENDOR                 Prefer specific Java vendor   │
-  │                                                (e.g., 'adoptium', 'zulu').   │
-  │ --java-version          VERSION                Force specific Java version   │
-  │                                                (e.g., 17). [env var:         │
-  │                                                JAVA_VERSION]                 │
-  │ --repository        -r  NAME=URL               Add remote Maven repository.  │
-  │ --resolver              [auto|python|mvn]      Dependency resolver: auto     │
-  │                                                (default), python, or mvn     │
-  │ --repo-cache            PATH                   Override Maven repo cache.    │
-  │                                                [env var: M2_REPO]            │
-  │ --cache-dir             PATH                   Override cache directory.     │
-  │                                                [env var: JGO_CACHE_DIR]      │
-  │ --no-cache                                     Skip cache entirely, always   │
-  │                                                rebuild. [env var:            │
-  │                                                JGO_NO_CACHE]                 │
-  │ --offline                                      Work offline, don't download. │
-  │                                                [env var: JGO_OFFLINE]        │
-  │ --update            -u                         Update cached environment.    │
-  │                                                [env var: JGO_UPDATE]         │
-  │ --dry-run                                      Show what would be done       │
-  │                                                without doing it. Note: while │
-  │                                                this mode prevents the        │
-  │                                                primary action (e.g. running  │
-  │                                                Java, creating files), jgo    │
-  │                                                may still download            │
-  │                                                dependencies and build cached │
-  │                                                environments as needed to     │
-  │                                                report accurate information.  │
-  │ --file              -f  FILE                   Use specific environment file │
-  │                                                (default: jgo.toml).          │
-  │ --color                 [auto|always|never]    Control colored output: auto  │
-  │                                                (default, color if TTY),      │
-  │                                                always (force color), never   │
-  │                                                (disable color). [env var:    │
-  │                                                COLOR]                        │
-  │ --quiet             -q                         Suppress all output.          │
-  │ --verbose           -v  INTEGER RANGE          Verbose output (can be        │
-  │                                                repeated: -vv, -vvv).         │
-  │ --help                                         Show this message and exit.   │
+  │ --version                                          Show jgo version and      │
+  │                                                    exit.                     │
+  │ --ignore-config                                    Ignore ~/.jgorc           │
+  │                                                    configuration file.       │
+  │ --module-path-only                                 Force all JARs to         │
+  │                                                    module-path (treat as     │
+  │                                                    modular).                 │
+  │ --class-path-only                                  Force all JARs to         │
+  │                                                    classpath (disable module │
+  │                                                    detection).               │
+  │ --lenient                                          Warn instead of failing   │
+  │                                                    on unresolved             │
+  │                                                    dependencies. [env var:   │
+  │                                                    JGO_LENIENT]              │
+  │ --link                  [hard|soft|copy|auto]      How to link JARs: hard,   │
+  │                                                    soft, copy, or auto       │
+  │                                                    (default)                 │
+  │ --property          -D  KEY=VALUE                  Set property for profile  │
+  │                                                    activation.               │
+  │ --os-version            VERSION                    Set OS version for        │
+  │                                                    profile activation (e.g., │
+  │                                                    '5.1.2600').              │
+  │ --os-arch               ARCH                       Set OS architecture for   │
+  │                                                    profile activation (e.g., │
+  │                                                    'amd64', 'aarch64'). Use  │
+  │                                                    'auto' to auto-detect.    │
+  │                                                    Overrides --platform.     │
+  │ --os-family             FAMILY                     Set OS family for profile │
+  │                                                    activation (e.g., 'unix', │
+  │                                                    'windows'). Use 'auto' to │
+  │                                                    auto-detect. Overrides    │
+  │                                                    --platform.               │
+  │ --os-name               NAME                       Set OS name for profile   │
+  │                                                    activation (e.g.,         │
+  │                                                    'Linux', 'Windows'). Use  │
+  │                                                    'auto' to auto-detect.    │
+  │                                                    Overrides --platform.     │
+  │ --platform              PLATFORM                   Target platform for       │
+  │                                                    profile activation. Sets  │
+  │                                                    os-name, os-family, and   │
+  │                                                    os-arch together.         │
+  │                                                    Choices: linux,           │
+  │                                                    linux-arm64, linux-x32,   │
+  │                                                    linux-x64, macos,         │
+  │                                                    macos-arm64, macos-x32,   │
+  │                                                    macos-x64, windows,       │
+  │                                                    windows-arm64,            │
+  │                                                    windows-x32, windows-x64, │
+  │                                                    freebsd, freebsd-x64,     │
+  │                                                    openbsd, openbsd-x64,     │
+  │                                                    netbsd, netbsd-x64,       │
+  │                                                    solaris, solaris-x64,     │
+  │                                                    aix, aix-ppc64. Aliases:  │
+  │                                                    linux32=linux-x32,        │
+  │                                                    linux64=linux-x64,        │
+  │                                                    macos32=macos-x32,        │
+  │                                                    macos64=macos-x64,        │
+  │                                                    win32=windows-x32,        │
+  │                                                    win64=windows-x64.        │
+  │ --min-heap              SIZE                       Minimum/initial heap size │
+  │                                                    (e.g., 512M, 1G).         │
+  │ --max-heap              SIZE                       Maximum heap size (e.g.,  │
+  │                                                    4G, 512M). Overrides      │
+  │                                                    auto-detection.           │
+  │ --gc                    FLAG                       GC options. Use shorthand │
+  │                                                    (e.g., --gc=G1, --gc=Z)   │
+  │                                                    or explicit form          │
+  │                                                    (--gc=-XX:+UseZGC).       │
+  │                                                    Special values: 'auto'    │
+  │                                                    (smart defaults), 'none'  │
+  │                                                    (disable GC flags). Can   │
+  │                                                    be repeated.              │
+  │ --system-java                                      Use system Java instead   │
+  │                                                    of downloading Java on    │
+  │                                                    demand.                   │
+  │ --java-vendor           VENDOR                     Prefer specific Java      │
+  │                                                    vendor (e.g., 'adoptium', │
+  │                                                    'zulu').                  │
+  │ --java-version          VERSION                    Force specific Java       │
+  │                                                    version (e.g., 17). [env  │
+  │                                                    var: JAVA_VERSION]        │
+  │ --repository        -r  NAME=URL                   Add remote Maven          │
+  │                                                    repository.               │
+  │ --resolver              [auto|python|mvn]          Dependency resolver: auto │
+  │                                                    (default), python, or mvn │
+  │ --repo-cache            PATH                       Override Maven repo       │
+  │                                                    cache. [env var: M2_REPO] │
+  │ --cache-dir             PATH                       Override cache directory. │
+  │                                                    [env var: JGO_CACHE_DIR]  │
+  │ --no-cache                                         Skip cache entirely,      │
+  │                                                    always rebuild. [env var: │
+  │                                                    JGO_NO_CACHE]             │
+  │ --offline                                          Work offline, don't       │
+  │                                                    download. [env var:       │
+  │                                                    JGO_OFFLINE]              │
+  │ --update            -u                             Update cached             │
+  │                                                    environment. [env var:    │
+  │                                                    JGO_UPDATE]               │
+  │ --dry-run                                          Show what would be done   │
+  │                                                    without doing it. Note:   │
+  │                                                    while this mode prevents  │
+  │                                                    the primary action (e.g.  │
+  │                                                    running Java, creating    │
+  │                                                    files), jgo may still     │
+  │                                                    download dependencies and │
+  │                                                    build cached environments │
+  │                                                    as needed to report       │
+  │                                                    accurate information.     │
+  │ --file              -f  FILE                       Use specific environment  │
+  │                                                    file (default: jgo.toml). │
+  │ --color                 [auto|rich|styled|plain|a  Control output            │
+  │                         lways|never]               formatting: auto          │
+  │                                                    (default, detect TTY),    │
+  │                                                    rich (force color+style), │
+  │                                                    styled (bold/italic only, │
+  │                                                    no color), plain (no ANSI │
+  │                                                    codes). Aliases:          │
+  │                                                    always=rich, never=plain. │
+  │                                                    [env var: COLOR]          │
+  │ --quiet             -q                             Suppress all output.      │
+  │ --verbose           -v  INTEGER RANGE              Verbose output (can be    │
+  │                                                    repeated: -vv, -vvv).     │
+  │ --help                                             Show this message and     │
+  │                                                    exit.                     │
   ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Commands ───────────────────────────────────────────────────────────────────╮
   │ add        Add dependencies to jgo.toml.                                     │
@@ -541,111 +579,130 @@ Test --help flag on main command.
    installation.                                                                  
                                                                                   
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
-  │ --version                                      Show jgo version and exit.    │
-  │ --ignore-config                                Ignore ~/.jgorc configuration │
-  │                                                file.                         │
-  │ --module-path-only                             Force all JARs to module-path │
-  │                                                (treat as modular).           │
-  │ --class-path-only                              Force all JARs to classpath   │
-  │                                                (disable module detection).   │
-  │ --lenient                                      Warn instead of failing on    │
-  │                                                unresolved dependencies. [env │
-  │                                                var: JGO_LENIENT]             │
-  │ --link                  [hard|soft|copy|auto]  How to link JARs: hard, soft, │
-  │                                                copy, or auto (default)       │
-  │ --property          -D  KEY=VALUE              Set property for profile      │
-  │                                                activation.                   │
-  │ --os-version            VERSION                Set OS version for profile    │
-  │                                                activation (e.g.,             │
-  │                                                '5.1.2600').                  │
-  │ --os-arch               ARCH                   Set OS architecture for       │
-  │                                                profile activation (e.g.,     │
-  │                                                'amd64', 'aarch64'). Use      │
-  │                                                'auto' to auto-detect.        │
-  │                                                Overrides --platform.         │
-  │ --os-family             FAMILY                 Set OS family for profile     │
-  │                                                activation (e.g., 'unix',     │
-  │                                                'windows'). Use 'auto' to     │
-  │                                                auto-detect. Overrides        │
-  │                                                --platform.                   │
-  │ --os-name               NAME                   Set OS name for profile       │
-  │                                                activation (e.g., 'Linux',    │
-  │                                                'Windows'). Use 'auto' to     │
-  │                                                auto-detect. Overrides        │
-  │                                                --platform.                   │
-  │ --platform              PLATFORM               Target platform for profile   │
-  │                                                activation. Sets os-name,     │
-  │                                                os-family, and os-arch        │
-  │                                                together. Choices: linux,     │
-  │                                                linux-arm64, linux-x32,       │
-  │                                                linux-x64, macos,             │
-  │                                                macos-arm64, macos-x32,       │
-  │                                                macos-x64, windows,           │
-  │                                                windows-arm64, windows-x32,   │
-  │                                                windows-x64, freebsd,         │
-  │                                                freebsd-x64, openbsd,         │
-  │                                                openbsd-x64, netbsd,          │
-  │                                                netbsd-x64, solaris,          │
-  │                                                solaris-x64, aix, aix-ppc64.  │
-  │                                                Aliases: linux32=linux-x32,   │
-  │                                                linux64=linux-x64,            │
-  │                                                macos32=macos-x32,            │
-  │                                                macos64=macos-x64,            │
-  │                                                win32=windows-x32,            │
-  │                                                win64=windows-x64.            │
-  │ --min-heap              SIZE                   Minimum/initial heap size     │
-  │                                                (e.g., 512M, 1G).             │
-  │ --max-heap              SIZE                   Maximum heap size (e.g., 4G,  │
-  │                                                512M). Overrides              │
-  │                                                auto-detection.               │
-  │ --gc                    FLAG                   GC options. Use shorthand     │
-  │                                                (e.g., --gc=G1, --gc=Z) or    │
-  │                                                explicit form                 │
-  │                                                (--gc=-XX:+UseZGC). Special   │
-  │                                                values: 'auto' (smart         │
-  │                                                defaults), 'none' (disable GC │
-  │                                                flags). Can be repeated.      │
-  │ --system-java                                  Use system Java instead of    │
-  │                                                downloading Java on demand.   │
-  │ --java-vendor           VENDOR                 Prefer specific Java vendor   │
-  │                                                (e.g., 'adoptium', 'zulu').   │
-  │ --java-version          VERSION                Force specific Java version   │
-  │                                                (e.g., 17). [env var:         │
-  │                                                JAVA_VERSION]                 │
-  │ --repository        -r  NAME=URL               Add remote Maven repository.  │
-  │ --resolver              [auto|python|mvn]      Dependency resolver: auto     │
-  │                                                (default), python, or mvn     │
-  │ --repo-cache            PATH                   Override Maven repo cache.    │
-  │                                                [env var: M2_REPO]            │
-  │ --cache-dir             PATH                   Override cache directory.     │
-  │                                                [env var: JGO_CACHE_DIR]      │
-  │ --no-cache                                     Skip cache entirely, always   │
-  │                                                rebuild. [env var:            │
-  │                                                JGO_NO_CACHE]                 │
-  │ --offline                                      Work offline, don't download. │
-  │                                                [env var: JGO_OFFLINE]        │
-  │ --update            -u                         Update cached environment.    │
-  │                                                [env var: JGO_UPDATE]         │
-  │ --dry-run                                      Show what would be done       │
-  │                                                without doing it. Note: while │
-  │                                                this mode prevents the        │
-  │                                                primary action (e.g. running  │
-  │                                                Java, creating files), jgo    │
-  │                                                may still download            │
-  │                                                dependencies and build cached │
-  │                                                environments as needed to     │
-  │                                                report accurate information.  │
-  │ --file              -f  FILE                   Use specific environment file │
-  │                                                (default: jgo.toml).          │
-  │ --color                 [auto|always|never]    Control colored output: auto  │
-  │                                                (default, color if TTY),      │
-  │                                                always (force color), never   │
-  │                                                (disable color). [env var:    │
-  │                                                COLOR]                        │
-  │ --quiet             -q                         Suppress all output.          │
-  │ --verbose           -v  INTEGER RANGE          Verbose output (can be        │
-  │                                                repeated: -vv, -vvv).         │
-  │ --help                                         Show this message and exit.   │
+  │ --version                                          Show jgo version and      │
+  │                                                    exit.                     │
+  │ --ignore-config                                    Ignore ~/.jgorc           │
+  │                                                    configuration file.       │
+  │ --module-path-only                                 Force all JARs to         │
+  │                                                    module-path (treat as     │
+  │                                                    modular).                 │
+  │ --class-path-only                                  Force all JARs to         │
+  │                                                    classpath (disable module │
+  │                                                    detection).               │
+  │ --lenient                                          Warn instead of failing   │
+  │                                                    on unresolved             │
+  │                                                    dependencies. [env var:   │
+  │                                                    JGO_LENIENT]              │
+  │ --link                  [hard|soft|copy|auto]      How to link JARs: hard,   │
+  │                                                    soft, copy, or auto       │
+  │                                                    (default)                 │
+  │ --property          -D  KEY=VALUE                  Set property for profile  │
+  │                                                    activation.               │
+  │ --os-version            VERSION                    Set OS version for        │
+  │                                                    profile activation (e.g., │
+  │                                                    '5.1.2600').              │
+  │ --os-arch               ARCH                       Set OS architecture for   │
+  │                                                    profile activation (e.g., │
+  │                                                    'amd64', 'aarch64'). Use  │
+  │                                                    'auto' to auto-detect.    │
+  │                                                    Overrides --platform.     │
+  │ --os-family             FAMILY                     Set OS family for profile │
+  │                                                    activation (e.g., 'unix', │
+  │                                                    'windows'). Use 'auto' to │
+  │                                                    auto-detect. Overrides    │
+  │                                                    --platform.               │
+  │ --os-name               NAME                       Set OS name for profile   │
+  │                                                    activation (e.g.,         │
+  │                                                    'Linux', 'Windows'). Use  │
+  │                                                    'auto' to auto-detect.    │
+  │                                                    Overrides --platform.     │
+  │ --platform              PLATFORM                   Target platform for       │
+  │                                                    profile activation. Sets  │
+  │                                                    os-name, os-family, and   │
+  │                                                    os-arch together.         │
+  │                                                    Choices: linux,           │
+  │                                                    linux-arm64, linux-x32,   │
+  │                                                    linux-x64, macos,         │
+  │                                                    macos-arm64, macos-x32,   │
+  │                                                    macos-x64, windows,       │
+  │                                                    windows-arm64,            │
+  │                                                    windows-x32, windows-x64, │
+  │                                                    freebsd, freebsd-x64,     │
+  │                                                    openbsd, openbsd-x64,     │
+  │                                                    netbsd, netbsd-x64,       │
+  │                                                    solaris, solaris-x64,     │
+  │                                                    aix, aix-ppc64. Aliases:  │
+  │                                                    linux32=linux-x32,        │
+  │                                                    linux64=linux-x64,        │
+  │                                                    macos32=macos-x32,        │
+  │                                                    macos64=macos-x64,        │
+  │                                                    win32=windows-x32,        │
+  │                                                    win64=windows-x64.        │
+  │ --min-heap              SIZE                       Minimum/initial heap size │
+  │                                                    (e.g., 512M, 1G).         │
+  │ --max-heap              SIZE                       Maximum heap size (e.g.,  │
+  │                                                    4G, 512M). Overrides      │
+  │                                                    auto-detection.           │
+  │ --gc                    FLAG                       GC options. Use shorthand │
+  │                                                    (e.g., --gc=G1, --gc=Z)   │
+  │                                                    or explicit form          │
+  │                                                    (--gc=-XX:+UseZGC).       │
+  │                                                    Special values: 'auto'    │
+  │                                                    (smart defaults), 'none'  │
+  │                                                    (disable GC flags). Can   │
+  │                                                    be repeated.              │
+  │ --system-java                                      Use system Java instead   │
+  │                                                    of downloading Java on    │
+  │                                                    demand.                   │
+  │ --java-vendor           VENDOR                     Prefer specific Java      │
+  │                                                    vendor (e.g., 'adoptium', │
+  │                                                    'zulu').                  │
+  │ --java-version          VERSION                    Force specific Java       │
+  │                                                    version (e.g., 17). [env  │
+  │                                                    var: JAVA_VERSION]        │
+  │ --repository        -r  NAME=URL                   Add remote Maven          │
+  │                                                    repository.               │
+  │ --resolver              [auto|python|mvn]          Dependency resolver: auto │
+  │                                                    (default), python, or mvn │
+  │ --repo-cache            PATH                       Override Maven repo       │
+  │                                                    cache. [env var: M2_REPO] │
+  │ --cache-dir             PATH                       Override cache directory. │
+  │                                                    [env var: JGO_CACHE_DIR]  │
+  │ --no-cache                                         Skip cache entirely,      │
+  │                                                    always rebuild. [env var: │
+  │                                                    JGO_NO_CACHE]             │
+  │ --offline                                          Work offline, don't       │
+  │                                                    download. [env var:       │
+  │                                                    JGO_OFFLINE]              │
+  │ --update            -u                             Update cached             │
+  │                                                    environment. [env var:    │
+  │                                                    JGO_UPDATE]               │
+  │ --dry-run                                          Show what would be done   │
+  │                                                    without doing it. Note:   │
+  │                                                    while this mode prevents  │
+  │                                                    the primary action (e.g.  │
+  │                                                    running Java, creating    │
+  │                                                    files), jgo may still     │
+  │                                                    download dependencies and │
+  │                                                    build cached environments │
+  │                                                    as needed to report       │
+  │                                                    accurate information.     │
+  │ --file              -f  FILE                       Use specific environment  │
+  │                                                    file (default: jgo.toml). │
+  │ --color                 [auto|rich|styled|plain|a  Control output            │
+  │                         lways|never]               formatting: auto          │
+  │                                                    (default, detect TTY),    │
+  │                                                    rich (force color+style), │
+  │                                                    styled (bold/italic only, │
+  │                                                    no color), plain (no ANSI │
+  │                                                    codes). Aliases:          │
+  │                                                    always=rich, never=plain. │
+  │                                                    [env var: COLOR]          │
+  │ --quiet             -q                             Suppress all output.      │
+  │ --verbose           -v  INTEGER RANGE              Verbose output (can be    │
+  │                                                    repeated: -vv, -vvv).     │
+  │ --help                                             Show this message and     │
+  │                                                    exit.                     │
   ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Commands ───────────────────────────────────────────────────────────────────╮
   │ add        Add dependencies to jgo.toml.                                     │

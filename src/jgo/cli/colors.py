@@ -31,20 +31,29 @@ def _detect_color_mode() -> str:
     return color
 
 
-# Configure rich-click's color system based on detected mode
-_color_mode = _detect_color_mode()
-if _color_mode == "never":
-    # Disable color and fancy formatting in rich-click's console
-    click.rich_click.COLOR_SYSTEM = None
-    # Use ASCII box characters instead of Unicode when color is disabled
-    # This ensures the output works on all terminals and avoids fancy formatting
-    from rich import box
+def _normalize_color_mode(color: str) -> str:
+    """Normalize color mode aliases to canonical values."""
+    if color == "always":
+        return "rich"
+    elif color == "never":
+        return "plain"
+    return color
 
-    click.rich_click.STYLE_ERRORS_PANEL_BOX = box.ASCII
-    click.rich_click.STYLE_OPTIONS_PANEL_BOX = box.ASCII
-    click.rich_click.STYLE_COMMANDS_PANEL_BOX = box.ASCII
-    click.rich_click.STYLE_OPTIONS_TABLE_BOX = box.ASCII
-    click.rich_click.STYLE_COMMANDS_TABLE_BOX = box.ASCII
-elif _color_mode == "always":
-    # Force color in rich-click's console
+
+# Configure rich-click's color system based on detected mode
+_color_mode = _normalize_color_mode(_detect_color_mode())
+
+if _color_mode == "plain":
+    # No ANSI codes at all - disable color system entirely
+    click.rich_click.COLOR_SYSTEM = None
+elif _color_mode == "styled":
+    # Bold/italic but no color (NO_COLOR compliant)
+    # Note: Rich-click doesn't support "styles only" mode - it only has COLOR_SYSTEM
+    # which controls both color and styles together. For help text, we fall back to
+    # auto detection. The main console output will properly handle styled mode via
+    # Rich's no_color=True setting in console.py.
+    pass
+elif _color_mode == "rich":
+    # Force full color + style even if not a TTY
     click.rich_click.FORCE_TERMINAL = True
+# else: "auto" - use Rich's default TTY detection

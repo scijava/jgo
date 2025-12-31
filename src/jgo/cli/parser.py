@@ -390,9 +390,14 @@ def global_options(f):
     f = click.option("-q", "--quiet", is_flag=True, help="Suppress all output.")(f)
     f = click.option(
         "--color",
-        type=click.Choice(["auto", "always", "never"]),
+        type=click.Choice(["auto", "rich", "styled", "plain", "always", "never"]),
         default="auto",
-        help="Control colored output: auto (default, color if TTY), always (force color), never (disable color).",
+        help="Control output formatting: "
+        "[cyan]auto[/] (default, detect TTY), "
+        "[cyan]rich[/] (force color+style), "
+        "[cyan]styled[/] (bold/italic only, no color), "
+        "[cyan]plain[/] (no ANSI codes). "
+        "Aliases: [cyan]always[/]=rich, [cyan]never[/]=plain.",
         envvar="COLOR",
         show_envvar=True,
     )(f)
