@@ -7,7 +7,6 @@ and user-facing messages in various formats with consistent styling.
 
 from __future__ import annotations
 
-import sys
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:

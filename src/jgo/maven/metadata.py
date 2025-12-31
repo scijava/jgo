@@ -72,10 +72,20 @@ class MetadataXML(XML, Metadata):
 
     @property
     def latest(self) -> str | None:
-        # NOTE: Maven's <latest> XML tag is often wrong, for reasons unknown.
-        # We return lastVersion instead, which is the last entry in <versions>.
-        # This gives the actual latest version rather than the unreliable XML tag.
-        return self.lastVersion
+        """
+        The latest version from this metadata file's <latest> tag.
+
+        NOTE: This faithfully returns the XML tag value, which may be absent
+        or unreliable. The tag often reflects the newest version in this
+        repository at the time the metadata was generated.
+
+        WARNING: This only reflects the latest version in THIS repository.
+        When multiple repositories are configured, use Project.latest instead
+        for smart resolution across all repositories.
+
+        See docs/version-resolution.md for details on version resolution behavior.
+        """
+        return self.value("versioning/latest")
 
     @property
     def versions(self) -> list[str]:
@@ -87,6 +97,15 @@ class MetadataXML(XML, Metadata):
 
     @property
     def release(self) -> str | None:
+        """
+        The release version from this metadata file's <release> tag.
+
+        WARNING: This only reflects the newest release in THIS repository.
+        When multiple repositories are configured, use Project.release instead
+        for smart resolution across all repositories.
+
+        See docs/version-resolution.md for details on version resolution behavior.
+        """
         return self.value("versioning/release")
 
 
@@ -150,6 +169,10 @@ class Metadatas(Metadata):
     A unified Maven metadata combined over a collection of individual Maven metadata.
     The typical use case for this class is to aggregate multiple maven-metadata.xml files
     describing the same project, across multiple local repository cache and storage directories.
+
+    NOTE: The `release` and `latest` properties use Maven-compatible resolution which has
+    limitations when dealing with multiple repositories. For smart resolution, use the
+    Project class instead. See docs/version-resolution.md for details.
     """
 
     def __init__(self, metadatas: Iterable[Metadata]):
@@ -173,6 +196,18 @@ class Metadatas(Metadata):
 
     @property
     def latest(self) -> str | None:
+        """
+        The latest version using Maven-compatible resolution.
+
+        Returns the latest version from the most recently updated repository
+        (based on <lastUpdated> timestamp). This matches Maven's behavior but
+        has limitations when artifacts are split across multiple repositories.
+
+        WARNING: This may not return the truly most recent version. For smart
+        resolution, use Project.latest instead.
+
+        See docs/version-resolution.md for details on version resolution behavior.
+        """
         return next((m.latest for m in reversed(self.metadatas) if m.latest), None)
 
     @property
@@ -185,6 +220,18 @@ class Metadatas(Metadata):
 
     @property
     def release(self) -> str | None:
+        """
+        The release version using Maven-compatible resolution.
+
+        Returns the release version from the most recently updated repository
+        (based on <lastUpdated> timestamp). This matches Maven's behavior but
+        has a critical bug when newer releases exist in other repositories.
+
+        WARNING: This may not return the truly newest release. For correct
+        version comparison across all repositories, use Project.release instead.
+
+        See docs/version-resolution.md for details on version resolution behavior.
+        """
         return next((m.release for m in reversed(self.metadatas) if m.release), None)
 
 

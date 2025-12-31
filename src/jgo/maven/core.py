@@ -328,18 +328,104 @@ class Project:
     @property
     def release(self) -> str:
         """
-        The newest release version of this project.
-        This is the equivalent of Maven's RELEASE version.
+        The newest release version of this project across all repositories.
+
+        This is jgo's smart implementation of Maven's RELEASE version resolution.
+
+        Algorithm:
+        - For single repository: returns the <release> tag value
+        - For multiple repositories:
+          1. Collects all versions from all repositories
+          2. Filters out SNAPSHOT versions
+          3. Uses Maven version ordering to find the truly newest version
+
+        Deviation from Maven:
+        Maven returns the release from the most recently updated repository,
+        which can be incorrect when newer releases exist elsewhere. jgo
+        correctly compares version numbers across all repositories.
+
+        Example:
+        - Maven Central has versions up to 1.54p (updated 2025-02-18)
+        - maven.scijava.org has versions up to 1.48q (updated 2025-12-22)
+        - Maven returns: 1.48q (wrong - from most recently updated repo)
+        - jgo returns: 1.54p (correct - truly newest version)
+
+        See docs/version-resolution.md for full details.
+
+        Returns:
+            The newest non-SNAPSHOT version string, or None if no releases exist.
         """
-        return self.metadata.release
+        from functools import cmp_to_key
+
+        from .metadata import Metadatas
+        from .version import compare_versions
+
+        # For single metadata source, use its release tag
+        if not isinstance(self.metadata, Metadatas):
+            return self.metadata.release
+
+        # For multiple repos: find newest non-SNAPSHOT version across all
+        release_versions = [
+            v for v in self.metadata.versions if not v.endswith("-SNAPSHOT")
+        ]
+        if not release_versions:
+            return None
+
+        return max(release_versions, key=cmp_to_key(compare_versions))
 
     @property
     def latest(self) -> str:
         """
-        The latest SNAPSHOT version of this project.
-        This is the equivalent of Maven's LATEST version.
+        The most recently deployed version of this project.
+
+        This is jgo's smart implementation of Maven's LATEST version resolution.
+
+        Algorithm:
+        - For single repository: returns the <latest> tag value (or lastVersion)
+        - For multiple repositories:
+          1. Finds the repository with the most recent <lastUpdated> timestamp
+          2. Returns the lastVersion from that repository
+
+        Rationale:
+        The <lastUpdated> timestamp indicates when something was deployed to that
+        repository. The lastVersion (last entry in <versions> list) is likely to
+        be what was recently deployed, though SNAPSHOTs may have been redeployed
+        without changing their position in the list.
+
+        Deviation from Maven:
+        jgo uses the same heuristic as Maven here (most recently updated repo).
+        Both have limitations when determining which specific version was just
+        deployed.
+
+        Future enhancement:
+        For full accuracy, could fetch and compare timestamps of:
+        - The lastVersion from the most recent repo
+        - All SNAPSHOT versions from that repo
+        This would require additional HTTP requests but would be definitive.
+
+        See docs/version-resolution.md for full details.
+
+        Returns:
+            The most recently deployed version string (may be SNAPSHOT or release),
+            or None if no versions exist.
         """
-        return self.metadata.latest
+        from datetime import datetime
+
+        from .metadata import Metadatas
+
+        # For single metadata source, use its latest tag (or fall back to lastVersion)
+        if not isinstance(self.metadata, Metadatas):
+            return self.metadata.latest or self.metadata.lastVersion
+
+        # For multiple repos: use lastVersion from most recently updated repo
+        if not self.metadata.metadatas:
+            return None
+
+        most_recent = max(
+            self.metadata.metadatas, key=lambda m: m.lastUpdated or datetime.min
+        )
+        # Use <latest> tag if present, otherwise fall back to lastVersion heuristic
+        return most_recent.latest or most_recent.lastVersion
 
     def versions(
         self, releases: bool = True, snapshots: bool = False, locked: bool = False
