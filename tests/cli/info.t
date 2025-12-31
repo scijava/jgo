@@ -34,47 +34,10 @@ Test info classpath with no endpoint.
 
 Test info classpath with endpoint.
 
-  $ jgo info classpath org.scijava:scijava-ops-image:1.0.0
-  */jars/caffeine-2.9.3.jar (glob)
-  */jars/checker-qual-3.34.0.jar (glob)
-  */jars/commons-lang3-3.12.0.jar (glob)
-  */jars/commons-math3-3.6.1.jar (glob)
-  */jars/ejml-0.25.jar (glob)
-  */jars/error_prone_annotations-2.19.0.jar (glob)
-  */jars/failureaccess-1.0.1.jar (glob)
-  */jars/guava-31.1-jre.jar (glob)
-  */jars/imglib2-6.2.0.jar (glob)
-  */jars/imglib2-algorithm-0.14.0.jar (glob)
-  */jars/imglib2-algorithm-fft-0.2.1.jar (glob)
-  */jars/imglib2-cache-1.0.0-beta-17.jar (glob)
-  */jars/imglib2-mesh-1.0.0.jar (glob)
-  */jars/imglib2-realtransform-4.0.1.jar (glob)
-  */jars/imglib2-roi-0.14.1.jar (glob)
-  */jars/j2objc-annotations-2.8.jar (glob)
-  */jars/jama-1.0.3.jar (glob)
-  */jars/jitk-tps-3.0.3.jar (glob)
-  */jars/joml-1.10.5.jar (glob)
-  */jars/jply-0.2.1.jar (glob)
-  */jars/jsr305-3.0.2.jar (glob)
-  */jars/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar (glob)
-  */jars/mines-jtk-20151125.jar (glob)
-  */jars/ojalgo-45.1.1.jar (glob)
-  */jars/scijava-collections-1.0.0.jar (glob)
-  */jars/scijava-common3-1.0.0.jar (glob)
-  */jars/scijava-concurrent-1.0.0.jar (glob)
-  */jars/scijava-discovery-1.0.0.jar (glob)
-  */jars/scijava-function-1.0.0.jar (glob)
-  */jars/scijava-meta-1.0.0.jar (glob)
-  */jars/scijava-ops-api-1.0.0.jar (glob)
-  */jars/scijava-ops-image-1.0.0.jar (glob)
-  */jars/scijava-ops-spi-1.0.0.jar (glob)
-  */jars/scijava-optional-1.0.1.jar (glob)
-  */jars/scijava-priority-1.0.0.jar (glob)
-  */jars/scijava-progress-1.0.0.jar (glob)
-  */jars/scijava-struct-1.0.0.jar (glob)
-  */jars/scijava-types-1.0.0.jar (glob)
-  */jars/slf4j-api-1.7.36.jar (glob)
-  */jars/trove4j-3.0.3.jar (glob)
+  $ jgo info classpath com.google.guava:guava:33.0.0-jre
+  */jars/j2objc-annotations-*.jar (glob)
+  */jars/jsr305-*.jar (glob)
+  */jars/listenablefuture-*.jar (glob)
 
 Test info deptree with no endpoint.
 
@@ -84,49 +47,16 @@ Test info deptree with no endpoint.
 
 Test info deptree with endpoint.
 
-  $ jgo info deptree org.scijava:scijava-ops-image:1.0.0
-  
-  └── org.scijava:scijava-ops-image:1.0.0
-      ├── org.scijava:scijava-collections:1.0.0
-      ├── org.scijava:scijava-common3:1.0.0
-      ├── org.scijava:scijava-concurrent:1.0.0
-      ├── org.scijava:scijava-function:1.0.0
-      ├── org.scijava:scijava-meta:1.0.0
-      ├── org.scijava:scijava-ops-api:1.0.0
-      │   ├── org.scijava:scijava-discovery:1.0.0
-      │   └── org.scijava:scijava-struct:1.0.0
-      ├── org.scijava:scijava-priority:1.0.0
-      ├── org.scijava:scijava-progress:1.0.0
-      ├── org.scijava:scijava-ops-spi:1.0.0
-      ├── org.scijava:scijava-types:1.0.0
-      │   ├── com.google.guava:guava:31.1-jre
-      │   │   ├── com.google.guava:failureaccess:1.0.1
-      │   │   ├── com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict
-      │   │   │   -with-guava
-      │   │   ├── com.google.code.findbugs:jsr305:3.0.2
-      │   │   ├── org.checkerframework:checker-qual:3.34.0
-      │   │   ├── com.google.errorprone:error_prone_annotations:2.19.0
-      │   │   └── com.google.j2objc:j2objc-annotations:2.8
-      │   └── org.slf4j:slf4j-api:1.7.36
-      ├── net.imglib2:imglib2:6.2.0
-      ├── net.imglib2:imglib2-algorithm:0.14.0
-      │   ├── net.sf.trove4j:trove4j:3.0.3
-      │   └── net.imglib2:imglib2-cache:1.0.0-beta-17
-      │       ├── com.github.ben-manes.caffeine:caffeine:2.9.3
-      │       └── org.scijava:scijava-optional:1.0.1
-      ├── net.imglib2:imglib2-algorithm-fft:0.2.1
-      │   └── edu.mines:mines-jtk:20151125
-      ├── net.imglib2:imglib2-mesh:1.0.0
-      │   └── org.smurn:jply:0.2.1
-      │       └── org.apache.commons:commons-lang3:3.12.0
-      ├── net.imglib2:imglib2-realtransform:4.0.1
-      │   └── jitk:jitk-tps:3.0.3
-      │       └── com.googlecode.efficient-java-matrix-library:ejml:0.25
-      ├── net.imglib2:imglib2-roi:0.14.1
-      ├── org.apache.commons:commons-math3:3.6.1
-      ├── org.joml:joml:1.10.5
-      ├── org.ojalgo:ojalgo:45.1.1
-      └── gov.nist.math:jama:1.0.3
+  $ jgo info deptree com.google.guava:guava:33.0.0-jre
+
+  └── com.google.guava:guava:33.0.0-jre
+      ├── com.google.guava:failureaccess:*
+      ├── com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict (glob)
+      │   *ava (glob)
+      ├── com.google.code.findbugs:jsr305:*
+      ├── org.checkerframework:checker-qual:*
+      ├── com.google.errorprone:error_prone_annotations:*
+      └── com.google.j2objc:j2objc-annotations:*
 
 Test info deplist with no endpoint.
 
@@ -136,91 +66,25 @@ Test info deplist with no endpoint.
 
 Test info deplist with endpoint.
 
-  $ jgo info deplist org.scijava:scijava-ops-image:1.0.0
-  org.scijava:scijava-ops-image:1.0.0
-     com.github.ben-manes.caffeine:caffeine:jar:2.9.3:compile
-     com.google.code.findbugs:jsr305:jar:3.0.2:compile
-     com.google.errorprone:error_prone_annotations:jar:2.19.0:compile
-     com.google.guava:failureaccess:jar:1.0.1:compile
-     com.google.guava:guava:jar:31.1-jre:compile
+  $ jgo info deplist com.google.guava:guava:33.0.0-jre
+  com.google.guava:guava:33.0.0-jre
+     com.google.code.findbugs:jsr305:jar:*:compile (glob)
+     com.google.errorprone:error_prone_annotations:jar:*:compile (glob)
+     com.google.guava:failureaccess:jar:*:compile (glob)
      com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
-     com.google.j2objc:j2objc-annotations:jar:2.8:compile
-     com.googlecode.efficient-java-matrix-library:ejml:jar:0.25:compile
-     edu.mines:mines-jtk:jar:20151125:compile
-     gov.nist.math:jama:jar:1.0.3:compile
-     jitk:jitk-tps:jar:3.0.3:compile
-     net.imglib2:imglib2:jar:6.2.0:compile
-     net.imglib2:imglib2-algorithm:jar:0.14.0:compile
-     net.imglib2:imglib2-algorithm-fft:jar:0.2.1:compile
-     net.imglib2:imglib2-cache:jar:1.0.0-beta-17:compile
-     net.imglib2:imglib2-mesh:jar:1.0.0:compile
-     net.imglib2:imglib2-realtransform:jar:4.0.1:compile
-     net.imglib2:imglib2-roi:jar:0.14.1:compile
-     net.sf.trove4j:trove4j:jar:3.0.3:compile
-     org.apache.commons:commons-lang3:jar:3.12.0:compile
-     org.apache.commons:commons-math3:jar:3.6.1:compile
-     org.checkerframework:checker-qual:jar:3.34.0:compile
-     org.joml:joml:jar:1.10.5:compile
-     org.ojalgo:ojalgo:jar:45.1.1:compile
-     org.scijava:scijava-collections:jar:1.0.0:compile
-     org.scijava:scijava-common3:jar:1.0.0:compile
-     org.scijava:scijava-concurrent:jar:1.0.0:compile
-     org.scijava:scijava-discovery:jar:1.0.0:compile
-     org.scijava:scijava-function:jar:1.0.0:compile
-     org.scijava:scijava-meta:jar:1.0.0:compile
-     org.scijava:scijava-ops-api:jar:1.0.0:compile
-     org.scijava:scijava-ops-spi:jar:1.0.0:compile
-     org.scijava:scijava-optional:jar:1.0.1:compile
-     org.scijava:scijava-priority:jar:1.0.0:compile
-     org.scijava:scijava-progress:jar:1.0.0:compile
-     org.scijava:scijava-struct:jar:1.0.0:compile
-     org.scijava:scijava-types:jar:1.0.0:compile
-     org.slf4j:slf4j-api:jar:1.7.36:compile
-     org.smurn:jply:jar:0.2.1:compile
+     com.google.j2objc:j2objc-annotations:jar:*:compile (glob)
+     org.checkerframework:checker-qual:jar:*:compile (glob)
 
 Test info deplist --direct flag.
 
-  $ jgo info deplist --direct org.scijava:scijava-ops-image:1.0.0
-  org.scijava:scijava-ops-image:1.0.0
-     com.github.ben-manes.caffeine:caffeine:jar:2.9.3:compile
-     com.google.code.findbugs:jsr305:jar:3.0.2:compile
-     com.google.errorprone:error_prone_annotations:jar:2.19.0:compile
-     com.google.guava:failureaccess:jar:1.0.1:compile
-     com.google.guava:guava:jar:31.1-jre:compile
+  $ jgo info deplist --direct com.google.guava:guava:33.0.0-jre
+  com.google.guava:guava:33.0.0-jre
+     com.google.code.findbugs:jsr305:jar:*:compile (glob)
+     com.google.errorprone:error_prone_annotations:jar:*:compile (glob)
+     com.google.guava:failureaccess:jar:*:compile (glob)
      com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
-     com.google.j2objc:j2objc-annotations:jar:2.8:compile
-     com.googlecode.efficient-java-matrix-library:ejml:jar:0.25:compile
-     edu.mines:mines-jtk:jar:20151125:compile
-     gov.nist.math:jama:jar:1.0.3:compile
-     jitk:jitk-tps:jar:3.0.3:compile
-     net.imglib2:imglib2:jar:6.2.0:compile
-     net.imglib2:imglib2-algorithm:jar:0.14.0:compile
-     net.imglib2:imglib2-algorithm-fft:jar:0.2.1:compile
-     net.imglib2:imglib2-cache:jar:1.0.0-beta-17:compile
-     net.imglib2:imglib2-mesh:jar:1.0.0:compile
-     net.imglib2:imglib2-realtransform:jar:4.0.1:compile
-     net.imglib2:imglib2-roi:jar:0.14.1:compile
-     net.sf.trove4j:trove4j:jar:3.0.3:compile
-     org.apache.commons:commons-lang3:jar:3.12.0:compile
-     org.apache.commons:commons-math3:jar:3.6.1:compile
-     org.checkerframework:checker-qual:jar:3.34.0:compile
-     org.joml:joml:jar:1.10.5:compile
-     org.ojalgo:ojalgo:jar:45.1.1:compile
-     org.scijava:scijava-collections:jar:1.0.0:compile
-     org.scijava:scijava-common3:jar:1.0.0:compile
-     org.scijava:scijava-concurrent:jar:1.0.0:compile
-     org.scijava:scijava-discovery:jar:1.0.0:compile
-     org.scijava:scijava-function:jar:1.0.0:compile
-     org.scijava:scijava-meta:jar:1.0.0:compile
-     org.scijava:scijava-ops-api:jar:1.0.0:compile
-     org.scijava:scijava-ops-spi:jar:1.0.0:compile
-     org.scijava:scijava-optional:jar:1.0.1:compile
-     org.scijava:scijava-priority:jar:1.0.0:compile
-     org.scijava:scijava-progress:jar:1.0.0:compile
-     org.scijava:scijava-struct:jar:1.0.0:compile
-     org.scijava:scijava-types:jar:1.0.0:compile
-     org.slf4j:slf4j-api:jar:1.7.36:compile
-     org.smurn:jply:jar:0.2.1:compile
+     com.google.j2objc:j2objc-annotations:jar:*:compile (glob)
+     org.checkerframework:checker-qual:jar:*:compile (glob)
 
 Test info javainfo with no endpoint.
 
@@ -230,12 +94,12 @@ Test info javainfo with no endpoint.
 
 Test info javainfo with endpoint.
 
-  $ jgo info javainfo org.scijava:scijava-ops-image:1.0.0
+  $ jgo info javainfo com.google.guava:guava:33.0.0-jre
   
   Environment: 
-  */org/scijava/scijava-ops-image/* (glob)
+  */com/google/guava/guava/* (glob)
   JARs directory: 
-  */org/scijava/scijava-ops-image/*/jars (glob)
+  */com/google/guava/guava/*/jars (glob)
   Total JARs: 40
   
   ╭───────────────────────── Java Version Requirements ──────────────────────────╮
@@ -253,7 +117,7 @@ Test info javainfo with endpoint.
   │ scijava-function-1.0.0.jar       │           11 │           55 │         360 │
   │ scijava-meta-1.0.0.jar           │           11 │           55 │           4 │
   │ scijava-ops-api-1.0.0.jar        │           11 │           55 │          97 │
-  │ scijava-ops-image-1.0.0.jar      │           11 │           55 │         918 │
+  │ guava-33.0.0-jre.jar      │           11 │           55 │         918 │
   │ scijava-ops-spi-1.0.0.jar        │           11 │           55 │          11 │
   │ scijava-priority-1.0.0.jar       │           11 │           55 │           2 │
   │ scijava-progress-1.0.0.jar       │           11 │           55 │           4 │
@@ -306,7 +170,7 @@ Test info manifest requires endpoint.
 
 Test info manifest with endpoint.
 
-  $ jgo info manifest org.scijava:scijava-ops-image:1.0.0
+  $ jgo info manifest com.google.guava:guava:33.0.0-jre
   Manifest-Version: 1.0
   Created-By: Maven JAR Plugin 3.3.0
   Build-Jdk-Spec: 11
@@ -326,7 +190,7 @@ Test info manifest with endpoint.
 
 Test info manifest --raw flag.
 
-  $ jgo info manifest --raw org.scijava:scijava-ops-image:1.0.0
+  $ jgo info manifest --raw com.google.guava:guava:33.0.0-jre
   Manifest-Version: 1.0\r (esc)
   Created-By: Maven JAR Plugin 3.3.0\r (esc)
   Build-Jdk-Spec: 11\r (esc)
@@ -373,7 +237,7 @@ Test info pom requires endpoint.
 
 Test info pom with endpoint.
 
-  $ jgo info pom org.scijava:scijava-ops-image:1.0.0
+  $ jgo info pom com.google.guava:guava:33.0.0-jre
   <?xml version="1.0" ?>
   <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
@@ -383,7 +247,7 @@ Test info pom with endpoint.
       <version>37.0.0</version>
       <relativePath/>
     </parent>
-    <artifactId>scijava-ops-image</artifactId>
+    <artifactId>guava</artifactId>
     <version>1.0.0</version>
     <name>SciJava Ops Image</name>
     <description>Image processing operations for SciJava Ops.</description>
@@ -1038,8 +902,8 @@ Test info versions requires coordinates.
 
 Test info versions with coordinates.
 
-  $ jgo info versions org.scijava:scijava-ops-image
-  Available versions for org.scijava:scijava-ops-image:
+  $ jgo info versions com.google.guava:guava
+  Available versions for com.google.guava:guava:
     1.0.0 (release)
     2.0.0-SNAPSHOT (latest)
     2.0.0-SNAPSHOT (latest)

@@ -42,7 +42,7 @@ Test init with --dry-run.
 Test init checks for existing jgo.toml.
 
   $ cd "$TMPDIR" && mkdir -p jgo-test-init && cd jgo-test-init
-  $ jgo init org.scijava:scijava-ops-image:1.0.0
+  $ jgo init com.google.guava:guava:33.0.0-jre
   $ test -f jgo.toml
 
   $ jgo init org.python:jython-standalone

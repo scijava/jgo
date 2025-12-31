@@ -22,7 +22,7 @@ Test sync --help shows usage.
 Test sync with existing jgo.toml.
 
   $ cd "$TMPDIR" && mkdir -p jgo-test-sync && cd jgo-test-sync
-  $ jgo init org.scijava:scijava-ops-image:1.0.0
+  $ jgo init com.google.guava:guava:33.0.0-jre
   $ jgo sync
 
 Test sync with --dry-run.

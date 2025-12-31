@@ -22,7 +22,7 @@ Test update --help shows usage.
 Test update with existing jgo.toml.
 
   $ cd "$TMPDIR" && mkdir -p jgo-test-update && cd jgo-test-update
-  $ jgo init org.scijava:scijava-ops-image:1.0.0
+  $ jgo init com.google.guava:guava:33.0.0-jre
   $ jgo update
 
 Test update with --dry-run.

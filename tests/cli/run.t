@@ -28,72 +28,58 @@ Test run --help output.
 
 Test auto-completed main class.
 
-  $ jgo run org.scijava:scijava-ops-image:1.0.0@About
-  SciJava Ops Image v1.0.0
-  Project license: Simplified BSD License
-  Project website: https://github.com/scijava/scijava
+  $ jgo run org.python:jython-standalone:2.7.4 -- --version
+  Jython 2.7.4
 
 Test inferred main class from JAR manifest.
 
-  $ jgo run org.scijava:scijava-ops-image:1.0.0
-  SciJava Ops Image v1.0.0
-  Project license: Simplified BSD License
-  Project website: https://github.com/scijava/scijava
+  $ jgo run org.python:jython-standalone:2.7.4 -- --version
+  Jython 2.7.4
 
 Test shorthand syntax (no 'run' command).
 
-  $ jgo org.scijava:scijava-ops-image:1.0.0
-  SciJava Ops Image v1.0.0
-  Project license: Simplified BSD License
-  Project website: https://github.com/scijava/scijava
+  $ jgo org.python:jython-standalone:2.7.4 -- --version
+  Jython 2.7.4
 
 Test --main-class flag.
 
-  $ jgo run --main-class About org.scijava:scijava-ops-image:1.0.0
-  SciJava Ops Image v1.0.0
-  Project license: Simplified BSD License
-  Project website: https://github.com/scijava/scijava
+  $ jgo run --main-class org.python.util.jython org.python:jython-standalone:2.7.4 -- --version
+  Jython 2.7.4
 
 Test --dry-run shows java command without executing.
 
-  $ jgo --dry-run run org.scijava:scijava-ops-image:1.0.0@About
-  */bin/java -XX:+UseG1GC -Xmx*G --module-path */modules --add-modules ALL-MODULE-PATH -cp */jars/\* --module org.scijava.ops.image/org.scijava.ops.image.About (glob)
+  $ jgo --dry-run run org.python:jython-standalone:2.7.4 -- --version
+  */bin/java -XX:+UseG1GC -Xmx*G -cp */jars/*:*/modules/* org.python.util.jython --version (glob)
 
 Test multiple endpoints with +.
 
-  $ jgo --dry-run run org.scijava:scijava-ops-image:1.0.0+net.imagej:ij:1.54g@About
-  */bin/java -XX:+UseG1GC -Xmx*G --module-path */modules --add-modules ALL-MODULE-PATH --module org.scijava.ops.image/org.scijava.ops.image.About (glob)
+  $ jgo --dry-run run org.python:jython-standalone:2.7.4+com.google.guava:guava:33.0.0-jre -- --version
+  */bin/java -XX:+UseG1GC -Xmx*G -cp */jars/*:*/modules/* org.python.util.jython --version (glob)
 
 Test --offline flag (should use cache).
 
-  $ jgo --offline run org.scijava:scijava-ops-image:1.0.0@About
-  SciJava Ops Image v1.0.0
-  Project license: Simplified BSD License
-  Project website: https://github.com/scijava/scijava
+  $ jgo --offline run org.python:jython-standalone:2.7.4 -- --version
+  Jython 2.7.4
 
 Test --update flag forces cache refresh.
 
-  $ jgo --update --dry-run run org.scijava:scijava-ops-image:1.0.0@About
-  */bin/java -XX:+UseG1GC -Xmx*G --module-path */modules --add-modules ALL-MODULE-PATH -cp */jars/\* --module org.scijava.ops.image/org.scijava.ops.image.About (glob)
+  $ jgo --update --dry-run run org.python:jython-standalone:2.7.4 -- --version
+  */bin/java -XX:+UseG1GC -Xmx*G -cp */jars/*:*/modules/* org.python.util.jython --version (glob)
 
 Test --verbose flag.
 
-  $ jgo -v run org.scijava:scijava-ops-image:1.0.0@About
-  INFO     Building environment for org.scijava:scijava-ops-image:1.0.0@About...  
-  INFO     Running Java application...                                            
-  Obtaining Java 11 automatically...
-  Using Java 11 (zulu) at */bin/java (glob)
-  */bin/java -XX:+UseG1GC -Xmx*G --module-path */modules --add-modules ALL-MODULE-PATH -cp */jars/\* --module org.scijava.ops.image/org.scijava.ops.image.About (glob)
-  SciJava Ops Image v1.0.0
-  Project license: Simplified BSD License
-  Project website: https://github.com/scijava/scijava
+  $ jgo -v run org.python:jython-standalone:2.7.4 -- --version
+  INFO     Building environment for org.python:jython-standalone:2.7.4...
+  INFO     Running Java application...
+  Obtaining Java * automatically... (glob)
+  Using Java * (*) at */bin/java (glob)
+  */bin/java -XX:+UseG1GC -Xmx*G -cp */jars/*:*/modules/* org.python.util.jython --version (glob)
+  Jython 2.7.4
 
 Test --quiet flag suppresses output.
 
-  $ jgo -q run org.scijava:scijava-ops-image:1.0.0@About
-  SciJava Ops Image v1.0.0
-  Project license: Simplified BSD License
-  Project website: https://github.com/scijava/scijava
+  $ jgo -q run org.python:jython-standalone:2.7.4 -- --version
+  Jython 2.7.4
 
 Test passing JVM args and app args.
 

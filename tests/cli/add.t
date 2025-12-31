@@ -36,7 +36,7 @@ Test add requires jgo.toml to exist.
 
 Test add with existing jgo.toml.
 
-  $ jgo init org.scijava:scijava-ops-image:1.0.0
+  $ jgo init com.google.guava:guava:33.0.0-jre
   $ jgo -v add org.python:jython-standalone:2.7.4
   INFO     Added 1 dependencies to jgo.toml* (glob)
 

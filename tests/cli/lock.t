@@ -22,7 +22,7 @@ Test lock --help shows usage.
 Test lock with existing jgo.toml.
 
   $ cd "$TMPDIR" && mkdir -p jgo-test-lock && cd jgo-test-lock
-  $ jgo init org.scijava:scijava-ops-image:1.0.0
+  $ jgo init com.google.guava:guava:33.0.0-jre
   $ jgo lock
   $ test -f jgo.lock.toml
 
