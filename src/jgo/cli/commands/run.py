@@ -212,7 +212,7 @@ def _run_spec(args: ParsedArgs, config: dict) -> int:
     # Create runner and execute
     _log.info(f"Running {spec.name}...")
 
-    runner = create_java_runner(args, config)
+    runner = create_java_runner(args, config, spec=spec)
     # Use environment's main class if set, otherwise fall back to args.main_class
     main_class_to_use = environment.main_class or args.main_class
     result = runner.run(
@@ -279,7 +279,7 @@ def _run_endpoint(args: ParsedArgs, config: dict) -> int:
     # Create runner and execute
     _log.info("Running Java application...")
 
-    runner = create_java_runner(args, config)
+    runner = create_java_runner(args, config, spec=None)
     # CLI main_class override takes precedence, otherwise use environment's main class
     main_class_to_use = args.main_class or environment.main_class
     result = runner.run(

@@ -38,6 +38,7 @@ class GlobalSettings:
     - [settings]: General settings (cache_dir, repo_cache, links, etc.)
     - [repositories]: Maven repositories (name = URL)
     - [shortcuts]: Coordinate shortcuts for the CLI
+    - [jvm]: JVM configuration (gc, max_heap, min_heap, jvm_args, properties)
     """
 
     def __init__(
@@ -47,6 +48,7 @@ class GlobalSettings:
         links: str = "auto",
         repositories: dict[str, str] | None = None,
         shortcuts: dict[str, str] | None = None,
+        jvm_config: dict | None = None,
     ):
         """
         Initialize configuration.
@@ -57,6 +59,7 @@ class GlobalSettings:
             links: Link strategy (hard, soft, copy, auto)
             repositories: Maven repositories (name -> URL)
             shortcuts: Coordinate shortcuts
+            jvm_config: JVM configuration (gc, max_heap, min_heap, jvm_args, properties)
         """
         from ..constants import default_jgo_cache, default_maven_repo
 
@@ -65,6 +68,7 @@ class GlobalSettings:
         self.links = links
         self.repositories = repositories or {}
         self.shortcuts = shortcuts or {}
+        self.jvm_config = jvm_config or {}
 
     @classmethod
     def load(cls, settings_file: Path | None = None) -> "GlobalSettings":
@@ -123,6 +127,7 @@ class GlobalSettings:
             links="auto",
             repositories={},
             shortcuts={},
+            jvm_config={},
         )
 
     @classmethod
@@ -179,12 +184,30 @@ class GlobalSettings:
             for name, replacement in parser.items("shortcuts"):
                 shortcuts[name] = replacement
 
+        # Parse [jvm] section
+        jvm_config = dict(base_config.jvm_config)
+        if parser.has_section("jvm"):
+            for key, value in parser.items("jvm"):
+                # Handle comma-separated lists for jvm_args
+                if key == "jvm_args":
+                    jvm_config[key] = [arg.strip() for arg in value.split(",")]
+                # Handle properties subsection (key.subkey format)
+                elif "." in key:
+                    # properties.foo.bar -> nested dict
+                    if "properties" not in jvm_config:
+                        jvm_config["properties"] = {}
+                    prop_key = key.split(".", 1)[1]
+                    jvm_config["properties"][prop_key] = value
+                else:
+                    jvm_config[key] = value
+
         return cls(
             cache_dir=cache_dir,
             repo_cache=repo_cache,
             links=links,
             repositories=repositories,
             shortcuts=shortcuts,
+            jvm_config=jvm_config,
         )
 
     @classmethod
@@ -222,6 +245,7 @@ class GlobalSettings:
             links=settings.links,
             repositories=settings.repositories,
             shortcuts=settings.shortcuts,
+            jvm_config=settings.jvm_config,
         )
 
     def to_dict(self) -> dict:
@@ -237,6 +261,7 @@ class GlobalSettings:
             "links": self.links,
             "repositories": self.repositories,
             "shortcuts": self.shortcuts,
+            "jvm": self.jvm_config,  # Note: key is "jvm" not "jvm_config" for consistency with INI file
         }
 
     def expand_shortcuts(self, coordinate: str) -> str:

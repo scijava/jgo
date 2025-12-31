@@ -226,6 +226,10 @@ class ParsedArgs:
         java_version: int | None = None,
         java_vendor: str | None = None,
         use_system_java: bool = False,
+        # JVM options
+        gc_options: tuple[str, ...] | None = None,
+        max_heap: str | None = None,
+        min_heap: str | None = None,
         # Profile constraints
         os_name: str | None = None,
         os_family: str | None = None,
@@ -283,6 +287,10 @@ class ParsedArgs:
         self.java_version = java_version
         self.java_vendor = java_vendor
         self.use_system_java = use_system_java
+        # JVM options
+        self.gc_options = gc_options
+        self.max_heap = max_heap
+        self.min_heap = min_heap
         # Profile constraints
         self.os_name = os_name
         self.os_family = os_family
@@ -484,6 +492,26 @@ def global_options(f):
         "use_system_java",
         is_flag=True,
         help="Use system Java instead of downloading Java on demand.",
+    )(f)
+
+    # JVM options
+    f = click.option(
+        "--gc",
+        "gc_options",
+        multiple=True,
+        metavar="FLAG",
+        help="GC options. Use shorthand (e.g., --gc=G1, --gc=Z) or explicit form (--gc=-XX:+UseZGC). "
+        "Special values: 'auto' (smart defaults), 'none' (disable GC flags). Can be repeated.",
+    )(f)
+    f = click.option(
+        "--max-heap",
+        metavar="SIZE",
+        help="Maximum heap size (e.g., 4G, 512M). Overrides auto-detection.",
+    )(f)
+    f = click.option(
+        "--min-heap",
+        metavar="SIZE",
+        help="Minimum/initial heap size (e.g., 512M, 1G).",
     )(f)
 
     # Profile constraints
@@ -843,6 +871,10 @@ def _build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, comman
         java_version=opts.get("java_version"),
         java_vendor=opts.get("java_vendor"),
         use_system_java=opts.get("use_system_java", False),
+        # JVM options
+        gc_options=opts.get("gc_options"),
+        max_heap=opts.get("max_heap"),
+        min_heap=opts.get("min_heap"),
         # Profile constraints
         os_name=os_name,
         os_family=os_family,

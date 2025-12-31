@@ -24,6 +24,13 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
         [java]
         version = "17"  # Or ">=11", "11-17", or "auto" (default)
         vendor = "corretto"  # Optional (default is "zulu")
+        gc = "G1"  # Or ["G1"], or "-XX:+UseG1GC", or "auto", or "none"
+        max_heap = "8G"  # Maximum heap size
+        min_heap = "2G"  # Minimum/initial heap size
+        jvm_args = ["-XX:+AlwaysPreTouch"]  # Additional JVM arguments
+
+        [java.properties]
+        app.name = "my-app"  # Becomes -Dapp.name=my-app
 
         [repositories]
         central = "https://repo.maven.apache.org/maven2"
@@ -58,6 +65,11 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
         description: str | None = None,
         java_version: str = "auto",
         java_vendor: str | None = None,
+        gc_options: list[str] | None = None,
+        max_heap: str | None = None,
+        min_heap: str | None = None,
+        jvm_args: list[str] | None = None,
+        properties: dict[str, str] | None = None,
         repositories: dict[str, str] | None = None,
         coordinates: list[str] | None = None,
         exclusions: list[str] | None = None,
@@ -70,6 +82,11 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
         self.description = description
         self.java_version = java_version
         self.java_vendor = java_vendor
+        self.gc_options = gc_options
+        self.max_heap = max_heap
+        self.min_heap = min_heap
+        self.jvm_args = jvm_args or []
+        self.properties = properties or {}
         self.repositories = repositories or {}
         self.coordinates = coordinates or []
         self.exclusions = exclusions or []
@@ -97,6 +114,25 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
         java_section = data.get("java", {})
         java_version = java_section.get("version", "auto")
         java_vendor = java_section.get("vendor")
+
+        # GC options - support both string and list
+        gc = java_section.get("gc")
+        if gc is not None:
+            gc_options = [gc] if isinstance(gc, str) else gc
+        else:
+            gc_options = None
+
+        # Heap settings
+        max_heap = java_section.get("max_heap")
+        min_heap = java_section.get("min_heap")
+
+        # Additional JVM arguments
+        jvm_args = java_section.get("jvm_args")
+        if jvm_args and not isinstance(jvm_args, list):
+            raise ValueError("'jvm_args' must be a list of strings")
+
+        # System properties from [java.properties] subsection
+        properties = java_section.get("properties", {})
 
         # [repositories] section (optional)
         repositories = data.get("repositories", {})
@@ -183,6 +219,11 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
             description=description,
             java_version=java_version,
             java_vendor=java_vendor,
+            gc_options=gc_options,
+            max_heap=max_heap,
+            min_heap=min_heap,
+            jvm_args=jvm_args,
+            properties=properties,
             repositories=repositories,
             coordinates=coordinates,
             exclusions=exclusions,
@@ -206,12 +247,26 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
             data["environment"] = env_section
 
         # [java] section
-        if self.java_version != "auto" or self.java_vendor:
-            java_section = {}
-            if self.java_version != "auto":
-                java_section["version"] = self.java_version
-            if self.java_vendor:
-                java_section["vendor"] = self.java_vendor
+        java_section = {}
+        if self.java_version != "auto":
+            java_section["version"] = self.java_version
+        if self.java_vendor:
+            java_section["vendor"] = self.java_vendor
+        if self.gc_options is not None:
+            # Write as single string if only one option, otherwise as list
+            java_section["gc"] = (
+                self.gc_options[0] if len(self.gc_options) == 1 else self.gc_options
+            )
+        if self.max_heap:
+            java_section["max_heap"] = self.max_heap
+        if self.min_heap:
+            java_section["min_heap"] = self.min_heap
+        if self.jvm_args:
+            java_section["jvm_args"] = self.jvm_args
+        if self.properties:
+            java_section["properties"] = self.properties
+
+        if java_section:
             data["java"] = java_section
 
         # [repositories] section

@@ -8,10 +8,19 @@
 name = "imagej-analysis"
 description = "ImageJ with Python scripting for image analysis"
 
-# Java version requirements (optional)
+# Java version requirements and JVM configuration (optional)
 [java]
 version = "17"         # Specific version, or ">=11", "11-17", or "auto" (default)
 vendor = "adoptium"    # Optional: adoptium, zulu, etc.
+gc = "G1"              # GC collector: G1, Parallel, Z, Shenandoah, Epsilon, or "auto" for smart defaults
+max_heap = "4G"        # Maximum heap size (e.g., "4G", "512M")
+min_heap = "1G"        # Minimum/initial heap size
+jvm_args = ["-XX:+AlwaysPreTouch"]  # Additional JVM arguments
+
+# System properties (becomes -Dfoo=bar)
+[java.properties]
+app.name = "imagej-analysis"
+log.level = "INFO"
 
 # Additional Maven repositories (optional)
 [repositories]

@@ -7,12 +7,14 @@ by CLI commands, extracting common configuration from ParsedArgs and config dict
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ..constants import DEFAULT_MAVEN_REPO, MAVEN_CENTRAL_URL
-from ..env import EnvironmentBuilder, LinkStrategy
+from ..env import EnvironmentBuilder, EnvironmentSpec, LinkStrategy
 from ..exec import JavaRunner, JavaSource, JVMConfig
+from ..exec.gc_defaults import is_gc_flag, normalize_gc_flag
 from ..maven import MavenContext, MvnResolver, PythonResolver
 from ..maven.model import ProfileConstraints
 from ..util import ensure_maven_available, is_debug_enabled, is_info_enabled
@@ -20,6 +22,8 @@ from ..util import ensure_maven_available, is_debug_enabled, is_info_enabled
 if TYPE_CHECKING:
     from ..maven import Resolver
     from .parser import ParsedArgs
+
+_log = logging.getLogger("jgo")
 
 
 def create_maven_context(args: ParsedArgs, config: dict) -> MavenContext:
@@ -130,23 +134,138 @@ def create_environment_builder(
     )
 
 
-def create_java_runner(args: ParsedArgs, config: dict) -> JavaRunner:
+def create_java_runner(
+    args: ParsedArgs, config: dict, spec: EnvironmentSpec | None = None
+) -> JavaRunner:
     """
-    Create Java runner from parsed arguments and configuration.
+    Create Java runner with 4-tier JVM configuration priority:
+    CLI > jgo.toml > ~/.jgorc > smart defaults
 
     Args:
         args: Parsed command line arguments
-        config: Global settings (currently unused, reserved for future)
+        config: Global settings from ~/.jgorc
+        spec: Optional EnvironmentSpec from jgo.toml (for project-level config)
 
     Returns:
         Configured JavaRunner instance
     """
     java_source = JavaSource.SYSTEM if args.use_system_java else JavaSource.AUTO
 
-    # Create JVM config
-    jvm_config = JVMConfig()
+    # ========== 4-Tier Precedence for GC Options ==========
+    # Priority: CLI > jgo.toml > ~/.jgorc > smart defaults
+    gc_options = None
 
-    # TODO: Load JVM options from settings file
+    # Tier 1: CLI override (highest priority)
+    if args.gc_options:
+        if len(args.gc_options) == 1 and args.gc_options[0].lower() == "none":
+            gc_options = []  # Explicit disable
+        elif len(args.gc_options) == 1 and args.gc_options[0].lower() == "auto":
+            # Skip to smart defaults (tier 4)
+            pass
+        else:
+            # Normalize and collect GC flags
+            normalized = []
+            for gc in args.gc_options:
+                result = normalize_gc_flag(gc)
+                if result and result != "auto":
+                    normalized.append(result)
+            gc_options = normalized if normalized else []
+
+    # Tier 2: Project config (jgo.toml)
+    if gc_options is None and spec and spec.gc_options:
+        gc_options = spec.gc_options.copy()
+
+    # Tier 3: Global config (~/.jgorc)
+    if gc_options is None and "jvm" in config:
+        jvm_config_section = config["jvm"]
+        if "gc" in jvm_config_section or "gc_options" in jvm_config_section:
+            gc_value = jvm_config_section.get("gc") or jvm_config_section.get(
+                "gc_options"
+            )
+            if isinstance(gc_value, str):
+                gc_options = [gc_value]
+            elif isinstance(gc_value, list):
+                gc_options = gc_value.copy()
+
+    # Tier 4: Smart defaults (will be applied in JVMConfig.to_jvm_args() based on java_version)
+    # Leave gc_options as None to trigger smart defaults
+
+    # ========== 4-Tier Precedence for Heap Settings ==========
+    max_heap = None
+    min_heap = None
+
+    # Tier 1: CLI
+    if args.max_heap:
+        max_heap = args.max_heap
+    # Tier 2: jgo.toml
+    elif spec and spec.max_heap:
+        max_heap = spec.max_heap
+    # Tier 3: ~/.jgorc
+    elif "jvm" in config and "max_heap" in config["jvm"]:
+        max_heap = config["jvm"]["max_heap"]
+    # Tier 4: Auto-detect (handled by JVMConfig)
+
+    # Same for min_heap
+    if args.min_heap:
+        min_heap = args.min_heap
+    elif spec and spec.min_heap:
+        min_heap = spec.min_heap
+    elif "jvm" in config and "min_heap" in config["jvm"]:
+        min_heap = config["jvm"]["min_heap"]
+
+    # ========== Merge Extra JVM Args (Additive + Conflict Resolution) ==========
+    # Combine from all sources: CLI -- separator + jgo.toml + ~/.jgorc
+    # Apply conflict resolution: structured settings win over extra args
+    extra_jvm_args = []
+
+    # Collect from global config
+    if "jvm" in config and "jvm_args" in config["jvm"]:
+        jvm_args_value = config["jvm"]["jvm_args"]
+        if isinstance(jvm_args_value, str):
+            extra_jvm_args.extend(jvm_args_value.split(","))
+        elif isinstance(jvm_args_value, list):
+            extra_jvm_args.extend(jvm_args_value)
+
+    # Add from spec
+    if spec and spec.jvm_args:
+        extra_jvm_args.extend(spec.jvm_args)
+
+    # Add from CLI -- separator
+    if args.jvm_args:
+        extra_jvm_args.extend(args.jvm_args)
+
+    # Strip conflicting flags if structured options are set
+    if max_heap:
+        extra_jvm_args = [arg for arg in extra_jvm_args if not arg.startswith("-Xmx")]
+    if min_heap:
+        extra_jvm_args = [arg for arg in extra_jvm_args if not arg.startswith("-Xms")]
+    if gc_options is not None:
+        extra_jvm_args = [arg for arg in extra_jvm_args if not is_gc_flag(arg)]
+
+    # ========== Merge System Properties (Additive) ==========
+    system_properties = {}
+
+    # Collect from global config
+    if "jvm" in config and "properties" in config["jvm"]:
+        system_properties.update(config["jvm"]["properties"])
+
+    # Add from spec
+    if spec and spec.properties:
+        system_properties.update(spec.properties)
+
+    # Add from CLI (already in args.properties)
+    if args.properties:
+        system_properties.update(args.properties)
+
+    # ========== Create JVMConfig ==========
+    jvm_config = JVMConfig(
+        max_heap=max_heap,
+        min_heap=min_heap,
+        gc_options=gc_options,
+        system_properties=system_properties,
+        extra_args=extra_jvm_args,
+        auto_heap=True,
+    )
 
     verbose = is_info_enabled() and not args.quiet
 

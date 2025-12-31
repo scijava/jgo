@@ -146,8 +146,8 @@ class JavaRunner:
         # Build command
         cmd = [str(java_path)]
 
-        # Add JVM arguments
-        jvm_args = self.jvm_config.to_jvm_args()
+        # Add JVM arguments (pass java_version for smart GC defaults)
+        jvm_args = self.jvm_config.to_jvm_args(java_version=actual_java_version)
         cmd.extend(jvm_args)
 
         # Add additional JVM arguments

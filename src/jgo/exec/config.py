@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import psutil
 
+from .gc_defaults import get_default_gc_options
+
 
 class JVMConfig:
     """
@@ -24,7 +26,7 @@ class JVMConfig:
         system_properties: dict[str, str] | None = None,
         extra_args: list[str] | None = None,
         auto_heap: bool = True,
-        default_gc: str = "-XX:+UseG1GC",
+        default_gc: str | None = None,
     ):
         """
         Initialize JVM configuration.
@@ -33,36 +35,51 @@ class JVMConfig:
             max_heap: Maximum heap size (e.g., "2G", "512M"). If None and auto_heap=True,
                      auto-detects based on system memory.
             min_heap: Minimum heap size (e.g., "512M")
-            gc_options: Garbage collection options (e.g., ["-XX:+UseG1GC"])
+            gc_options: Garbage collection options (e.g., ["-XX:+UseG1GC"]).
+                       If None, smart defaults based on Java version will be used.
             system_properties: System properties as dict (e.g., {"foo": "bar"} -> -Dfoo=bar)
             extra_args: Additional JVM arguments
             auto_heap: If True and max_heap is None, auto-detect max heap size
-            default_gc: Default GC option to use if gc_options is None
+            default_gc: DEPRECATED. Legacy default GC option. Use gc_options instead.
         """
         self.max_heap = max_heap
         self.min_heap = min_heap
-        self.gc_options = gc_options or []
+        self.gc_options = gc_options  # Keep as None to distinguish from empty list
         self.system_properties = system_properties or {}
         self.extra_args = extra_args or []
         self.auto_heap = auto_heap
-        self.default_gc = default_gc
+        self.default_gc = default_gc  # Kept for backward compatibility
 
-    def to_jvm_args(self) -> list[str]:
+    def to_jvm_args(self, java_version: int | None = None) -> list[str]:
         """
         Convert configuration to JVM arguments list.
+
+        Args:
+            java_version: Java major version for smart defaults (e.g., 8, 11, 17, 21).
+                         Required if gc_options is None and you want version-aware defaults.
 
         Returns:
             List of JVM arguments suitable for java command
         """
         args = []
 
-        # Add GC options
-        gc_args = (
-            self.gc_options
-            if self.gc_options
-            else ([self.default_gc] if self.default_gc else [])
-        )
-        args.extend(gc_args)
+        # Add GC options with precedence:
+        # 1. Explicit gc_options (could be empty list to disable)
+        # 2. Legacy default_gc (backward compatibility)
+        # 3. Smart defaults based on Java version
+        # 4. Fallback to G1GC (safe for Java 8+)
+        if self.gc_options is not None:
+            # Explicit gc_options set (could be empty list to disable)
+            args.extend(self.gc_options)
+        elif self.default_gc:
+            # Legacy default_gc parameter (backward compatibility)
+            args.append(self.default_gc)
+        elif java_version is not None:
+            # Smart default based on Java version
+            args.extend(get_default_gc_options(java_version))
+        else:
+            # Fallback: use G1GC (safe for Java 8+, most common case)
+            args.append("-XX:+UseG1GC")
 
         # Add heap settings
         if self.min_heap:
@@ -123,7 +140,7 @@ class JVMConfig:
         return JVMConfig(
             max_heap=self.max_heap,
             min_heap=self.min_heap,
-            gc_options=self.gc_options.copy(),
+            gc_options=self.gc_options.copy() if self.gc_options is not None else None,
             system_properties=new_props,
             extra_args=self.extra_args.copy(),
             auto_heap=self.auto_heap,
@@ -146,7 +163,7 @@ class JVMConfig:
         return JVMConfig(
             max_heap=self.max_heap,
             min_heap=self.min_heap,
-            gc_options=self.gc_options.copy(),
+            gc_options=self.gc_options.copy() if self.gc_options is not None else None,
             system_properties=self.system_properties.copy(),
             extra_args=new_args,
             auto_heap=self.auto_heap,
