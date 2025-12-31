@@ -175,7 +175,6 @@ def _run_spec(args: ParsedArgs, config: dict) -> int:
         create_java_runner,
         create_maven_context,
     )
-    from ..output import print_classpath, print_java_info
 
     debug = is_debug_enabled()
 
@@ -198,16 +197,6 @@ def _run_spec(args: ParsedArgs, config: dict) -> int:
     environment = builder.from_spec(
         spec, update=args.update, entrypoint=args.entrypoint
     )
-
-    # If --print-classpath, just print and exit
-    if args.print_classpath:
-        print_classpath(environment)
-        return 0
-
-    # If --print-java-info, just print and exit
-    if args.print_java_info:
-        print_java_info(environment)
-        return 0
 
     # Create runner and execute
     _log.info(f"Running {spec.name}...")
@@ -245,7 +234,6 @@ def _run_endpoint(args: ParsedArgs, config: dict) -> int:
         create_java_runner,
         create_maven_context,
     )
-    from ..output import print_classpath, print_java_info
 
     debug = is_debug_enabled()
 
@@ -266,16 +254,6 @@ def _run_endpoint(args: ParsedArgs, config: dict) -> int:
         update=args.update,
         main_class=args.main_class,
     )
-
-    # If --print-classpath, just print and exit
-    if args.print_classpath:
-        print_classpath(environment)
-        return 0
-
-    # If --print-java-info, just print and exit
-    if args.print_java_info:
-        print_java_info(environment)
-        return 0
 
     # Create runner and execute
     _log.info("Running Java application...")

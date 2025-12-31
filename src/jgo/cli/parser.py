@@ -190,12 +190,15 @@ class ParsedArgs:
         # General
         verbose: int = 0,
         quiet: bool = False,
+        dry_run: bool = False,
         # Cache and update
         update: bool = False,
         offline: bool = False,
         no_cache: bool = False,
-        # Resolver and linking
+        # Dependency resolution
         resolver: str = "auto",
+        direct_only: bool = False,
+        # Environment construction
         link: str = "auto",
         # Paths
         cache_dir: Path | None = None,
@@ -209,14 +212,6 @@ class ParsedArgs:
         ignore_config: bool = False,
         additional_endpoints: list[str] | None = None,
         log_level: str | None = None,
-        # Information commands
-        list_versions: bool = False,
-        print_classpath: bool = False,
-        print_java_info: bool = False,
-        print_dependency_tree: bool = False,
-        print_dependency_list: bool = False,
-        direct_only: bool = False,
-        dry_run: bool = False,
         # Spec file
         file: Path | None = None,
         entrypoint: str | None = None,
@@ -251,12 +246,15 @@ class ParsedArgs:
         # General
         self.verbose = verbose
         self.quiet = quiet
+        self.dry_run = dry_run
         # Cache and update
         self.update = update
         self.offline = offline
         self.no_cache = no_cache
-        # Resolver and linking
+        # Dependency resolution
         self.resolver = resolver
+        self.direct_only = direct_only
+        # Environment construction
         self.link = link
         # Paths
         self.cache_dir = cache_dir
@@ -270,14 +268,6 @@ class ParsedArgs:
         self.ignore_config = ignore_config
         self.additional_endpoints = additional_endpoints
         self.log_level = log_level
-        # Information commands
-        self.list_versions = list_versions
-        self.print_classpath = print_classpath
-        self.print_java_info = print_java_info
-        self.print_dependency_tree = print_dependency_tree
-        self.print_dependency_list = print_dependency_list
-        self.direct_only = direct_only
-        self.dry_run = dry_run
         # Spec file
         self.file = file
         self.entrypoint = entrypoint
@@ -847,12 +837,15 @@ def _build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, comman
         # General
         verbose=opts.get("verbose", 0),
         quiet=opts.get("quiet", False),
+        dry_run=opts.get("dry_run", False),
         # Cache and update
         update=opts.get("update", False),
         offline=opts.get("offline", False),
         no_cache=opts.get("no_cache", False),
-        # Resolver and linking
+        # Dependency resolution
         resolver=opts.get("resolver", "auto"),
+        direct_only=opts.get("direct_only", False),
+        # Environment construction
         link=opts.get("link", "auto"),
         # Paths
         cache_dir=opts.get("cache_dir"),
@@ -866,14 +859,6 @@ def _build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, comman
         ignore_config=opts.get("ignore_config", False),
         additional_endpoints=None,
         log_level=None,
-        # Information commands (legacy)
-        list_versions=opts.get("list_versions", False),
-        print_classpath=opts.get("print_classpath", False),
-        print_java_info=opts.get("print_java_info", False),
-        print_dependency_tree=opts.get("print_dependency_tree", False),
-        print_dependency_list=opts.get("print_dependency_list", False),
-        direct_only=opts.get("direct_only", False),
-        dry_run=opts.get("dry_run", False),
         # Spec file
         file=opts.get("file"),
         entrypoint=opts.get("entrypoint"),

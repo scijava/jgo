@@ -86,10 +86,6 @@ def test_run_with_main_class_after_init():
                     app_args=[],
                     jvm_args=[],
                     classpath_append=[],
-                    print_classpath=False,  # Actually run (well, mock run)
-                    print_dependency_tree=False,
-                    print_dependency_list=False,
-                    print_java_info=False,
                     update=False,
                     entrypoint=None,
                     resolver="python",
@@ -143,10 +139,6 @@ def test_run_endpoint_with_main_class():
             app_args=[],
             jvm_args=[],
             classpath_append=[],
-            print_classpath=True,  # Just print classpath, don't actually run
-            print_dependency_tree=False,
-            print_dependency_list=False,
-            print_java_info=False,
             update=False,
             entrypoint=None,
             resolver="python",
