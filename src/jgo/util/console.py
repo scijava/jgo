@@ -15,6 +15,9 @@ _err_console: Console = Console(stderr=True)
 # Current color mode (for other modules to query)
 _color_mode: str = "auto"
 
+# Current no-wrap mode
+_no_wrap: bool = False
+
 
 def normalize_color_mode(color: str) -> str:
     """
@@ -34,7 +37,9 @@ def normalize_color_mode(color: str) -> str:
     return color
 
 
-def setup_consoles(color: str = "auto", quiet: bool = False) -> None:
+def setup_consoles(
+    color: str = "auto", quiet: bool = False, no_wrap: bool = False
+) -> None:
     """
     Configure console instances based on CLI flags.
 
@@ -47,12 +52,14 @@ def setup_consoles(color: str = "auto", quiet: bool = False) -> None:
             - "styled": Bold/italic only, no color (NO_COLOR compliant)
             - "plain" (alias: "never"): No ANSI codes at all
         quiet: If True, suppress all console output (data and messages)
+        no_wrap: If True, disable text wrapping in rich output
     """
-    global _console, _err_console, _color_mode
+    global _console, _err_console, _color_mode, _no_wrap
 
     # Normalize aliases
     color = normalize_color_mode(color)
     _color_mode = color
+    _no_wrap = no_wrap
 
     console_kwargs: dict = {"quiet": quiet}
 
@@ -81,6 +88,16 @@ def get_color_mode() -> str:
     return _color_mode
 
 
+def get_no_wrap() -> bool:
+    """
+    Get the current no-wrap mode.
+
+    Returns:
+        True if text wrapping should be disabled in rich output
+    """
+    return _no_wrap
+
+
 def get_console() -> Console:
     """
     Get the stdout console instance.
@@ -99,3 +116,37 @@ def get_err_console() -> Console:
         Console configured for stderr output
     """
     return _err_console
+
+
+def console_print(
+    *objects,
+    sep: str = " ",
+    end: str = "\n",
+    stderr: bool = False,
+    highlight: bool | None = None,
+    **kwargs,
+) -> None:
+    """
+    Print to console, respecting the global no-wrap setting.
+
+    This is a convenience wrapper around Console.print() that automatically
+    applies soft_wrap=True when --no-wrap mode is enabled.
+
+    Args:
+        *objects: Objects to print
+        sep: Separator between objects
+        end: String to print at end
+        stderr: If True, print to stderr console
+        highlight: Enable syntax highlighting (default: None = auto)
+        **kwargs: Additional arguments passed to Console.print()
+    """
+    console = _err_console if stderr else _console
+
+    if _no_wrap:
+        # In no-wrap mode, use soft_wrap to prevent artificial line breaks
+        kwargs.setdefault("soft_wrap", True)
+        # Disable highlighting in no-wrap mode to avoid color codes in grep output
+        if highlight is None:
+            highlight = False
+
+    console.print(*objects, sep=sep, end=end, highlight=highlight, **kwargs)

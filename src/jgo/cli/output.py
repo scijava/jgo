@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from ..maven.core import Component
 
 # Import shared console instances (configured at startup)
-from ..util.console import get_console, get_err_console
+from ..util.console import get_console, get_err_console, get_no_wrap
 
 _console = get_console()
 _err_console = get_err_console()
@@ -72,6 +72,8 @@ def print_dependencies(
                   If False, print tree (like mvn dependency:tree).
         direct_only: If True and list_mode is True, show only direct dependencies
     """
+    no_wrap = get_no_wrap()
+
     if list_mode:
         # Flat list mode - use Rich for colored output
         from ..maven.dependency_printer import format_dependency_list_rich
@@ -100,8 +102,9 @@ def print_dependencies(
         )
 
         # Format and print using Rich
-        rich_tree = format_dependency_tree_rich(tree)
-        _console.print(rich_tree)
+        # Use NoWrapTree + soft_wrap when --no-wrap is enabled
+        rich_tree = format_dependency_tree_rich(tree, no_wrap=no_wrap)
+        _console.print(rich_tree, soft_wrap=no_wrap)
 
 
 def print_java_info(environment: Environment) -> None:
@@ -112,13 +115,16 @@ def print_java_info(environment: Environment) -> None:
         environment: The resolved environment
     """
     from rich.panel import Panel
-    from rich.table import Table
 
     from jgo.env.bytecode import (
         analyze_jar_bytecode,
         bytecode_to_java_version,
         round_to_lts,
     )
+
+    from ..util.rich_utils import create_table
+
+    no_wrap = get_no_wrap()
 
     jars_dir = environment.path / "jars"
     if not jars_dir.exists():
@@ -163,11 +169,18 @@ def print_java_info(environment: Environment) -> None:
         title="[bold]Java Version Requirements[/]",
         border_style="cyan",
     )
-    _console.print(summary_panel)
+    _console.print(summary_panel, soft_wrap=no_wrap)
 
     # Print per-JAR analysis in a table
-    table = Table(title="Per-JAR Analysis", show_header=True, header_style="bold cyan")
-    table.add_column("JAR", style="bold", no_wrap=False, max_width=40)
+    # Use NoWrapTable when --no-wrap is enabled to show full JAR names
+    table = create_table(
+        no_wrap=no_wrap,
+        title="Per-JAR Analysis",
+        show_header=True,
+        header_style="bold cyan",
+    )
+    # When no_wrap is enabled, use no_wrap=True on column to prevent truncation
+    table.add_column("JAR", style="bold", no_wrap=no_wrap)
     table.add_column("Java Version", justify="right", style="green")
     table.add_column("Max Bytecode", justify="right")
     table.add_column("Class Count", justify="right")
@@ -185,7 +198,7 @@ def print_java_info(environment: Environment) -> None:
             str(total_classes),
         )
 
-    _console.print(table)
+    _console.print(table, soft_wrap=no_wrap)
 
     # Print detailed breakdown for JARs with mixed bytecode versions
     _console.print("\n[bold]Bytecode Version Details:[/]")

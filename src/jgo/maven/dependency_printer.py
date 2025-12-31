@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from rich.tree import Tree
 
+from ..util.rich_utils import NoWrapTree
 from .core import DependencyNode
 
 
@@ -182,16 +183,19 @@ def format_dependency_tree(root: DependencyNode) -> str:
     return "\n".join(lines)
 
 
-def format_dependency_tree_rich(root: DependencyNode) -> Tree:
+def format_dependency_tree_rich(root: DependencyNode, no_wrap: bool = False) -> Tree:
     """
     Format a dependency tree using Rich Tree for beautiful colored output.
 
     Args:
         root: The root node of the dependency tree
+        no_wrap: If True, use NoWrapTree to prevent line wrapping
 
     Returns:
         Rich Tree object ready for printing
     """
+    # Choose tree class based on no_wrap setting
+    TreeClass = NoWrapTree if no_wrap else Tree
 
     def add_children_rich(tree: Tree, nodes: list[DependencyNode]):
         """Recursively add child nodes to Rich tree."""
@@ -218,7 +222,7 @@ def format_dependency_tree_rich(root: DependencyNode) -> Tree:
         and root.dep.artifactId == "INTERNAL-WRAPPER"
     ):
         # Create invisible root for multiple top-level items
-        tree = Tree("")
+        tree = TreeClass("")
         for child in root.children:
             coord = (
                 f"[bold cyan]{child.dep.groupId}[/]:"
@@ -235,7 +239,7 @@ def format_dependency_tree_rich(root: DependencyNode) -> Tree:
             f"[bold]{root.dep.artifactId}[/]:"
             f"[green]{root.dep.version}[/]"
         )
-        tree = Tree(coord)
+        tree = TreeClass(coord)
         if root.children:
             add_children_rich(tree, root.children)
 
