@@ -57,18 +57,18 @@ legacy_repo = https://legacy.example.com/maven2
 
     # Print debug info for CI diagnostics
     if os.environ.get("GITHUB_REPOSITORY"):
-        print(f"\n=== DEBUG INFO FOR CI ===")
+        print("\n=== DEBUG INFO FOR CI ===")
         print(f"tmp_path: {tmp_path}")
         print(f"XDG file exists: {(tmp_path / '.config' / 'jgo.conf').exists()}")
         print(f"Legacy file exists: {(tmp_path / '.jgorc').exists()}")
         print(f"Loaded cache_dir: {config.cache_dir}")
         print(f"Loaded links: {config.links}")
         print(f"Loaded repositories: {config.repositories}")
-        print(f"\n=== CAPLOG DEBUG OUTPUT ===")
+        print("\n=== CAPLOG DEBUG OUTPUT ===")
         for record in caplog.records:
             if record.levelname == "DEBUG":
                 print(f"{record.name}: {record.message}")
-        print(f"=== END DEBUG INFO ===\n")
+        print("=== END DEBUG INFO ===\n")
 
     # Verify XDG config was loaded
     assert str(config.cache_dir) == "/xdg/cache", (
