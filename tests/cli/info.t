@@ -97,9 +97,9 @@ Test info javainfo with endpoint.
 
   $ jgo info javainfo com.google.guava:guava:33.0.0-jre
   
-  Environment: /home/*/.cache/jgo/com/google/guava/guava/* (glob)
+  Environment: /*/.cache/jgo/com/google/guava/guava/* (glob)
   JARs directory: 
-  /home/*/.cache/jgo/com/google/guava/guava/*/jars (glob)
+  /*/.cache/jgo/com/google/guava/guava/*/jars (glob)
   Total JARs: 3
   
   ╭───────────────────────── Java Version Requirements ──────────────────────────╮
