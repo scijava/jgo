@@ -19,6 +19,7 @@ from .commands.info import (
     entrypoints,
     env_dir,
     javainfo,
+    main_classes,
     manifest,
     modulepath,
     pom,
@@ -677,17 +678,19 @@ def info(ctx):
     Show information about a jgo environment or Maven artifact.
 
     Use subcommands to specify what information to display:
-      classpath    - Show classpath (all JARs)
-      modulepath   - Show module-path (modular JARs only)
-      deptree      - Show dependency tree
-      deplist      - Show flat list of dependencies
-      env-dir      - Show environment directory path
-      javainfo     - Show Java version requirements
-      entrypoints  - Show entrypoints from jgo.toml
-      versions     - List available versions of an artifact
+      classpath     - Show classpath (all JARs)
+      modulepath    - Show module-path (modular JARs only)
+      main-classes  - Show classes with public main methods
+      deptree       - Show dependency tree
+      deplist       - Show flat list of dependencies
+      env-dir       - Show environment directory path
+      javainfo      - Show Java version requirements
+      entrypoints   - Show entrypoints from jgo.toml
+      versions      - List available versions of an artifact
 
     Examples:
       jgo info classpath org.python:jython-standalone
+      jgo info main-classes org.scijava:scijava-common
       jgo info modulepath org.scijava:scijava-common
       jgo info env-dir org.scijava:scijava-common
       jgo info javainfo org.scijava:scijava-common
@@ -710,6 +713,7 @@ info.add_command(deptree)
 info.add_command(entrypoints)
 info.add_command(env_dir)
 info.add_command(javainfo)
+info.add_command(main_classes)
 info.add_command(manifest)
 info.add_command(modulepath)
 info.add_command(pom)

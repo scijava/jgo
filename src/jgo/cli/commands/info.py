@@ -119,6 +119,42 @@ def modulepath(ctx, endpoint):
     ctx.exit(0)
 
 
+@click.command(help="Show classes with public main methods.")
+@click.argument("endpoint", required=False)
+@click.pass_context
+def main_classes(ctx, endpoint):
+    """Find and list all classes with public static void main(String[]) methods."""
+    from ...config import GlobalSettings
+    from ...env import EnvironmentSpec
+    from ..context import create_environment_builder, create_maven_context
+    from ..output import print_main_classes
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    config = GlobalSettings.load_from_opts(opts)
+    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+
+    context = create_maven_context(args, config.to_dict())
+    builder = create_environment_builder(args, config.to_dict(), context)
+
+    # Build environment
+    if args.is_spec_mode():
+        spec_file = args.get_spec_file()
+        if not spec_file.exists():
+            _log.error(f"{spec_file} not found")
+            ctx.exit(1)
+        spec = EnvironmentSpec.load(spec_file)
+        environment = builder.from_spec(spec, update=args.update)
+    else:
+        if not endpoint:
+            _log.error("No endpoint specified")
+            ctx.exit(1)
+        environment = builder.from_endpoint(endpoint, update=args.update)
+
+    print_main_classes(environment)
+    ctx.exit(0)
+
+
 @click.command(help="Show dependency tree.")
 @click.argument("endpoint", required=False)
 @click.pass_context

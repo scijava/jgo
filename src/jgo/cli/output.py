@@ -72,6 +72,41 @@ def print_modulepath(environment: Environment) -> None:
         print(jar_path)
 
 
+def print_main_classes(environment: Environment) -> None:
+    """
+    Print all classes with public static void main(String[]) methods.
+
+    Args:
+        environment: The resolved environment
+    """
+    from ..env.jar import find_main_classes
+
+    all_jars = environment.all_jars
+    if not all_jars:
+        _err_console.print("[red]No JARs in environment[/]")
+        return
+
+    # Scan all JARs for main classes
+    main_classes_by_jar = {}
+    for jar_path in all_jars:
+        main_classes = find_main_classes(jar_path)
+        if main_classes:
+            main_classes_by_jar[jar_path.name] = main_classes
+
+    if not main_classes_by_jar:
+        _err_console.print("[yellow]No classes with main methods found[/]")
+        return
+
+    # Print results grouped by JAR
+    _console.print(f"\n[bold]Found {sum(len(v) for v in main_classes_by_jar.values())} classes with main methods:[/]\n")
+
+    for jar_name, main_classes in sorted(main_classes_by_jar.items()):
+        _console.print(f"[cyan]{jar_name}[/]:")
+        for cls in main_classes:
+            _console.print(f"  {cls}")
+        _console.print()
+
+
 def print_dependencies(
     components: list[Component],
     context: MavenContext,

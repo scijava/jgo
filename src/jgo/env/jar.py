@@ -653,3 +653,218 @@ def classify_jar(jar_path: Path, jar_executable: Path) -> int:
 
     # Unknown output format - conservatively assume non-modularizable
     return 4
+
+
+def has_main_method(class_bytes: bytes) -> bool:
+    """
+    Check if a class file has a public static void main(String[]) method.
+
+    Parses the class file to check:
+    1. Class is public
+    2. Has a method named "main"
+    3. The method is public and static
+    4. The method signature is "([Ljava/lang/String;)V"
+
+    Args:
+        class_bytes: Raw bytes of the class file
+
+    Returns:
+        True if the class has a valid main method
+    """
+    if len(class_bytes) < 10 or class_bytes[:4] != b"\xca\xfe\xba\xbe":
+        return False
+
+    try:
+        # Skip magic (4), minor (2), major (2) = 8 bytes
+        pos = 8
+
+        # Read constant pool count
+        cp_count = struct.unpack(">H", class_bytes[pos : pos + 2])[0]
+        pos += 2
+
+        # Parse constant pool to extract UTF-8 strings
+        constant_pool: list[tuple[str, object] | None] = [None]  # 1-indexed
+        i = 1
+        while i < cp_count:
+            if pos >= len(class_bytes):
+                return False
+
+            tag = class_bytes[pos]
+            pos += 1
+
+            if tag == 1:  # CONSTANT_Utf8
+                length = struct.unpack(">H", class_bytes[pos : pos + 2])[0]
+                pos += 2
+                if pos + length > len(class_bytes):
+                    return False
+                utf8_str = class_bytes[pos : pos + length].decode("utf-8", errors="replace")
+                pos += length
+                constant_pool.append(("Utf8", utf8_str))
+            elif tag in (7, 8, 16, 19, 20):  # 2-byte entries
+                pos += 2
+                constant_pool.append(None)
+            elif tag in (3, 4, 9, 10, 11, 12, 17, 18):  # 4-byte entries
+                pos += 4
+                constant_pool.append(None)
+            elif tag == 15:  # CONSTANT_MethodHandle
+                pos += 3
+                constant_pool.append(None)
+            elif tag in (5, 6):  # CONSTANT_Long/Double (takes 2 slots)
+                pos += 8
+                constant_pool.append(None)
+                constant_pool.append(None)
+                i += 1
+            else:
+                return False  # Unknown tag
+
+            i += 1
+
+        # Read access flags
+        if pos + 2 > len(class_bytes):
+            return False
+        access_flags = struct.unpack(">H", class_bytes[pos : pos + 2])[0]
+        pos += 2
+
+        # Check if class is public (0x0001)
+        is_public = (access_flags & 0x0001) != 0
+        if not is_public:
+            return False
+
+        # Skip this_class (2), super_class (2)
+        pos += 4
+
+        # Skip interfaces
+        if pos + 2 > len(class_bytes):
+            return False
+        interfaces_count = struct.unpack(">H", class_bytes[pos : pos + 2])[0]
+        pos += 2 + (interfaces_count * 2)
+
+        # Skip fields
+        if pos + 2 > len(class_bytes):
+            return False
+        fields_count = struct.unpack(">H", class_bytes[pos : pos + 2])[0]
+        pos += 2
+        for _ in range(fields_count):
+            # Skip access_flags (2), name_index (2), descriptor_index (2)
+            pos += 6
+            if pos + 2 > len(class_bytes):
+                return False
+            attributes_count = struct.unpack(">H", class_bytes[pos : pos + 2])[0]
+            pos += 2
+            # Skip attributes
+            for _ in range(attributes_count):
+                if pos + 6 > len(class_bytes):
+                    return False
+                pos += 2  # name_index
+                length = struct.unpack(">I", class_bytes[pos : pos + 4])[0]
+                pos += 4 + length
+
+        # Read methods
+        if pos + 2 > len(class_bytes):
+            return False
+        methods_count = struct.unpack(">H", class_bytes[pos : pos + 2])[0]
+        pos += 2
+
+        for _ in range(methods_count):
+            if pos + 6 > len(class_bytes):
+                return False
+
+            method_access_flags = struct.unpack(">H", class_bytes[pos : pos + 2])[0]
+            pos += 2
+
+            name_index = struct.unpack(">H", class_bytes[pos : pos + 2])[0]
+            pos += 2
+
+            descriptor_index = struct.unpack(">H", class_bytes[pos : pos + 2])[0]
+            pos += 2
+
+            # Check if method is public (0x0001) and static (0x0008)
+            is_public_static = (method_access_flags & 0x0009) == 0x0009
+
+            # Get method name and descriptor
+            method_name = None
+            method_descriptor = None
+
+            if 0 < name_index < len(constant_pool) and constant_pool[name_index]:
+                entry = constant_pool[name_index]
+                if entry[0] == "Utf8":
+                    method_name = entry[1]
+
+            if (
+                0 < descriptor_index < len(constant_pool)
+                and constant_pool[descriptor_index]
+            ):
+                entry = constant_pool[descriptor_index]
+                if entry[0] == "Utf8":
+                    method_descriptor = entry[1]
+
+            # Check if this is the main method
+            if (
+                is_public_static
+                and method_name == "main"
+                and method_descriptor == "([Ljava/lang/String;)V"
+            ):
+                return True
+
+            # Skip method attributes
+            if pos + 2 > len(class_bytes):
+                return False
+            attributes_count = struct.unpack(">H", class_bytes[pos : pos + 2])[0]
+            pos += 2
+            for _ in range(attributes_count):
+                if pos + 6 > len(class_bytes):
+                    return False
+                pos += 2  # name_index
+                length = struct.unpack(">I", class_bytes[pos : pos + 4])[0]
+                pos += 4 + length
+
+        return False
+
+    except Exception:
+        return False
+
+
+def find_main_classes(jar_path: Path) -> list[str]:
+    """
+    Find all classes in a JAR that have a public static void main(String[]) method.
+
+    Args:
+        jar_path: Path to JAR file
+
+    Returns:
+        List of fully qualified class names that have main methods
+    """
+    main_classes = []
+
+    try:
+        with zipfile.ZipFile(jar_path) as jar:
+            for name in jar.namelist():
+                # Only process .class files
+                if not name.endswith(".class"):
+                    continue
+
+                # Skip module-info and package-info
+                if name.endswith("module-info.class") or name.endswith(
+                    "package-info.class"
+                ):
+                    continue
+
+                # Skip inner classes (contain $)
+                if "$" in name:
+                    continue
+
+                try:
+                    with jar.open(name) as class_file:
+                        class_bytes = class_file.read()
+                        if has_main_method(class_bytes):
+                            # Convert path to class name
+                            class_name = name[:-6].replace("/", ".")
+                            main_classes.append(class_name)
+                except Exception:
+                    continue
+
+    except (zipfile.BadZipFile, FileNotFoundError):
+        pass
+
+    return sorted(main_classes)
+
