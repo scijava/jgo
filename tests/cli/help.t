@@ -313,14 +313,17 @@ Test help for specific commands.
   │ --help  Show this message and exit.                                          │
   ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Commands ───────────────────────────────────────────────────────────────────╮
-  │ classpath          Show classpath.                                           │
-  │ deplist            Show flat list of dependencies.                           │
-  │ deptree            Show dependency tree.                                     │
-  │ entrypoints        Show entrypoints from jgo.toml.                           │
-  │ javainfo           Show Java version requirements.                           │
-  │ manifest           Show JAR manifest.                                        │
-  │ pom                Show POM content.                                         │
-  │ versions           List available versions of an artifact.                   │
+  │ classpath           Show classpath.                                          │
+  │ deplist             Show flat list of dependencies.                          │
+  │ deptree             Show dependency tree.                                    │
+  │ entrypoints         Show entrypoints from jgo.toml.                          │
+  │ env-dir             Show environment directory path.                         │
+  │ javainfo            Show Java version requirements.                          │
+  │ main-classes        Show classes with public main methods.                   │
+  │ manifest            Show JAR manifest.                                       │
+  │ modulepath          Show module-path.                                        │
+  │ pom                 Show POM content.                                        │
+  │ versions            List available versions of an artifact.                  │
   ╰──────────────────────────────────────────────────────────────────────────────╯
                                                                                   
    TIP: To see the launch command, use: jgo --dry-run run <endpoint>              

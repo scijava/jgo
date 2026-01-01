@@ -12,14 +12,17 @@ Test info with no subcommand shows help.
   │ --help  Show this message and exit.                                          │
   ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Commands ───────────────────────────────────────────────────────────────────╮
-  │ classpath          Show classpath.                                           │
-  │ deplist            Show flat list of dependencies.                           │
-  │ deptree            Show dependency tree.                                     │
-  │ entrypoints        Show entrypoints from jgo.toml.                           │
-  │ javainfo           Show Java version requirements.                           │
-  │ manifest           Show JAR manifest.                                        │
-  │ pom                Show POM content.                                         │
-  │ versions           List available versions of an artifact.                   │
+  │ classpath           Show classpath.                                          │
+  │ deplist             Show flat list of dependencies.                          │
+  │ deptree             Show dependency tree.                                    │
+  │ entrypoints         Show entrypoints from jgo.toml.                          │
+  │ env-dir             Show environment directory path.                         │
+  │ javainfo            Show Java version requirements.                          │
+  │ main-classes        Show classes with public main methods.                   │
+  │ manifest            Show JAR manifest.                                       │
+  │ modulepath          Show module-path.                                        │
+  │ pom                 Show POM content.                                        │
+  │ versions            List available versions of an artifact.                  │
   ╰──────────────────────────────────────────────────────────────────────────────╯
                                                                                   
    TIP: To see the launch command, use: jgo --dry-run run <endpoint>              
@@ -38,6 +41,10 @@ Test info classpath with endpoint.
   */jars/j2objc-annotations-2.8.jar (glob)
   */jars/jsr305-3.0.2.jar (glob)
   */jars/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar (glob)
+  */modules/checker-qual-3.41.0.jar (glob)
+  */modules/error_prone_annotations-2.23.0.jar (glob)
+  */modules/failureaccess-1.0.2.jar (glob)
+  */modules/guava-33.0.0-jre.jar (glob)
 
 Test info deptree with no endpoint.
 
