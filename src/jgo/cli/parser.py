@@ -17,9 +17,10 @@ from .commands.info import (
     deplist,
     deptree,
     entrypoints,
-    env_dir,
+    envdir,
+    jars,
     javainfo,
-    main_classes,
+    mains,
     manifest,
     modulepath,
     pom,
@@ -680,19 +681,21 @@ def info(ctx):
     Use subcommands to specify what information to display:
       classpath     - Show classpath (all JARs)
       modulepath    - Show module-path (modular JARs only)
-      main-classes  - Show classes with public main methods
+      jars          - Show all JARs with section headers
+      mains         - Show classes with public main methods
       deptree       - Show dependency tree
       deplist       - Show flat list of dependencies
-      env-dir       - Show environment directory path
+      envdir        - Show environment directory path
       javainfo      - Show Java version requirements
       entrypoints   - Show entrypoints from jgo.toml
       versions      - List available versions of an artifact
 
     Examples:
       jgo info classpath org.python:jython-standalone
-      jgo info main-classes org.scijava:scijava-common
+      jgo info jars org.scijava:scijava-common
+      jgo info mains org.scijava:scijava-common
       jgo info modulepath org.scijava:scijava-common
-      jgo info env-dir org.scijava:scijava-common
+      jgo info envdir org.scijava:scijava-common
       jgo info javainfo org.scijava:scijava-common
       jgo info deptree org.scijava:scijava-common
       jgo info versions org.python:jython-standalone
@@ -711,9 +714,10 @@ info.add_command(classpath)
 info.add_command(deplist)
 info.add_command(deptree)
 info.add_command(entrypoints)
-info.add_command(env_dir)
+info.add_command(envdir)
+info.add_command(jars)
 info.add_command(javainfo)
-info.add_command(main_classes)
+info.add_command(mains)
 info.add_command(manifest)
 info.add_command(modulepath)
 info.add_command(pom)

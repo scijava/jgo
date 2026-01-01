@@ -55,6 +55,43 @@ def print_classpath(environment: Environment) -> None:
         print(jar_path)
 
 
+def print_jars(environment: Environment) -> None:
+    """
+    Print all JAR paths with section headers.
+
+    Args:
+        environment: The resolved environment
+    """
+    cp_jars = environment.class_path_jars
+    mp_jars = environment.module_path_jars
+    
+    if not cp_jars and not mp_jars:
+        _err_console.print("[red]No JARs in environment[/]")
+        return
+    
+    # Print classpath JARs
+    if cp_jars:
+        _console.print("[bold cyan]Classpath:[/]")
+        for jar_path in cp_jars:
+            print(jar_path)
+        if not mp_jars:
+            _console.print("\n[dim]TIP: Use 'jgo info modulepath' to see module-path JARs only[/]")
+    else:
+        _console.print("[yellow]No classpath JARs[/]")
+        _console.print("[dim]TIP: Use 'jgo info modulepath' to see module-path JARs[/]")
+    
+    # Print module-path JARs
+    if mp_jars:
+        if cp_jars:
+            _console.print("\n[bold cyan]Module-path:[/]")
+        else:
+            _console.print("[bold cyan]Module-path:[/]")
+        for jar_path in mp_jars:
+            print(jar_path)
+        if not cp_jars:
+            _console.print("\n[dim]TIP: Use 'jgo info classpath' to see all JARs[/]")
+
+
 def print_modulepath(environment: Environment) -> None:
     """
     Print environment module-path.
@@ -65,6 +102,7 @@ def print_modulepath(environment: Environment) -> None:
     module_jars = environment.module_path_jars
     if not module_jars:
         _err_console.print("[red]No JARs on module-path[/]")
+        _err_console.print("[dim]TIP: Use 'jgo info classpath' to see classpath JARs[/]")
         return
 
     # Print one module-path element per line (raw output, no Rich formatting)

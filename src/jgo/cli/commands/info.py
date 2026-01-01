@@ -51,7 +51,7 @@ def classpath(ctx, endpoint):
 @click.command(help="Show environment directory path.")
 @click.argument("endpoint", required=False)
 @click.pass_context
-def env_dir(ctx, endpoint):
+def envdir(ctx, endpoint):
     """Show the cache/environment directory for the given endpoint or jgo project."""
     from ...config import GlobalSettings
     from ...env import EnvironmentSpec
@@ -80,6 +80,42 @@ def env_dir(ctx, endpoint):
         environment = builder.from_endpoint(endpoint, update=args.update)
 
     print(environment.path)
+    ctx.exit(0)
+
+
+@click.command(help="Show all JAR paths (classpath + module-path).")
+@click.argument("endpoint", required=False)
+@click.pass_context
+def jars(ctx, endpoint):
+    """Show all JAR paths with section headers for classpath and module-path."""
+    from ...config import GlobalSettings
+    from ...env import EnvironmentSpec
+    from ..context import create_environment_builder, create_maven_context
+    from ..output import print_jars
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    config = GlobalSettings.load_from_opts(opts)
+    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+
+    context = create_maven_context(args, config.to_dict())
+    builder = create_environment_builder(args, config.to_dict(), context)
+
+    # Build environment
+    if args.is_spec_mode():
+        spec_file = args.get_spec_file()
+        if not spec_file.exists():
+            _log.error(f"{spec_file} not found")
+            ctx.exit(1)
+        spec = EnvironmentSpec.load(spec_file)
+        environment = builder.from_spec(spec, update=args.update)
+    else:
+        if not endpoint:
+            _log.error("No endpoint specified")
+            ctx.exit(1)
+        environment = builder.from_endpoint(endpoint, update=args.update)
+
+    print_jars(environment)
     ctx.exit(0)
 
 
@@ -122,7 +158,7 @@ def modulepath(ctx, endpoint):
 @click.command(help="Show classes with public main methods.")
 @click.argument("endpoint", required=False)
 @click.pass_context
-def main_classes(ctx, endpoint):
+def mains(ctx, endpoint):
     """Find and list all classes with public static void main(String[]) methods."""
     from ...config import GlobalSettings
     from ...env import EnvironmentSpec
