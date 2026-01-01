@@ -105,21 +105,25 @@ Test info javainfo with endpoint.
   $ jgo info javainfo com.google.guava:guava:33.0.0-jre
   
   Environment: /*/.cache/jgo/com/google/guava/guava/* (glob)
-  JARs directory: 
-  /*/.cache/jgo/com/google/guava/guava/*/jars (glob)
-  Total JARs: 3
+  Class-path JARs: 3
+  Module-path JARs: 4
+  Total JARs: 7
   
   ╭───────────────────────── Java Version Requirements ──────────────────────────╮
-  │ Minimum Java version: 7                                                      │
-  │ Rounded to LTS: 8                                                            │
+  │ Minimum Java version: 8                                                      │
+  │ (already an LTS version)                                                     │
   ╰──────────────────────────────────────────────────────────────────────────────╯
-                               Per-JAR Analysis                             
-  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┓
-  ┃ JAR                        ┃ Java Version ┃ Max Bytecode ┃ Class Count ┃
-  ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━┩
-  │ j2objc-annotations-2.8.jar │            7 │           51 │          13 │
-  │ jsr305-3.0.2.jar           │            5 │           49 │          35 │
-  └────────────────────────────┴──────────────┴──────────────┴─────────────┘
+                                  Per-JAR Analysis                                
+  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┓
+  ┃ JAR                              ┃ Java Version ┃ Max Bytecode ┃ Class Count ┃
+  ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━┩
+  │ checker-qual-3.41.0.jar          │            8 │           52 │         366 │
+  │ error_prone_annotations-2.23.0.… │            8 │           52 │          27 │
+  │ guava-33.0.0-jre.jar             │            8 │           52 │        2003 │
+  │ j2objc-annotations-2.8.jar       │            7 │           51 │          13 │
+  │ failureaccess-1.0.2.jar          │            7 │           51 │           2 │
+  │ jsr305-3.0.2.jar                 │            5 │           49 │          35 │
+  └──────────────────────────────────┴──────────────┴──────────────┴─────────────┘
   
   Bytecode Version Details:
 
