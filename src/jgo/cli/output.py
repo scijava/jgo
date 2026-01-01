@@ -44,13 +44,14 @@ def print_classpath(environment: Environment) -> None:
     Args:
         environment: The resolved environment
     """
-    classpath = environment.classpath
-    if not classpath:
-        _err_console.print("[red]No JARs in classpath[/]")
+    # Get all JARs from both jars/ and modules/ directories
+    all_jars = environment.all_jars
+    if not all_jars:
+        _err_console.print("[red]No JARs in environment[/]")
         return
 
     # Print one classpath element per line (raw output, no Rich formatting)
-    for jar_path in classpath:
+    for jar_path in all_jars:
         print(jar_path)
 
 
@@ -126,19 +127,18 @@ def print_java_info(environment: Environment) -> None:
 
     no_wrap = get_no_wrap()
 
-    jars_dir = environment.path / "jars"
-    if not jars_dir.exists():
-        _err_console.print("[red]No JARs directory found[/]")
-        return
-
-    jar_files = sorted(jars_dir.glob("*.jar"))
+    # Get all JARs from both jars/ and modules/ directories
+    jar_files = environment.all_jars
     if not jar_files:
         _err_console.print("[red]No JARs in environment[/]")
         return
 
     # Print environment info
     _console.print(f"\n[bold]Environment:[/] {environment.path}")
-    _console.print(f"[bold]JARs directory:[/] {jars_dir}")
+    if environment.has_classpath:
+        _console.print(f"[bold]Class-path JARs:[/] {len(environment.class_path_jars)}")
+    if environment.has_modules:
+        _console.print(f"[bold]Module-path JARs:[/] {len(environment.module_path_jars)}")
     _console.print(f"[bold]Total JARs:[/] {len(jar_files)}\n")
 
     # Analyze each JAR
