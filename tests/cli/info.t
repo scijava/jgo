@@ -39,13 +39,13 @@ Test info classpath with no endpoint.
 Test info classpath with endpoint.
 
   $ jgo info classpath com.google.guava:guava:33.0.0-jre
+  */jars/checker-qual-3.41.0.jar (glob)
+  */jars/error_prone_annotations-2.23.0.jar (glob)
+  */jars/failureaccess-1.0.2.jar (glob)
+  */jars/guava-33.0.0-jre.jar (glob)
   */jars/j2objc-annotations-2.8.jar (glob)
   */jars/jsr305-3.0.2.jar (glob)
   */jars/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar (glob)
-  */modules/checker-qual-3.41.0.jar (glob)
-  */modules/error_prone_annotations-2.23.0.jar (glob)
-  */modules/failureaccess-1.0.2.jar (glob)
-  */modules/guava-33.0.0-jre.jar (glob)
 
 Test info deptree with no endpoint.
 
@@ -106,8 +106,7 @@ Test info javainfo with endpoint.
   $ jgo info javainfo com.google.guava:guava:33.0.0-jre
   
   Environment: /*/.cache/jgo/com/google/guava/guava/* (glob)
-  Class-path JARs: 3
-  Module-path JARs: 4
+  Class-path JARs: 7
   Total JARs: 7
   
   ╭───────────────────────── Java Version Requirements ──────────────────────────╮
@@ -121,8 +120,8 @@ Test info javainfo with endpoint.
   │ checker-qual-3.41.0.jar          │            8 │           52 │         366 │
   │ error_prone_annotations-2.23.0.… │            8 │           52 │          27 │
   │ guava-33.0.0-jre.jar             │            8 │           52 │        2003 │
-  │ j2objc-annotations-2.8.jar       │            7 │           51 │          13 │
   │ failureaccess-1.0.2.jar          │            7 │           51 │           2 │
+  │ j2objc-annotations-2.8.jar       │            7 │           51 │          13 │
   │ jsr305-3.0.2.jar                 │            5 │           49 │          35 │
   └──────────────────────────────────┴──────────────┴──────────────┴─────────────┘
   
