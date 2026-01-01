@@ -17,6 +17,7 @@ from .commands.info import (
     deplist,
     deptree,
     entrypoints,
+    env_dir,
     javainfo,
     manifest,
     pom,
@@ -678,12 +679,14 @@ def info(ctx):
       classpath    - Show classpath
       deptree      - Show dependency tree
       deplist      - Show flat list of dependencies
+      env-dir      - Show environment directory path
       javainfo     - Show Java version requirements
       entrypoints  - Show entrypoints from jgo.toml
       versions     - List available versions of an artifact
 
     Examples:
       jgo info classpath org.python:jython-standalone
+      jgo info env-dir org.scijava:scijava-common
       jgo info javainfo org.scijava:scijava-common
       jgo info deptree org.scijava:scijava-common
       jgo info versions org.python:jython-standalone
@@ -702,6 +705,7 @@ info.add_command(classpath)
 info.add_command(deplist)
 info.add_command(deptree)
 info.add_command(entrypoints)
+info.add_command(env_dir)
 info.add_command(javainfo)
 info.add_command(manifest)
 info.add_command(pom)
