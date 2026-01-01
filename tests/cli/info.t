@@ -528,8 +528,6 @@ Test info versions with coordinates.
 
   $ jgo info versions com.google.guava:guava | head -n100
   Available versions for com.google.guava:guava:
-    HEAD-android-SNAPSHOT
-    HEAD-jre-SNAPSHOT
     r03
     r05
     r06
@@ -545,8 +543,6 @@ Test info versions with coordinates.
     11.0
     11.0.1
     11.0.2
-    11.0.2-atlassian-01
-    11.0.2-atlassian-02
     12.0-rc1
     12.0-rc2
     12.0
@@ -575,12 +571,8 @@ Test info versions with coordinates.
     19.0-rc2
     19.0-rc3
     19.0
-    19.0.0.jbossorg-1
-    19.0.0.jbossorg-2
-    19.0.20150826
     20.0-rc1
     20.0
-    20.0-hal
     21.0-rc1
     21.0-rc2
     21.0
@@ -606,7 +598,6 @@ Test info versions with coordinates.
     23.6-jre
     23.6.1-android
     23.6.1-jre
-    24.0-SNAPSHOT
     24.0-android
     24.0-jre
     24.1-android
@@ -627,6 +618,15 @@ Test info versions with coordinates.
     27.1-jre
     28.0-android
     28.0-jre
+    28.1-android
+    28.1-jre
+    28.2-android
+    28.2-jre
+    29.0-android
+    29.0-jre
+    30.0-android
+    30.0-jre
+    30.1-android
 
 Test info entrypoints without jgo.toml.
 
