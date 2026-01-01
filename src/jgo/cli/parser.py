@@ -667,6 +667,7 @@ cli.add_command(update)
 @cli.group(
     help="Show information about environment or artifact.",
     epilog="[dim]TIP: To see the launch command, use: [yellow]jgo --dry-run run <endpoint>[/]",
+    invoke_without_command=True,
 )
 @click.pass_context
 def info(ctx):
@@ -691,7 +692,9 @@ def info(ctx):
     Related:
       To see the launch command: jgo --dry-run run <endpoint>
     """
-    pass
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+        ctx.exit(2)
 
 
 # Register info subcommands
