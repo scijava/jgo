@@ -651,10 +651,14 @@ class EnvironmentBuilder:
                 jar_type = classify_jar(source_path, jar_tool)
                 # Types 1/2/3 are modularizable, type 4 is not
                 target_dir = modules_dir if jar_type in (1, 2, 3) else jars_dir
-            else:
-                # Java 8 or no jar tool - use simple heuristic
+            elif min_java_version and min_java_version >= 9:
+                # Java 9+ but no jar tool - use simple module detection
                 module_info = detect_module_info(source_path)
                 target_dir = modules_dir if module_info.is_modular else jars_dir
+                jar_type = None  # Not classified
+            else:
+                # Java 8 or below - no module support, everything goes to jars/
+                target_dir = jars_dir
                 jar_type = None  # Not classified
 
             dest_path = target_dir / artifact.filename
@@ -703,10 +707,14 @@ class EnvironmentBuilder:
                 jar_type = classify_jar(source_path, jar_tool)
                 # Types 1/2/3 are modularizable, type 4 is not
                 target_dir = modules_dir if jar_type in (1, 2, 3) else jars_dir
-            else:
-                # Java 8 or no jar tool - use simple heuristic
+            elif min_java_version and min_java_version >= 9:
+                # Java 9+ but no jar tool - use simple module detection
                 module_info = detect_module_info(source_path)
                 target_dir = modules_dir if module_info.is_modular else jars_dir
+                jar_type = None  # Not classified
+            else:
+                # Java 8 or below - no module support, everything goes to jars/
+                target_dir = jars_dir
                 jar_type = None  # Not classified
 
             dest_path = target_dir / artifact.filename
