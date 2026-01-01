@@ -1,12 +1,14 @@
 """Tests for GlobalSettings class and settings file loading."""
 
 from jgo.config import GlobalSettings
+from jgo.util.platform import get_user_home
 
 
 def test_xdg_config_precedence(monkeypatch, tmp_path):
     """Test that XDG config location takes precedence over legacy .jgorc."""
-    # Set HOME to our test directory
-    monkeypatch.setenv("HOME", str(tmp_path))
+    # Mock home directory to return our test directory
+    # Patch in constants module where it's imported and used
+    monkeypatch.setattr("jgo.constants.get_user_home", lambda: tmp_path)
     # Unset XDG_CONFIG_HOME so it doesn't override our test HOME
     monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
     # Unset JGO_CACHE_DIR to prevent env var override
@@ -56,8 +58,9 @@ legacy_repo = https://legacy.example.com/maven2
 
 def test_legacy_config_fallback(monkeypatch, tmp_path):
     """Test that legacy .jgorc is used when XDG config doesn't exist."""
-    # Set HOME to our test directory
-    monkeypatch.setenv("HOME", str(tmp_path))
+    # Mock home directory to return our test directory
+    # Patch in constants module where it's imported and used
+    monkeypatch.setattr("jgo.constants.get_user_home", lambda: tmp_path)
     # Unset XDG_CONFIG_HOME to ensure clean test environment
     monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
     # Unset JGO_CACHE_DIR to prevent env var override
@@ -87,8 +90,9 @@ legacy_repo = https://legacy.example.com/maven2
 
 def test_no_config_file(monkeypatch, tmp_path):
     """Test that defaults are used when no config file exists."""
-    # Set HOME to our test directory (no config files)
-    monkeypatch.setenv("HOME", str(tmp_path))
+    # Mock home directory to return our test directory (no config files)
+    # Patch in constants module where it's imported and used
+    monkeypatch.setattr("jgo.constants.get_user_home", lambda: tmp_path)
     # Unset XDG_CONFIG_HOME to ensure clean test environment
     monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
     # Unset environment variables that could override defaults

@@ -7,6 +7,8 @@ Centralizes hardcoded paths and URLs to avoid duplication across the codebase.
 import os
 from pathlib import Path
 
+from .util.platform import get_user_home
+
 
 def _get_version() -> str:
     """Get jgo version from package metadata."""
@@ -52,7 +54,7 @@ def default_maven_repo() -> Path:
     m2_repo = os.getenv("M2_REPO")
     if m2_repo:
         return Path(m2_repo)
-    return Path.home() / ".m2" / "repository"
+    return get_user_home() / ".m2" / "repository"
 
 
 def default_jgo_cache() -> Path:
@@ -64,7 +66,7 @@ def default_jgo_cache() -> Path:
     cache_dir = os.getenv("JGO_CACHE_DIR")
     if cache_dir:
         return Path(cache_dir)
-    return Path.home() / ".cache" / "jgo"
+    return get_user_home() / ".cache" / "jgo"
 
 
 def xdg_settings_path() -> Path:
@@ -76,14 +78,14 @@ def xdg_settings_path() -> Path:
     xdg_config_home = os.getenv("XDG_CONFIG_HOME")
     if xdg_config_home:
         return Path(xdg_config_home) / "jgo.conf"
-    return Path.home() / ".config" / "jgo.conf"
+    return get_user_home() / ".config" / "jgo.conf"
 
 
 def legacy_settings_path() -> Path:
     """
     Get legacy settings file path (~/.jgorc).
     """
-    return Path.home() / ".jgorc"
+    return get_user_home() / ".jgorc"
 
 
 # Legacy constant-style access (for backward compatibility, will be removed in 3.0)
