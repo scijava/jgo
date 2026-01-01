@@ -697,7 +697,9 @@ def has_main_method(class_bytes: bytes) -> bool:
                 pos += 2
                 if pos + length > len(class_bytes):
                     return False
-                utf8_str = class_bytes[pos : pos + length].decode("utf-8", errors="replace")
+                utf8_str = class_bytes[pos : pos + length].decode(
+                    "utf-8", errors="replace"
+                )
                 pos += length
                 constant_pool.append(("Utf8", utf8_str))
             elif tag in (7, 8, 16, 19, 20):  # 2-byte entries
@@ -867,4 +869,3 @@ def find_main_classes(jar_path: Path) -> list[str]:
         pass
 
     return sorted(main_classes)
-

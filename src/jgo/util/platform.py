@@ -4,7 +4,6 @@ Platform-specific utilities for jgo.
 Provides platform-aware functions that can be easily mocked in tests.
 """
 
-import os
 from pathlib import Path
 
 

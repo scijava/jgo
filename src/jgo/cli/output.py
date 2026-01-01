@@ -64,22 +64,24 @@ def print_jars(environment: Environment) -> None:
     """
     cp_jars = environment.class_path_jars
     mp_jars = environment.module_path_jars
-    
+
     if not cp_jars and not mp_jars:
         _err_console.print("[red]No JARs in environment[/]")
         return
-    
+
     # Print classpath JARs
     if cp_jars:
         _console.print("[bold cyan]Classpath:[/]")
         for jar_path in cp_jars:
             print(jar_path)
         if not mp_jars:
-            _console.print("\n[dim]TIP: Use 'jgo info modulepath' to see module-path JARs only[/]")
+            _console.print(
+                "\n[dim]TIP: Use 'jgo info modulepath' to see module-path JARs only[/]"
+            )
     else:
         _console.print("[yellow]No classpath JARs[/]")
         _console.print("[dim]TIP: Use 'jgo info modulepath' to see module-path JARs[/]")
-    
+
     # Print module-path JARs
     if mp_jars:
         if cp_jars:
@@ -102,7 +104,9 @@ def print_modulepath(environment: Environment) -> None:
     module_jars = environment.module_path_jars
     if not module_jars:
         _err_console.print("[red]No JARs on module-path[/]")
-        _err_console.print("[dim]TIP: Use 'jgo info classpath' to see classpath JARs[/]")
+        _err_console.print(
+            "[dim]TIP: Use 'jgo info classpath' to see classpath JARs[/]"
+        )
         return
 
     # Print one module-path element per line (raw output, no Rich formatting)
@@ -136,7 +140,9 @@ def print_main_classes(environment: Environment) -> None:
         return
 
     # Print results grouped by JAR
-    _console.print(f"\n[bold]Found {sum(len(v) for v in main_classes_by_jar.values())} classes with main methods:[/]\n")
+    _console.print(
+        f"\n[bold]Found {sum(len(v) for v in main_classes_by_jar.values())} classes with main methods:[/]\n"
+    )
 
     for jar_name, main_classes in sorted(main_classes_by_jar.items()):
         _console.print(f"[cyan]{jar_name}[/]:")
@@ -228,7 +234,9 @@ def print_java_info(environment: Environment) -> None:
     if environment.has_classpath:
         _console.print(f"[bold]Class-path JARs:[/] {len(environment.class_path_jars)}")
     if environment.has_modules:
-        _console.print(f"[bold]Module-path JARs:[/] {len(environment.module_path_jars)}")
+        _console.print(
+            f"[bold]Module-path JARs:[/] {len(environment.module_path_jars)}"
+        )
     _console.print(f"[bold]Total JARs:[/] {len(jar_files)}\n")
 
     # Analyze each JAR

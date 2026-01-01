@@ -1,7 +1,6 @@
 """Tests for GlobalSettings class and settings file loading."""
 
 from jgo.config import GlobalSettings
-from jgo.util.platform import get_user_home
 
 
 def test_xdg_config_precedence(monkeypatch, tmp_path):
