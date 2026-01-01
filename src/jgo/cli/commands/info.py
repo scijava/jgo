@@ -83,6 +83,42 @@ def env_dir(ctx, endpoint):
     ctx.exit(0)
 
 
+@click.command(help="Show module-path.")
+@click.argument("endpoint", required=False)
+@click.pass_context
+def modulepath(ctx, endpoint):
+    """Show the module-path for the given endpoint."""
+    from ...config import GlobalSettings
+    from ...env import EnvironmentSpec
+    from ..context import create_environment_builder, create_maven_context
+    from ..output import print_modulepath
+    from ..parser import _build_parsed_args
+
+    opts = ctx.obj
+    config = GlobalSettings.load_from_opts(opts)
+    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+
+    context = create_maven_context(args, config.to_dict())
+    builder = create_environment_builder(args, config.to_dict(), context)
+
+    # Build environment
+    if args.is_spec_mode():
+        spec_file = args.get_spec_file()
+        if not spec_file.exists():
+            _log.error(f"{spec_file} not found")
+            ctx.exit(1)
+        spec = EnvironmentSpec.load(spec_file)
+        environment = builder.from_spec(spec, update=args.update)
+    else:
+        if not endpoint:
+            _log.error("No endpoint specified")
+            ctx.exit(1)
+        environment = builder.from_endpoint(endpoint, update=args.update)
+
+    print_modulepath(environment)
+    ctx.exit(0)
+
+
 @click.command(help="Show dependency tree.")
 @click.argument("endpoint", required=False)
 @click.pass_context

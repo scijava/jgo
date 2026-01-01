@@ -55,6 +55,23 @@ def print_classpath(environment: Environment) -> None:
         print(jar_path)
 
 
+def print_modulepath(environment: Environment) -> None:
+    """
+    Print environment module-path.
+
+    Args:
+        environment: The resolved environment
+    """
+    module_jars = environment.module_path_jars
+    if not module_jars:
+        _err_console.print("[red]No JARs on module-path[/]")
+        return
+
+    # Print one module-path element per line (raw output, no Rich formatting)
+    for jar_path in module_jars:
+        print(jar_path)
+
+
 def print_dependencies(
     components: list[Component],
     context: MavenContext,
