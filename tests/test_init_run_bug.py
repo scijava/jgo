@@ -36,7 +36,7 @@ def test_run_with_main_class_after_init():
 
             # Step 1: Initialize environment
             init_args = ParsedArgs(
-                endpoint="org.scijava:scijava-common",
+                endpoint="org.scijava:scijava-common:2.97.1",
                 command="init",
                 verbose=0,
                 quiet=False,
@@ -130,7 +130,7 @@ def test_run_endpoint_with_main_class():
         tmp_path = Path(tmp_dir)
 
         run_args = ParsedArgs(
-            endpoint="org.scijava:scijava-common",
+            endpoint="org.scijava:scijava-common:2.97.1",
             command="run",
             verbose=0,
             quiet=False,

@@ -261,8 +261,8 @@ def test_lockfile_staleness_detection():
     from jgo.env.spec import EnvironmentSpec
 
     original_cwd = os.getcwd()
-    try:
-        with tempfile.TemporaryDirectory() as tmp_dir:
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        try:
             # Change to temp directory to isolate from project's jgo.toml
             os.chdir(tmp_dir)
 
@@ -320,8 +320,9 @@ def test_lockfile_staleness_detection():
             assert builder._is_environment_valid(
                 env, update=False, check_staleness=False
             )
-    finally:
-        os.chdir(original_cwd)
+        finally:
+            # Ensure we change back to original directory before temp cleanup
+            os.chdir(original_cwd)
 
 
 if __name__ == "__main__":

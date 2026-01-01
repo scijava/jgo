@@ -20,8 +20,8 @@ def test_coordinate_reference_inference():
         spec = EnvironmentSpec(
             name="test-inference",
             description="Test coordinate reference inference",
-            coordinates=["org.scijava:parsington"],
-            entrypoints={"main": "org.scijava:parsington"},
+            coordinates=["org.scijava:parsington:3.1.0"],
+            entrypoints={"main": "org.scijava:parsington:3.1.0"},
             default_entrypoint="main",
             cache_dir=tmp_path / ".jgo",
         )
@@ -71,7 +71,7 @@ def test_explicit_class_name_in_entrypoint():
         spec = EnvironmentSpec(
             name="test-explicit",
             description="Test explicit class name",
-            coordinates=["org.scijava:scijava-common"],
+            coordinates=["org.scijava:scijava-common:2.97.1"],
             entrypoints={"main": "ScriptREPL"},  # Simple name, will be auto-completed
             default_entrypoint="main",
             cache_dir=tmp_path / ".jgo",
@@ -116,7 +116,7 @@ def test_lockfile_has_spec_hash():
 
         spec = EnvironmentSpec(
             name="test-hash",
-            coordinates=["org.scijava:parsington"],
+            coordinates=["org.scijava:parsington:3.1.0"],
             cache_dir=tmp_path / ".jgo",
         )
 

@@ -139,7 +139,9 @@ class JavaLocator:
         try:
             # Use cjdk to locate a suitable Java, downloading it on demand.
             java_home = cjdk.java_home(version=str(version), vendor=self.java_vendor)
-            java_path = Path(java_home) / "bin" / "java"
+            # On Windows, the executable is java.exe; on Unix it's java
+            java_exe = "java.exe" if sys.platform == "win32" else "java"
+            java_path = Path(java_home) / "bin" / java_exe
 
             if not java_path.exists():
                 raise RuntimeError(f"Failed to obtain Java path: {java_path}")

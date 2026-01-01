@@ -9,6 +9,8 @@ def test_xdg_config_precedence(monkeypatch, tmp_path):
     monkeypatch.setenv("HOME", str(tmp_path))
     # Unset XDG_CONFIG_HOME so it doesn't override our test HOME
     monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+    # Unset JGO_CACHE_DIR to prevent env var override
+    monkeypatch.delenv("JGO_CACHE_DIR", raising=False)
 
     # Create XDG config location
     xdg_config_dir = tmp_path / ".config"
@@ -18,17 +20,21 @@ def test_xdg_config_precedence(monkeypatch, tmp_path):
     # Create legacy config location
     legacy_config = tmp_path / ".jgorc"
 
+    # Use paths relative to tmp_path for platform independence
+    xdg_cache_path = tmp_path / "xdg_cache"
+    legacy_cache_path = tmp_path / "legacy_cache"
+
     # Write different values to each
-    xdg_config.write_text("""[settings]
-cache_dir = /xdg/cache
+    xdg_config.write_text(f"""[settings]
+cache_dir = {xdg_cache_path}
 links = soft
 
 [repositories]
 xdg_repo = https://xdg.example.com/maven2
 """)
 
-    legacy_config.write_text("""[settings]
-cache_dir = /legacy/cache
+    legacy_config.write_text(f"""[settings]
+cache_dir = {legacy_cache_path}
 links = hard
 
 [repositories]
@@ -39,7 +45,7 @@ legacy_repo = https://legacy.example.com/maven2
     config = GlobalSettings.load()
 
     # Verify XDG config was loaded
-    assert str(config.cache_dir) == "/xdg/cache"
+    assert config.cache_dir == xdg_cache_path
     assert config.links == "soft"
     assert "xdg_repo" in config.repositories
     assert config.repositories["xdg_repo"] == "https://xdg.example.com/maven2"
@@ -54,11 +60,15 @@ def test_legacy_config_fallback(monkeypatch, tmp_path):
     monkeypatch.setenv("HOME", str(tmp_path))
     # Unset XDG_CONFIG_HOME to ensure clean test environment
     monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+    # Unset JGO_CACHE_DIR to prevent env var override
+    monkeypatch.delenv("JGO_CACHE_DIR", raising=False)
 
     # Create only legacy config (no XDG config)
     legacy_config = tmp_path / ".jgorc"
-    legacy_config.write_text("""[settings]
-cache_dir = /legacy/cache
+    legacy_cache_path = tmp_path / "legacy_cache"
+
+    legacy_config.write_text(f"""[settings]
+cache_dir = {legacy_cache_path}
 links = hard
 
 [repositories]
@@ -69,7 +79,7 @@ legacy_repo = https://legacy.example.com/maven2
     config = GlobalSettings.load()
 
     # Verify legacy config was loaded
-    assert str(config.cache_dir) == "/legacy/cache"
+    assert config.cache_dir == legacy_cache_path
     assert config.links == "hard"
     assert "legacy_repo" in config.repositories
     assert config.repositories["legacy_repo"] == "https://legacy.example.com/maven2"
@@ -81,6 +91,10 @@ def test_no_config_file(monkeypatch, tmp_path):
     monkeypatch.setenv("HOME", str(tmp_path))
     # Unset XDG_CONFIG_HOME to ensure clean test environment
     monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+    # Unset environment variables that could override defaults
+    monkeypatch.delenv("JGO_CACHE_DIR", raising=False)
+    monkeypatch.delenv("M2_REPO", raising=False)
+    monkeypatch.delenv("M2_HOME", raising=False)
 
     # Load config - should use defaults
     config = GlobalSettings.load()
@@ -97,8 +111,10 @@ def test_explicit_config_file(tmp_path):
     """Test that explicit config file path works."""
     # Create a custom config file
     custom_config = tmp_path / "my-custom-config"
-    custom_config.write_text("""[settings]
-cache_dir = /custom/cache
+    custom_cache_path = tmp_path / "custom_cache"
+
+    custom_config.write_text(f"""[settings]
+cache_dir = {custom_cache_path}
 
 [repositories]
 custom_repo = https://custom.example.com/maven2
@@ -108,6 +124,6 @@ custom_repo = https://custom.example.com/maven2
     config = GlobalSettings.load(settings_file=custom_config)
 
     # Verify custom config was loaded
-    assert str(config.cache_dir) == "/custom/cache"
+    assert config.cache_dir == custom_cache_path
     assert "custom_repo" in config.repositories
     assert config.repositories["custom_repo"] == "https://custom.example.com/maven2"

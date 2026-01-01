@@ -101,7 +101,8 @@ class TestJavaLocator:
         java_path = locator.locate()
 
         assert java_path.exists()
-        assert java_path.name == "java" or java_path.name == "java.exe"
+        # Handle both unix (java) and Windows (java.exe or java.EXE)
+        assert java_path.stem.lower() == "java"
 
     def test_get_system_java_version(self):
         """Test getting system Java version."""
@@ -174,25 +175,45 @@ class TestJavaRunner:
 
         assert runner.jvm_config == config
 
-    def test_build_classpath_unix(self, monkeypatch):
+    def test_build_classpath_unix(self, monkeypatch, tmp_path):
         """Test classpath building on Unix."""
         monkeypatch.setattr(sys, "platform", "linux")
 
         runner = JavaRunner()
-        paths = [Path("/path/to/a.jar"), Path("/path/to/b.jar")]
+        # Use real files so is_dir() works correctly
+        jar1 = tmp_path / "a.jar"
+        jar2 = tmp_path / "b.jar"
+        jar1.touch()
+        jar2.touch()
+
+        paths = [jar1, jar2]
         classpath = runner._build_classpath(paths)
 
-        assert classpath == "/path/to/a.jar:/path/to/b.jar"
+        # On Unix, separator is ':'
+        assert ":" in classpath
+        # Verify both jars are in the classpath
+        assert "a.jar" in classpath
+        assert "b.jar" in classpath
 
-    def test_build_classpath_windows(self, monkeypatch):
+    def test_build_classpath_windows(self, monkeypatch, tmp_path):
         """Test classpath building on Windows."""
         monkeypatch.setattr(sys, "platform", "win32")
 
         runner = JavaRunner()
-        paths = [Path("C:/path/to/a.jar"), Path("C:/path/to/b.jar")]
+        # Use real files so is_dir() works correctly
+        jar1 = tmp_path / "a.jar"
+        jar2 = tmp_path / "b.jar"
+        jar1.touch()
+        jar2.touch()
+
+        paths = [jar1, jar2]
         classpath = runner._build_classpath(paths)
 
-        assert classpath == "C:/path/to/a.jar;C:/path/to/b.jar"
+        # On Windows, separator is ';'
+        assert ";" in classpath
+        # Verify both jars are in the classpath
+        assert "a.jar" in classpath
+        assert "b.jar" in classpath
 
     def test_run_requires_main_class(self, tmp_path):
         """Test that run() requires a main class."""

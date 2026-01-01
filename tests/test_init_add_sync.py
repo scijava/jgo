@@ -39,7 +39,7 @@ def test_init_with_main_class_then_add():
 
             # Step 1: Initialize environment with @MainClass
             init_args = ParsedArgs(
-                endpoint="org.scijava:scijava-common@ScriptREPL",
+                endpoint="org.scijava:scijava-common:2.97.1@ScriptREPL",
                 command="init",
                 verbose=0,
                 quiet=False,
@@ -61,7 +61,7 @@ def test_init_with_main_class_then_add():
             spec = EnvironmentSpec.load(tmp_path / "jgo.toml")
 
             # The coordinate should NOT include @ScriptREPL
-            assert spec.coordinates == ["org.scijava:scijava-common"]
+            assert spec.coordinates == ["org.scijava:scijava-common:2.97.1"]
 
             # The main class should be in entrypoints
             assert "main" in spec.entrypoints
@@ -89,7 +89,7 @@ def test_init_with_main_class_then_add():
             # Verify both coordinates are in the spec
             spec = EnvironmentSpec.load(tmp_path / "jgo.toml")
             assert len(spec.coordinates) == 2
-            assert "org.scijava:scijava-common" in spec.coordinates
+            assert "org.scijava:scijava-common:2.97.1" in spec.coordinates
             assert "org.scijava:scripting-groovy" in spec.coordinates
 
             # Entrypoint should still be there
@@ -117,7 +117,7 @@ def test_init_without_main_class():
 
             # Initialize environment without @MainClass
             init_args = ParsedArgs(
-                endpoint="org.scijava:scijava-common",
+                endpoint="org.scijava:scijava-common:2.97.1",
                 command="init",
                 verbose=0,
                 quiet=False,
@@ -136,10 +136,10 @@ def test_init_without_main_class():
             spec = EnvironmentSpec.load(tmp_path / "jgo.toml")
 
             # Should have coordinate
-            assert spec.coordinates == ["org.scijava:scijava-common"]
+            assert spec.coordinates == ["org.scijava:scijava-common:2.97.1"]
 
             # Should have entrypoint with coordinate reference (new behavior)
-            assert spec.entrypoints == {"main": "org.scijava:scijava-common"}
+            assert spec.entrypoints == {"main": "org.scijava:scijava-common:2.97.1"}
             assert spec.default_entrypoint == "main"
 
         finally:
@@ -161,7 +161,7 @@ def test_init_with_old_format_main_class():
 
             # Initialize with old format coord:@MainClass
             init_args = ParsedArgs(
-                endpoint="org.scijava:scijava-common:@ScriptREPL",
+                endpoint="org.scijava:scijava-common:2.97.1:@ScriptREPL",
                 command="init",
                 verbose=0,
                 quiet=False,
@@ -180,7 +180,7 @@ def test_init_with_old_format_main_class():
             spec = EnvironmentSpec.load(tmp_path / "jgo.toml")
 
             # Coordinate should not have :@ScriptREPL
-            assert spec.coordinates == ["org.scijava:scijava-common"]
+            assert spec.coordinates == ["org.scijava:scijava-common:2.97.1"]
 
             # Main class should have @ prefix (old format)
             assert spec.entrypoints["main"] == "@ScriptREPL"
@@ -211,7 +211,7 @@ def test_cached_environment_uses_entrypoint():
             spec = EnvironmentSpec(
                 name="test-env",
                 description="Test environment",
-                coordinates=["org.scijava:scijava-common"],
+                coordinates=["org.scijava:scijava-common:2.97.1"],
                 entrypoints={"main": "ScriptREPL"},
                 default_entrypoint="main",
                 cache_dir=".jgo",

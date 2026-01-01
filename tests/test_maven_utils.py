@@ -21,7 +21,8 @@ class TestEnsureMavenAvailable:
             assert mvn_path is not None
             assert isinstance(mvn_path, Path)
             assert mvn_path.exists()
-            assert mvn_path.name == "mvn" or mvn_path.name == "mvn.cmd"
+            # Handle both Unix (mvn) and Windows (mvn.cmd or mvn.CMD)
+            assert mvn_path.stem.lower() == "mvn"
 
     def test_fetches_maven_when_missing(self, monkeypatch):
         """Test that it fetches Maven when not on PATH."""
@@ -32,7 +33,8 @@ class TestEnsureMavenAvailable:
         assert mvn_path is not None
         assert isinstance(mvn_path, Path)
         assert mvn_path.exists()
-        assert mvn_path.name == "mvn" or mvn_path.name == "mvn.cmd"
+        # Handle both Unix (mvn) and Windows (mvn.cmd or mvn.CMD)
+        assert mvn_path.stem.lower() == "mvn"
 
 
 class TestFetchMaven:
@@ -44,7 +46,8 @@ class TestFetchMaven:
         assert mvn_path is not None
         assert isinstance(mvn_path, Path)
         assert mvn_path.exists()
-        assert mvn_path.name == "mvn" or mvn_path.name == "mvn.cmd"
+        # Handle both Unix (mvn) and Windows (mvn.cmd or mvn.CMD)
+        assert mvn_path.stem.lower() == "mvn"
 
     def test_fetch_maven_invalid_sha(self):
         """Test that fetch_maven raises ValueError for invalid SHA length."""
