@@ -29,9 +29,16 @@ else
   done
 fi
 
+# Track overall exit status
+exit_status=0
+
 # Run pytest if we have args
 if [ ${#pytest_args[@]} -gt 0 ]; then
   uv run python -m pytest -v -p no:faulthandler "${pytest_args[@]}"
+  pytest_status=$?
+  if [ $pytest_status -ne 0 ]; then
+    exit_status=$pytest_status
+  fi
 fi
 
 # Run prysk if we have args and prysk is installed
@@ -45,4 +52,11 @@ if [ ${#prysk_args[@]} -gt 0 ] && command -v prysk; then
   # as ANSI-color-compatible compared to local usage of prysk.
   # Tests can override this (e.g., color.t does).
   COLOR="${COLOR:-never}" prysk -v "${prysk_args[@]}"
+  prysk_status=$?
+  if [ $prysk_status -ne 0 ]; then
+    exit_status=$prysk_status
+  fi
 fi
+
+# Exit with appropriate status
+exit $exit_status
