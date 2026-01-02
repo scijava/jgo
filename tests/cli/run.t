@@ -69,11 +69,13 @@ Test --update flag forces cache refresh.
 Test --verbose flag.
 
   $ jgo -v run org.python:jython-standalone:2.7.4 -- --version
-  INFO     Building environment for org.python:jython-standalone:2.7.4...         
-  INFO     Running Java application...                                            
-  Obtaining Java 8 automatically...
-  Using Java 8 (zulu) at */bin/java (glob)
-  */bin/java -XX:+UseG1GC -Xmx*G -cp */jars/\*:*/modules/\* org.python.util.jython --version (glob)
+  INFO     Building environment for org.python:jython-standalone:2.7.4.* (re)
+  INFO     Running Java application.* (re)
+  INFO     Obtaining Java 8 automatically.* (re)
+  INFO     Using Java 8 .* (re)
+  \s*.* (re)
+  \s*.* (re)
+  .*/bin/java .* org.python.util.jython --version.* (re)
   Jython 2.7.4
 
 Test --quiet flag suppresses output.

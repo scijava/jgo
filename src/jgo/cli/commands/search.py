@@ -12,11 +12,14 @@ from typing import TYPE_CHECKING
 import rich_click as click
 
 from ...util import is_debug_enabled, is_info_enabled
+from ...util.console import get_console, get_err_console
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
 _log = logging.getLogger(__name__)
+_console = get_console()
+_err_console = get_err_console()
 
 
 @click.command(help="Search for artifacts in [magenta]Maven repositories[/].")
@@ -105,32 +108,32 @@ def execute(
     # For now, only support Maven Central
     # Future enhancement: support custom repositories
     if repository and repository != "central":
-        print(
-            f"Error: Repository '{repository}' is not supported. Only 'central' is currently supported.",
-            file=sys.stderr,
+        _err_console.print(
+            f"Error: Repository '{repository}' is not supported. Only 'central' is currently supported."
         )
         return 1
 
-    if is_info_enabled():
-        print(f"Searching Maven Central for: {query}")
+    _log.info(f"Searching Maven Central for: {query}")
 
     # Dry run
     if args.dry_run:
-        print(f"Would search Maven Central for '{query}' with limit {limit}")
+        from ..output import print_dry_run
+
+        print_dry_run(f"Would search Maven Central for '{query}' with limit {limit}")
         return 0
 
     from ...util.logging import log_exception_if_verbose
 
     # Search Maven Central
     try:
-        results = _search_maven_central(query, limit, is_debug_enabled())
+        results = _search_maven_central(query, limit)
 
         if not results:
-            print(f"No artifacts found for query: {query}")
+            _console.print(f"No artifacts found for query: {query}")
             return 0
 
         # Display results
-        _display_results(results, is_info_enabled())
+        _display_results(results)
 
         return 0
 
@@ -140,14 +143,13 @@ def execute(
         return 1
 
 
-def _search_maven_central(query: str, limit: int, debug: bool = False) -> list[dict]:
+def _search_maven_central(query: str, limit: int) -> list[dict]:
     """
     Search Maven Central using the SOLR API.
 
     Args:
         query: Search query
         limit: Maximum number of results
-        debug: Whether to print debug info
 
     Returns:
         List of artifact dictionaries
@@ -162,8 +164,7 @@ def _search_maven_central(query: str, limit: int, debug: bool = False) -> list[d
 
     url = f"{base_url}?{urllib.parse.urlencode(params)}"
 
-    if debug:
-        print(f"Query URL: {url}", file=sys.stderr)
+    _log.debug(f"Query URL: {url}")
 
     # Make request
     try:
@@ -200,16 +201,17 @@ def _search_maven_central(query: str, limit: int, debug: bool = False) -> list[d
     return results
 
 
-def _display_results(results: list[dict], verbose: bool) -> None:
+def _display_results(results: list[dict]) -> None:
     """
     Display search results.
 
     Args:
         results: List of artifact dictionaries
-        verbose: Whether to show verbose output
     """
-    print(f"Found {len(results)} artifacts:")
-    print()
+    verbose = is_info_enabled()
+
+    _console.print(f"Found {len(results)} artifacts:")
+    _console.print()
 
     for i, result in enumerate(results, 1):
         group_id = result["group_id"]
@@ -218,8 +220,8 @@ def _display_results(results: list[dict], verbose: bool) -> None:
 
         # Basic format: coordinate and latest version
         coordinate = f"{group_id}:{artifact_id}"
-        print(f"{i}. {coordinate}")
-        print(f"   Latest version: {version}")
+        _console.print(f"{i}. {coordinate}")
+        _console.print(f"   Latest version: {version}")
 
         if verbose:
             # Show additional details in verbose mode
@@ -227,10 +229,10 @@ def _display_results(results: list[dict], verbose: bool) -> None:
             description = result.get("description", "")
 
             if version_count > 1:
-                print(f"   Available versions: {version_count}")
+                _console.print(f"   Available versions: {version_count}")
 
             if description:
-                print(f"   Packaging: {description}")
+                _console.print(f"   Packaging: {description}")
 
             if "last_updated" in result:
                 # Convert timestamp to readable format
@@ -239,6 +241,6 @@ def _display_results(results: list[dict], verbose: bool) -> None:
                 from datetime import datetime
 
                 dt = datetime.fromtimestamp(timestamp / 1000)
-                print(f"   Last updated: {dt.strftime('%Y-%m-%d')}")
+                _console.print(f"   Last updated: {dt.strftime('%Y-%m-%d')}")
 
-        print()
+        _console.print()

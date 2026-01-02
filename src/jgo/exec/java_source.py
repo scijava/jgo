@@ -6,6 +6,7 @@ Handles finding or downloading the appropriate Java executable.
 
 from __future__ import annotations
 
+import logging
 import re
 import subprocess
 import sys
@@ -15,6 +16,8 @@ from pathlib import Path
 import cjdk
 
 from jgo.maven.version import parse_java_version
+
+_log = logging.getLogger(__name__)
 
 
 class JavaSource(Enum):
@@ -108,11 +111,8 @@ class JavaLocator:
                     f"Java {required_version} or higher required, but system Java is version {actual_version}. "
                     f"Please upgrade Java or use auto mode for automatic Java management."
                 )
-            elif self.verbose:
-                print(
-                    f"Using system Java {actual_version} at {java_path}",
-                    file=sys.stderr,
-                )
+            else:
+                _log.info(f"Using system Java {actual_version} at {java_path}")
 
         return java_path
 
@@ -133,8 +133,7 @@ class JavaLocator:
         # Default to latest LTS if no version specified
         version = required_version or 21
 
-        if self.verbose:
-            print(f"Obtaining Java {version} automatically...", file=sys.stderr)
+        _log.info(f"Obtaining Java {version} automatically...")
 
         try:
             # Use cjdk to locate a suitable Java, downloading it on demand.
@@ -146,13 +145,9 @@ class JavaLocator:
             if not java_path.exists():
                 raise RuntimeError(f"Failed to obtain Java path: {java_path}")
 
-            if self.verbose:
-                actual_version = self._get_java_version(java_path)
-                vendor_info = f" ({self.java_vendor})" if self.java_vendor else ""
-                print(
-                    f"Using Java {actual_version}{vendor_info} at {java_path}",
-                    file=sys.stderr,
-                )
+            actual_version = self._get_java_version(java_path)
+            vendor_info = f" ({self.java_vendor})" if self.java_vendor else ""
+            _log.info(f"Using Java {actual_version}{vendor_info} at {java_path}")
 
             return java_path
 

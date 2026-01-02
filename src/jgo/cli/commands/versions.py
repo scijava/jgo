@@ -7,10 +7,13 @@ from typing import TYPE_CHECKING
 
 import rich_click as click
 
+from ...util.console import get_console
+
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
 _log = logging.getLogger(__name__)
+_console = get_console()
 
 
 @click.command(help="List available versions of an artifact.")
@@ -69,7 +72,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
         # Get available versions
         metadata = project.metadata
         if not metadata or not metadata.versions:
-            print(f"No versions found for {coord.groupId}:{coord.artifactId}")
+            _console.print(f"No versions found for {coord.groupId}:{coord.artifactId}")
             return 0
 
         # Use project's smart release/latest resolution

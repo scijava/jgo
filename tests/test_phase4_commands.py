@@ -300,8 +300,7 @@ def test_search_display_results():
 
     # Just verify it doesn't crash
     # In real tests, you might want to capture stdout
-    search_cmd._display_results(results, verbose=False)
-    search_cmd._display_results(results, verbose=True)
+    search_cmd._display_results(results)
 
 
 # ============================================================================

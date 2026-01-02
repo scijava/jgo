@@ -6,12 +6,15 @@ Executes Java programs with constructed environments.
 
 from __future__ import annotations
 
+import logging
 import subprocess
 import sys
 from pathlib import Path
 
 from .config import JVMConfig
 from .java_source import JavaLocator, JavaSource
+
+_log = logging.getLogger(__name__)
 
 
 class JavaRunner:

@@ -64,4 +64,4 @@ Test search with query.
 Test search with --dry-run.
 
   $ jgo --dry-run search jython
-  Would search Maven Central for 'jython' with limit 20
+  \[DRY-RUN\] Would search Maven Central for 'jython' with limit 20 (re)

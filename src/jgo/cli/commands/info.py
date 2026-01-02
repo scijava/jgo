@@ -8,8 +8,10 @@ from pathlib import Path
 import rich_click as click
 
 from ...parse.coordinate import Coordinate
+from ...util.console import get_console
 
 _log = logging.getLogger(__name__)
+_console = get_console()
 
 
 @click.command(help="Show classpath.")
@@ -265,13 +267,13 @@ def entrypoints(ctx):
     spec = EnvironmentSpec.load(spec_file)
 
     if not spec.entrypoints:
-        print("No entrypoints defined")
+        _console.print("No entrypoints defined")
         ctx.exit(0)
 
-    print("Available entrypoints:")
+    _console.print("Available entrypoints:")
     for name, main_class in spec.entrypoints.items():
         marker = " (default)" if name == spec.default_entrypoint else ""
-        print(f"  {name}: {main_class}{marker}")
+        _console.print(f"  {name}: {main_class}{marker}")
 
     ctx.exit(0)
 
