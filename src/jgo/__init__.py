@@ -105,7 +105,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from .config import GlobalSettings, JgoConfig  # JgoConfig is deprecated alias
+from .config import GlobalSettings
 from .constants import MAVEN_CENTRAL_URL
 from .constants import VERSION as __version__
 from .env import Environment, EnvironmentBuilder, LinkStrategy
@@ -168,7 +168,7 @@ def run(
         >>> jgo.run("org.python:jython-standalone:2.7.3", app_args=["script.py"])
     """
     # Load configuration
-    config = JgoConfig.load()
+    config = GlobalSettings.load()
 
     # Create Maven context
     remote_repos = {"central": MAVEN_CENTRAL_URL}
@@ -245,7 +245,7 @@ def build(
         >>> print(env.classpath)
     """
     # Load configuration
-    config = JgoConfig.load()
+    config = GlobalSettings.load()
 
     # Create Maven context
     remote_repos = {"central": MAVEN_CENTRAL_URL}
@@ -290,7 +290,7 @@ def resolve(
         ...     print(f"{comp.groupId}:{comp.artifactId}:{comp.version}")
     """
     # Load configuration
-    config = JgoConfig.load()
+    config = GlobalSettings.load()
 
     # Create Maven context
     remote_repos = {"central": MAVEN_CENTRAL_URL}
