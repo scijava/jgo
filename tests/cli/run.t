@@ -71,7 +71,7 @@ Test --verbose flag.
   $ jgo -v run org.python:jython-standalone:2.7.4 -- --version
   INFO     Building environment for org.python:jython-standalone:2.7.4.* (re)
   INFO     Running Java application.* (re)
-  INFO     Obtaining Java 8 automatically.* (re)
+  INFO     Locating Java 8.* (re)
   INFO     Using Java 8 .* (re)
   \s*.* (re)
   \s*.* (re)

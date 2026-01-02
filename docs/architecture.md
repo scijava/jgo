@@ -241,7 +241,7 @@ jgo.run("net.imagej:imagej")
 
 # Output:
 # INFO: Detected minimum Java version: 17
-# INFO: Obtaining Java 17 automatically...
+# INFO: Locating Java 17...
 # INFO: Using Java 17.0.9 (Adoptium)
 # [ImageJ launches]
 ```

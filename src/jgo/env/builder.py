@@ -61,7 +61,7 @@ def get_baseline_jar_tool() -> Path | None:
         # Use AUTO mode to always fetch via cjdk (not system Java)
         from ..exec.java_source import JavaLocator, JavaSource
 
-        _log.debug("Obtaining baseline Java 11 for JAR classification...")
+        _log.debug("Locating baseline Java 11 for JAR classification...")
         locator = JavaLocator(
             java_source=JavaSource.AUTO,
             java_version=11,
