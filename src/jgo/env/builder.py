@@ -584,6 +584,14 @@ class EnvironmentBuilder:
         environment.path.mkdir(parents=True, exist_ok=True)
         jars_dir = environment.path / "jars"
         modules_dir = environment.path / "modules"
+
+        # Clean existing JARs to prevent duplicates across jars/ and modules/
+        # This ensures JARs are only in one directory based on current classification
+        for dir_path in [jars_dir, modules_dir]:
+            if dir_path.exists():
+                for jar_file in dir_path.glob("*.jar"):
+                    jar_file.unlink()
+
         jars_dir.mkdir(exist_ok=True)
         modules_dir.mkdir(exist_ok=True)
 
