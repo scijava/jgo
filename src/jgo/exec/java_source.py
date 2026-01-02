@@ -112,7 +112,7 @@ class JavaLocator:
                     f"Please upgrade Java or use auto mode for automatic Java management."
                 )
             else:
-                _log.info(f"Using system Java {actual_version} at {java_path}")
+                self._maybe_log(f"Using system Java {actual_version} at {java_path}")
 
         return java_path
 
@@ -133,7 +133,7 @@ class JavaLocator:
         # Default to latest LTS if no version specified
         version = required_version or 21
 
-        _log.info(f"Obtaining Java {version} automatically...")
+        self._maybe_log(f"Locating Java {version}...")
 
         try:
             # Use cjdk to locate a suitable Java, downloading it on demand.
@@ -147,12 +147,16 @@ class JavaLocator:
 
             actual_version = self._get_java_version(java_path)
             vendor_info = f" ({self.java_vendor})" if self.java_vendor else ""
-            _log.info(f"Using Java {actual_version}{vendor_info} at {java_path}")
+            self._maybe_log(f"Using Java {actual_version}{vendor_info} at {java_path}")
 
             return java_path
 
         except Exception as e:
             raise RuntimeError(f"Failed to obtain Java automatically: {e}")
+
+    def _maybe_log(self, message) -> None:
+        if self.verbose:
+            _log.info(message)
 
     def _find_java_in_path(self) -> Path | None:
         """
