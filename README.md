@@ -259,11 +259,24 @@ fiji = sc.fiji:fiji:LATEST
 scifio = io.scif:scifio-cli
 ```
 
-Shortcuts are substituted verbatim from the beginning of the endpoint,
-single-pass in the order they are defined. So e.g. now you can run:
+Shortcuts replace the matched prefix at the beginning of an endpoint string.
+The definition order does not matter; shortcuts are matched iteratively until no
+more replacements occur (allowing shortcuts to reference other shortcuts).
+Shortcuts can be composed using `+` to combine multiple shortcuts.
+
+Syntactic requirements:
+- Shortcut names must match at the start of the coordinate (or one of the `+`-separated parts)
+- Anything after the matched shortcut name is preserved (e.g., `imagej:2.0.0` expands the `imagej` prefix and keeps `:2.0.0`)
+- Shortcuts can reference other shortcuts, which are recursively expanded
+- Composition with `+` treats each part independently (e.g., `repl+groovy` expands both)
+
+Examples:
 ```shell
-jgo repl
+jgo repl                    # Expand single shortcut
+jgo repl+groovy             # Compose multiple shortcuts
+jgo imagej:2.0.0            # Expand shortcut prefix, preserve suffix
 ```
+
 Note that with the `repl` shortcut above, the main class
 (`org.scijava.script.ScriptREPL`) comes from a _different_ artifact than
 the toplevel artifact (`net.imagej:imagej`). This is intentional, so that
