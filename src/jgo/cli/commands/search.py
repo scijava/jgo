@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import json
 import logging
-import sys
 import urllib.parse
 import urllib.request
 from typing import TYPE_CHECKING
 
 import rich_click as click
 
-from ...util import is_debug_enabled, is_info_enabled
+from ...util import is_info_enabled
 from ...util.console import get_console, get_err_console
 
 if TYPE_CHECKING:

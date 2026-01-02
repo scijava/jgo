@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import configparser
 import logging
-import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -154,7 +153,9 @@ def _list_shortcuts(config_file: Path, config: dict, args: ParsedArgs) -> int:
         _console.print("  jgo config shortcut NAME ENDPOINT")
         _console.print()
         _console.print("Example:")
-        _console.print("  jgo config shortcut repl org.scijava:scijava-common@ScriptREPL")
+        _console.print(
+            "  jgo config shortcut repl org.scijava:scijava-common@ScriptREPL"
+        )
         return 0
 
     _console.print(f"Shortcuts from {config_file}:")
