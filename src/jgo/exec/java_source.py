@@ -197,7 +197,7 @@ class JavaLocator:
         """
         try:
             result = subprocess.run(
-                [str(java_path), "-version"], capture_output=True, text=True, timeout=5
+                [str(java_path), "-version"], capture_output=True, text=True, timeout=10
             )
 
             # Java version output goes to stderr
