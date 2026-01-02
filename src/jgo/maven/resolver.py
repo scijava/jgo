@@ -316,8 +316,14 @@ class PythonResolver(Resolver):
                 # Get total size from Content-Length header
                 total_size = int(response.headers.get("content-length", 0))
 
-                # Show progress bar unless in quiet mode
-                show_progress = not is_quiet() and total_size > 0
+                # Show progress bar unless in quiet mode or NO_PROGRESS is set
+                import os
+
+                show_progress = (
+                    not is_quiet()
+                    and total_size > 0
+                    and not os.environ.get("NO_PROGRESS")
+                )
 
                 if show_progress:
                     # Create progress bar for this download

@@ -48,10 +48,11 @@ if [ ${#prysk_args[@]} -gt 0 ] && command -v prysk; then
   # Use `uv tool install prysk` instead.
   #
   # We set COLOR=never by default to avoid ANSI codes in test output.
+  # We set NO_PROGRESS=1 to disable progress bars in test output.
   # This is especially important for CI, which may or may not detect
   # as ANSI-color-compatible compared to local usage of prysk.
   # Tests can override this (e.g., color.t does).
-  COLOR="${COLOR:-never}" prysk -v "${prysk_args[@]}"
+  COLOR="${COLOR:-never}" NO_PROGRESS="${NO_PROGRESS:-1}" prysk -v "${prysk_args[@]}"
   prysk_status=$?
   if [ $prysk_status -ne 0 ]; then
     exit_status=$prysk_status
