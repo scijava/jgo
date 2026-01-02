@@ -1,12 +1,4 @@
-Components targeting Java 9+ may have split jars/ and modules/ (or often all modules/), so commands like `jgo info classpath` no longer work as desired, since there are few/no jars on the classpath. How should we handle this? Should we add `jgo info module-path`, or should we make `jgo info classpath` show information about both module-path and classpath sides? Example:
-```
-jgo -v info classpath org.scijava:scijava-ops-image:1.0.0
-No JARs in classpath
-```
-
 Remove or repurpose obsolete files in docs/
-
-Review all print commands -- which ones should be using _log instead?
 
 Decide about remaining `~/.jgorc` references throughout the codebase
 
