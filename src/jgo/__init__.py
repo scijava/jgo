@@ -90,7 +90,7 @@ Old jgo 1.x APIs still work but show deprecation warnings:
 
 Installation
 ------------
-Basic: pip install jgo
+pip install jgo
 
 See Also
 --------
