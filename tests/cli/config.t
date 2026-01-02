@@ -33,8 +33,8 @@ Test config list subcommand.
     scijava.public = https://maven.scijava.org/content/groups/public
   
   [shortcuts]
-    jd-cli = com.github.kwart.jd:jd-cli
-    jython = org.python:jython-standalone
+    jd-cli = com.github.kwart.jd:jd-cli:1.3.0-beta-1
+    jython = org.python:jython-standalone:2.7.4
   
 
 Test config get requires key argument.
@@ -115,36 +115,41 @@ Test config shortcut --list.
   $  XDG_CONFIG_HOME="$TESTDIR" jgo -v config shortcut --list
   Shortcuts from */jgo.conf: (glob)
   
-    jd-cli  →  com.github.kwart.jd:jd-cli
-    jython  →  org.python:jython-standalone
+    jd-cli  →  com.github.kwart.jd:jd-cli:1.3.0-beta-1
+    jython  →  org.python:jython-standalone:2.7.4
   
   Total: 2 shortcut(s)
 
+
+
   $ XDG_CONFIG_HOME="$TESTDIR" jgo config shortcut -r jython
-  Removed shortcut: jython → org.python:jython-standalone
+  Removed shortcut: jython → org.python:jython-standalone:2.7.4
 
   $ XDG_CONFIG_HOME="$TESTDIR" jgo config shortcut --list
-  Shortcuts from */jgo.conf: (glob)
+  Shortcuts from */tests/cli/jgo.conf: (glob)
   
-    jd-cli  →  com.github.kwart.jd:jd-cli
+    jd-cli  →  com.github.kwart.jd:jd-cli:1.3.0-beta-1
   
   Total: 1 shortcut(s)
 
-  $ XDG_CONFIG_HOME="$TESTDIR" jgo config shortcut jython org.python:jython-standalone
-  Added shortcut: jython → org.python:jython-standalone
+
+  $ XDG_CONFIG_HOME="$TESTDIR" jgo config shortcut jython org.python:jython-standalone:2.7.4
+  Added shortcut: jython → org.python:jython-standalone:2.7.4
 
   $ XDG_CONFIG_HOME="$TESTDIR" jgo config shortcut --list
-  Shortcuts from */jgo.conf: (glob)
+  Shortcuts from */tests/cli/jgo.conf: (glob)
   
-    jd-cli  →  com.github.kwart.jd:jd-cli
-    jython  →  org.python:jython-standalone
+    jd-cli  →  com.github.kwart.jd:jd-cli:1.3.0-beta-1
+    jython  →  org.python:jython-standalone:2.7.4
   
   Total: 2 shortcut(s)
 
+
+
   $ cat "$TESTDIR/jgo.conf"
   [shortcuts]
-  jd-cli = com.github.kwart.jd:jd-cli
-  jython = org.python:jython-standalone
+  jd-cli = com.github.kwart.jd:jd-cli:1.3.0-beta-1
+  jython = org.python:jython-standalone:2.7.4
   
   [repositories]
   scijava.public = https://maven.scijava.org/content/groups/public

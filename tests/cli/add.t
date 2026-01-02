@@ -29,7 +29,7 @@ Test add --help shows usage.
 Test add requires jgo.toml to exist.
 
   $ cd "$TMPDIR" && mkdir -p jgo-test-add && cd jgo-test-add
-  $ jgo -v add org.python:jython-standalone
+  $ jgo -v add org.python:jython-standalone:2.7.4
   ERROR    jgo.toml does not exist* (glob)
   INFO     Run 'jgo init' to create a new environment file first.* (glob)
   [1]

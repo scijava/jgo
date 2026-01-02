@@ -60,7 +60,7 @@ class TestExceptions(unittest.TestCase):
     def _test_help_before_endpoint(self):
         # Does not work yet
         parser = jgo_parser()
-        argv = ["--help", "org.codehaus.groovy:groovy-groovysh"]
+        argv = ["--help", "org.codehaus.groovy:groovy-groovysh:3.0.25"]
 
         with self.assertRaises(HelpRequested):
             run(parser, argv)
@@ -68,7 +68,7 @@ class TestExceptions(unittest.TestCase):
     def _test_help_after_endpoint(self):
         # Does not work yet
         parser = jgo_parser()
-        argv = ["org.codehaus.groovy:groovy-groovysh", "--help"]
+        argv = ["org.codehaus.groovy:groovy-groovysh:3.0.25", "--help"]
 
         with self.assertRaises(HelpRequested):
             run(parser, argv)
@@ -112,7 +112,7 @@ class TestExceptions(unittest.TestCase):
 
     def test_additional_endpoint_too_few_colons(self):
         parser = jgo_parser()
-        argv = ["--additional-endpoints", "invalid", "mvxcvi:cljstyle"]
+        argv = ["--additional-endpoints", "invalid", "mvxcvi:cljstyle:0.17.642"]
 
         with self.assertRaisesRegex(InvalidEndpoint, "Not enough artifacts specified"):
             run(parser, argv)
@@ -136,8 +136,23 @@ class TestExceptions(unittest.TestCase):
 
     def test_no_main_class_in_manifest(self):
         parser = jgo_parser()
-        argv = ["org.codehaus.groovy:groovy-groovysh"]
+        argv = ["org.codehaus.groovy:groovy-groovysh:3.0.25"]
 
+        with self.assertRaises(NoMainClassInManifest):
+            run(parser, argv)
+
+    def test_unversioned_release_inference(self):
+        """Test that unversioned coordinates resolve to RELEASE version.
+
+        Uses org.apache.commons:commons-math which was last published in 2011
+        and has since moved to commons-math3/commons-math4, making it a stable
+        artifact that won't change and break this test.
+        """
+        parser = jgo_parser()
+        argv = ["org.apache.commons:commons-math"]
+
+        # This artifact has no main class in manifest, so we expect that error
+        # rather than a version resolution error
         with self.assertRaises(NoMainClassInManifest):
             run(parser, argv)
 
@@ -166,7 +181,7 @@ class TestRun(unittest.TestCase):
     @patch("jgo.jgo._run")
     def test_basic(self, run_mock):
         parser = jgo_parser()
-        argv = ["com.pinterest:ktlint", "-F", "/c/path/to/file.kt"]
+        argv = ["com.pinterest:ktlint:0.51.0-FINAL", "-F", "/c/path/to/file.kt"]
 
         run(parser, argv)
         self.assertTrue(run_mock.called)
@@ -182,6 +197,7 @@ class TestRun(unittest.TestCase):
         self.assertIsInstance(primary_endpoint, Endpoint)
         self.assertEqual(primary_endpoint.groupId, "com.pinterest")
         self.assertEqual(primary_endpoint.artifactId, "ktlint")
+        self.assertEqual(primary_endpoint.version, "0.51.0-FINAL")
         self.assertEqual(jvm_args, [])
         self.assertEqual(program_args, ["-F", "/c/path/to/file.kt"])
         self.assertEqual(additional_jars, [])
@@ -195,7 +211,7 @@ class TestRun(unittest.TestCase):
             "-Xms1G",
             "--add-opens",
             "java.base/java.lang=ALL-UNNAMED",
-            "com.pinterest:ktlint",
+            "com.pinterest:ktlint:0.51.0-FINAL",
             "-F",
             "/c/path/to/file.kt",
         ]
@@ -214,6 +230,7 @@ class TestRun(unittest.TestCase):
         self.assertIsInstance(primary_endpoint, Endpoint)
         self.assertEqual(primary_endpoint.groupId, "com.pinterest")
         self.assertEqual(primary_endpoint.artifactId, "ktlint")
+        self.assertEqual(primary_endpoint.version, "0.51.0-FINAL")
         self.assertEqual(
             jvm_args, ["-Xms1G", "--add-opens", "java.base/java.lang=ALL-UNNAMED"]
         )
@@ -228,7 +245,7 @@ class TestRun(unittest.TestCase):
         argv = [
             "--add-opens",
             "java.base/java.lang=ALL-UNNAMED",
-            "com.pinterest:ktlint",
+            "com.pinterest:ktlint:0.51.0-FINAL",
             "--",
             "-F",
             "/c/path/to/file.kt",
@@ -248,6 +265,7 @@ class TestRun(unittest.TestCase):
         self.assertIsInstance(primary_endpoint, Endpoint)
         self.assertEqual(primary_endpoint.groupId, "com.pinterest")
         self.assertEqual(primary_endpoint.artifactId, "ktlint")
+        self.assertEqual(primary_endpoint.version, "0.51.0-FINAL")
         self.assertEqual(jvm_args, ["--add-opens", "java.base/java.lang=ALL-UNNAMED"])
         self.assertEqual(program_args, ["--", "-F", "/c/path/to/file.kt"])
         self.assertEqual(additional_jars, [])
@@ -260,9 +278,9 @@ class TestRun(unittest.TestCase):
         argv = [
             "-q",
             "--additional-endpoints",
-            "io.netty:netty-transport-native-epoll",
-            "org.clojure:clojure",
-            "org.scijava:parsington",
+            "io.netty:netty-transport-native-epoll:5.0.0.Alpha2",
+            "org.clojure:clojure:1.12.4",
+            "org.scijava:parsington:3.1.0",
             "-F",
             "/c/path/to/file.kt",
         ]
@@ -290,8 +308,8 @@ class TestRun(unittest.TestCase):
         with open("{}/{}".format(workspace, "coordinates.txt")) as fh:
             coordinates = fh.read()
 
-        self.assertIn("io.netty:netty-transport-native-epoll", coordinates)
-        self.assertIn("org.clojure:clojure", coordinates)
+        self.assertIn("io.netty:netty-transport-native-epoll:5.0.0.Alpha2", coordinates)
+        self.assertIn("org.clojure:clojure:1.12.4", coordinates)
 
     @patch("jgo.jgo._run")
     def test_additional_endpoints_with_jvm_args(self, run_mock):
@@ -299,11 +317,11 @@ class TestRun(unittest.TestCase):
         argv = [
             "-q",
             "--additional-endpoints",
-            "io.netty:netty-transport-native-epoll",
-            "org.clojure:clojure",
+            "io.netty:netty-transport-native-epoll:5.0.0.Alpha2",
+            "org.clojure:clojure:1.12.4",
             "--add-opens",
             "java.base/java.lang=ALL-UNNAMED",
-            "org.scijava:parsington",
+            "org.scijava:parsington:3.1.0",
             "-F",
             "/c/path/to/file.kt",
         ]
@@ -331,8 +349,8 @@ class TestRun(unittest.TestCase):
         with open("{}/{}".format(workspace, "coordinates.txt")) as fh:
             coordinates = fh.read()
 
-        self.assertIn("io.netty:netty-transport-native-epoll", coordinates)
-        self.assertIn("org.clojure:clojure", coordinates)
+        self.assertIn("io.netty:netty-transport-native-epoll:5.0.0.Alpha2", coordinates)
+        self.assertIn("org.clojure:clojure:1.12.4", coordinates)
 
     @patch("jgo.jgo.default_config")
     @patch("jgo.jgo._run")
@@ -343,7 +361,7 @@ class TestRun(unittest.TestCase):
         config_mock.return_value = {
             "settings": {"cacheDir": os.path.join(str(pathlib.Path.home()), ".jgo")},
             "repositories": {},
-            "shortcuts": {"ktlint": "com.pinterest:ktlint"},
+            "shortcuts": {"ktlint": "com.pinterest:ktlint:0.51.0-FINAL"},
         }
 
         run(parser, argv)
@@ -361,6 +379,7 @@ class TestRun(unittest.TestCase):
         self.assertIsInstance(primary_endpoint, Endpoint)
         self.assertEqual(primary_endpoint.groupId, "com.pinterest")
         self.assertEqual(primary_endpoint.artifactId, "ktlint")
+        self.assertEqual(primary_endpoint.version, "0.51.0-FINAL")
         self.assertEqual(jvm_args, [])
         self.assertEqual(program_args, [])
         self.assertEqual(additional_jars, [])
@@ -404,7 +423,7 @@ class TestRun(unittest.TestCase):
         argv = [
             "-r",
             "clojars=https://clojars.org/repo/",
-            "mvxcvi:cljstyle",
+            "mvxcvi:cljstyle:0.17.642",
             "fix",
             "c:/path/to/file.clj",
         ]
@@ -434,7 +453,7 @@ class TestRun(unittest.TestCase):
         argv = [
             "-r",
             "clojars=https://clojars.org/repo/",
-            "mvxcvi:cljstyle",
+            "mvxcvi:cljstyle:0.17.642",
             "fix",
             "c:\\path\\to\\file.clj",
         ]
@@ -461,7 +480,7 @@ class TestRun(unittest.TestCase):
     @patch("jgo.jgo.launch_java")
     def test_explicit_main_class(self, launch_java_mock):
         parser = jgo_parser()
-        argv = ["org.jruby:jruby-complete:@jruby.Main"]
+        argv = ["org.jruby:jruby-complete:10.0.2.0:@jruby.Main"]
 
         run(parser, argv)
         self.assertTrue(launch_java_mock.called)
@@ -484,7 +503,7 @@ class TestRun(unittest.TestCase):
     @patch("jgo.jgo.launch_java")
     def test_infer_main_class(self, launch_java_mock):
         parser = jgo_parser()
-        argv = ["com.pinterest.ktlint:ktlint-cli"]
+        argv = ["com.pinterest.ktlint:ktlint-cli:1.8.0"]
 
         run(parser, argv)
         self.assertTrue(launch_java_mock.called)
@@ -511,7 +530,7 @@ class TestUtil(unittest.TestCase):
         main_from_endpoint(
             "org.janelia.saalfeldlab:paintera",
             argv=[],
-            primary_endpoint_version="0.8.1",
+            primary_endpoint_version="1.13.0",
             secondary_endpoints=("org.slf4j:slf4j-simple:1.7.25",),
         )
 
@@ -546,7 +565,7 @@ class TestUtil(unittest.TestCase):
         main_from_endpoint(
             "org.janelia.saalfeldlab:paintera",
             argv=["-Xmx1024m", "--"],
-            primary_endpoint_version="0.8.1",
+            primary_endpoint_version="1.13.0",
             secondary_endpoints=("org.slf4j:slf4j-simple:1.7.25",),
         )
 

@@ -29,7 +29,7 @@ Test remove --help shows usage.
 Test remove requires jgo.toml to exist.
 
   $ cd "$TMPDIR" && mkdir -p jgo-test-remove && cd jgo-test-remove
-  $ jgo -v remove org.python:jython-standalone
+  $ jgo -v remove org.python:jython-standalone:2.7.4
   ERROR    jgo.toml does not exist                                                
   INFO     Run 'jgo init' to create a new environment file first.                 
   [1]
@@ -38,13 +38,13 @@ Test remove with existing jgo.toml.
 
   $ jgo init com.google.guava:guava:33.0.0-jre
   $ jgo add org.python:jython-standalone:2.7.4
-  $ jgo -v remove org.python:jython-standalone
+  $ jgo -v remove org.python:jython-standalone:2.7.4
   INFO     Removed 1 dependencies from jgo.toml                                   
 
 Test remove multiple coordinates.
 
   $ jgo add net.imagej:ij:1.54g org.scijava:parsington:3.1.0
-  $ jgo -v remove net.imagej:ij org.scijava:parsington
+  $ jgo -v remove net.imagej:ij:1.54g org.scijava:parsington:3.1.0
   INFO     Removed 2 dependencies from jgo.toml                                   
 
 Test remove with --dry-run.

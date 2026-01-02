@@ -22,81 +22,88 @@ class TestShortcutExpansion:
         """Test that expansion with no shortcuts is a no-op."""
         config = GlobalSettings(shortcuts={})
         assert (
-            config.expand_shortcuts("org.scijava:scijava-common")
-            == "org.scijava:scijava-common"
+            config.expand_shortcuts("org.scijava:scijava-common:2.99.0")
+            == "org.scijava:scijava-common:2.99.0"
         )
 
     def test_simple_shortcut(self):
         """Test simple shortcut expansion."""
         config = GlobalSettings(
-            shortcuts={"repl": "org.scijava:scijava-common@ScriptREPL"}
+            shortcuts={"repl": "org.scijava:scijava-common:2.99.0@ScriptREPL"}
         )
         assert (
-            config.expand_shortcuts("repl") == "org.scijava:scijava-common@ScriptREPL"
+            config.expand_shortcuts("repl")
+            == "org.scijava:scijava-common:2.99.0@ScriptREPL"
         )
 
     def test_shortcut_with_suffix(self):
         """Test shortcut expansion with additional text after shortcut."""
-        config = GlobalSettings(shortcuts={"imagej": "net.imagej:imagej"})
+        config = GlobalSettings(shortcuts={"imagej": "net.imagej:imagej:2.17.0"})
         # Shortcut matches at start, rest is preserved
-        assert config.expand_shortcuts("imagej:2.0.0") == "net.imagej:imagej:2.0.0"
+        assert (
+            config.expand_shortcuts("imagej:2.0.0") == "net.imagej:imagej:2.17.0:2.0.0"
+        )
 
     def test_composition_with_plus(self):
         """Test shortcut composition using + operator."""
         config = GlobalSettings(
             shortcuts={
-                "repl": "org.scijava:scijava-common@ScriptREPL",
-                "groovy": "org.scijava:scripting-groovy@GroovySh",
+                "repl": "org.scijava:scijava-common:2.99.0@ScriptREPL",
+                "groovy": "org.scijava:scripting-groovy:1.0.0@GroovySh",
             }
         )
         result = config.expand_shortcuts("repl+groovy")
         assert (
             result
-            == "org.scijava:scijava-common@ScriptREPL+org.scijava:scripting-groovy@GroovySh"
+            == "org.scijava:scijava-common:2.99.0@ScriptREPL+org.scijava:scripting-groovy:1.0.0@GroovySh"
         )
 
     def test_partial_composition(self):
         """Test composition where only some parts are shortcuts."""
         config = GlobalSettings(
-            shortcuts={"repl": "org.scijava:scijava-common@ScriptREPL"}
+            shortcuts={"repl": "org.scijava:scijava-common:2.99.0@ScriptREPL"}
         )
         # Only first part is a shortcut
-        result = config.expand_shortcuts("repl+org.scijava:parsington")
-        assert result == "org.scijava:scijava-common@ScriptREPL+org.scijava:parsington"
+        result = config.expand_shortcuts("repl+org.scijava:parsington:3.1.0")
+        assert (
+            result
+            == "org.scijava:scijava-common:2.99.0@ScriptREPL+org.scijava:parsington:3.1.0"
+        )
 
     def test_no_matching_shortcut(self):
         """Test that non-shortcuts pass through unchanged."""
-        config = GlobalSettings(shortcuts={"repl": "org.scijava:scijava-common"})
+        config = GlobalSettings(shortcuts={"repl": "org.scijava:scijava-common:2.99.0"})
         assert (
-            config.expand_shortcuts("org.python:jython-standalone")
-            == "org.python:jython-standalone"
+            config.expand_shortcuts("org.python:jython-standalone:2.7.4")
+            == "org.python:jython-standalone:2.7.4"
         )
 
     def test_multiple_shortcuts_in_composition(self):
         """Test composing multiple shortcuts with explicit coordinates."""
         config = GlobalSettings(
             shortcuts={
-                "scijava": "org.scijava:scijava-common",
-                "groovy": "org.scijava:scripting-groovy",
+                "scijava": "org.scijava:scijava-common:2.99.0",
+                "groovy": "org.scijava:scripting-groovy:1.0.0",
             }
         )
-        result = config.expand_shortcuts("scijava+groovy+net.imagej:imagej")
+        result = config.expand_shortcuts("scijava+groovy+net.imagej:imagej:2.17.0")
         assert (
             result
-            == "org.scijava:scijava-common+org.scijava:scripting-groovy+net.imagej:imagej"
+            == "org.scijava:scijava-common:2.99.0+org.scijava:scripting-groovy:1.0.0+net.imagej:imagej:2.17.0"
         )
 
     def test_nested_shortcuts(self):
         """Test shortcuts that reference other shortcuts."""
         config = GlobalSettings(
             shortcuts={
-                "base": "org.scijava:scijava-common",
+                "base": "org.scijava:scijava-common:2.99.0",
                 "repl": "base@ScriptREPL",  # References "base" shortcut
             }
         )
-        # Should expand repl -> base@ScriptREPL -> org.scijava:scijava-common@ScriptREPL
+        # Should expand repl -> base@ScriptREPL -> org.scijava:scijava-common:2.99.0@ScriptREPL
         assert (
-            config.expand_shortcuts("repl") == "org.scijava:scijava-common@ScriptREPL"
+            config.expand_shortcuts("repl")
+            == "org.scijava:scijava-common:2.99.0@ScriptREPL"
         )
 
 
@@ -119,7 +126,9 @@ class TestInitWithShortcuts:
 
                 # Create config with shortcut
                 config = {
-                    "shortcuts": {"repl": "org.scijava:scijava-common@ScriptREPL"}
+                    "shortcuts": {
+                        "repl": "org.scijava:scijava-common:2.99.0@ScriptREPL"
+                    }
                 }
 
                 # Run init with shortcut
@@ -139,7 +148,7 @@ class TestInitWithShortcuts:
                 spec = EnvironmentSpec.load(tmp_path / "jgo.toml")
 
                 # Should have the expanded coordinate
-                assert spec.coordinates == ["org.scijava:scijava-common"]
+                assert spec.coordinates == ["org.scijava:scijava-common:2.99.0"]
 
                 # Should have entrypoint named after the shortcut
                 assert "repl" in spec.entrypoints
@@ -166,8 +175,8 @@ class TestInitWithShortcuts:
                 # Create config with shortcuts
                 config = {
                     "shortcuts": {
-                        "repl": "org.scijava:scijava-common@ScriptREPL",
-                        "groovy": "org.scijava:scripting-groovy@GroovySh",
+                        "repl": "org.scijava:scijava-common:2.99.0@ScriptREPL",
+                        "groovy": "org.scijava:scripting-groovy:1.0.0@GroovySh",
                     }
                 }
 
@@ -189,8 +198,8 @@ class TestInitWithShortcuts:
 
                 # Should have both coordinates
                 assert len(spec.coordinates) == 2
-                assert "org.scijava:scijava-common" in spec.coordinates
-                assert "org.scijava:scripting-groovy" in spec.coordinates
+                assert "org.scijava:scijava-common:2.99.0" in spec.coordinates
+                assert "org.scijava:scripting-groovy:1.0.0" in spec.coordinates
 
                 # Should have both entrypoints
                 assert "repl" in spec.entrypoints
@@ -220,12 +229,14 @@ class TestInitWithShortcuts:
 
                 # Create config with one shortcut
                 config = {
-                    "shortcuts": {"repl": "org.scijava:scijava-common@ScriptREPL"}
+                    "shortcuts": {
+                        "repl": "org.scijava:scijava-common:2.99.0@ScriptREPL"
+                    }
                 }
 
                 # Run init with shortcut + explicit coordinate
                 init_args = ParsedArgs(
-                    endpoint="repl+org.scijava:parsington",
+                    endpoint="repl+org.scijava:parsington:3.1.0",
                     command="init",
                     verbose=0,
                     quiet=False,
@@ -241,8 +252,8 @@ class TestInitWithShortcuts:
 
                 # Should have both coordinates
                 assert len(spec.coordinates) == 2
-                assert "org.scijava:scijava-common" in spec.coordinates
-                assert "org.scijava:parsington" in spec.coordinates
+                assert "org.scijava:scijava-common:2.99.0" in spec.coordinates
+                assert "org.scijava:parsington:3.1.0" in spec.coordinates
 
                 # Should only have one entrypoint (from shortcut with @MainClass)
                 assert len(spec.entrypoints) == 1
@@ -268,7 +279,7 @@ class TestInitWithShortcuts:
                 from jgo.cli.parser import ParsedArgs
 
                 # Create config with shortcut (no @MainClass)
-                config = {"shortcuts": {"imagej": "net.imagej:imagej"}}
+                config = {"shortcuts": {"imagej": "net.imagej:imagej:2.17.0"}}
 
                 # Run init with shortcut
                 init_args = ParsedArgs(
@@ -287,11 +298,11 @@ class TestInitWithShortcuts:
                 spec = EnvironmentSpec.load(tmp_path / "jgo.toml")
 
                 # Should have the coordinate
-                assert spec.coordinates == ["net.imagej:imagej"]
+                assert spec.coordinates == ["net.imagej:imagej:2.17.0"]
 
                 # Should have entrypoint matching endpoint
                 assert "main" in spec.entrypoints
-                assert spec.entrypoints["main"] == "net.imagej:imagej"
+                assert spec.entrypoints["main"] == "net.imagej:imagej:2.17.0"
                 assert spec.default_entrypoint == "main"
 
             finally:
@@ -316,7 +327,7 @@ class TestInitWithShortcuts:
 
                 # Run init with explicit coordinate
                 init_args = ParsedArgs(
-                    endpoint="org.scijava:scijava-common@ScriptREPL",
+                    endpoint="org.scijava:scijava-common:2.99.0@ScriptREPL",
                     command="init",
                     verbose=0,
                     quiet=False,
@@ -331,7 +342,7 @@ class TestInitWithShortcuts:
                 spec = EnvironmentSpec.load(tmp_path / "jgo.toml")
 
                 # Should have the coordinate
-                assert spec.coordinates == ["org.scijava:scijava-common"]
+                assert spec.coordinates == ["org.scijava:scijava-common:2.99.0"]
 
                 # Should have entrypoint named "main" (not a shortcut)
                 assert "main" in spec.entrypoints
@@ -403,7 +414,9 @@ class TestRunWithShortcuts:
 
                 # Create config with shortcut
                 config = {
-                    "shortcuts": {"repl": "org.scijava:scijava-common@ScriptREPL"}
+                    "shortcuts": {
+                        "repl": "org.scijava:scijava-common:2.99.0@ScriptREPL"
+                    }
                 }
 
                 # Create jgo.toml with entrypoint named "repl"
