@@ -718,14 +718,28 @@ class EnvironmentBuilder:
             # Note: min_java_version is about bytecode level, not module support.
             # JARs compiled for Java 8 can still have Automatic-Module-Name and
             # be used on the module-path with Java 9+.
+
+            # First, use fast module detection (no subprocess)
+            module_info = detect_module_info(source_path)
+
             if jar_tool:
                 # Baseline jar tool available - use precise classification
-                jar_type = classify_jar(source_path, jar_tool)
-                # Types 1/2/3 are modularizable, type 4 is not
-                target_dir = modules_dir if jar_type in (1, 2, 3) else jars_dir
+                if module_info.is_modular:
+                    # Fast path: JAR has module-info.class or Automatic-Module-Name
+                    # Type 1: Has module-info.class (not automatic)
+                    # Type 2: Has Automatic-Module-Name (is automatic)
+                    jar_type = 2 if module_info.is_automatic else 1
+                    target_dir = modules_dir
+                else:
+                    # Slow path: Need subprocess to distinguish type 3 vs 4
+                    _log.debug(
+                        f"Analyzing JAR for modularizability: {artifact.filename}"
+                    )
+                    jar_type = classify_jar(source_path, jar_tool)
+                    # Types 3 is derivable (modularizable), type 4 is not
+                    target_dir = modules_dir if jar_type == 3 else jars_dir
             else:
                 # No jar tool available - use simple module detection
-                module_info = detect_module_info(source_path)
                 target_dir = modules_dir if module_info.is_modular else jars_dir
                 jar_type = None  # Not classified
 
@@ -733,9 +747,6 @@ class EnvironmentBuilder:
 
             if not dest_path.exists():
                 link_file(source_path, dest_path, self.link_strategy)
-
-            # For lockfile, we still need module_info for backward compat
-            module_info = detect_module_info(source_path)
 
             # Create locked dependency with module info and classification
             sha256 = compute_sha256(source_path) if source_path.exists() else None
