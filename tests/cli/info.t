@@ -39,13 +39,32 @@ Test info classpath with no endpoint.
 Test info classpath with endpoint.
 
   $ jgo info classpath com.google.guava:guava:33.0.0-jre
-  */jars/checker-qual-3.41.0.jar (glob)
-  */jars/error_prone_annotations-2.23.0.jar (glob)
-  */jars/failureaccess-1.0.2.jar (glob)
-  */jars/guava-33.0.0-jre.jar (glob)
-  */jars/j2objc-annotations-2.8.jar (glob)
-  */jars/jsr305-3.0.2.jar (glob)
-  */jars/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar (glob)
+  No JARs on classpath
+  TIP: Use 'jgo info module-path' to see module-path JARs
+
+Test info modulepath with endpoint.
+
+  $ jgo info modulepath com.google.guava:guava:33.0.0-jre
+  */modules/checker-qual-3.41.0.jar (glob)
+  */modules/error_prone_annotations-2.23.0.jar (glob)
+  */modules/failureaccess-1.0.2.jar (glob)
+  */modules/guava-33.0.0-jre.jar (glob)
+  */modules/j2objc-annotations-2.8.jar (glob)
+  */modules/jsr305-3.0.2.jar (glob)
+  */modules/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar (glob)
+
+Test info jars with endpoint.
+
+  $ jgo info jars com.google.guava:guava:33.0.0-jre
+  No classpath JARs
+  Module-path:
+  */modules/checker-qual-3.41.0.jar (glob)
+  */modules/error_prone_annotations-2.23.0.jar (glob)
+  */modules/failureaccess-1.0.2.jar (glob)
+  */modules/guava-33.0.0-jre.jar (glob)
+  */modules/j2objc-annotations-2.8.jar (glob)
+  */modules/jsr305-3.0.2.jar (glob)
+  */modules/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar (glob)
 
 Test info deptree with no endpoint.
 
@@ -105,8 +124,8 @@ Test info javainfo with endpoint.
 
   $ jgo info javainfo com.google.guava:guava:33.0.0-jre
   
-  Environment: /*/.cache/jgo/com/google/guava/guava/* (glob)
-  Class-path JARs: 7
+  Environment: */.cache/jgo/com/google/guava/guava/* (glob)
+  Module-path JARs: 7
   Total JARs: 7
   
   ╭───────────────────────── Java Version Requirements ──────────────────────────╮

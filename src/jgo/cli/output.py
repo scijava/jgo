@@ -118,7 +118,6 @@ def print_jars(environment: Environment) -> None:
             print(jar_path)
     else:
         _console.print("[yellow]No classpath JARs[/]")
-        _console.print("[dim]TIP: Use 'jgo info modulepath' to see module-path JARs[/]")
 
     # Print module-path JARs
     if mp_jars:
@@ -128,6 +127,8 @@ def print_jars(environment: Environment) -> None:
             _console.print("[bold cyan]Module-path:[/]")
         for jar_path in mp_jars:
             print(jar_path)
+    else:
+        _console.print("[yellow]No module-path JARs[/]")
 
 
 def print_main_classes(environment: Environment) -> None:
