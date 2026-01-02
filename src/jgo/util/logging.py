@@ -115,3 +115,24 @@ def is_info_enabled() -> bool:
         True if the current log level is INFO or lower (INFO or DEBUG)
     """
     return get_log_level() <= logging.INFO
+
+
+def log_exception_if_verbose(verbose: int = 0, level: int = 1) -> None:
+    """
+    Print full traceback if verbose level is high enough.
+
+    Args:
+        verbose: Current verbosity level
+        level: Minimum verbose level required to print traceback (default: 1)
+
+    Examples:
+        >>> try:
+        ...     risky_operation()
+        ... except Exception as e:
+        ...     _log.error(f"Operation failed: {e}")
+        ...     log_exception_if_verbose(args.verbose)
+    """
+    if verbose > level:
+        import traceback
+
+        traceback.print_exc()

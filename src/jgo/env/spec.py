@@ -233,6 +233,40 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
             cache_dir=cache_dir,
         )
 
+    @classmethod
+    def load_or_error(cls, path: Path) -> "EnvironmentSpec":
+        """
+        Load environment spec file with user-friendly error handling.
+
+        Args:
+            path: Path to spec file
+
+        Returns:
+            Loaded environment spec
+
+        Raises:
+            FileNotFoundError: If spec file does not exist (with helpful message)
+            ValueError: If spec file is invalid or cannot be parsed
+        """
+        import logging
+
+        _log = logging.getLogger(__name__)
+
+        if not path.exists():
+            _log.error(f"{path} does not exist")
+            _log.info("Run 'jgo init' to create a new environment file first.")
+            raise FileNotFoundError(
+                f"{path} does not exist. Run 'jgo init' to create a new environment file first."
+            )
+
+        try:
+            spec = cls.load(path)
+            _log.debug(f"Loaded spec file from {path}")
+            return spec
+        except Exception as e:
+            _log.error(f"Failed to load {path}: {e}")
+            raise ValueError(f"Failed to load {path}: {e}") from e
+
     def _to_dict(self) -> dict:
         """Convert EnvironmentSpec to dict for TOML serialization."""
         data = {}

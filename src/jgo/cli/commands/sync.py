@@ -61,17 +61,15 @@ def execute(args: ParsedArgs, config: dict) -> int:
         Exit code (0 for success, non-zero for failure)
     """
     from ...env.lockfile import LockFile
-    from ..helpers import (
-        handle_dry_run,
-        load_spec_file,
-        print_exception_if_verbose,
-    )
+    from ...env.spec import EnvironmentSpec
+    from ...util.logging import log_exception_if_verbose
+    from ..output import handle_dry_run
 
     # Get the spec file path
     spec_file = args.get_spec_file()
 
     try:
-        spec = load_spec_file(args)
+        spec = EnvironmentSpec.load_or_error(spec_file)
     except (FileNotFoundError, ValueError) as e:
         _log.debug(f"Failed to load spec file: {e}")
         return 1
@@ -129,7 +127,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     except Exception as e:
         _log.error(f"Failed to build environment: {e}")
-        print_exception_if_verbose(args)
+        log_exception_if_verbose(args.verbose)
         return 1
 
 

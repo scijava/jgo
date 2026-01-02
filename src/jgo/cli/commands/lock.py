@@ -56,14 +56,15 @@ def execute(args: ParsedArgs, config: dict) -> int:
         Exit code (0 for success, non-zero for failure)
     """
     from ...env.lockfile import LockFile, compute_spec_hash
-    from ..helpers import load_spec_file, print_exception_if_verbose
+    from ...env.spec import EnvironmentSpec
+    from ...util.logging import log_exception_if_verbose
 
     # Get the spec file path
     spec_file = args.get_spec_file()
     lock_file = spec_file.parent / "jgo.lock.toml"
 
     try:
-        spec = load_spec_file(args)
+        spec = EnvironmentSpec.load_or_error(spec_file)
     except (FileNotFoundError, ValueError) as e:
         _log.debug(f"Failed to load spec file: {e}")
         return 1
@@ -92,7 +93,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
         except Exception as e:
             _log.error(f"Failed to validate lock file: {e}")
-            print_exception_if_verbose(args)
+            log_exception_if_verbose(args.verbose)
             return 1
 
     _log.debug(f"Updating lock file for {spec_file}")
@@ -121,5 +122,5 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     except Exception as e:
         _log.error(f"Failed to generate lock file: {e}")
-        print_exception_if_verbose(args)
+        log_exception_if_verbose(args.verbose)
         return 1

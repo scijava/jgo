@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from ..env import Environment
     from ..maven import MavenContext
     from ..maven.core import Component
+    from .parser import ParsedArgs
 
 # Import shared console instances (configured at startup)
 from ..util.console import get_console, get_err_console, get_no_wrap
@@ -32,6 +33,23 @@ def print_dry_run(message: str) -> None:
         message: Dry-run message (e.g., "Would add 5 dependencies")
     """
     _console.print(r"[cyan bold]\[DRY-RUN] " + message, highlight=False)
+
+
+def handle_dry_run(args: ParsedArgs, message: str) -> bool:
+    """
+    Check if in dry run mode and print message if so.
+
+    Args:
+        args: Parsed arguments containing dry_run flag
+        message: Message to print in dry run mode
+
+    Returns:
+        True if dry run (caller should return 0), False otherwise
+    """
+    if args.dry_run:
+        print_dry_run(message)
+        return True
+    return False
 
 
 # === Data Output Functions ===

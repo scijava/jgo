@@ -448,3 +448,25 @@ class GlobalSettings:
         """
         if name in self.shortcuts:
             del self.shortcuts[name]
+
+
+def parse_config_key(key: str, default_section: str = "settings") -> tuple[str, str]:
+    """
+    Parse a config key into section and key name.
+
+    Args:
+        key: Key in format "section.key" or just "key"
+        default_section: Default section if not specified (default: "settings")
+
+    Returns:
+        Tuple of (section, key_name)
+
+    Examples:
+        >>> parse_config_key("cache_dir")
+        ('settings', 'cache_dir')
+        >>> parse_config_key("repositories.central")
+        ('repositories', 'central')
+    """
+    if "." in key:
+        return tuple(key.split(".", 1))
+    return default_section, key

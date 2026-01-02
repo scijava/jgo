@@ -57,13 +57,13 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    from ..helpers import load_spec_file
+    from ...env.spec import EnvironmentSpec
 
     # Get the spec file path
     spec_file = args.get_spec_file()
 
     try:
-        spec = load_spec_file(args)
+        spec = EnvironmentSpec.load_or_error(spec_file)
     except (FileNotFoundError, ValueError) as e:
         _log.debug(f"Failed to load spec file: {e}")
         return 1
@@ -104,7 +104,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
         _log.warning("No dependencies removed")
         return 0
 
-    from ..helpers import handle_dry_run
+    from ..output import handle_dry_run
 
     # Save updated spec
     if handle_dry_run(

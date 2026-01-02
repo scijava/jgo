@@ -8,11 +8,16 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import rich_click as click
+from rich.markup import escape
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
+# Import console for styled output
+from ...util.console import get_console
+
 _log = logging.getLogger(__name__)
+_console = get_console()
 
 
 @click.group(help="Manage jgo configuration.", invoke_without_command=True)
@@ -107,7 +112,7 @@ def execute(
 def _list_config(config_file: Path, config_type: str, args: ParsedArgs) -> int:
     """List all configuration values."""
     if not config_file.exists():
-        print(f"No {config_type} configuration file found at {config_file}")
+        _console.print(f"No {config_type} configuration file found at {config_file}")
         return 0
 
     if config_type == "global":
@@ -122,68 +127,70 @@ def _list_jgorc(config_file: Path, args: ParsedArgs) -> int:
 
     settings = GlobalSettings.load(config_file)
 
-    print(f"Configuration from {config_file}:")
-    print()
+    _console.print(f"Configuration from {config_file}:")
+    _console.print()
 
     # Print [settings] section
-    print("[settings]")
-    print(f"  cache_dir = {settings.cache_dir}")
-    print(f"  repo_cache = {settings.repo_cache}")
-    print(f"  links = {settings.links}")
-    print()
+    # Use escape() to prevent Rich from interpreting [...] as markup
+    _console.print(escape("[settings]"))
+    _console.print(f"  cache_dir = {settings.cache_dir}")
+    _console.print(f"  repo_cache = {settings.repo_cache}")
+    _console.print(f"  links = {settings.links}")
+    _console.print()
 
     # Print [repositories] section if any
     if settings.repositories:
-        print("[repositories]")
+        _console.print(escape("[repositories]"))
         for name, url in settings.repositories.items():
-            print(f"  {name} = {url}")
-        print()
+            _console.print(f"  {name} = {url}")
+        _console.print()
 
     # Print [shortcuts] section if any
     if settings.shortcuts:
-        print("[shortcuts]")
+        _console.print(escape("[shortcuts]"))
         for name, replacement in settings.shortcuts.items():
-            print(f"  {name} = {replacement}")
-        print()
+            _console.print(f"  {name} = {replacement}")
+        _console.print()
 
     return 0
 
 
 def _list_toml(config_file: Path, args: ParsedArgs) -> int:
     """List all configuration from jgo.toml file."""
-    from ..helpers import load_toml_file
+    from ...util.toml import load_toml_file
 
     data = load_toml_file(config_file)
     if data is None:
         return 1
 
-    print(f"Configuration from {config_file}:")
-    print()
+    _console.print(f"Configuration from {config_file}:")
+    _console.print()
 
     # Show settings section
+    # Use escape() to prevent Rich from interpreting [...] as markup
     if "settings" in data:
-        print("[settings]")
+        _console.print(escape("[settings]"))
         for key, value in data["settings"].items():
-            print(f"  {key} = {value}")
-        print()
+            _console.print(f"  {key} = {value}")
+        _console.print()
 
     # Show repositories
     if "repositories" in data:
-        print("[repositories]")
+        _console.print(escape("[repositories]"))
         for key, value in data["repositories"].items():
-            print(f"  {key} = {value}")
-        print()
+            _console.print(f"  {key} = {value}")
+        _console.print()
 
     return 0
 
 
 def _get_config(config_file: Path, config_type: str, key: str, args: ParsedArgs) -> int:
     """Get a specific configuration value."""
-    from ..helpers import parse_config_key
+    from ...config.settings import parse_config_key
 
     if not config_file.exists():
-        print(
-            f"Error: No {config_type} configuration file found at {config_file}",
+        _console.print(
+            f"[red]Error:[/] No {config_type} configuration file found at {config_file}",
             file=sys.stderr,
         )
         return 1
@@ -235,7 +242,7 @@ def _get_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) -> i
 
 def _get_toml(config_file: Path, section: str, key: str, args: ParsedArgs) -> int:
     """Get value from jgo.toml file."""
-    from ..helpers import load_toml_file
+    from ...util.toml import load_toml_file
 
     data = load_toml_file(config_file)
     if data is None:
@@ -258,7 +265,7 @@ def _set_config(
     config_file: Path, config_type: str, key: str, value: str, args: ParsedArgs
 ) -> int:
     """Set a configuration value."""
-    from ..helpers import parse_config_key
+    from ...config.settings import parse_config_key
 
     # Parse key as section.key or just key
     section, key_name = parse_config_key(key)
@@ -275,7 +282,7 @@ def _set_jgorc(
     """Set value in global settings file."""
     import configparser
 
-    from ..helpers import handle_dry_run, verbose_print
+    from ..output import handle_dry_run
 
     # Validate section and key
     valid_settings = ("cache_dir", "repo_cache", "links")
@@ -307,7 +314,7 @@ def _set_jgorc(
     with open(config_file, "w") as f:
         parser.write(f)
 
-    verbose_print(args, f"Set [{section}] {key} = {value} in {config_file}")
+    _log.debug(f"Set [{section}] {key} = {value} in {config_file}")
 
     return 0
 
@@ -318,16 +325,19 @@ def _set_toml(
     """Set value in jgo.toml file."""
     import tomli_w
 
-    from ..helpers import handle_dry_run, load_toml_file, verbose_print
+    from ...util.toml import load_toml_file
+    from ..output import handle_dry_run
 
     # Read existing file
     data = load_toml_file(config_file)
     if data is None:
-        print(
-            f"Error: No local configuration file found at {config_file}",
+        _console.print(
+            f"[red]Error:[/] No local configuration file found at {config_file}",
             file=sys.stderr,
         )
-        print("Run 'jgo init' to create a new environment file first.", file=sys.stderr)
+        _console.print(
+            "Run 'jgo init' to create a new environment file first.", file=sys.stderr
+        )
         return 1
 
     # Create section if it doesn't exist
@@ -348,7 +358,7 @@ def _set_toml(
     with open(config_file, "wb") as f:
         tomli_w.dump(data, f)
 
-    verbose_print(args, f"Set [{section}] {key} = {parsed_value} in {config_file}")
+    _log.debug(f"Set [{section}] {key} = {parsed_value} in {config_file}")
 
     return 0
 
@@ -357,11 +367,11 @@ def _unset_config(
     config_file: Path, config_type: str, key: str, args: ParsedArgs
 ) -> int:
     """Unset a configuration value."""
-    from ..helpers import parse_config_key
+    from ...config.settings import parse_config_key
 
     if not config_file.exists():
-        print(
-            f"Error: No {config_type} configuration file found at {config_file}",
+        _console.print(
+            f"[red]Error:[/] No {config_type} configuration file found at {config_file}",
             file=sys.stderr,
         )
         return 1
@@ -379,11 +389,11 @@ def _unset_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) ->
     """Unset value in global settings file."""
     import configparser
 
-    from ..helpers import handle_dry_run, verbose_print
+    from ..output import handle_dry_run
 
     if not config_file.exists():
-        print(
-            f"Error: No configuration file found at {config_file}",
+        _console.print(
+            f"[red]Error:[/] No configuration file found at {config_file}",
             file=sys.stderr,
         )
         return 1
@@ -416,7 +426,7 @@ def _unset_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) ->
     with open(config_file, "w") as f:
         parser.write(f)
 
-    verbose_print(args, f"Removed [{section}] {key} from {config_file}")
+    _log.debug(f"Removed [{section}] {key} from {config_file}")
 
     return 0
 
@@ -425,7 +435,8 @@ def _unset_toml(config_file: Path, section: str, key: str, args: ParsedArgs) -> 
     """Unset value in jgo.toml file."""
     import tomli_w
 
-    from ..helpers import handle_dry_run, load_toml_file, verbose_print
+    from ...util.toml import load_toml_file
+    from ..output import handle_dry_run
 
     data = load_toml_file(config_file)
     if data is None:
@@ -454,7 +465,7 @@ def _unset_toml(config_file: Path, section: str, key: str, args: ParsedArgs) -> 
     with open(config_file, "wb") as f:
         tomli_w.dump(data, f)
 
-    verbose_print(args, f"Removed [{section}] {key} from {config_file}")
+    _log.debug(f"Removed [{section}] {key} from {config_file}")
 
     return 0
 

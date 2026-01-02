@@ -87,7 +87,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
     if args.dry_run:
         import tomli_w
 
-        from ..helpers import handle_dry_run
+        from ..output import handle_dry_run
 
         # Generate the TOML content that would be written
         toml_content = tomli_w.dumps(spec._to_dict())
