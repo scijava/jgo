@@ -20,6 +20,9 @@ _color_mode: str = "auto"
 # Current no-wrap mode
 _no_wrap: bool = False
 
+# Current quiet mode
+_quiet: bool = False
+
 
 def normalize_color_mode(color: str) -> str:
     """
@@ -56,12 +59,13 @@ def setup_consoles(
         quiet: If True, suppress all console output (data and messages)
         no_wrap: If True, disable text wrapping in rich output
     """
-    global _console, _err_console, _color_mode, _no_wrap
+    global _console, _err_console, _color_mode, _no_wrap, _quiet
 
     # Normalize aliases
     color = normalize_color_mode(color)
     _color_mode = color
     _no_wrap = no_wrap
+    _quiet = quiet
 
     console_kwargs: dict = {"quiet": quiet}
 
@@ -98,6 +102,16 @@ def get_no_wrap() -> bool:
         True if text wrapping should be disabled in rich output
     """
     return _no_wrap
+
+
+def is_quiet() -> bool:
+    """
+    Check if quiet mode is enabled.
+
+    Returns:
+        True if quiet mode is enabled (suppress all output including progress bars)
+    """
+    return _quiet
 
 
 def get_console() -> Console:

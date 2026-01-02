@@ -11,6 +11,16 @@ from subprocess import run
 from typing import TYPE_CHECKING
 
 import requests
+from rich.progress import (
+    BarColumn,
+    DownloadColumn,
+    Progress,
+    TextColumn,
+    TimeRemainingColumn,
+    TransferSpeedColumn,
+)
+
+from jgo.util.console import get_err_console, is_quiet
 
 from .core import Dependency, create_pom
 from .dependency_printer import (
@@ -291,7 +301,9 @@ class PythonResolver(Resolver):
             path_str = str(artifact.component.path_prefix).replace("\\", "/")
             url = f"{remote_repo}/{path_str}/{artifact.filename}"
             _log.debug(f"Trying {url}")
-            response: requests.Response = requests.get(url)
+
+            # Use streaming to enable progress bar
+            response: requests.Response = requests.get(url, stream=True)
             if response.status_code == 200:
                 # Artifact downloaded successfully.
                 # TODO: Also get MD5 and SHA1 files if available.
@@ -300,8 +312,37 @@ class PythonResolver(Resolver):
                 cached_file = artifact.cached_path
                 assert not cached_file.exists()
                 cached_file.parent.mkdir(parents=True, exist_ok=True)
-                with open(cached_file, "wb") as f:
-                    f.write(response.content)
+
+                # Get total size from Content-Length header
+                total_size = int(response.headers.get("content-length", 0))
+
+                # Show progress bar unless in quiet mode
+                show_progress = not is_quiet() and total_size > 0
+
+                if show_progress:
+                    # Create progress bar for this download
+                    progress = Progress(
+                        TextColumn("[bold blue]{task.description}"),
+                        BarColumn(),
+                        DownloadColumn(),
+                        TransferSpeedColumn(),
+                        TimeRemainingColumn(),
+                        console=get_err_console(),
+                    )
+                    with progress:
+                        task = progress.add_task(
+                            f"Downloading {artifact.filename}", total=total_size
+                        )
+                        with open(cached_file, "wb") as f:
+                            for chunk in response.iter_content(chunk_size=8192):
+                                f.write(chunk)
+                                progress.update(task, advance=len(chunk))
+                else:
+                    # No progress bar - download without display
+                    with open(cached_file, "wb") as f:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            f.write(chunk)
+
                 if is_snapshot:
                     _log.info(f"Downloaded SNAPSHOT {artifact} to {cached_file}")
                 else:
