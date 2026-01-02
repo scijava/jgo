@@ -174,6 +174,7 @@ def print_dependencies(
     boms: list[Component] | None = None,
     list_mode: bool = False,
     direct_only: bool = False,
+    optional_depth: int = 0,
 ) -> None:
     """
     Print dependencies for the given components.
@@ -185,6 +186,7 @@ def print_dependencies(
         list_mode: If True, print flat list (like mvn dependency:list).
                   If False, print tree (like mvn dependency:tree).
         direct_only: If True and list_mode is True, show only direct dependencies
+        optional_depth: Maximum depth at which to include optional dependencies (default: 0)
     """
     no_wrap = get_no_wrap()
 
@@ -198,6 +200,7 @@ def print_dependencies(
             managed=bool(boms),
             boms=boms,
             transitive=not direct_only,
+            optional_depth=optional_depth,
         )
 
         # Format and print using Rich with soft_wrap to prevent line wrapping
@@ -213,6 +216,7 @@ def print_dependencies(
             components,
             managed=bool(boms),
             boms=boms,
+            optional_depth=optional_depth,
         )
 
         # Format and print using Rich

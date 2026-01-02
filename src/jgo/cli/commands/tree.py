@@ -72,5 +72,11 @@ def execute(args: ParsedArgs, config: dict) -> int:
         components, coordinates, _ = builder._parse_endpoint(args.endpoint)
         boms = filter_managed_components(components, coordinates)
 
-    print_dependencies(components, context, boms=boms, list_mode=False)
+    print_dependencies(
+        components,
+        context,
+        boms=boms,
+        list_mode=False,
+        optional_depth=args.get_effective_optional_depth(),
+    )
     return 0

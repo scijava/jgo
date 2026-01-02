@@ -131,6 +131,7 @@ def create_environment_builder(
         context=context,
         cache_dir=cache_dir,
         link_strategy=link_strategy,
+        optional_depth=args.get_effective_optional_depth(),
     )
 
 

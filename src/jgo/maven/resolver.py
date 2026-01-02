@@ -185,7 +185,10 @@ class Resolver(ABC):
 
     @abstractmethod
     def get_dependency_list(
-        self, component: Component, transitive: bool = True
+        self,
+        component: Component,
+        transitive: bool = True,
+        optional_depth: int = 0,
     ) -> tuple[DependencyNode, list[DependencyNode]]:
         """
         Get the flat list of resolved dependencies as data structures.
@@ -196,6 +199,7 @@ class Resolver(ABC):
         Args:
             component: The component for which to get dependencies.
             transitive: If False, return only direct dependencies.
+            optional_depth: Maximum depth at which to include optional dependencies.
 
         Returns:
             Tuple of (root_node, dependencies_list) where root_node is the
@@ -205,7 +209,9 @@ class Resolver(ABC):
         ...
 
     @abstractmethod
-    def get_dependency_tree(self, component: Component) -> DependencyNode:
+    def get_dependency_tree(
+        self, component: Component, optional_depth: int = 0
+    ) -> DependencyNode:
         """
         Get the full dependency tree as a data structure.
 
@@ -214,6 +220,8 @@ class Resolver(ABC):
 
         Args:
             component: The component for which to get the dependency tree.
+            optional_depth: Maximum depth at which to include optional dependencies.
+                Defaults to 0, matching Maven's behavior.
 
         Returns:
             DependencyNode representing the root component with children populated
@@ -227,6 +235,7 @@ class Resolver(ABC):
         managed: bool = False,
         boms: list[Component] | None = None,
         transitive: bool = True,
+        optional_depth: int = 0,
     ) -> str:
         """
         Print a flat list of resolved dependencies (like mvn dependency:list).
@@ -238,12 +247,17 @@ class Resolver(ABC):
             managed: If True, use dependency management (import components as BOMs).
             boms: List of components to import as BOMs. Defaults to [component].
             transitive: If False, show only direct dependencies (non-transitive).
+            optional_depth: Maximum depth at which to include optional dependencies.
 
         Returns:
             The dependency list as a string.
         """
         root, deps = self.get_dependency_list(
-            components, managed=managed, boms=boms, transitive=transitive
+            components,
+            managed=managed,
+            boms=boms,
+            transitive=transitive,
+            optional_depth=optional_depth,
         )
         return format_dependency_list(root, deps)
 
@@ -252,6 +266,7 @@ class Resolver(ABC):
         components: list[Component] | Component,
         managed: bool = False,
         boms: list[Component] | None = None,
+        optional_depth: int = 0,
     ) -> str:
         """
         Print the full dependency tree for the given component (like mvn dependency:tree).
@@ -262,11 +277,14 @@ class Resolver(ABC):
             components: The component(s) for which to print dependencies.
             managed: If True, use dependency management (import components as BOMs).
             boms: List of components to import as BOMs. Defaults to [component].
+            optional_depth: Maximum depth at which to include optional dependencies.
 
         Returns:
             The dependency tree as a string.
         """
-        root = self.get_dependency_tree(components, managed=managed, boms=boms)
+        root = self.get_dependency_tree(
+            components, managed=managed, boms=boms, optional_depth=optional_depth
+        )
         return format_dependency_tree(root)
 
 
@@ -366,6 +384,7 @@ class PythonResolver(Resolver):
         managed: bool = False,
         boms: list[Component] | None = None,
         transitive: bool = True,
+        optional_depth: int = 0,
     ) -> list[Dependency]:
         """
         Get all dependencies for the given components.
@@ -375,6 +394,7 @@ class PythonResolver(Resolver):
             managed: If True and boms is None, use components as BOMs
             boms: Optional list of components to import in dependencyManagement
             transitive: Whether to include transitive dependencies
+            optional_depth: Maximum depth at which to include optional dependencies
 
         Returns:
             Flat list of dependencies
@@ -393,7 +413,7 @@ class PythonResolver(Resolver):
         # When transitive=False, set max_depth=1 to get one level of dependencies
         # from the synthetic wrapper (i.e., the direct dependencies of the components)
         max_depth = 1 if not transitive else None
-        deps, _ = model.dependencies(max_depth=max_depth)
+        deps, _ = model.dependencies(max_depth=max_depth, optional_depth=optional_depth)
 
         deps = _filter_component_deps(deps, components)
 
@@ -406,6 +426,7 @@ class PythonResolver(Resolver):
         managed: bool = False,
         boms: list[Component] | None = None,
         transitive: bool = True,
+        optional_depth: int = 0,
     ) -> tuple[DependencyNode, list[DependencyNode]]:
         """
         Get the flat list of resolved dependencies as data structures.
@@ -415,13 +436,18 @@ class PythonResolver(Resolver):
             managed: If True and boms is None, use components as BOMs
             boms: Optional list of components to import in dependencyManagement
             transitive: If False, return only direct dependencies
+            optional_depth: Maximum depth at which to include optional dependencies
 
         Returns:
             Tuple of (root_node, flat_list_of_dependencies)
         """
         components = _listify(components)
         deps = self.dependencies(
-            components, managed=managed, boms=boms, transitive=transitive
+            components,
+            managed=managed,
+            boms=boms,
+            transitive=transitive,
+            optional_depth=optional_depth,
         )
         return self._build_dependency_list(components, deps)
 
@@ -430,6 +456,7 @@ class PythonResolver(Resolver):
         components: list[Component] | Component,
         managed: bool = False,
         boms: list[Component] | None = None,
+        optional_depth: int = 0,
     ) -> DependencyNode:
         """
         Get the full dependency tree as a data structure.
@@ -441,6 +468,7 @@ class PythonResolver(Resolver):
             components: Single component or list of components
             managed: If True and boms is None, use components as BOMs
             boms: Optional list of components to import in dependencyManagement
+            optional_depth: Maximum depth at which to include optional dependencies
 
         Returns:
             Root DependencyNode with full tree structure
@@ -453,7 +481,7 @@ class PythonResolver(Resolver):
         model = Model(
             pom, components[0].context, profile_constraints=self.profile_constraints
         )
-        _, tree_root = model.dependencies()
+        _, tree_root = model.dependencies(optional_depth=optional_depth)
 
         return tree_root
 
@@ -606,6 +634,7 @@ class MvnResolver(Resolver):
         managed: bool = False,
         boms: list[Component] | None = None,
         transitive: bool = True,
+        optional_depth: int = 0,
     ) -> list[Dependency]:
         """
         Get all dependencies for the given components.
@@ -615,10 +644,20 @@ class MvnResolver(Resolver):
             managed: If True and boms is None, use components as BOMs
             boms: Optional list of components to import in dependencyManagement
             transitive: Whether to include transitive dependencies
+            optional_depth: Maximum depth at which to include optional dependencies.
+                NOTE: MvnResolver does not support custom optional_depth - Maven always
+                excludes optional transitive dependencies (equivalent to optional_depth=0).
 
         Returns:
             Flat list of dependencies
         """
+        if optional_depth > 0:
+            _log.warning(
+                f"MvnResolver does not support optional_depth={optional_depth}. "
+                "Maven always excludes optional transitive dependencies. "
+                "Use PythonResolver (--resolver=python) for custom optional_depth."
+            )
+
         if not transitive:
             # Use get_dependency_tree and extract only direct children (depth 1)
             root = self.get_dependency_tree(components, managed=managed, boms=boms)
@@ -695,6 +734,7 @@ class MvnResolver(Resolver):
         managed: bool = False,
         boms: list[Component] | None = None,
         transitive: bool = True,
+        optional_depth: int = 0,
     ) -> tuple[DependencyNode, list[DependencyNode]]:
         """
         Get the flat list of resolved dependencies as data structures.
@@ -704,13 +744,19 @@ class MvnResolver(Resolver):
             managed: If True and boms is None, use components as BOMs
             boms: Optional list of components to import in dependencyManagement
             transitive: If False, return only direct dependencies
+            optional_depth: Maximum depth at which to include optional dependencies
+                NOTE: Not supported by MvnResolver - use PythonResolver instead
 
         Returns:
             Tuple of (root_node, flat_list_of_dependencies)
         """
         components = _listify(components)
         deps = self.dependencies(
-            components, managed=managed, boms=boms, transitive=transitive
+            components,
+            managed=managed,
+            boms=boms,
+            transitive=transitive,
+            optional_depth=optional_depth,
         )
         return self._build_dependency_list(components, deps)
 
@@ -719,6 +765,7 @@ class MvnResolver(Resolver):
         components: list[Component] | Component,
         managed: bool = False,
         boms: list[Component] | None = None,
+        optional_depth: int = 0,
     ) -> DependencyNode:
         """
         Get the full dependency tree as a data structure.
@@ -727,10 +774,19 @@ class MvnResolver(Resolver):
             components: Single component or list of components
             managed: If True and boms is None, use components as BOMs
             boms: Optional list of components to import in dependencyManagement
+            optional_depth: Maximum depth at which to include optional dependencies
+                NOTE: Not supported by MvnResolver - use PythonResolver instead
 
         Returns:
             Root DependencyNode with full tree structure
         """
+        if optional_depth > 0:
+            _log.warning(
+                f"MvnResolver does not support optional_depth={optional_depth}. "
+                "Maven always excludes optional transitive dependencies. "
+                "Use PythonResolver (--resolver=python) for custom optional_depth."
+            )
+
         components = _listify(components)
 
         if not components:

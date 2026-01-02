@@ -93,6 +93,11 @@ Test main help output.
   │ --java-version          VERSION                    Force specific Java       │
   │                                                    version (e.g., 17). [env  │
   │                                                    var: JAVA_VERSION]        │
+  │ --include-optional                                 Include optional          │
+  │                                                    dependencies of endpoint  │
+  │                                                    coordinates in the        │
+  │                                                    environment. [env var:    │
+  │                                                    JGO_INCLUDE_OPTIONAL]     │
   │ --repository        -r  NAME:URL                   Add remote Maven          │
   │                                                    repository.               │
   │ --resolver              [auto|python|mvn]          Dependency resolver: auto │
@@ -515,6 +520,11 @@ Test no-argument help (should show main help).
   │ --java-version          VERSION                    Force specific Java       │
   │                                                    version (e.g., 17). [env  │
   │                                                    var: JAVA_VERSION]        │
+  │ --include-optional                                 Include optional          │
+  │                                                    dependencies of endpoint  │
+  │                                                    coordinates in the        │
+  │                                                    environment. [env var:    │
+  │                                                    JGO_INCLUDE_OPTIONAL]     │
   │ --repository        -r  NAME:URL                   Add remote Maven          │
   │                                                    repository.               │
   │ --resolver              [auto|python|mvn]          Dependency resolver: auto │
@@ -674,6 +684,11 @@ Test --help flag on main command.
   │ --java-version          VERSION                    Force specific Java       │
   │                                                    version (e.g., 17). [env  │
   │                                                    var: JAVA_VERSION]        │
+  │ --include-optional                                 Include optional          │
+  │                                                    dependencies of endpoint  │
+  │                                                    coordinates in the        │
+  │                                                    environment. [env var:    │
+  │                                                    JGO_INCLUDE_OPTIONAL]     │
   │ --repository        -r  NAME:URL                   Add remote Maven          │
   │                                                    repository.               │
   │ --resolver              [auto|python|mvn]          Dependency resolver: auto │

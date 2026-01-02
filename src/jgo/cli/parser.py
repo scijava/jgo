@@ -202,6 +202,8 @@ class ParsedArgs:
         # Dependency resolution
         resolver: str = "auto",
         direct_only: bool = False,
+        include_optional: bool = False,
+        optional_depth: int | None = None,
         # Environment construction
         link: str = "auto",
         # Paths
@@ -258,6 +260,8 @@ class ParsedArgs:
         # Dependency resolution
         self.resolver = resolver
         self.direct_only = direct_only
+        self.include_optional = include_optional
+        self.optional_depth = optional_depth
         # Environment construction
         self.link = link
         # Paths
@@ -311,6 +315,20 @@ class ParsedArgs:
         elif self.module_path_only:
             return "module-path-only"
         return "auto"
+
+    def get_effective_optional_depth(self) -> int:
+        """
+        Get the effective optional_depth based on command and flags.
+
+        Returns:
+            int | None: The optional_depth to use for dependency resolution
+        """
+        # If explicitly set via --optional-depth, use that value
+        if self.optional_depth is not None:
+            return self.optional_depth
+
+        # If --include-optional flag is set, use depth 1
+        return 1 if self.include_optional else 0
 
     def is_spec_mode(self) -> bool:
         """Check if running in spec file mode (jgo.toml)."""
@@ -467,6 +485,13 @@ def global_options(f):
         multiple=True,
         metavar="NAME:URL",
         help="Add remote Maven repository.",
+    )(f)
+    f = click.option(
+        "--include-optional",
+        is_flag=True,
+        help="Include optional dependencies of endpoint coordinates in the environment.",
+        envvar="JGO_INCLUDE_OPTIONAL",
+        show_envvar=True,
     )(f)
     f = click.option(
         "-m",
@@ -864,6 +889,8 @@ def _build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, comman
         # Dependency resolution
         resolver=opts.get("resolver", "auto"),
         direct_only=opts.get("direct_only", False),
+        include_optional=opts.get("include_optional", False),
+        optional_depth=opts.get("optional_depth"),
         # Environment construction
         link=opts.get("link", "auto"),
         # Paths

@@ -77,6 +77,11 @@ def execute(args: ParsedArgs, config: dict) -> int:
         boms = filter_managed_components(components, coordinates)
 
     print_dependencies(
-        components, context, boms=boms, list_mode=True, direct_only=args.direct_only
+        components,
+        context,
+        boms=boms,
+        list_mode=True,
+        direct_only=args.direct_only,
+        optional_depth=args.get_effective_optional_depth(),
     )
     return 0

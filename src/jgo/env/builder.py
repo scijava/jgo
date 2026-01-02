@@ -182,9 +182,11 @@ class EnvironmentBuilder:
         context: MavenContext,
         cache_dir: Path | None = None,
         link_strategy: LinkStrategy = LinkStrategy.AUTO,
+        optional_depth: int = 0,
     ):
         self.context = context
         self.link_strategy = link_strategy
+        self.optional_depth = optional_depth
 
         # Auto-detect cache directory if not specified
         if cache_dir is None:
@@ -584,6 +586,11 @@ class EnvironmentBuilder:
             [f"{c.groupId}:{c.artifactId}:{c.resolved_version}" for c in components]
         )
         combined = "+".join(coord_strings)
+
+        # Include optional_depth in cache key
+        # This ensures different optional_depth values get separate cache directories
+        combined += f":optional_depth={self.optional_depth}"
+
         return hashlib.sha256(combined.encode()).hexdigest()[:16]
 
     def _infer_concrete_entrypoints(
@@ -675,6 +682,7 @@ class EnvironmentBuilder:
             components,
             managed=bool(boms),
             boms=boms,
+            optional_depth=self.optional_depth,
         )
 
         # Track locked dependencies with module info

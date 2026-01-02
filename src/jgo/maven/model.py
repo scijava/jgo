@@ -233,6 +233,7 @@ class Model:
         resolved: dict[GACT, Dependency] | None = None,
         root_dep_mgmt: dict[GACT, Dependency] | None = None,
         max_depth: int | None = None,
+        optional_depth: int = 0,
     ) -> tuple[list[Dependency], DependencyNode]:
         """
         Compute the component's list of dependencies, including transitive dependencies.
@@ -256,6 +257,10 @@ class Model:
                 (fully transitive). 1 means direct dependencies only (when called on a
                 synthetic wrapper POM, this gives the direct dependencies of the wrapped
                 components). 0 would mean no dependencies at all.
+            optional_depth:
+                Maximum depth at which to include optional dependencies.
+                0 means exclude all optional transitive dependencies, matching Maven's behavior.
+                1 means include optional dependencies at depth 1.
 
         Returns:
             A tuple of (dependency_list, dependency_tree) where:
@@ -313,9 +318,12 @@ class Model:
                         )
                         continue
 
-                    # Skip optional dependencies when recursing
-                    if recursing and dep.optional:
-                        _log.debug(f"{model.gav}: {dep_ga}: skipped (optional)")
+                    # Skip optional dependencies based on optional_depth
+                    if dep.optional and current_depth > optional_depth:
+                        _log.debug(
+                            f"{model.gav}: {dep_ga}: skipped (optional at depth {current_depth}, "
+                            f"optional_depth={optional_depth})"
+                        )
                         continue
 
                     # Check exclusions from all ancestors (not just immediate parent)
