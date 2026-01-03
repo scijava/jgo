@@ -305,7 +305,9 @@ def coord2str(
         A formatted coordinate string (e.g., "g:a:p:c:v:s" or "g:a:v!" for raw)
         If rich=True, includes Rich markup tags for coloring
     """
-    tag = lambda s, t: f"[{t}]{s}[/]" if rich and t is not None else s
+
+    def tag(s: str, t: str | None) -> str:
+        return f"[{t}]{s}[/]" if rich and t is not None else s
 
     rich_g = tag(groupId, "bold cyan")
     rich_a = tag(artifactId, "bold")
