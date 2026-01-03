@@ -711,10 +711,19 @@ class EnvironmentBuilder:
                 if version:
                     min_java_version = max(min_java_version or 0, version)
 
-        # Get baseline JDK for module classification
-        # This uses a consistent Java 11 via cjdk, ensuring deterministic builds
-        # regardless of what Java version is on the system PATH
-        jar_tool = get_baseline_jar_tool()
+        # Lazy-initialize baseline jar tool only when needed
+        # Sentinel value to detect if we've tried to get it yet
+        jar_tool_state = {"tool": None, "initialized": False}
+
+        def get_jar_tool_lazy():
+            """Get baseline jar tool lazily (only when actually needed)."""
+            if not jar_tool_state["initialized"]:
+                # Get baseline JDK for module classification
+                # This uses a consistent Java 11 via cjdk, ensuring deterministic builds
+                # regardless of what Java version is on the system PATH
+                jar_tool_state["tool"] = get_baseline_jar_tool()
+                jar_tool_state["initialized"] = True
+            return jar_tool_state["tool"]
 
         # Helper function to classify and link a JAR artifact
         def process_artifact(artifact, source_path):
@@ -727,6 +736,9 @@ class EnvironmentBuilder:
 
             # Use fast module detection (no subprocess)
             module_info = detect_module_info(source_path)
+
+            # Get jar tool lazily only when we need it
+            jar_tool = get_jar_tool_lazy()
 
             if jar_tool:
                 # Baseline jar tool available - use precise classification
@@ -760,11 +772,11 @@ class EnvironmentBuilder:
                 )
 
             # Determine target directory based on jar_type
-            if jar_tool and jar_type is not None:
+            if jar_type is not None:
                 # Types 1/2/3 are modularizable, type 4 is not
                 target_dir = modules_dir if jar_type in (1, 2, 3) else jars_dir
             else:
-                # No jar tool or no classification - use module_info
+                # No classification - use module_info
                 target_dir = modules_dir if module_info.is_modular else jars_dir
 
             dest_path = target_dir / artifact.filename
