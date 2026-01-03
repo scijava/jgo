@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 from ..constants import DEFAULT_JGO_CACHE
 from ..parse.coordinate import Coordinate
 from .bytecode import detect_jar_java_version
+from .cache import write_metadata_cache
 from .environment import Environment
 from .jar import (
     autocomplete_main_class,
@@ -290,7 +291,9 @@ class EnvironmentBuilder:
 
         # Environment path (always hierarchical for ad-hoc mode)
         primary = components[0]
-        workspace_path = self.cache_dir / primary.project.path_prefix / cache_key
+        workspace_path = (
+            self.cache_dir / "envs" / primary.project.path_prefix / cache_key
+        )
 
         # Check if environment exists and is valid
         environment = Environment(workspace_path)
@@ -379,7 +382,7 @@ class EnvironmentBuilder:
 
         # Determine workspace path based on mode
         # Project mode: flat structure (.jgo/ directly)
-        # Ad-hoc mode: hierarchical structure (G/A/hash/)
+        # Ad-hoc mode: hierarchical structure (envs/G/A/hash/)
         if self.is_project_mode():
             # Flat structure for project mode
             workspace_path = cache_dir
@@ -387,7 +390,9 @@ class EnvironmentBuilder:
             # Hierarchical structure for ad-hoc mode
             cache_key = self._cache_key(components)
             primary = components[0]
-            workspace_path = cache_dir / primary.project.path_prefix / cache_key
+            workspace_path = (
+                cache_dir / "envs" / primary.project.path_prefix / cache_key
+            )
 
         # Check if environment exists and is valid
         environment = Environment(workspace_path)
@@ -714,12 +719,13 @@ class EnvironmentBuilder:
         # Helper function to classify and link a JAR artifact
         def process_artifact(artifact, source_path):
             """Classify JAR, link it to the appropriate directory, and create locked dependency."""
-            # Classify JAR for module compatibility
-            # Note: min_java_version is about bytecode level, not module support.
-            # JARs compiled for Java 8 can still have Automatic-Module-Name and
-            # be used on the module-path with Java 9+.
+            # Compute SHA256 first (needed for cache and lockfile)
+            sha256 = compute_sha256(source_path) if source_path.exists() else None
 
-            # First, use fast module detection (no subprocess)
+            # Detect minimum Java version from bytecode
+            min_java_ver = detect_jar_java_version(source_path)
+
+            # Use fast module detection (no subprocess)
             module_info = detect_module_info(source_path)
 
             if jar_tool:
@@ -729,19 +735,37 @@ class EnvironmentBuilder:
                     # Type 1: Has module-info.class (not automatic)
                     # Type 2: Has Automatic-Module-Name (is automatic)
                     jar_type = 2 if module_info.is_automatic else 1
-                    target_dir = modules_dir
                 else:
                     # Slow path: Need subprocess to distinguish type 3 vs 4
                     _log.debug(
                         f"Analyzing JAR for modularizability: {artifact.filename}"
                     )
                     jar_type = classify_jar(source_path, jar_tool)
-                    # Types 3 is derivable (modularizable), type 4 is not
-                    target_dir = modules_dir if jar_type == 3 else jars_dir
             else:
                 # No jar tool available - use simple module detection
-                target_dir = modules_dir if module_info.is_modular else jars_dir
                 jar_type = None  # Not classified
+
+            # Write to cache for next time
+            if sha256:
+                write_metadata_cache(
+                    artifact.groupId,
+                    artifact.artifactId,
+                    artifact.version,
+                    artifact.filename,
+                    self.cache_dir,
+                    sha256,
+                    jar_type,
+                    min_java_ver,
+                    module_info,
+                )
+
+            # Determine target directory based on jar_type
+            if jar_tool and jar_type is not None:
+                # Types 1/2/3 are modularizable, type 4 is not
+                target_dir = modules_dir if jar_type in (1, 2, 3) else jars_dir
+            else:
+                # No jar tool or no classification - use module_info
+                target_dir = modules_dir if module_info.is_modular else jars_dir
 
             dest_path = target_dir / artifact.filename
 
@@ -749,7 +773,6 @@ class EnvironmentBuilder:
                 link_file(source_path, dest_path, self.link_strategy)
 
             # Create locked dependency with module info and classification
-            sha256 = compute_sha256(source_path) if source_path.exists() else None
             return LockedDependency(
                 groupId=artifact.groupId,
                 artifactId=artifact.artifactId,
