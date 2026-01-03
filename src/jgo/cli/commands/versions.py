@@ -72,7 +72,8 @@ def execute(args: ParsedArgs, config: dict) -> int:
         # Get available versions
         metadata = project.metadata
         if not metadata or not metadata.versions:
-            _console.print(f"No versions found for {coord.groupId}:{coord.artifactId}")
+            # Use rich() for styled output (emoji-safe)
+            _console.print(f"No versions found for {coord.rich()}")
             return 0
 
         # Use project's smart release/latest resolution
@@ -80,7 +81,8 @@ def execute(args: ParsedArgs, config: dict) -> int:
         latest_version = project.latest
 
         # Data output - keep as print() for parseable output
-        print(f"Available versions for {coord.groupId}:{coord.artifactId}:")
+        # Use str() for plain text (no Rich markup)
+        print(f"Available versions for {coord}:")
         for version in metadata.versions:
             marker = ""
             if release_version and version == release_version:

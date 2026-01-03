@@ -183,6 +183,45 @@ Provides structured logging with Rich formatting.
   - `2+`: DEBUG (with `-vv` or more)
 - Uses stderr console from `get_err_console()`
 
+#### Rich Markup in Log Messages
+
+**RichHandler is configured with `markup=False`**, which has important implications:
+
+**✅ What IS enabled** (built-in RichHandler features):
+- Log level colors (DEBUG=blue, INFO=green, WARNING=yellow, ERROR=red)
+- Module:line formatting when verbose >= 2 (`show_path=True`)
+- Rich tracebacks for better exception formatting
+- Nice layout and styling
+
+**❌ What is NOT enabled** (markup processing in message content):
+- Rich markup tags like `[red]text[/]`, `[bold]text[/]` - will be shown literally
+- Emoji substitution like `:emoji_name:` (e.g., `:fire:`, `:fiji:`) - will be shown literally
+
+**Rationale:**
+1. **Prevents collisions with user data**: Maven coordinates like `sc.fiji:fiji:2.17.0` contain the pattern `:fiji:` which Rich would interpret as the Fiji flag emoji 🇫🇯 if markup were enabled
+2. **Keeps logs simple**: Log messages should be plain text for debugging and grepping
+3. **No need for markup in logs**: RichHandler already provides sufficient styling via log levels
+
+**Example:**
+```python
+import logging
+_log = logging.getLogger(__name__)
+
+# ✅ Good: Plain text logging
+_log.debug("Processing sc.fiji:fiji:2.17.0")
+_log.info("Added 3 dependencies")
+
+# ❌ Don't use markup in log messages (won't work)
+_log.debug("[cyan]Processing[/] sc.fiji:fiji:2.17.0")  # Tags shown literally
+
+# ✅ For styled user messages, use console.print() instead
+from ..util.console import get_console
+_console = get_console()
+_console.print("[cyan]Processing:[/] sc.fiji:fiji:2.17.0")
+```
+
+**Note:** If you need to include text with literal square brackets (e.g., `[settings]` section names) in console output, use `rich.markup.escape()` to prevent misinterpretation as markup tags.
+
 **`get_log(name="jgo") -> logging.Logger`**
 - Get a logger instance for a module
 - All module loggers should be children of "jgo" root logger
@@ -444,6 +483,7 @@ After refactoring and testing, here's the **verified clean output approach**:
 - ✅ Warnings about potential issues
 - ✅ Errors with context
 - ✅ Debug information
+- ⚠️ **Note**: Log messages do NOT support Rich markup (see [Rich Markup in Log Messages](#rich-markup-in-log-messages))
 
 #### Systematic Approach
 

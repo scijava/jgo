@@ -63,7 +63,7 @@ class Coordinate:
     placement: Literal["class-path", "module-path"] | None = None
 
     def __str__(self) -> str:
-        """Return string representation using coord2str."""
+        """Return plain string representation using coord2str."""
         return coord2str(
             self.groupId,
             self.artifactId,
@@ -74,6 +74,42 @@ class Coordinate:
             self.optional,
             self.raw,
             self.placement,
+        )
+
+    def rich(self) -> str:
+        """
+        Return Rich-formatted string representation with semantic colors.
+
+        Uses Rich markup to colorize components based on their semantic meaning:
+        - groupId: bold cyan
+        - artifactId: bold
+        - version: green
+        - packaging: default color
+        - classifier: default color
+        - scope: dim
+        - colons: dim (prevents emoji substitution like :fiji: → 🇫🇯)
+
+        The markup is automatically stripped by Rich when --color=plain is used.
+
+        Returns:
+            Formatted string with Rich markup
+
+        Examples:
+            >>> coord = Coordinate("sc.fiji", "fiji", "2.17.0")
+            >>> coord.rich()
+            '[bold cyan]sc.fiji[/][dim]:[/][bold]fiji[/][dim]:[/][green]2.17.0[/]'
+        """
+        return coord2str(
+            self.groupId,
+            self.artifactId,
+            self.version,
+            self.classifier,
+            self.packaging,
+            self.scope,
+            self.optional,
+            self.raw,
+            self.placement,
+            rich=True,
         )
 
     @classmethod
@@ -248,6 +284,7 @@ def coord2str(
     optional: bool = False,
     raw: bool | None = None,
     placement: str | None = None,
+    rich: bool = False,
 ) -> str:
     """
     Convert Maven coordinate components to a string.
@@ -262,41 +299,57 @@ def coord2str(
         optional: Whether this is an optional dependency
         raw: Whether to use raw/strict resolution (appends ! if True)
         placement: Module path placement ("class-path" or "module-path")
+        rich: If True, format with Rich markup for semantic coloring
 
     Returns:
         A formatted coordinate string (e.g., "g:a:p:c:v:s" or "g:a:v!" for raw)
+        If rich=True, includes Rich markup tags for coloring
     """
-    parts = [groupId, artifactId]
+    tag = lambda s, t: f"[{t}]{s}[/]" if rich and t is not None else s
+
+    rich_g = tag(groupId, "bold cyan")
+    rich_a = tag(artifactId, "bold")
+    rich_v = tag(version, "green")
+    rich_c = tag(classifier, None)
+    rich_p = tag(packaging, None)
+    rich_s = tag(scope, None)
+    opt = tag("(optional)", "dim")
+    colon = tag(":", "dim")  # Prevents emojification (e.g., :fiji: → 🇫🇯)
+    bang = tag("!", "dim")
+    cp = tag("(c)", "dim")
+    mp = tag("(m)", "dim")
+
+    # Start with groupId:artifactId
+    result = f"{rich_g}{colon}{rich_a}"
 
     # Add packaging if present (comes before version in Maven format)
     if packaging:
-        parts.append(packaging)
+        result += f"{colon}{rich_p}"
 
     # Add classifier if present
     if classifier:
-        parts.append(classifier)
+        result += f"{colon}{rich_c}"
 
     # Add version if present
     if version:
-        parts.append(version)
+        result += f"{colon}{rich_v}"
 
     # Add scope if present
     if scope:
-        parts.append(scope)
+        scope_text = rich_s
         if optional:
-            parts[-1] += " (optional)"
-
-    result = ":".join(parts)
+            scope_text += f" {opt}"
+        result += f"{colon}{scope_text}"
 
     # Append placement suffix (before raw flag)
     if placement == "class-path":
-        result += "(c)"
+        result += cp
     elif placement == "module-path":
-        result += "(m)"
+        result += mp
 
     # Append ! for raw/strict resolution (comes last)
     if raw:
-        result += "!"
+        result += bang
 
     return result
 

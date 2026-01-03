@@ -50,7 +50,7 @@ def setup_logging(verbose: int = 0) -> logging.Logger:
         console=console,
         show_time=False,
         show_path=(verbose >= 2),  # Show module:line in debug mode
-        markup=True,  # Allow rich markup in log messages
+        markup=False,  # Disable markup to prevent emoji conversion (e.g., :fiji: → 🇫🇯)
         rich_tracebacks=True,  # Better exception formatting
     )
     handler.setLevel(level)

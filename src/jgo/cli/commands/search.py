@@ -218,9 +218,10 @@ def _display_results(results: list[dict]) -> None:
         version = result["latest_version"]
 
         # Basic format: coordinate and latest version
-        coordinate = f"{group_id}:{artifact_id}"
-        _console.print(f"{i}. {coordinate}")
-        _console.print(f"   Latest version: {version}")
+        from ...parse.coordinate import Coordinate
+
+        coord = Coordinate(group_id, artifact_id, version)
+        _console.print(f"{i}. {coord.rich()}")
 
         if verbose:
             # Show additional details in verbose mode

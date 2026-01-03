@@ -258,3 +258,17 @@ Test --color respects environment variable COLOR.
                                                                                   
   [2]
 
+Test that coordinate formatting prevents emoji substitution.
+Coordinates use dim colons in rich mode to prevent patterns like :bear:
+from being converted to emoji (🐻). Without proper markup, Rich would
+interpret such patterns as emoji codes.
+
+Verify that "bear" appears as text, not emoji (would be 🐻 without escaping).
+If emoji substitution were happening, grep wouldn't find the text "bear".
+And filter to known artifact to avoid brittleness from search result changes.
+
+  $ jgo --color=plain search bear | grep bear | grep com.github.qydq:
+  *. com.github.qydq:bear:* (glob)
+
+  $ jgo --color=rich search bear | grep bear | grep com.github.qydq:
+  *. com.github.qydq:bear:* (glob)
