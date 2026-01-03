@@ -12,6 +12,17 @@ This module handles parsing various Maven coordinate formats using heuristics:
 - G:A:P:C:V:S (full format with scope)
 - Other orderings of these - see the Coordinate.parse function for details
 
+Explicit Positioning (Strict Mode):
+To avoid heuristic ambiguity, use empty strings (consecutive colons) to specify
+exact positions. When empty strings are detected, the parser uses strict positional
+format: G:A:V:C:P:S
+
+Examples:
+- "org.example:my-lib:1.0.0:"      → version=1.0.0, classifier=None (explicit)
+- "org.example:my-lib::sources"    → version=None, classifier=sources (explicit)
+- "org.example:my-lib:1.0::pom"    → version=1.0, packaging=pom (skip classifier)
+- "junit:junit:4.13:::test"        → version=4.13, scope=test (skip C and P)
+
 The Coordinate class is a simple data structure for holding parsed coordinate
 components. It does not perform Maven resolution, version interpolation, or
 dependency management - for that, see the jgo.maven subpackage.
@@ -296,6 +307,11 @@ def _parse_coordinate_dict(coordinate: str) -> dict[str, str | None | bool]:
 
     This is the internal implementation that returns a dict.
     External callers should use Coordinate.parse() instead.
+
+    Supports two modes:
+    1. Heuristic mode (default): Uses pattern matching to infer component types
+    2. Strict mode: When empty strings are present (e.g., "g:a::c"), uses
+       fixed positions G:A:V:C:P:S to avoid ambiguity
     """
     # Check for raw/unmanaged flag (! or \! suffix) on the entire coordinate
     # Handle both ! and \! (shell escaped) before splitting
@@ -328,6 +344,9 @@ def _parse_coordinate_dict(coordinate: str) -> dict[str, str | None | bool]:
         raise ValueError(
             "Invalid coordinate string: must have at least groupId and artifactId"
         )
+
+    # Check if we're in strict mode (empty strings present, indicating explicit positions)
+    has_empty_strings = any(part == "" for part in parts[2:])  # Skip G and A positions
 
     # Handle " (optional)" suffix early - it's typically attached to the last part
     optional = False
@@ -362,6 +381,43 @@ def _parse_coordinate_dict(coordinate: str) -> dict[str, str | None | bool]:
     scope = None
 
     num_parts = len(parts)
+
+    # STRICT MODE: When empty strings are present, use fixed positions G:A:V:C:P:S
+    # This allows explicit disambiguation without relying on heuristics
+    if has_empty_strings:
+        if num_parts >= 3:
+            version = parts[2] if parts[2] else None
+        if num_parts >= 4:
+            classifier = parts[3] if parts[3] else None
+        if num_parts >= 5:
+            packaging = parts[4] if parts[4] else None
+        if num_parts >= 6:
+            scope = parts[5] if parts[5] else None
+        if num_parts >= 7:
+            # More than 6 positions (G:A:V:C:P:S) is an error
+            raise ValueError(
+                f"Too many parts in strict mode coordinate: {coordinate}. "
+                "Expected at most G:A:V:C:P:S (6 positions total)."
+            )
+
+        # In strict mode, validate that scope is actually a scope if provided
+        if scope and scope not in scope_values:
+            raise ValueError(
+                f"Invalid scope '{scope}' in strict mode. "
+                f"Must be one of: {', '.join(sorted(scope_values))}"
+            )
+
+        return {
+            "groupId": groupId,
+            "artifactId": artifactId,
+            "packaging": packaging,
+            "classifier": classifier,
+            "version": version,
+            "scope": scope,
+            "optional": optional,
+            "raw": raw,
+            "placement": placement,
+        }
 
     if num_parts == 2:
         # G:A - minimal coordinate

@@ -181,6 +181,15 @@ Endpoint Format:
   Specify main class: org.scijava:scijava-common@ScriptREPL
   Auto-completion: Use simple class name (e.g., @ScriptREPL) and it will be auto-completed
 
+Explicit Positioning (Advanced):
+  Use empty strings (consecutive colons) to avoid heuristic parsing:
+  - g:a:1.0:      → version=1.0, classifier=None (explicit)
+  - g:a::sources  → version=None, classifier=sources (explicit)
+  - g:a:v::jar    → version=v, packaging=jar, skip classifier
+
+  Format: groupId:artifactId:version:classifier:packaging:scope
+  Empty positions default to None. Useful when heuristics fail.
+
 Full documentation: jgo --help
 ```
 

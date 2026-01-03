@@ -374,3 +374,180 @@ def test_roundtrip_with_scope():
     original = "junit:junit:jar:4.13.2:test"
     coord = Coordinate.parse(original)
     assert str(coord) == original
+
+
+# =============================================================================
+# Strict mode tests (explicit positioning with empty strings)
+# =============================================================================
+
+
+def test_strict_mode_version_explicit():
+    """Test G:A:V: format - explicit version, no classifier (strict mode)."""
+    result = Coordinate.parse("org.example:my-artifact:1.2.3:")
+    assert result.groupId == "org.example"
+    assert result.artifactId == "my-artifact"
+    assert result.version == "1.2.3"
+    assert result.classifier is None
+    assert result.packaging is None
+    assert result.scope is None
+
+
+def test_strict_mode_classifier_without_version():
+    """Test G:A::C format - no version, explicit classifier (strict mode)."""
+    result = Coordinate.parse("org.example:my-lib::sources")
+    assert result.groupId == "org.example"
+    assert result.artifactId == "my-lib"
+    assert result.version is None
+    assert result.classifier == "sources"
+    assert result.packaging is None
+
+
+def test_strict_mode_version_and_classifier():
+    """Test G:A:V:C: format - explicit version and classifier (strict mode)."""
+    result = Coordinate.parse("org.lwjgl:lwjgl:3.3.1:natives-linux:")
+    assert result.groupId == "org.lwjgl"
+    assert result.artifactId == "lwjgl"
+    assert result.version == "3.3.1"
+    assert result.classifier == "natives-linux"
+    assert result.packaging is None
+    assert result.scope is None
+
+
+def test_strict_mode_version_skip_classifier_packaging():
+    """Test G:A:V::P format - version and packaging, skip classifier (strict mode)."""
+    result = Coordinate.parse("org.example:my-lib:1.0.0::pom")
+    assert result.groupId == "org.example"
+    assert result.artifactId == "my-lib"
+    assert result.version == "1.0.0"
+    assert result.classifier is None
+    assert result.packaging == "pom"
+    assert result.scope is None
+
+
+def test_strict_mode_skip_version_packaging():
+    """Test G:A:::P format - skip version and classifier, specify packaging (strict mode)."""
+    result = Coordinate.parse("org.example:my-webapp:::pom")
+    assert result.groupId == "org.example"
+    assert result.artifactId == "my-webapp"
+    assert result.version is None
+    assert result.classifier is None
+    assert result.packaging == "pom"
+
+
+def test_strict_mode_full_with_scope():
+    """Test G:A:V:C:P:S format - full strict specification (strict mode)."""
+    # Use empty classifier to trigger strict mode while specifying all positions
+    result = Coordinate.parse("org.example:my-lib:1.2.3::jar:compile")
+    assert result.groupId == "org.example"
+    assert result.artifactId == "my-lib"
+    assert result.version == "1.2.3"
+    assert result.classifier is None
+    assert result.packaging == "jar"
+    assert result.scope == "compile"
+
+
+def test_strict_mode_only_scope():
+    """Test G:A::::S format - only scope specified (strict mode)."""
+    result = Coordinate.parse("org.example:my-lib::::test")
+    assert result.groupId == "org.example"
+    assert result.artifactId == "my-lib"
+    assert result.version is None
+    assert result.classifier is None
+    assert result.packaging is None
+    assert result.scope == "test"
+
+
+def test_strict_mode_version_and_scope():
+    """Test G:A:V:::S format - version and scope, skip middle parts (strict mode)."""
+    result = Coordinate.parse("junit:junit:4.13.2:::test")
+    assert result.groupId == "junit"
+    assert result.artifactId == "junit"
+    assert result.version == "4.13.2"
+    assert result.classifier is None
+    assert result.packaging is None
+    assert result.scope == "test"
+
+
+def test_strict_mode_invalid_scope():
+    """Test that strict mode validates scope values."""
+    try:
+        Coordinate.parse("org.example:my-lib::::invalid-scope")
+        assert False, "Should have raised ValueError for invalid scope"
+    except ValueError as e:
+        assert "Invalid scope" in str(e)
+        assert "invalid-scope" in str(e)
+
+
+def test_strict_mode_too_many_parts():
+    """Test that strict mode rejects more than 6 positions (7+ parts)."""
+    try:
+        # Need empty string to trigger strict mode, and 7+ parts
+        Coordinate.parse("g:a:v:c:p:s:extra:")
+        assert False, "Should have raised ValueError for too many parts"
+    except ValueError as e:
+        assert "Too many parts" in str(e)
+        assert "at most G:A:V:C:P:S" in str(e)
+
+
+def test_strict_mode_disambiguate_version_vs_classifier():
+    """
+    Test strict mode disambiguates ambiguous cases.
+
+    Without trailing colon, "sources" could be version or classifier (heuristic decides).
+    With trailing colon, position is explicit.
+    """
+    # Heuristic mode: "sources" detected as classifier
+    heuristic = Coordinate.parse("org.example:my-lib:sources")
+    assert heuristic.classifier == "sources"
+    assert heuristic.version is None
+
+    # Strict mode: "sources" in position 2 = version
+    strict = Coordinate.parse("org.example:my-lib:sources:")
+    assert strict.version == "sources"  # Unusual but explicit
+    assert strict.classifier is None
+
+
+def test_strict_mode_disambiguate_packaging_vs_version():
+    """
+    Test strict mode disambiguates packaging vs version.
+
+    "jar" could be packaging (heuristic) or version (if used as version string).
+    """
+    # Heuristic mode: "jar" detected as packaging
+    heuristic = Coordinate.parse("org.example:my-lib:jar")
+    assert heuristic.packaging == "jar"
+    assert heuristic.version is None
+
+    # Strict mode: "jar" in position 2 = version (unusual but explicit)
+    strict = Coordinate.parse("org.example:my-lib:jar:")
+    assert strict.version == "jar"
+    assert strict.packaging is None
+
+
+def test_strict_mode_empty_version_string():
+    """Test G:A:: format - both version and classifier are explicitly empty."""
+    result = Coordinate.parse("org.example:my-lib::")
+    assert result.groupId == "org.example"
+    assert result.artifactId == "my-lib"
+    assert result.version is None
+    assert result.classifier is None
+    assert result.packaging is None
+
+
+def test_strict_mode_with_raw_flag():
+    """Test that strict mode works with raw flag (! suffix)."""
+    result = Coordinate.parse("org.example:my-lib:1.0.0:!")
+    assert result.groupId == "org.example"
+    assert result.artifactId == "my-lib"
+    assert result.version == "1.0.0"
+    assert result.classifier is None
+    assert result.raw is True
+
+
+def test_strict_mode_preserves_special_versions():
+    """Test that strict mode preserves RELEASE, LATEST, MANAGED versions."""
+    result = Coordinate.parse("org.example:my-lib:RELEASE:")
+    assert result.groupId == "org.example"
+    assert result.artifactId == "my-lib"
+    assert result.version == "RELEASE"
+    assert result.classifier is None
