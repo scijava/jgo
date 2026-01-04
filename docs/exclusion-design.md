@@ -2,223 +2,192 @@
 
 ## Overview
 
-Add CLI-based dependency exclusion support to jgo v2, allowing users to exclude specific transitive dependencies from the classpath.
+This document specifies dependency exclusion support for jgo v2, allowing users to exclude specific transitive dependencies from the classpath when running Java applications.
 
 ## Motivation
 
-Maven supports `<exclusions>` blocks within `<dependency>` elements. Users need a way to specify these exclusions when running Java applications via jgo, without creating a custom pom.xml file.
+Maven supports `<exclusions>` blocks within `<dependency>` elements to exclude transitive dependencies. Users need equivalent functionality in jgo without creating custom pom.xml files.
 
-## Design Decisions
+Common use cases:
+- **Logging conflicts**: Exclude commons-logging when using slf4j
+- **Version conflicts**: Exclude older component versions when explicitly including newer ones with different G:A
+- **Unwanted dependencies**: Remove unused transitive dependencies that cause classpath bloat
 
-### Why CLI Flag (not inline syntax)?
+## Design Summary
 
-jgo v2 already has other "dirty" CLI flags (like `--add-classpath`) that affect the cache key. Adding `--exclude` follows this established pattern and provides:
-- Clearer syntax (no special character needed)
-- Better shell compatibility (no escaping issues)
-- Consistent with existing jgo v2 design
-- Easy to implement (already have the infrastructure)
+### Three Ways to Specify Exclusions
 
-### Why not use special characters?
+1. **Endpoint syntax (inline)**: Exclusions specified directly in coordinate strings
+   - `coord(x)` - Mark this coordinate AS a global exclusion
+   - `coord(x:excl1,x:excl2)` - This coordinate HAS per-dependency exclusions
 
-Considered characters for inline exclusion syntax:
-- `!` - Already taken for raw/unmanaged marker (e.g., `g:a:v!`)
-- `-` - Used heavily in GAVs (group-ids, artifact-ids)
-- `~` - Could work, but CLI flag is cleaner
-- `^` - Could work, but CLI flag is cleaner
+2. **jgo.toml (project mode)**: Exclusions in project configuration files
+   - Global exclusions: `exclusions = ["g:a", ...]`
+   - Per-coordinate: Use inline syntax in coordinate strings
 
-## Proposed Design
+3. **jgo exclude (management)**: CLI command to add/remove exclusions from jgo.toml
+   - `jgo exclude add g:a`
+   - `jgo exclude remove g:a`
+   - `jgo exclude list`
 
-### CLI Syntax
+### Design Rationale
+
+**Why inline syntax?**
+- Exclusions modify the dependency graph and must affect the cache key
+- Users may need to include exclusions in shortcuts (which expand to endpoints, not CLI flags)
+- Enables per-coordinate exclusions: exclude X from coordinate A but not from coordinate B
+
+**Why no `--exclude` CLI flag?**
+- Redundant with inline syntax: `+coord(x)` achieves same result
+- Simplicity: One way to specify exclusions (Python philosophy)
+- Consistency: Other coordinate modifiers (placement, raw) use inline syntax
+
+**Why `jgo exclude` command?**
+- Convenience for managing jgo.toml without manual editing
+- Validates exclusion coordinates before writing
+- Prevents syntax errors in TOML files
+- Symmetry with `jgo add` and `jgo remove` for coordinates themselves
+
+## Detailed Specification
+
+### 1. Endpoint Syntax
+
+All coordinate modifiers use a **unified parenthetical** with comma-separated values:
+
+#### Grammar
+
+```
+coordinate := G:A[:V][:C][:P] [modifiers] [!] [@mainClass]
+modifiers  := '(' modifier [',' modifier]* ')'
+modifier   := placement | exclusion-marker | exclusion
+placement  := 'c' | 'cp' | 'm' | 'mp' | 'p'
+exclusion-marker := 'x'                              # this coord IS an exclusion
+exclusion        := 'x:' groupId ':' artifactId      # this coord HAS this exclusion
+```
+
+**Key simplification:** Each exclusion is a separate modifier with its own `x:` prefix. This eliminates comma ambiguity - commas only separate modifiers, never parts within a modifier.
+
+#### Two Meanings of `(x)`
+
+**1. Exclusion Marker**: `coord(x)` - this coordinate IS a global exclusion
 
 ```bash
-# Exclude single dependency
-jgo --exclude commons-logging:commons-logging org.apache.httpcomponents:httpclient
-
-# Exclude multiple dependencies
-jgo -x commons-logging:commons-logging \
-    -x log4j:log4j \
-    org.springframework:spring-web
-
-# Exclude with wildcards (Maven-style)
-jgo --exclude '*:commons-logging' org.springframework:spring-web
-jgo --exclude 'org.slf4j:*' com.example:my-app
+# Include httpclient, but globally exclude commons-logging and log4j
+jgo httpclient+commons-logging:commons-logging(x)+log4j:log4j(x)
 ```
 
-### Flag Details
+The marked coordinates are excluded from ALL dependencies in the dependency graph.
 
-**Long form:** `--exclude COORDINATE`
-**Short form:** `-x COORDINATE`
-**Can be specified multiple times:** Yes
-**Coordinate format:** `groupId:artifactId` (minimal form)
-**Wildcard support:** `*` for groupId or artifactId (Maven standard)
-
-### Technical Implementation
-
-#### 1. CLI Option Addition
-
-Add to relevant commands (run, info, init, etc.):
-
-```python
-@click.option(
-    "--exclude", "-x",
-    "exclusions",  # Store as list
-    multiple=True,
-    metavar="COORDINATE",
-    help="Exclude dependency (format: groupId:artifactId or *:artifactId)",
-)
-```
-
-#### 2. Exclusion Parsing
-
-Parse exclusion coordinates:
-
-```python
-def parse_exclusion(coord: str) -> Project:
-    """
-    Parse exclusion coordinate string.
-
-    Args:
-        coord: Exclusion coordinate (e.g., "commons-logging:commons-logging" or "*:slf4j-api")
-
-    Returns:
-        Project object for exclusion
-
-    Raises:
-        ValueError: If coordinate format is invalid
-    """
-    parts = coord.split(":")
-    if len(parts) != 2:
-        raise ValueError(
-            f"Invalid exclusion coordinate '{coord}'. "
-            "Expected format: groupId:artifactId"
-        )
-
-    groupId, artifactId = parts
-
-    # Validate (Maven allows * wildcards)
-    if not groupId or not artifactId:
-        raise ValueError(f"Empty groupId or artifactId in exclusion '{coord}'")
-
-    return Project(groupId=groupId, artifactId=artifactId, context=None)
-```
-
-#### 3. Cache Key Integration
-
-Update `EnvironmentBuilder._cache_key()` to include exclusions:
-
-```python
-def _cache_key(self, components: list[Component], exclusions: list[Project] = None) -> str:
-    """Generate a stable hash for a set of components and exclusions."""
-    # Existing coordinate sorting
-    coord_strings = sorted(
-        [f"{c.groupId}:{c.artifactId}:{c.resolved_version}" for c in components]
-    )
-    combined = "+".join(coord_strings)
-
-    # Include optional_depth
-    combined += f":optional_depth={self.optional_depth}"
-
-    # Include exclusions (NEW)
-    if exclusions:
-        exclusion_strings = sorted(
-            [f"{e.groupId}:{e.artifactId}" for e in exclusions]
-        )
-        combined += f":exclusions={','.join(exclusion_strings)}"
-
-    return hashlib.sha256(combined.encode()).hexdigest()[:16]
-```
-
-#### 4. Dependency Resolution Integration
-
-Pass exclusions to the root-level dependencies in the synthetic POM:
-
-```python
-def create_pom_with_exclusions(
-    components: list[Component],
-    boms: list[Component] | None,
-    exclusions: list[Project] | None = None
-) -> POM:
-    """
-    Create a synthetic wrapper POM with dependency exclusions.
-
-    Args:
-        components: Components to include
-        boms: BOM imports for dependency management
-        exclusions: Global exclusions to apply to all dependencies
-    """
-    # Create dependencies with exclusions
-    dependencies = []
-    for comp in components:
-        artifact = comp.artifact()
-        dep = Dependency(
-            artifact=artifact,
-            scope="compile",
-            exclusions=exclusions if exclusions else tuple()
-        )
-        dependencies.append(dep)
-
-    # ... rest of POM creation
-```
-
-#### 5. Environment Builder Updates
-
-Update `EnvironmentBuilder` to accept and propagate exclusions:
-
-```python
-class EnvironmentBuilder:
-    def __init__(
-        self,
-        context: MavenContext,
-        cache_dir: Path | None = None,
-        link_strategy: LinkStrategy = LinkStrategy.AUTO,
-        optional_depth: int = 0,
-        exclusions: list[Project] | None = None,  # NEW
-    ):
-        self.context = context
-        self.link_strategy = link_strategy
-        self.optional_depth = optional_depth
-        self.exclusions = exclusions or []  # NEW
-
-        # ... rest of __init__
-```
-
-## Examples
-
-### Example 1: Exclude Commons Logging
+**2. Exclusion List**: `coord(x:excl1,x:excl2)` - this coordinate HAS per-dependency exclusions
 
 ```bash
-# Problem: httpclient depends on commons-logging, but you want to use slf4j
-jgo --exclude commons-logging:commons-logging \
-    org.apache.httpcomponents:httpclient:4.5.13 \
-    -- -Xmx2G \
-    -- org.example.MyApp
+# Include httpclient, but exclude commons-logging only from httpclient's dependency tree
+jgo httpclient(x:commons-logging:commons-logging)
 ```
 
-### Example 2: Exclude All SLF4J Implementations
+The exclusions apply only to the specified coordinate's transitive dependencies.
+
+#### Multiple Exclusions
+
+Specify multiple exclusions by repeating the `x:` modifier:
 
 ```bash
-# Keep slf4j-api but exclude all implementations (use your own)
-jgo -x 'org.slf4j:slf4j-simple' \
-    -x 'org.slf4j:slf4j-log4j12' \
-    -x 'ch.qos.logback:*' \
-    org.springframework:spring-web:5.3.20
+# Exclude multiple dependencies from httpclient
+jgo httpclient(x:commons-logging:commons-logging,x:commons-codec:commons-codec)
 ```
 
-### Example 3: Complex Exclusion Scenario
+#### Wildcard Support
+
+Maven-style wildcards (`*`) are supported for groupId or artifactId:
 
 ```bash
-# Exclude multiple conflicting dependencies
-jgo \
-  --exclude 'commons-logging:commons-logging' \
-  --exclude 'log4j:log4j' \
-  --exclude 'org.slf4j:slf4j-log4j12' \
-  org.springframework:spring-web:5.3.20+org.apache.httpcomponents:httpclient:4.5.13 \
-  @org.example.WebApp
+# Exclude all artifacts from org.slf4j group
+jgo spring-web(x:org.slf4j:*)
+
+# Exclude commons-logging from any group
+jgo httpclient(x:*:commons-logging)
 ```
 
-## Integration with jgo.toml
+#### Combining Modifiers
 
-For project mode, add exclusions to the config file:
+Multiple modifiers can coexist in one parenthetical (order independent):
+
+```bash
+# Placement + exclusions
+jgo httpclient(c,x:commons-logging:commons-logging)
+jgo httpclient(x:commons-logging:commons-logging,c)  # same thing
+
+# Multiple exclusions + placement + raw flag
+jgo httpclient:4.5.14(c,x:commons-logging:commons-logging,x:commons-codec:commons-codec)!
+
+# Module-path + exclusions
+jgo lwjgl:3.3.1(m,x:lwjgl-opengl:lwjgl-opengl)
+```
+
+**Key properties:**
+- **Single parenthetical** - no ambiguity about ordering
+- **Comma-separated** - readable and familiar
+- **Order independent** - `(c,x:...)` equals `(x:...,c)`
+- **Extensible** - easy to add new modifiers
+- **Raw flag `!` always last** - logical termination symbol
+
+#### Examples
+
+**Basic global exclusion:**
+```bash
+jgo httpclient+commons-logging:commons-logging(x)
+```
+
+**Per-coordinate exclusion:**
+```bash
+jgo httpclient(x:commons-logging:commons-logging)+spring-web
+```
+
+**Multiple per-coordinate exclusions:**
+```bash
+jgo spring-web(x:commons-logging:commons-logging,x:log4j:log4j)
+```
+
+**Combined with placement modifiers:**
+```bash
+jgo lwjgl:3.3.1(m,x:lwjgl-opengl:lwjgl-opengl)
+```
+
+**Complex scenario with main class:**
+```bash
+jgo 'httpclient(x:commons-logging:commons-logging)+lwjgl:3.3.1(m)@MyApp'
+```
+
+#### Shortcuts with Exclusions
+
+Shortcuts can include exclusions since they're part of the coordinate syntax:
+
+```ini
+# ~/.config/jgo.conf
+[shortcuts]
+# Per-coordinate exclusions
+httpclient-clean = httpclient:4.5.14(x:commons-logging:commons-logging,x:commons-codec:commons-codec)
+spring-clean = spring-web(x:commons-logging:commons-logging,x:log4j:log4j)
+
+# Exclusions + placement
+lwjgl-modular = lwjgl:3.3.1(m,x:lwjgl-opengl:lwjgl-opengl)
+
+# Global exclusion markers
+no-logging = httpclient+commons-logging:commons-logging(x)+log4j:log4j(x)
+```
+
+Usage:
+```bash
+jgo httpclient-clean
+jgo spring-clean@MyApp
+jgo lwjgl-modular
+```
+
+### 2. jgo.toml Integration
+
+#### Global Exclusions
+
+Global exclusions apply to all dependencies in the environment:
 
 ```toml
 [environment]
@@ -230,192 +199,206 @@ coordinates = [
     "org.apache.httpcomponents:httpclient:4.5.13"
 ]
 
-# Global exclusions applied to all dependencies
+# Global exclusions - applied to ALL dependencies above
 exclusions = [
     "commons-logging:commons-logging",
     "log4j:log4j"
 ]
 ```
 
-## Benefits
+#### Per-Coordinate Exclusions
 
-1. **Resolves dependency conflicts** - Users can exclude problematic transitive dependencies
-2. **Consistent with Maven** - Uses same exclusion semantics as Maven POMs
-3. **Cache-aware** - Different exclusions create separate cached environments
-4. **Shell-friendly** - No special characters that need escaping
-5. **Composable** - Works with all existing jgo features (+, @, !, etc.)
+Use inline endpoint syntax directly in coordinate strings:
 
-## Implementation Checklist
+```toml
+[dependencies]
+coordinates = [
+    # Exclude commons-logging only from httpclient
+    "org.apache:httpclient:4.5.14(x:commons-logging:commons-logging)",
 
-### Parsing
-- [ ] Update `_parse_coordinate_dict()` to extract unified parenthetical
-- [ ] Parse comma-separated modifiers within parenthetical
-- [ ] Support `(x)` exclusion marker vs `(x:...)` exclusion list
-- [ ] Handle placement modifiers in same parenthetical
-- [ ] Ensure `!` raw flag is processed after parenthetical
-- [ ] Add tests for parenthetical parsing
+    # Exclude multiple dependencies from spring-web
+    "org.springframework:spring-web:5.3.20(x:commons-logging:commons-logging,x:log4j:log4j)",
 
-### CLI Integration
-- [ ] Add `--exclude`/`-x` CLI option to run command
-- [ ] Add to other relevant commands (info, init, etc.)
-- [ ] Parse CLI exclusions into Project objects
-- [ ] Update CLI help text
-
-### Core Integration
-- [ ] Update `_cache_key()` to include exclusions
-- [ ] Update `create_pom()` to accept exclusions parameter
-- [ ] Update `EnvironmentBuilder` to propagate exclusions
-- [ ] Handle global exclusions (CLI + `(x)` markers)
-- [ ] Handle per-coordinate exclusions `(x:...)`
-- [ ] Merge all exclusion sources in dependency resolution
-
-### Testing
-- [ ] Test `(x)` marker (global exclusion)
-- [ ] Test `(x:excl1,excl2)` list (per-coordinate)
-- [ ] Test combined `(c,x:...)` modifiers
-- [ ] Test order independence `(c,x:...)` vs `(x:...,c)`
-- [ ] Test `!` after parenthetical
-- [ ] Test shortcuts with exclusions
-- [ ] Integration tests with real Maven artifacts
-
-### Documentation
-- [ ] Update README.md with examples
-- [ ] Add to jgo.toml spec for project mode
-- [ ] Document grammar in user guide
-
-## Unified Parenthetical Syntax ⭐
-
-**FINAL DESIGN:** Single parenthetical with comma-separated modifiers.
-
-### Core Concept
-
-All coordinate modifiers go in **one parenthetical block** with comma-separated values:
-- Placement modifiers: `c`, `cp`, `m`, `mp`, `p` (existing)
-- Exclusion marker: `(x)` - marks coordinate AS a global exclusion
-- Exclusion list: `(x:excl1,excl2)` - coordinate HAS per-dependency exclusions
-- Raw flag: `!` always comes **after** the parenthetical (termination symbol)
-
-### Grammar
-
-```
-coordinate := G:A[:V][:C][:P] [modifiers] [!] [@mainClass]
-modifiers  := '(' modifier [',' modifier]* ')'
-modifier   := placement | exclusion-marker | exclusion-list
-placement  := 'c' | 'cp' | 'm' | 'mp' | 'p'
-exclusion-marker := 'x'                              # this coord IS an exclusion
-exclusion-list   := 'x:' exclusion [',' exclusion]*  # this coord HAS exclusions
-exclusion        := groupId ':' artifactId
+    # Regular coordinate without exclusions
+    "org.slf4j:slf4j-api:1.7.32"
+]
 ```
 
-### Two Meanings of `(x)`
+**Rationale for inline syntax:**
+- Reuses existing endpoint parsing logic
+- No special TOML schema needed
+- Clear and self-documenting
+- Consistent with CLI usage
 
-**1. Exclusion Marker:** `coord(x)` - this coordinate **IS** a global exclusion
+#### Complete Example
+
+```toml
+[environment]
+name = "web-app"
+
+[dependencies]
+# Mix of global and per-coordinate exclusions
+coordinates = [
+    # This has its own exclusions
+    "org.apache:httpclient:4.5.14(x:commons-codec:commons-codec)",
+
+    # This one too
+    "org.springframework:spring-web:5.3.20(x:log4j:log4j)",
+
+    # This gets global exclusions only
+    "org.slf4j:slf4j-api:1.7.32"
+]
+
+# These apply to ALL coordinates
+exclusions = [
+    "commons-logging:commons-logging"
+]
+
+[entrypoints]
+default = "com.example.WebApp"
+```
+
+**Effective exclusions:**
+- httpclient: excludes commons-logging (global) + commons-codec (per-coord)
+- spring-web: excludes commons-logging (global) + log4j (per-coord)
+- slf4j-api: excludes commons-logging (global only)
+
+### 3. jgo exclude Command
+
+Manage exclusions in jgo.toml files via CLI.
+
+#### Command Syntax
 
 ```bash
-# Include httpclient, globally exclude commons-logging and log4j
-jgo httpclient+commons-logging:commons-logging(x)+log4j:log4j(x)
+# Add global exclusion
+jgo exclude add <groupId>:<artifactId>
+
+# Remove global exclusion
+jgo exclude remove <groupId>:<artifactId>
+
+# List all exclusions
+jgo exclude list
+
+# Add exclusion to specific coordinate (optional feature)
+jgo exclude add --coordinate <coordinate> <exclusion>
 ```
 
-**2. Exclusion List:** `coord(x:excl1,excl2)` - this coordinate **HAS** exclusions
+#### Options
 
+- `--file FILE` or `-f FILE`: Path to jgo.toml (default: ./jgo.toml)
+- `--coordinate <coordinate>`: Coordinate to modify with the exclusion
+
+#### Examples
+
+**Add global exclusion:**
 ```bash
-# Include httpclient, but exclude commons-logging from its dependency tree
-jgo httpclient(x:commons-logging:commons-logging,commons-codec:commons-codec)
+jgo exclude add commons-logging:commons-logging
+# Adds to [dependencies] exclusions array in jgo.toml
 ```
 
-### Combining Modifiers
-
-Multiple modifiers in one parenthetical - **order doesn't matter**:
-
+**Remove global exclusion:**
 ```bash
-# Placement + exclusions
-jgo httpclient(c,x:commons-logging:commons-logging)
-jgo httpclient(x:commons-logging:commons-logging,c)  # same thing
-
-# Multiple exclusions + placement + raw flag
-jgo httpclient:4.5.14(c,x:commons-logging:commons-logging,commons-codec:commons-codec)!
-
-# Module-path + exclusions
-jgo lwjgl:3.3.1(m,x:lwjgl-opengl:lwjgl-opengl)
+jgo exclude remove commons-logging:commons-logging
+# Removes from [dependencies] exclusions array
 ```
 
-**Advantages:**
-- ✅ **Single parenthetical** - no ambiguity about ordering
-- ✅ **Comma-separated** - readable and familiar
-- ✅ **Bang at end** - logical termination symbol
-- ✅ **Order independent** - `(c,x:...)` = `(x:...,c)`
-- ✅ **Extensible** - easy to add new modifiers
-
-### Shortcuts Now Work!
-
-```ini
-[shortcuts]
-# Per-coordinate exclusions
-httpclient-clean = httpclient:4.5.14(x:commons-logging:commons-logging,commons-codec:commons-codec)
-spring-clean = spring-web(x:commons-logging:commons-logging,log4j:log4j)
-
-# Exclusions + placement
-lwjgl-modular = lwjgl:3.3.1(m,x:lwjgl-opengl:lwjgl-opengl)
-
-# Global exclusion markers (exclude these everywhere)
-no-logging = httpclient+commons-logging:commons-logging(x)+log4j:log4j(x)
-```
-
-Then use:
+**List all exclusions:**
 ```bash
-jgo httpclient-clean
-jgo spring-clean
-jgo lwjgl-modular
-jgo no-logging
+jgo exclude list
+# Output:
+# Global exclusions:
+#   - commons-logging:commons-logging
+#   - log4j:log4j
+#
+# Per-coordinate exclusions:
+#   org.apache:httpclient:4.5.14
+#     - commons-codec:commons-codec
+#   org.springframework:spring-web:5.3.20
+#     - log4j:log4j
 ```
 
-### Three Ways to Specify Exclusions
-
-**1. CLI Flag (global):**
+**Add per-coordinate exclusion (optional):**
 ```bash
-jgo --exclude commons-logging:commons-logging httpclient
+jgo exclude add --coordinate httpclient:4.5.14 commons-logging:commons-logging
+# Modifies the coordinate string in jgo.toml to add x:commons-logging:commons-logging modifier
 ```
 
-**2. Exclusion Marker `(x)` (global):**
-```bash
-jgo httpclient+commons-logging:commons-logging(x)
-```
+#### Behavior
 
-**3. Exclusion List `(x:...)` (per-coordinate):**
-```bash
-jgo httpclient(x:commons-logging:commons-logging)
-```
+**Adding exclusions:**
+1. Validate exclusion coordinate format (groupId:artifactId)
+2. Load existing jgo.toml
+3. Check if exclusion already exists (idempotent)
+4. Add to `[dependencies] exclusions` array
+5. Write updated jgo.toml (preserve formatting where possible)
+6. Print confirmation message
 
-All three can be **combined**:
+**Removing exclusions:**
+1. Validate exclusion coordinate format
+2. Load existing jgo.toml
+3. Remove from exclusions array (no error if not present)
+4. Write updated jgo.toml
+5. Print confirmation message
 
-```bash
-# CLI global + marker + per-coordinate
-jgo --exclude 'org.slf4j:slf4j-log4j12' \
-    'httpclient(x:commons-logging:commons-logging)+log4j:log4j(x)'
-```
+**Listing exclusions:**
+1. Load jgo.toml
+2. Parse global exclusions from `[dependencies] exclusions`
+3. Parse per-coordinate exclusions from coordinate strings
+4. Display grouped by type (global vs per-coordinate)
 
-**Semantics:**
-- CLI `--exclude` → global exclusion
-- Coordinate `(x)` → global exclusion marker
-- Coordinate `(x:...)` → per-coordinate exclusion
-- All are merged in dependency resolution
+**Error handling:**
+- No jgo.toml exists: Create new file with minimal structure
+- Invalid coordinate format: Print error and exit
+- TOML syntax error: Print error and suggest manual fix
+- File not writable: Print error with permission details
 
-### Parsing Implementation
+#### Implementation Notes
 
-Parse **single parenthetical** with comma-separated modifiers:
+The `jgo exclude` command modifies jgo.toml programmatically using a TOML library (e.g., `tomli`/`tomli-w`).
+
+**For global exclusions:**
+- Simple array manipulation in `[dependencies] exclusions`
+
+**For per-coordinate exclusions (optional feature):**
+- Parse existing coordinate string
+- Add/remove exclusion from `(x:...)` modifier
+- Reconstruct coordinate string
+- Replace in coordinates array
+
+**Preservation of comments:**
+- Best-effort preservation using TOML library features
+- Document that some formatting may be lost during automated edits
+
+## Technical Implementation
+
+### 1. Parsing
+
+Extend coordinate parsing in `src/jgo/parse/endpoint.py`:
 
 ```python
 def parse_coordinate_modifiers(coordinate: str) -> tuple[str, dict]:
     """
-    Parse unified parenthetical modifiers.
+    Parse unified parenthetical modifiers from a coordinate string.
 
     Returns: (coordinate_without_modifiers, modifiers_dict)
+
+    Example:
+        >>> parse_coordinate_modifiers("httpclient:4.5.14(c,x:commons-logging:commons-logging,x:log4j:log4j)!")
+        ("httpclient:4.5.14", {
+            'placement': 'class-path',
+            'exclusions': [
+                Project(groupId='commons-logging', artifactId='commons-logging'),
+                Project(groupId='log4j', artifactId='log4j')
+            ],
+            'is_exclusion': False,
+            'raw': True
+        })
     """
     modifiers = {
-        'placement': None,
-        'exclusions': [],
-        'is_exclusion': False,
-        'raw': False
+        'placement': None,        # 'class-path' | 'module-path' | None
+        'exclusions': [],         # list[Project]
+        'is_exclusion': False,    # bool (this coord IS an exclusion)
+        'raw': False              # bool (disable dependency management)
     }
 
     # 1. Check for raw flag (always at end)
@@ -440,145 +423,512 @@ def parse_coordinate_modifiers(coordinate: str) -> tuple[str, dict]:
                 elif modifier in ('m', 'mp', 'p'):
                     modifiers['placement'] = 'module-path'
 
-                # Exclusion marker
+                # Exclusion marker (this coord IS an exclusion)
                 elif modifier == 'x':
                     modifiers['is_exclusion'] = True
 
-                # Exclusion list
+                # Exclusion (this coord HAS this exclusion)
                 elif modifier.startswith('x:'):
                     excl_str = modifier[2:]  # Strip 'x:'
-                    for excl in excl_str.split(','):
-                        excl = excl.strip()
-                        parts = excl.split(':')
-                        if len(parts) >= 2:
+                    # Parse groupId:artifactId
+                    if ':' in excl_str:
+                        parts = excl_str.split(':', 1)
+                        if len(parts) == 2:
+                            groupId, artifactId = parts
                             modifiers['exclusions'].append(
-                                Project(groupId=parts[0], artifactId=parts[1])
+                                Project(groupId=groupId, artifactId=artifactId)
                             )
 
     return coordinate, modifiers
 ```
 
-**Parsing order:**
-1. Strip `!` raw flag (if present) - **always last**
+**Parsing strategy:**
+1. Strip `!` raw flag (always last)
 2. Extract single `(...)` parenthetical
-3. Parse comma-separated modifiers (order independent)
-4. Parse coordinate components (G:A:V:C:P)
-5. Merge with global `--exclude` CLI flags
+3. Simple comma-split to get modifiers (no special cases needed!)
+4. Parse each modifier: placement (`c`, `m`, etc.), exclusion marker (`x`), or exclusion (`x:g:a`)
+5. Return cleaned coordinate + modifiers dict
 
-### Comprehensive Examples
+**Key simplification:** No need for complex state machines or special splitting logic. Each `x:groupId:artifactId` is a complete, self-contained modifier.
 
-**Example 1: Shortcut with per-coordinate exclusions**
+### 2. Cache Key Integration ✅ **IMPLEMENTED**
+
+Exclusions must affect the cache key since they modify the dependency graph.
+
+**Implemented design:** Changed to use `list[Dependency]` which includes exclusions, classifier, and packaging.
+
+```python
+def _cache_key(self, dependencies: list[Dependency]) -> str:
+    """
+    Generate a stable hash for a set of dependencies.
+
+    Uses full artifact coordinates (G:A:V:C:P) plus exclusions to ensure:
+    - Different classifiers get different caches (e.g., natives-linux vs natives-windows)
+    - Different packaging types get different caches
+    - Different exclusions get different caches (different dependency trees)
+
+    Args:
+        dependencies: List of Dependency objects with full coordinate info and exclusions
+
+    Returns:
+        16-character hex hash string
+    """
+    # Sort to ensure stable ordering
+    # Use resolved version to ensure RELEASE/LATEST resolve to consistent cache keys
+    coord_strings = []
+    for dep in sorted(
+        dependencies,
+        key=lambda d: (
+            d.artifact.groupId,
+            d.artifact.artifactId,
+            d.artifact.version,  # Resolved version
+            d.artifact.classifier,
+            d.artifact.packaging,
+        ),
+    ):
+        # Include full artifact coordinates: G:A:V:C:P
+        coord_str = (
+            f"{dep.artifact.groupId}:"
+            f"{dep.artifact.artifactId}:"
+            f"{dep.artifact.version}:"
+            f"{dep.artifact.classifier}:"
+            f"{dep.artifact.packaging}"
+        )
+
+        # Include exclusions for this dependency
+        if dep.exclusions:
+            excl_strs = sorted(
+                [f"{e.groupId}:{e.artifactId}" for e in dep.exclusions]
+            )
+            coord_str += f":excl={','.join(excl_strs)}"
+
+        coord_strings.append(coord_str)
+
+    combined = "+".join(coord_strings)
+
+    # Include optional_depth in cache key
+    # This ensures different optional_depth values get separate cache directories
+    combined += f":optional_depth={self.optional_depth}"
+
+    return hashlib.sha256(combined.encode()).hexdigest()[:16]
+```
+
+**Helper methods for conversion:**
+
+```python
+def _coordinates_to_dependencies(
+    self, coordinates: list[Coordinate]
+) -> list[Dependency]:
+    """
+    Convert Coordinate objects to Dependency objects for cache key generation.
+    Preserves classifier, packaging, and exclusion information.
+    """
+    dependencies = []
+    for coord in coordinates:
+        version = coord.version or "RELEASE"
+        component = self.context.project(coord.groupId, coord.artifactId).at_version(version)
+
+        # Create Artifact with classifier and packaging (G:A:V:C:P)
+        classifier = coord.classifier or ""
+        packaging = coord.packaging or "jar"
+        artifact = component.artifact(classifier=classifier, packaging=packaging)
+
+        # Create Dependency with scope and exclusions
+        # TODO: Parse exclusions from coord when exclusion syntax is implemented
+        scope = coord.scope or "compile"
+        optional = coord.optional or False
+        exclusions = []  # Will be populated when exclusion parsing is added
+
+        dependency = Dependency(
+            artifact=artifact,
+            scope=scope,
+            optional=optional,
+            exclusions=exclusions,
+        )
+        dependencies.append(dependency)
+
+    return dependencies
+
+def _components_to_dependencies(
+    self, components: list[Component]
+) -> list[Dependency]:
+    """
+    Convert Component objects to Dependency objects with default classifier/packaging.
+    Backward compatibility helper for code that still uses Components.
+    """
+    dependencies = []
+    for component in components:
+        artifact = component.artifact(classifier="", packaging="jar")
+        dependency = Dependency(
+            artifact=artifact,
+            scope="compile",
+            optional=False,
+            exclusions=[],
+        )
+        dependencies.append(dependency)
+    return dependencies
+```
+
+**Key improvements:**
+- ✅ Exclusions baked into Dependency objects (no separate parameters needed)
+- ✅ Classifier and packaging included (fixes LWJGL natives bug)
+- ✅ Single source of truth for cache key components
+- ✅ Ready for exclusion feature (just need to populate `exclusions` field)
+
+### 3. Dependency Resolution Integration
+
+Pass exclusions to Maven resolver when creating synthetic POM:
+
+```python
+def create_pom_with_exclusions(
+    components: list[Component],
+    boms: list[Component] | None,
+    global_exclusions: list[Project] | None = None,
+    per_coord_exclusions: dict[Component, list[Project]] | None = None
+) -> POM:
+    """
+    Create a synthetic wrapper POM with dependency exclusions.
+
+    Args:
+        components: Components to include as dependencies
+        boms: BOM imports for dependencyManagement
+        global_exclusions: Exclusions applied to all dependencies
+        per_coord_exclusions: Per-component exclusions
+
+    Returns:
+        POM object representing the synthetic wrapper
+    """
+    dependencies = []
+
+    for comp in components:
+        artifact = comp.artifact()
+
+        # Merge global and per-coordinate exclusions
+        exclusions = (global_exclusions or []).copy()
+        if per_coord_exclusions and comp in per_coord_exclusions:
+            exclusions.extend(per_coord_exclusions[comp])
+
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_exclusions = []
+        for excl in exclusions:
+            key = (excl.groupId, excl.artifactId)
+            if key not in seen:
+                seen.add(key)
+                unique_exclusions.append(excl)
+
+        dep = Dependency(
+            artifact=artifact,
+            scope="compile",
+            exclusions=tuple(unique_exclusions)
+        )
+        dependencies.append(dep)
+
+    # Create wrapper POM with dependencies
+    return create_wrapper_pom(dependencies, boms)
+```
+
+### 4. EnvironmentBuilder Updates
+
+Extend `EnvironmentBuilder` to handle exclusions:
+
+```python
+class EnvironmentBuilder:
+    def __init__(
+        self,
+        context: MavenContext,
+        cache_dir: Path | None = None,
+        link_strategy: LinkStrategy = LinkStrategy.AUTO,
+        optional_depth: int = 0,
+        global_exclusions: list[Project] | None = None,
+        per_coord_exclusions: dict[Component, list[Project]] | None = None,
+    ):
+        self.context = context
+        self.link_strategy = link_strategy
+        self.optional_depth = optional_depth
+        self.global_exclusions = global_exclusions or []
+        self.per_coord_exclusions = per_coord_exclusions or {}
+        # ... rest of initialization
+```
+
+## Complete Examples
+
+### Example 1: Exclude Commons Logging Globally
+
+**Problem:** Multiple dependencies pull in commons-logging, but you want to use slf4j.
+
+**Solution:**
+
+```bash
+# Using inline syntax
+jgo httpclient+spring-web+commons-logging:commons-logging(x)
+```
+
+### Example 2: Per-Coordinate Exclusions
+
+**Problem:** Want different exclusions for different coordinates.
+
+**Solution:**
+
+```bash
+# Exclude commons-logging from httpclient, log4j from spring-web
+jgo httpclient(x:commons-logging:commons-logging)+spring-web(x:log4j:log4j)
+```
+
+### Example 3: Project with jgo.toml
+
+**Setup:**
+
+```toml
+# jgo.toml
+[environment]
+name = "web-app"
+
+[dependencies]
+coordinates = [
+    "org.springframework:spring-web:5.3.20(x:log4j:log4j)",
+    "org.apache:httpclient:4.5.14",
+]
+
+# Global exclusion for commons-logging
+exclusions = [
+    "commons-logging:commons-logging"
+]
+
+[entrypoints]
+default = "com.example.WebApp"
+```
+
+**Usage:**
+
+```bash
+# Initialize environment
+jgo sync
+
+# Run default entrypoint
+jgo run
+
+# Add another global exclusion
+jgo exclude add org.slf4j:slf4j-log4j12
+
+# List all exclusions
+jgo exclude list
+```
+
+### Example 4: Shortcuts with Exclusions
+
+**Setup:**
+
 ```ini
+# ~/.config/jgo.conf
 [shortcuts]
-httpclient = httpclient:4.5.14(x:commons-logging:commons-logging,commons-codec:commons-codec)
-spring = spring-web:5.3.20(x:commons-logging:commons-logging,log4j:log4j)
+httpclient-clean = httpclient:4.5.14(x:commons-logging:commons-logging,x:commons-codec:commons-codec)
+spring-minimal = spring-web:5.3.20(x:commons-logging:commons-logging,x:log4j:log4j)
 ```
 
-**Example 2: Shortcut with placement + exclusions**
-```ini
-[shortcuts]
-# Single parenthetical with both modifiers
-lwjgl = lwjgl:3.3.1(m,x:lwjgl-opengl:lwjgl-opengl)
-```
+**Usage:**
 
-**Example 3: Global exclusion markers**
 ```bash
-# Include httpclient, but globally exclude commons-logging and log4j
-jgo httpclient:4.5.14+commons-logging:commons-logging(x)+log4j:log4j(x)
+jgo httpclient-clean@org.example.HttpDemo
+jgo spring-minimal+slf4j-simple@org.example.WebDemo
 ```
 
-**Example 4: Mixed exclusions + placement + raw + main class**
+### Example 5: Complex Multi-Coordinate Setup
+
+**Scenario:** Spring web app with LWJGL on module-path, excluding problematic logging libraries.
+
 ```bash
-# Per-coordinate exclusion + placement + raw flag + main class
-jgo 'httpclient:4.5.14(c,x:commons-logging:commons-logging,commons-codec:commons-codec)!+lwjgl:3.3.1(m)@MyApp'
+jgo 'spring-web:5.3.20(c,x:commons-logging:commons-logging,x:log4j:log4j)+lwjgl:3.3.1(m)+commons-logging:commons-logging(x)@WebApp'
 ```
 
-**Example 5: All three exclusion methods combined**
-```bash
-# CLI global + marker + per-coordinate
-jgo --exclude 'org.slf4j:slf4j-log4j12' \
-    'httpclient(x:commons-logging:commons-logging)+log4j:log4j(x)'
-```
+**Breakdown:**
+- `spring-web:5.3.20(c,x:commons-logging:commons-logging,x:log4j:log4j)` - Spring on classpath, excludes its commons-logging and log4j
+- `lwjgl:3.3.1(m)` - LWJGL on module-path
+- `commons-logging:commons-logging(x)` - Global exclusion marker for commons-logging
+- `@WebApp` - Main class
 
-**Example 6: Complex real-world scenario**
-```bash
-# Spring web app with modular LWJGL, excluding problematic logging libs
-jgo --exclude 'commons-logging:commons-logging' \
-    'spring-web:5.3.20(c)+lwjgl:3.3.1(m,x:lwjgl-opengl:lwjgl-opengl)+log4j:log4j(x)@WebApp'
-```
+## Benefits
 
-**Example 7: Order independence**
-```bash
-# These are equivalent:
-jgo 'httpclient(c,x:commons-logging:commons-logging)'
-jgo 'httpclient(x:commons-logging:commons-logging,c)'
-```
+1. **Resolves dependency conflicts**: Exclude problematic transitive dependencies
+2. **Consistent with Maven**: Uses same exclusion semantics as Maven POMs
+3. **Cache-aware**: Different exclusions create separate cached environments
+4. **Composable**: Works seamlessly with existing jgo features (+, @, !, placement modifiers)
+5. **Flexible**: Supports both global and per-coordinate exclusions
+6. **Shortcut-compatible**: Exclusions can be embedded in shortcuts
+7. **Simple**: One primary syntax (inline), with convenience command for jgo.toml
 
 ## Open Questions
 
-1. **Scope of exclusions** - Should exclusions apply globally to all components, or per-component?
-   - **Decision:** Support BOTH via hybrid approach (CLI for global, inline for per-coordinate)
+### 1. Validation
 
-2. **Validation** - Should we validate that excluded dependencies actually exist in the tree?
-   - **Decision:** No validation (Maven doesn't validate either, makes it more flexible)
+**Question:** Should we validate that excluded dependencies actually exist in the resolved tree?
 
-3. **Exclusion syntax** - Use `~`, `^`, or parenthetical?
-   - **Decision:** Unified parenthetical `(modifier,modifier,...)` - consistent with existing placement suffixes
+**Decision:** No validation (following Maven's approach).
 
-4. **Multiple exclusions format** - How to specify multiple exclusions?
-   - **Decision:** Comma-separated within `x:` prefix: `coord(x:excl1,excl2,excl3)`
+**Rationale:**
+- Maven doesn't validate exclusions
+- Allows "defensive" exclusions that may not always be present
+- Simpler implementation
+- Avoids coupling exclusion spec to resolution results
 
-5. **Multiple parentheticals vs. single** - Allow `(c)(x:...)` or require single `(c,x:...)`?
-   - **Decision:** Single parenthetical only - simpler parsing, no ordering ambiguity
+### 2. Wildcard Exclusion Scope
 
-6. **Bang position** - Before or after parenthetical?
-   - **Decision:** After - logical termination symbol: `coord(modifiers)!`
+**Question:** Should wildcards in per-coordinate exclusions (`coord(x:org.slf4j:*)`) apply transitively?
 
-7. **Two meanings for (x)** - Support both marker and list?
-   - **Decision:** Yes! `(x)` = global marker, `(x:...)` = per-coordinate exclusions
+**Decision:** Yes, follow Maven semantics (wildcards apply transitively).
+
+**Example:**
+```
+A depends on B depends on slf4j-simple
+A(x:org.slf4j:*) excludes slf4j-simple even though it's transitive
+```
+
+### 3. jgo exclude --coordinate Feature
+
+**Question:** Should `jgo exclude` support per-coordinate exclusions or only global?
+
+**Options:**
+- **Option A:** Only global exclusions (simpler)
+- **Option B:** Support per-coordinate via `--coordinate` flag (more features)
+
+**Recommendation:** Start with Option A (global only). Users can manually edit jgo.toml for per-coordinate exclusions. Add Option B later if demand exists.
+
+## Implementation Checklist
+
+### Phase 1: Core Parsing and Syntax
+
+- [ ] Implement `parse_coordinate_modifiers()` with exclusion support
+- [ ] Add wildcard support (`*` for groupId/artifactId)
+- [ ] Handle combined modifiers (placement + exclusions)
+- [ ] Ensure `!` raw flag processed after parenthetical
+- [ ] Add unit tests for all parsing edge cases
+- [ ] Test repeated `x:` modifiers work correctly
+
+### Phase 2: Exclusion Integration
+
+- [x] ✅ Extend `_cache_key()` to include exclusions (uses Dependency objects)
+- [x] ✅ Update `_cache_key()` to include classifier and packaging (fixes LWJGL bug)
+- [x] ✅ Add `_coordinates_to_dependencies()` helper method
+- [x] ✅ Add `_components_to_dependencies()` compatibility helper
+- [x] ✅ Update `from_components()` to accept optional coordinates parameter
+- [x] ✅ Update `from_spec()` to preserve coordinates for cache key
+- [x] ✅ Add tests for cache key with classifiers and packaging
+- [ ] Update `EnvironmentBuilder` to accept global and per-coord exclusions
+- [ ] Update `create_pom()` to propagate exclusions to dependencies
+- [ ] Implement exclusion merging logic (global + per-coord)
+- [ ] Add exclusion deduplication
+- [ ] Update POM generation to include `<exclusions>` blocks
+
+### Phase 3: jgo.toml Support
+
+- [ ] Add `exclusions` field to TOML schema
+- [ ] Parse global exclusions from `[dependencies] exclusions`
+- [ ] Parse per-coordinate exclusions from inline syntax
+- [ ] Update `jgo sync` to handle exclusions
+- [ ] Update lockfile to record effective exclusions
+- [ ] Add validation for exclusion coordinate format
+
+### Phase 4: jgo exclude Command
+
+- [ ] Implement `jgo exclude add` subcommand
+- [ ] Implement `jgo exclude remove` subcommand
+- [ ] Implement `jgo exclude list` subcommand
+- [ ] Add `--file` option for custom jgo.toml paths
+- [ ] Implement TOML loading and updating
+- [ ] Add coordinate validation
+- [ ] Add error handling (missing file, invalid TOML, etc.)
+- [ ] Preserve TOML formatting where possible
+
+### Phase 5: Testing
+
+- [ ] Unit tests for `(x)` marker (global exclusion)
+- [ ] Unit tests for repeated `x:` modifiers: `(x:excl1,x:excl2)`
+- [ ] Unit tests for combined modifiers: `(c,x:...,x:...)`
+- [ ] Unit tests for order independence
+- [ ] Unit tests for wildcard exclusions
+- [ ] Integration tests with real Maven artifacts
+- [ ] Test shortcuts with exclusions
+- [ ] Test jgo.toml with exclusions
+- [ ] Test `jgo exclude` command operations
+- [ ] Test cache key changes with exclusions
+
+### Phase 6: Documentation
+
+- [ ] Update README.md with exclusion examples
+- [ ] Document exclusion syntax in user guide
+- [ ] Add exclusion examples to cookbook
+- [ ] Document jgo.toml exclusions field
+- [ ] Document `jgo exclude` command
+- [ ] Add migration guide for cache key changes
+- [ ] Update grammar specification
 
 ## Alternatives Considered
 
-### Inline Syntax with ~ or ^
+### CLI Flags Only
+
+**Proposal:** Use only `--exclude` flags without inline syntax.
 
 ```bash
-# With ~
-jgo 'org.apache.httpcomponents:httpclient~commons-logging:commons-logging'
-
-# With ^
-jgo 'org.apache.httpcomponents:httpclient^commons-logging:commons-logging'
+jgo --exclude commons-logging:commons-logging httpclient
 ```
 
 **Rejected because:**
-- Less consistent with existing jgo v2 syntax
-- Harder to distinguish from coordinate body
-- More potential for shell escaping issues
-- `(x:...)` suffix is more self-documenting
+- Cannot include exclusions in shortcuts (deal-breaker)
+- Less flexible for per-coordinate exclusions
+- Doesn't affect cache key naturally (needs special handling)
+- Verbose when same exclusions needed repeatedly
 
-### CLI Flags Only (Original Design)
+### Special Character Syntax
 
-Use only `--exclude` flag without inline syntax.
+**Proposal:** Use symbols like `~`, `^`, or `/` instead of `(x)`.
+
+```bash
+jgo httpclient~commons-logging:commons-logging  # tilde
+jgo httpclient^commons-logging:commons-logging  # caret
+jgo httpclient/commons-logging:commons-logging  # slash
+```
 
 **Rejected because:**
-- **Shortcuts cannot include exclusions** (deal-breaker!)
-- Less flexible for per-coordinate exclusions
-- Verbose when same exclusions needed repeatedly
+- `~` and `^` have version semantics in poetry
+- Less self-documenting than `(x)`
+- Harder to distinguish from coordinate body
+- Shell escaping issues
+- Inconsistent with existing `(...)` placement modifiers
 
 ### Multiple Separate Parentheticals
 
-Allow `coord(c)(x:excl1)(x:excl2)!` instead of unified syntax.
+**Proposal:** Allow multiple parentheticals instead of unified syntax.
+
+```bash
+jgo httpclient(c)(x:excl1)(x:excl2)!
+```
 
 **Rejected because:**
-- Order ambiguity - should `(c)` come before or after `(x:...)`?
-- More characters to type
-- Harder to parse (multiple suffix passes)
+- Order ambiguity (does `(c)` come before or after `(x:...)`?)
+- More verbose
+- Harder to parse (multiple passes)
 - Less readable
 
 ### Configuration File Only
 
-Require users to create jgo.toml for exclusions.
+**Proposal:** Require jgo.toml for all exclusions.
 
 **Rejected because:**
 - Too heavyweight for quick one-off runs
-- Inconsistent with existing --add-classpath pattern
-- Doesn't solve the ad-hoc use case
+- No support for shortcuts with exclusions
+- Inconsistent with other jgo features
+- Doesn't solve ad-hoc use cases
+
+---
+
+## Summary
+
+This design provides a comprehensive, coherent exclusion system for jgo v2:
+
+- **One primary syntax**: Inline `(x)` and `(x:...)` modifiers
+- **Three access methods**: Direct inline, jgo.toml, jgo exclude command
+- **Two exclusion scopes**: Global (apply everywhere) and per-coordinate (apply to one dependency)
+- **Cache-aware**: Exclusions properly affect cache keys
+- **Maven-compatible**: Semantics match Maven's `<exclusions>` blocks
+
+The system is simple, composable, and consistent with jgo's existing design principles.
