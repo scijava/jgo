@@ -26,7 +26,7 @@ from .linking import LinkStrategy, link_file
 from .lockfile import LockedDependency, LockFile, compute_sha256, compute_spec_hash
 
 if TYPE_CHECKING:
-    from ..maven import Component, MavenContext
+    from ..maven import Component, Dependency, MavenContext
     from .spec import EnvironmentSpec
 
 _log = logging.getLogger(__name__)
@@ -282,12 +282,25 @@ class EnvironmentBuilder:
         components: list[Component],
         update: bool = False,
         main_class: str | None = None,
+        coordinates: list["Coordinate"] | None = None,
     ) -> Environment:
         """
         Build an environment from a list of components (ad-hoc mode).
+
+        Args:
+            components: Maven components to include
+            update: Force update even if cached
+            main_class: Optional main class override
+            coordinates: Original coordinates (preserves classifier/packaging for cache key).
+                        If not provided, defaults are used (empty classifier, jar packaging).
         """
-        # Generate cache key
-        cache_key = self._cache_key(components)
+        # Generate cache key from coordinates (if provided) or components
+        if coordinates:
+            dependencies = self._coordinates_to_dependencies(coordinates)
+        else:
+            dependencies = self._components_to_dependencies(components)
+
+        cache_key = self._cache_key(dependencies)
 
         # Environment path (always hierarchical for ad-hoc mode)
         primary = components[0]
@@ -365,7 +378,9 @@ class EnvironmentBuilder:
             Environment instance
         """
         # Parse coordinates into components
+        # Keep coordinates for cache key generation (preserves classifier/packaging)
         components = []
+        coordinates = []
         for coord_str in spec.coordinates:
             coord = Coordinate.parse(coord_str)
             version = coord.version or "RELEASE"
@@ -374,6 +389,7 @@ class EnvironmentBuilder:
                 coord.groupId, coord.artifactId
             ).at_version(version)
             components.append(component)
+            coordinates.append(coord)
 
         # Use spec's cache_dir if specified, otherwise use builder's default
         cache_dir = (
@@ -388,7 +404,9 @@ class EnvironmentBuilder:
             workspace_path = cache_dir
         else:
             # Hierarchical structure for ad-hoc mode
-            cache_key = self._cache_key(components)
+            # Use coordinates for cache key to preserve classifier/packaging
+            dependencies = self._coordinates_to_dependencies(coordinates)
+            cache_key = self._cache_key(dependencies)
             primary = components[0]
             workspace_path = (
                 cache_dir / "envs" / primary.project.path_prefix / cache_key
@@ -583,13 +601,134 @@ class EnvironmentBuilder:
 
         return True
 
-    def _cache_key(self, components: list[Component]) -> str:
-        """Generate a stable hash for a set of components."""
+    def _components_to_dependencies(
+        self, components: list[Component]
+    ) -> list["Dependency"]:
+        """
+        Convert Component objects to Dependency objects with default classifier/packaging.
+
+        This is a compatibility helper for code that still uses Components.
+        Uses empty classifier and 'jar' packaging by default.
+
+        Args:
+            components: List of Component objects
+
+        Returns:
+            List of Dependency objects with default artifact settings
+        """
+        from jgo.maven.core import Dependency
+
+        dependencies = []
+        for component in components:
+            # Create default artifact (empty classifier, jar packaging)
+            artifact = component.artifact(classifier="", packaging="jar")
+
+            # Create dependency with defaults
+            dependency = Dependency(
+                artifact=artifact,
+                scope="compile",
+                optional=False,
+                exclusions=[],
+            )
+            dependencies.append(dependency)
+
+        return dependencies
+
+    def _coordinates_to_dependencies(
+        self, coordinates: list["Coordinate"]
+    ) -> list["Dependency"]:
+        """
+        Convert Coordinate objects to Dependency objects for cache key generation.
+
+        This preserves classifier, packaging, and exclusion information from the
+        original coordinates.
+
+        Args:
+            coordinates: List of parsed Coordinate objects with full coordinate info
+
+        Returns:
+            List of Dependency objects
+        """
+        from jgo.maven.core import Dependency
+
+        dependencies = []
+        for coord in coordinates:
+            # Get version (default to RELEASE if not specified)
+            version = coord.version or "RELEASE"
+
+            # Create Component (G:A:V)
+            component = self.context.project(
+                coord.groupId, coord.artifactId
+            ).at_version(version)
+
+            # Create Artifact with classifier and packaging (G:A:V:C:P)
+            classifier = coord.classifier or ""
+            packaging = coord.packaging or "jar"
+            artifact = component.artifact(classifier=classifier, packaging=packaging)
+
+            # Create Dependency with scope and exclusions
+            # TODO: Parse exclusions from coord when exclusion syntax is implemented
+            # For now, use empty exclusions list
+            scope = coord.scope or "compile"
+            optional = coord.optional or False
+            exclusions: list = []  # Will be populated when exclusion parsing is added
+
+            dependency = Dependency(
+                artifact=artifact,
+                scope=scope,
+                optional=optional,
+                exclusions=exclusions,
+            )
+            dependencies.append(dependency)
+
+        return dependencies
+
+    def _cache_key(self, dependencies: list["Dependency"]) -> str:
+        """
+        Generate a stable hash for a set of dependencies.
+
+        Uses full artifact coordinates (G:A:V:C:P) plus exclusions to ensure:
+        - Different classifiers get different caches (e.g., natives-linux vs natives-windows)
+        - Different packaging types get different caches
+        - Different exclusions get different caches (different dependency trees)
+
+        Args:
+            dependencies: List of Dependency objects with full coordinate info and exclusions
+
+        Returns:
+            16-character hex hash string
+        """
         # Sort to ensure stable ordering
-        # Use resolved_version to ensure RELEASE/LATEST resolve to consistent cache keys
-        coord_strings = sorted(
-            [f"{c.groupId}:{c.artifactId}:{c.resolved_version}" for c in components]
-        )
+        # Use resolved version to ensure RELEASE/LATEST resolve to consistent cache keys
+        coord_strings = []
+        for dep in sorted(
+            dependencies,
+            key=lambda d: (
+                d.artifact.groupId,
+                d.artifact.artifactId,
+                d.artifact.version,  # This resolves RELEASE/LATEST
+                d.artifact.classifier,
+                d.artifact.packaging,
+            ),
+        ):
+            # Include full artifact coordinates: G:A:V:C:P
+            coord_str = (
+                f"{dep.artifact.groupId}:"
+                f"{dep.artifact.artifactId}:"
+                f"{dep.artifact.version}:"  # Resolved version
+                f"{dep.artifact.classifier}:"
+                f"{dep.artifact.packaging}"
+            )
+
+            # Include exclusions for this dependency
+            if dep.exclusions:
+                excl_strs = sorted(
+                    [f"{e.groupId}:{e.artifactId}" for e in dep.exclusions]
+                )
+                coord_str += f":excl={','.join(excl_strs)}"
+
+            coord_strings.append(coord_str)
+
         combined = "+".join(coord_strings)
 
         # Include optional_depth in cache key

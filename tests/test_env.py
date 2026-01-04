@@ -94,7 +94,10 @@ def test_cache_key_generation():
         component2 = project2.at_version("2.0.0")
 
         components = [component1, component2]
-        key = builder._cache_key(components)
+
+        # Convert components to dependencies for cache key
+        dependencies = builder._components_to_dependencies(components)
+        key = builder._cache_key(dependencies)
 
         # Should generate a hash
         assert isinstance(key, str)
