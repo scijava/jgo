@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from .parser import ParsedArgs
 
 # Import shared console instances (configured at startup)
-from ..util.console import get_console, get_err_console, get_no_wrap
+from ..util.console import get_console, get_err_console, get_wrap_mode
 
 _console = get_console()
 _err_console = get_err_console()
@@ -188,7 +188,8 @@ def print_dependencies(
         direct_only: If True and list_mode is True, show only direct dependencies
         optional_depth: Maximum depth at which to include optional dependencies (default: 0)
     """
-    no_wrap = get_no_wrap()
+    # In "raw" mode, use NoWrapTree/Table variants and disable column truncation
+    no_wrap = get_wrap_mode() == "raw"
 
     if list_mode:
         # Flat list mode - use Rich for colored output
@@ -203,10 +204,10 @@ def print_dependencies(
             optional_depth=optional_depth,
         )
 
-        # Format and print using Rich with soft_wrap to prevent line wrapping
+        # Format and print using Rich
         lines = format_dependency_list_rich(root, deps)
         for line in lines:
-            _console.print(line, highlight=False, soft_wrap=True)
+            _console.print(line, highlight=False)
     else:
         # Tree mode - use Rich Tree for beautiful colored output
         from ..maven.dependency_printer import format_dependency_tree_rich
@@ -219,10 +220,10 @@ def print_dependencies(
             optional_depth=optional_depth,
         )
 
-        # Format and print using Rich
-        # Use NoWrapTree + soft_wrap when --no-wrap is enabled
+        # Format and print using Rich (soft_wrap configured globally)
+        # Use NoWrapTree when wrap mode is "raw"
         rich_tree = format_dependency_tree_rich(tree, no_wrap=no_wrap)
-        _console.print(rich_tree, soft_wrap=no_wrap)
+        _console.print(rich_tree)
 
 
 def print_java_info(environment: Environment) -> None:
@@ -242,7 +243,8 @@ def print_java_info(environment: Environment) -> None:
 
     from ..util.rich_utils import create_table
 
-    no_wrap = get_no_wrap()
+    # In "raw" mode, use NoWrapTable variant and disable column truncation
+    no_wrap = get_wrap_mode() == "raw"
 
     # Get all JARs from both jars/ and modules/ directories
     jar_files = environment.all_jars
@@ -288,17 +290,17 @@ def print_java_info(environment: Environment) -> None:
         title="[bold]Java Version Requirements[/]",
         border_style="cyan",
     )
-    _console.print(summary_panel, soft_wrap=no_wrap)
+    _console.print(summary_panel)
 
     # Print per-JAR analysis in a table
-    # Use NoWrapTable when --no-wrap is enabled to show full JAR names
+    # Use NoWrapTable when wrap mode is "raw" to show full JAR names
     table = create_table(
         no_wrap=no_wrap,
         title="Per-JAR Analysis",
         show_header=True,
         header_style="bold cyan",
     )
-    # When no_wrap is enabled, use no_wrap=True on column to prevent truncation
+    # When wrap mode is "raw", disable column truncation
     table.add_column("JAR", style="bold", no_wrap=no_wrap)
     table.add_column("Java Version", justify="right", style="green")
     table.add_column("Max Bytecode", justify="right")

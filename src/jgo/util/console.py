@@ -17,8 +17,8 @@ _err_console: Console = Console(stderr=True)
 # Current color mode (for other modules to query)
 _color_mode: str = "auto"
 
-# Current no-wrap mode
-_no_wrap: bool = False
+# Current wrap mode
+_wrap_mode: str = "smart"
 
 # Current quiet mode
 _quiet: bool = False
@@ -43,7 +43,7 @@ def normalize_color_mode(color: str) -> str:
 
 
 def setup_consoles(
-    color: str = "auto", quiet: bool = False, no_wrap: bool = False
+    color: str = "auto", quiet: bool = False, wrap: str = "smart"
 ) -> None:
     """
     Configure console instances based on CLI flags.
@@ -57,18 +57,22 @@ def setup_consoles(
             - "styled": Bold/italic only, no color (NO_COLOR compliant)
             - "plain" (alias: "never"): No ANSI codes at all
         quiet: If True, suppress all console output (data and messages)
-        no_wrap: If True, disable text wrapping in rich output
+        wrap: Wrap mode:
+            - "smart" (default): Rich's intelligent wrapping with padding
+            - "raw": Natural terminal wrapping, no constraints
+            - "crop": Truncate at terminal width
     """
-    global _console, _err_console, _color_mode, _no_wrap, _quiet
+    global _console, _err_console, _color_mode, _wrap_mode, _quiet
 
     # Normalize aliases
     color = normalize_color_mode(color)
     _color_mode = color
-    _no_wrap = no_wrap
+    _wrap_mode = wrap
     _quiet = quiet
 
     console_kwargs: dict = {"quiet": quiet}
 
+    # Configure color mode
     if color == "plain":
         # No ANSI codes at all
         console_kwargs["color_system"] = None
@@ -79,6 +83,12 @@ def setup_consoles(
         # Force full color + style even if not a TTY
         console_kwargs["force_terminal"] = True
     # else: "auto" - use Rich's default TTY detection
+
+    # Configure wrap mode
+    if wrap == "raw":
+        # Natural terminal wrapping, no constraints
+        console_kwargs["soft_wrap"] = True
+    # else: "smart" or "crop" use Rich's default behavior
 
     _console = Console(**console_kwargs)
     _err_console = Console(stderr=True, **console_kwargs)
@@ -94,14 +104,14 @@ def get_color_mode() -> str:
     return _color_mode
 
 
-def get_no_wrap() -> bool:
+def get_wrap_mode() -> str:
     """
-    Get the current no-wrap mode.
+    Get the current wrap mode.
 
     Returns:
-        True if text wrapping should be disabled in rich output
+        Current wrap mode: "smart", "raw", or "crop"
     """
-    return _no_wrap
+    return _wrap_mode
 
 
 def is_quiet() -> bool:
@@ -143,10 +153,11 @@ def console_print(
     **kwargs,
 ) -> None:
     """
-    Print to console, respecting the global no-wrap setting.
+    Print to console, respecting the global wrap setting.
 
-    This is a convenience wrapper around Console.print() that automatically
-    applies soft_wrap=True when --no-wrap mode is enabled.
+    This is a convenience wrapper around Console.print(). Currently not used
+    since wrap mode is configured globally on the console instances, but kept
+    for potential future use.
 
     Args:
         *objects: Objects to print
@@ -157,12 +168,4 @@ def console_print(
         **kwargs: Additional arguments passed to Console.print()
     """
     console = _err_console if stderr else _console
-
-    if _no_wrap:
-        # In no-wrap mode, use soft_wrap to prevent artificial line breaks
-        kwargs.setdefault("soft_wrap", True)
-        # Disable highlighting in no-wrap mode to avoid color codes in grep output
-        if highlight is None:
-            highlight = False
-
     console.print(*objects, sep=sep, end=end, highlight=highlight, **kwargs)

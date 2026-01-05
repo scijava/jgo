@@ -8,10 +8,8 @@ from pathlib import Path
 import rich_click as click
 
 from ...parse.coordinate import Coordinate
-from ...util.console import get_console
 
 _log = logging.getLogger(__name__)
-_console = get_console()
 
 
 @click.command(help="Show classpath.")
@@ -253,8 +251,10 @@ def javainfo(ctx, endpoint):
 def entrypoints(ctx):
     """Show available entrypoints defined in jgo.toml."""
     from ...env import EnvironmentSpec
+    from ...util.console import get_console
     from ..parser import _build_parsed_args
 
+    console = get_console()
     opts = ctx.obj
     args = _build_parsed_args(opts, endpoint=None, command="info")
 
@@ -267,13 +267,13 @@ def entrypoints(ctx):
     spec = EnvironmentSpec.load(spec_file)
 
     if not spec.entrypoints:
-        _console.print("No entrypoints defined")
+        console.print("No entrypoints defined")
         ctx.exit(0)
 
-    _console.print("Available entrypoints:")
+    console.print("Available entrypoints:")
     for name, main_class in spec.entrypoints.items():
         marker = " (default)" if name == spec.default_entrypoint else ""
-        _console.print(f"  {name}: {main_class}{marker}")
+        console.print(f"  {name}: {main_class}{marker}")
 
     ctx.exit(0)
 
@@ -354,9 +354,11 @@ def pom(ctx, endpoint):
     import xml.dom.minidom
 
     from ...config import GlobalSettings
+    from ...util.console import get_console
     from ..context import create_maven_context
     from ..parser import _build_parsed_args
 
+    console = get_console()
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
     args = _build_parsed_args(opts, endpoint=endpoint, command="info")
@@ -391,13 +393,37 @@ def pom(ctx, endpoint):
         # Pretty-print the XML
         try:
             dom = xml.dom.minidom.parseString(pom_content)
+            # pretty_xml = dom.toprettyxml(indent="  ", newl="")
+            # xml_output = pretty_xml
             pretty_xml = dom.toprettyxml(indent="  ")
             # Remove extra blank lines that toprettyxml adds
             lines = [line for line in pretty_xml.split("\n") if line.strip()]
-            print("\n".join(lines))
+            xml_output = "\n".join(lines)
+            # TODO: Double check. If newl="" there aren't extra blanks, but what if POM is a one-line XML block?
         except Exception:
-            # If pretty-printing fails, just output raw
-            print(pom_content)
+            # If pretty-printing fails, use raw content
+            xml_output = pom_content
+
+        # Use syntax highlighting based on wrap mode
+        from ...util.console import get_wrap_mode
+
+        wrap_mode = get_wrap_mode()
+
+        if wrap_mode == "raw":
+            # Use pygments directly for raw mode to avoid Rich's width constraints
+            from pygments import highlight
+            from pygments.formatters import Terminal256Formatter
+            from pygments.lexers import XmlLexer
+
+            highlighted = highlight(
+                xml_output, XmlLexer(), Terminal256Formatter(style="monokai")
+            )
+            print(highlighted, end="")
+        else:
+            # Use Rich's Syntax for smart/crop modes
+            from rich.syntax import Syntax
+
+            console.print(Syntax(xml_output, "xml", theme="monokai"))
 
     except SystemExit:
         raise

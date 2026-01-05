@@ -401,10 +401,13 @@ def global_options(f):
     )(f)
     f = click.option("-q", "--quiet", is_flag=True, help="Suppress all output.")(f)
     f = click.option(
-        "--no-wrap",
-        is_flag=True,
-        help="Disable text wrapping in rich output (trees, tables, panels). "
-        "Long lines will extend beyond terminal width.",
+        "--wrap",
+        type=click.Choice(["smart", "raw", "crop"]),
+        default="smart",
+        help="Control line wrapping: "
+        "[cyan]smart[/] (default, Rich formatting with padding), "
+        "[cyan]raw[/] (natural terminal wrapping, no constraints), "
+        "[cyan]crop[/] (truncate at terminal width).",
     )(f)
     f = click.option(
         "--color",
@@ -660,11 +663,11 @@ def cli(ctx, **kwargs):
 
     color = kwargs.get("color", "auto")
     quiet = kwargs.get("quiet", False)
-    no_wrap = kwargs.get("no_wrap", False)
+    wrap = kwargs.get("wrap", "smart")
     verbose = kwargs.get("verbose", 0)
 
     # Setup console instances (for both data output and logging)
-    setup_consoles(color=color, quiet=quiet, no_wrap=no_wrap)
+    setup_consoles(color=color, quiet=quiet, wrap=wrap)
 
     # Setup logging (uses console from setup_consoles)
     setup_logging(verbose=verbose)

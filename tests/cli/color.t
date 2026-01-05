@@ -162,11 +162,14 @@ Test --color with different commands.
   │                                                    codes). Aliases:          │
   │                                                    always=rich, never=plain. │
   │                                                    [env var: COLOR]          │
-  │ --no-wrap                                          Disable text wrapping in  │
-  │                                                    rich output (trees,       │
-  │                                                    tables, panels). Long     │
-  │                                                    lines will extend beyond  │
-  │                                                    terminal width.           │
+  │ --wrap                  [smart|raw|crop]           Control line wrapping:    │
+  │                                                    smart (default, Rich      │
+  │                                                    formatting with padding), │
+  │                                                    raw (natural terminal     │
+  │                                                    wrapping, no              │
+  │                                                    constraints), crop        │
+  │                                                    (truncate at terminal     │
+  │                                                    width).                   │
   │ --quiet             -q                             Suppress all output.      │
   │ --verbose           -v  INTEGER RANGE              Verbose output (can be    │
   │                                                    repeated: -vv, -vvv).     │
