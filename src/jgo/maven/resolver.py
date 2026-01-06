@@ -22,9 +22,8 @@ from rich.progress import (
 
 from jgo.util.console import get_err_console, is_quiet
 
-from .core import Dependency, create_pom
+from .core import Dependency, DependencyNode, create_pom
 from .dependency_printer import (
-    DependencyNode,
     format_dependency_list,
     format_dependency_tree,
 )
