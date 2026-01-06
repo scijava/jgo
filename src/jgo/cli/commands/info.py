@@ -251,7 +251,7 @@ def javainfo(ctx, endpoint):
 def entrypoints(ctx):
     """Show available entrypoints defined in jgo.toml."""
     from ...env import EnvironmentSpec
-    from ...util.console import get_console
+    from ..console import get_console
     from ..parser import _build_parsed_args
 
     console = get_console()
@@ -354,7 +354,7 @@ def pom(ctx, endpoint):
     import xml.dom.minidom
 
     from ...config import GlobalSettings
-    from ...util.console import get_console
+    from ..console import get_console
     from ..context import create_maven_context
     from ..parser import _build_parsed_args
 
@@ -405,7 +405,7 @@ def pom(ctx, endpoint):
             xml_output = pom_content
 
         # Use syntax highlighting based on wrap mode
-        from ...util.console import get_wrap_mode
+        from ..console import get_wrap_mode
 
         wrap_mode = get_wrap_mode()
 

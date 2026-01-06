@@ -9,7 +9,7 @@ import logging
 
 from rich.logging import RichHandler
 
-from ...util.console import get_err_console
+from ..console import get_err_console
 
 
 def setup_rich_logging(logger: logging.Logger, verbose: int = 0) -> None:

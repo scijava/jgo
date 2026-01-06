@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import rich_click as click
 
-from ...util.console import get_console
+from ..console import get_console
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs

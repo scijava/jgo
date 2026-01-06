@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
 # Import console for styled output
-from ...util.console import get_console
+from ..console import get_console
 
 _log = logging.getLogger(__name__)
 _console = get_console()

@@ -19,7 +19,7 @@ from rich.progress import (
     TransferSpeedColumn,
 )
 
-from ...util.console import get_err_console, is_quiet
+from ..console import get_err_console, is_quiet
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator

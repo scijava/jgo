@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from .parser import ParsedArgs
 
 # Import shared console instances (configured at startup)
-from ..util.console import get_console, get_err_console, get_wrap_mode
+from .console import get_console, get_err_console, get_wrap_mode
 
 _console = get_console()
 _err_console = get_err_console()

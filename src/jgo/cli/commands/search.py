@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 import rich_click as click
 
 from ...util import is_info_enabled
-from ...util.console import get_console, get_err_console
+from ..console import get_console, get_err_console
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs

@@ -659,7 +659,7 @@ def cli(ctx, **kwargs):
     - Legacy endpoint mode: jgo <endpoint> [options]
     """
     # Configure console and logging based on CLI flags
-    from ..util.console import setup_consoles
+    from .console import setup_consoles
     from .rich.logging import setup_rich_logging
 
     color = kwargs.get("color", "auto")
