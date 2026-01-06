@@ -38,20 +38,20 @@ The subsystem is built on:
 
 ```
 src/jgo/
-├── util/
-│   ├── console.py       # Console management (stdout/stderr Rich Consoles)
-│   ├── logging.py       # Logging setup and log_exception_if_verbose
-│   ├── rich_utils.py    # Custom Rich components (NoWrapTree, NoWrapTable)
-│   └── toml.py          # TOML utilities (tomllib + load_toml_file)
 ├── cli/
 │   ├── colors.py        # Early color mode detection for rich-click
-│   └── output.py        # Output functions (print_dry_run, handle_dry_run, print_*)
+│   ├── console.py       # Console management (stdout/stderr Rich Consoles)
+│   ├── output.py        # Output functions (print_dry_run, handle_dry_run, print_*)
+│   └── rich/
+│       ├── formatters.py  # Dependency formatting (trees and lists)
+│       └── widgets.py     # Custom Rich components (NoWrapTree, NoWrapTable)
 ├── config/
 │   └── settings.py      # GlobalSettings + parse_config_key
 ├── env/
 │   └── spec.py          # EnvironmentSpec + load_or_error classmethod
-└── maven/
-    └── dependency_printer.py  # Dependency formatting (trees and lists)
+└── util/
+    ├── logging.py       # Logging setup and log_exception_if_verbose
+    └── toml.py          # TOML utilities (tomllib + load_toml_file)
 ```
 
 ### Initialization Flow
@@ -99,7 +99,7 @@ _log.error("Failed to load jgo.toml")              # always (unless --quiet)
 **Control**:
 - Suppression: `--quiet` (suppresses all output including data)
 - Color/style: `--color` flag
-- Wrapping: `--no-wrap` flag (for long lines in tables/trees)
+- Wrapping: `--wrap` flag (`auto` for TTY detection, `smart` for word-boundary wrapping, `raw` for natural terminal wrapping)
 
 **Examples**:
 ```python
@@ -119,13 +119,13 @@ _console.print(f"  {dependency_count} resolved")
 
 ## Console Management
 
-### Module: `util/console.py`
+### Module: `cli/console.py`
 
 Provides centralized Rich Console instances configured once at startup.
 
 #### Functions
 
-**`setup_consoles(color, quiet, no_wrap)`**
+**`setup_consoles(color, quiet, wrap)`**
 - Called once at CLI startup (in `cli.parser.cli()`)
 - Configures global console instances based on flags
 - Color modes:
@@ -134,7 +134,10 @@ Provides centralized Rich Console instances configured once at startup.
   - `"styled"`: Bold/italic only, no color (NO_COLOR compliant)
   - `"plain"` (alias `"never"`): No ANSI codes at all
 - Quiet mode: Suppresses all output (both data and logging)
-- No-wrap mode: Disables text wrapping in Rich output
+- Wrap modes:
+  - `"auto"` (default): Smart for TTY, raw for pipes/files
+  - `"smart"`: Rich's intelligent wrapping at word boundaries
+  - `"raw"`: Natural terminal wrapping without constraints
 
 **`get_console() -> Console`**
 - Returns the stdout console instance
@@ -147,22 +150,19 @@ Provides centralized Rich Console instances configured once at startup.
 **`get_color_mode() -> str`**
 - Returns current color mode: `"auto"`, `"rich"`, `"styled"`, or `"plain"`
 
-**`get_no_wrap() -> bool`**
-- Returns whether no-wrap mode is enabled
-- Used by functions that create trees/tables to decide which variant to use
-
-**`console_print(*objects, stderr=False, highlight=None, **kwargs)`**
-- Convenience wrapper around Console.print()
-- Automatically applies `soft_wrap=True` in no-wrap mode
-- Disables highlighting in no-wrap mode (cleaner grep output)
+**`get_wrap_mode() -> str`**
+- Returns current wrap mode: `"smart"` or `"raw"`
+- The `"auto"` mode is resolved to `"smart"` or `"raw"` in `setup_consoles()` using `console.is_terminal`
+- This ensures consistency with Rich's TTY detection
 
 #### Global State
 
 ```python
 _console: Console        # Stdout console (for data)
 _err_console: Console    # Stderr console (for logging-like messages)
-_color_mode: str         # Current color mode
-_no_wrap: bool           # Whether no-wrap mode is enabled
+_color_mode: str         # Current color mode ("auto", "rich", "styled", "plain")
+_wrap_mode: str          # Current wrap mode ("smart" or "raw", auto is resolved in setup_consoles)
+_quiet: bool             # Whether quiet mode is enabled
 ```
 
 ## Logging Infrastructure
@@ -287,16 +287,25 @@ All data output functions use a consistent pattern:
 - Scans JARs for classes with main methods
 - Groups by JAR name, pretty-printed with Rich
 
+**`pom` command (in `cli/commands/info.py`)**
+- Shows POM content with syntax highlighting
+- Uses `console.print()` directly (not Rich Syntax object)
+- Behavior by color mode:
+  - `plain` or `auto` (non-TTY): Plain XML without ANSI codes
+  - `rich` or `auto` (TTY): Colored XML with basic highlighting (tags, slashes)
+  - `styled`: Plain XML (Rich's no_color mode limitation - no syntax highlighting)
+- Respects `--wrap` mode via `soft_wrap` parameter
+
 **`print_dependencies(components, context, boms, list_mode, direct_only)`**
 - Prints dependency list (flat) or tree
 - List mode: Uses `format_dependency_list_rich()` → colored lines
-- Tree mode: Uses `format_dependency_tree_rich()` → Rich Tree
-- Respects `--no-wrap` via `get_no_wrap()`
+- Tree mode: Uses `format_dependency_tree_rich()` → Rich Tree (NoWrapTree variant for raw mode)
+- Respects `--wrap` mode by passing `soft_wrap` parameter to `console.print()`
 
 **`print_java_info(environment)`**
 - Analyzes bytecode to determine Java requirements
-- Uses Rich Panel, Table, and formatted output
-- Respects `--no-wrap` for table column widths
+- Uses Rich Panel, Table (NoWrapTable variant for raw mode), and formatted output
+- Respects `--wrap` mode for table column widths
 
 **`handle_dry_run(args, message) -> bool`**
 - Checks for dry-run mode and prints message if active
@@ -341,29 +350,21 @@ All data output functions use a consistent pattern:
 - Raises FileNotFoundError or ValueError with context
 - Replaces the old `load_spec_file(args)` helper
 
-### Module: `maven/dependency_printer.py`
+### Module: `cli/rich/formatters.py`
 
 Formats dependency data as trees and lists with Rich markup.
-
-**`format_dependency_list(root, dependencies) -> str`**
-- Plain text formatting (no colors)
-- Returns string with dependency coordinates
 
 **`format_dependency_list_rich(root, dependencies) -> list[str]`**
 - Rich markup formatting with colors:
   - Cyan: groupId
-  - Bold: artifactId  
+  - Bold: artifactId
   - Green: version
 - Returns list of formatted lines
-
-**`format_dependency_tree(root) -> str`**
-- Plain text tree with Unicode box characters
-- Returns formatted string
 
 **`format_dependency_tree_rich(root, no_wrap=False) -> Tree`**
 - Rich Tree object with colored nodes
 - Uses `NoWrapTree` if `no_wrap=True`
-- Returns Rich Tree for printing with `_console.print()`
+- Returns Rich Tree for printing with `console.print(tree, soft_wrap=no_wrap)`
 
 ## Rich Integration
 
@@ -378,31 +379,79 @@ Formats dependency data as trees and lists with Rich markup.
 
 ### Rich Consoles (Runtime Output)
 
-**Module**: `util/console.py`
+**Module**: `cli/console.py`
 
 - Provides two Console instances: stdout and stderr
-- Configured at startup based on `--color`, `--quiet`, `--no-wrap`
+- Configured at startup based on `--color`, `--quiet`, `--wrap`
 - Both consoles respect the same color settings
+- Wrap mode is applied per-call via `soft_wrap` parameter to `console.print()`
 
 ### Custom Rich Components
 
-**Module**: `util/rich_utils.py`
+**Module**: `cli/rich/widgets.py`
 
 **`NoWrapTree(Tree)`**
 - Tree that renders with unlimited width when printed with `soft_wrap=True`
-- Prevents Rich from wrapping long dependency names
-- Used when `--no-wrap` flag is set
+- Allows full dependency names to wrap naturally at terminal edge
+- Used when `--wrap=raw` flag is set
+- Combined with `console.print(tree, soft_wrap=True)` for natural wrapping
 
 **`NoWrapTable(Table)`**
 - Table that renders with unlimited width when printed with `soft_wrap=True`
-- Prevents Rich from truncating column content
-- Used when `--no-wrap` flag is set
+- Allows full column content without truncation, wrapping naturally
+- Used when `--wrap=raw` flag is set
+- Combined with `console.print(table, soft_wrap=True)` for natural wrapping
 
-**`create_tree(label, no_wrap=False) -> Tree | NoWrapTree`**
+**`create_tree(label, no_wrap=False, **kwargs) -> Tree | NoWrapTree`**
 - Factory function: returns NoWrapTree if `no_wrap=True`, else Tree
 
 **`create_table(no_wrap=False, **kwargs) -> Table | NoWrapTable`**
 - Factory function: returns NoWrapTable if `no_wrap=True`, else Table
+
+### Wrap Mode Implementation
+
+Wrap modes are implemented by passing the `soft_wrap` parameter to `console.print()`:
+
+**Auto mode** (`--wrap=auto`, default):
+- Resolved at startup in `setup_consoles()` using `console.is_terminal`
+- Uses `smart` for TTY (terminal display)
+- Uses `raw` for non-TTY (pipes, file redirection)
+- Mirrors the philosophy of `--color=auto`
+- Ensures consistency with Rich's TTY detection
+
+**Smart mode** (`--wrap=smart`):
+- Uses `console.print(content, soft_wrap=False)`
+- Rich applies intelligent word-boundary wrapping
+- Tables and trees are constrained to terminal width
+- Long lines wrap at word boundaries
+
+**Raw mode** (`--wrap=raw`):
+- Uses `console.print(content, soft_wrap=True)`
+- Natural terminal wrapping without Rich constraints
+- NoWrapTree/NoWrapTable variants render with unlimited width
+- Content wraps naturally at terminal edge, mid-word if needed
+
+**Example usage:**
+```python
+from ..console import get_wrap_mode
+
+# Get resolved wrap mode (auto is already resolved in setup_consoles)
+wrap_mode = get_wrap_mode()  # Returns "smart" or "raw"
+no_wrap = wrap_mode == "raw"
+
+# For trees
+rich_tree = format_dependency_tree_rich(tree, no_wrap=no_wrap)
+console.print(rich_tree, soft_wrap=no_wrap)
+
+# For tables
+table = create_table(no_wrap=no_wrap)
+# ... add rows ...
+console.print(table, soft_wrap=no_wrap)
+
+# For simple text (like info pom XML output)
+wrap_mode = get_wrap_mode()
+console.print(xml_output, soft_wrap=(wrap_mode == "raw"))
+```
 
 ## Usage Guidelines
 

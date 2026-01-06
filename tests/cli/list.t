@@ -26,8 +26,7 @@ Test list with endpoint.
      com.google.code.findbugs:jsr305:jar:3.0.2:compile
      com.google.errorprone:error_prone_annotations:jar:2.23.0:compile
      com.google.guava:failureaccess:jar:1.0.2:compile
-     com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-gua
-  va:compile
+     com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
      com.google.j2objc:j2objc-annotations:jar:2.8:compile
      org.checkerframework:checker-qual:jar:3.41.0:compile
 
@@ -38,8 +37,7 @@ Test list with --dry-run.
      com.google.code.findbugs:jsr305:jar:3.0.2:compile
      com.google.errorprone:error_prone_annotations:jar:2.23.0:compile
      com.google.guava:failureaccess:jar:1.0.2:compile
-     com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-gua
-  va:compile
+     com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
      com.google.j2objc:j2objc-annotations:jar:2.8:compile
      org.checkerframework:checker-qual:jar:3.41.0:compile
 
@@ -50,7 +48,6 @@ Test list with --offline (uses cache).
      com.google.code.findbugs:jsr305:jar:3.0.2:compile
      com.google.errorprone:error_prone_annotations:jar:2.23.0:compile
      com.google.guava:failureaccess:jar:1.0.2:compile
-     com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-gua
-  va:compile
+     com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
      com.google.j2objc:j2objc-annotations:jar:2.8:compile
      org.checkerframework:checker-qual:jar:3.41.0:compile

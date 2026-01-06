@@ -1,0 +1,135 @@
+Tests global jgo flags.
+
+Test --platform flag with different values.
+
+  $ jgo --platform=linux-x64 --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+  $ jgo --platform=macos-arm64 --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+  $ jgo --platform=windows-x64 --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+Test --platform aliases.
+
+  $ jgo --platform=linux64 --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+  $ jgo --platform=win64 --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+Test --os-name, --os-family, --os-arch flags.
+
+  $ jgo --os-name=Linux --os-family=unix --os-arch=amd64 --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+Test --os-arch=auto for auto-detection.
+
+  $ jgo --os-arch=auto --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+Test --resolver flag.
+
+  $ jgo --resolver=auto --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+  $ jgo --resolver=python --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+  $ jgo --resolver=mvn --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+Test --link flag.
+
+  $ jgo --link=hard --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+  $ jgo --link=soft --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+  $ jgo --link=copy --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+  $ jgo --link=auto --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+Test --repository/-r flag.
+
+  $ jgo -r central=https://repo.maven.apache.org/maven2 --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+Test --property/-D flag.
+
+  $ jgo -D foo=bar --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+Test --java-version flag.
+
+  $ jgo --java-version=17 --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+Test --java-vendor flag.
+
+  $ jgo --java-vendor=adoptium --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+Test --system-java flag.
+
+  $ jgo --system-java --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+Test --module-path-only flag.
+
+  $ jgo --module-path-only --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+Test --class-path-only flag.
+
+  $ jgo --class-path-only --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+Test --lenient flag.
+
+  $ jgo --lenient --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+Test --ignore-config flag.
+
+  $ jgo --ignore-config --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+Test --no-cache flag.
+
+  $ jgo --no-cache --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)
+
+Test combined flags.
+
+  $ jgo --verbose --offline --dry-run run org.scijava:scijava-ops-image:1.0.0@About
+  *java* (glob)
+  * org.scijava.ops.image.About (glob)

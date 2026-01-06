@@ -43,7 +43,7 @@ def normalize_color_mode(color: str) -> str:
 
 
 def setup_consoles(
-    color: str = "auto", quiet: bool = False, wrap: str = "smart"
+    color: str = "auto", quiet: bool = False, wrap: str = "auto"
 ) -> None:
     """
     Configure console instances based on CLI flags.
@@ -58,16 +58,15 @@ def setup_consoles(
             - "plain" (alias: "never"): No ANSI codes at all
         quiet: If True, suppress all console output (data and messages)
         wrap: Wrap mode:
-            - "smart" (default): Rich's intelligent wrapping with padding
+            - "auto" (default): Smart for TTY, raw for pipes/files
+            - "smart": Rich's intelligent wrapping at word boundaries
             - "raw": Natural terminal wrapping, no constraints
-            - "crop": Truncate at terminal width
     """
     global _console, _err_console, _color_mode, _wrap_mode, _quiet
 
     # Normalize aliases
     color = normalize_color_mode(color)
     _color_mode = color
-    _wrap_mode = wrap
     _quiet = quiet
 
     console_kwargs: dict = {"quiet": quiet}
@@ -84,14 +83,16 @@ def setup_consoles(
         console_kwargs["force_terminal"] = True
     # else: "auto" - use Rich's default TTY detection
 
-    # Configure wrap mode
-    if wrap == "raw":
-        # Natural terminal wrapping, no constraints
-        console_kwargs["soft_wrap"] = True
-    # else: "smart" or "crop" use Rich's default behavior
-
+    # Create consoles
     _console = Console(**console_kwargs)
     _err_console = Console(stderr=True, **console_kwargs)
+
+    # Resolve wrap mode using Rich's TTY detection
+    # This ensures we're consistent with Rich's opinion on TTY status
+    if wrap == "auto":
+        _wrap_mode = "smart" if _console.is_terminal else "raw"
+    else:
+        _wrap_mode = wrap
 
 
 def get_color_mode() -> str:
@@ -109,7 +110,7 @@ def get_wrap_mode() -> str:
     Get the current wrap mode.
 
     Returns:
-        Current wrap mode: "smart", "raw", or "crop"
+        Current wrap mode: "smart" or "raw" (auto is resolved in setup_consoles)
     """
     return _wrap_mode
 

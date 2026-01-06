@@ -404,26 +404,24 @@ def pom(ctx, endpoint):
             # If pretty-printing fails, use raw content
             xml_output = pom_content
 
-        # Use syntax highlighting based on wrap mode
-        from ..console import get_wrap_mode
+        # Use Rich console for output
+        # Console is already configured with color_system=None for plain mode,
+        # so we can always use console.print() and it will respect both color and wrap settings
+        from ..console import get_color_mode, get_wrap_mode
 
+        color_mode = get_color_mode()
         wrap_mode = get_wrap_mode()
 
-        if wrap_mode == "raw":
-            # Use pygments directly for raw mode to avoid Rich's width constraints
-            from pygments import highlight
-            from pygments.formatters import Terminal256Formatter
-            from pygments.lexers import XmlLexer
+        # Disable highlighting for plain mode
+        # (Rich automatically disables syntax highlighting when piping in auto mode)
+        use_highlighting = color_mode != "plain"
 
-            highlighted = highlight(
-                xml_output, XmlLexer(), Terminal256Formatter(style="monokai")
-            )
-            print(highlighted, end="")
-        else:
-            # Use Rich's Syntax for smart/crop modes
-            from rich.syntax import Syntax
-
-            console.print(Syntax(xml_output, "xml", theme="monokai"))
+        # soft_wrap parameter controls wrapping behavior:
+        #   False (smart): Rich's intelligent wrapping at word boundaries
+        #   True (raw): natural terminal wrapping
+        console.print(
+            xml_output, soft_wrap=(wrap_mode == "raw"), highlight=use_highlighting
+        )
 
     except SystemExit:
         raise

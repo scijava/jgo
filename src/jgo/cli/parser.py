@@ -402,19 +402,19 @@ def global_options(f):
     f = click.option("-q", "--quiet", is_flag=True, help="Suppress all output.")(f)
     f = click.option(
         "--wrap",
-        type=click.Choice(["smart", "raw", "crop"]),
-        default="smart",
+        type=click.Choice(["auto", "smart", "raw"]),
+        default="auto",
         help="Control line wrapping: "
-        "[cyan]smart[/] (default, Rich formatting with padding), "
-        "[cyan]raw[/] (natural terminal wrapping, no constraints), "
-        "[cyan]crop[/] (truncate at terminal width).",
+        "[cyan]auto[/] (default: smart for TTY, raw for pipes/files), "
+        "[cyan]smart[/] (Rich's intelligent wrapping at word boundaries), "
+        "[cyan]raw[/] (natural terminal wrapping, no constraints).",
     )(f)
     f = click.option(
         "--color",
         type=click.Choice(["auto", "rich", "styled", "plain", "always", "never"]),
         default="auto",
         help="Control output formatting: "
-        "[cyan]auto[/] (default, detect TTY), "
+        "[cyan]auto[/] (default: detect TTY), "
         "[cyan]rich[/] (force color+style), "
         "[cyan]styled[/] (bold/italic only, no color), "
         "[cyan]plain[/] (no ANSI codes). "

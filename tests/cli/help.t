@@ -113,21 +113,22 @@ Test main help output.
   │                                                    file (default: jgo.toml). │
   │ --color                 [auto|rich|styled|plain|a  Control output            │
   │                         lways|never]               formatting: auto          │
-  │                                                    (default, detect TTY),    │
+  │                                                    (default: detect TTY),    │
   │                                                    rich (force color+style), │
   │                                                    styled (bold/italic only, │
   │                                                    no color), plain (no ANSI │
   │                                                    codes). Aliases:          │
   │                                                    always=rich, never=plain. │
   │                                                    [env var: COLOR]          │
-  │ --wrap                  [smart|raw|crop]           Control line wrapping:    │
-  │                                                    smart (default, Rich      │
-  │                                                    formatting with padding), │
-  │                                                    raw (natural terminal     │
-  │                                                    wrapping, no              │
-  │                                                    constraints), crop        │
-  │                                                    (truncate at terminal     │
-  │                                                    width).                   │
+  │ --wrap                  [auto|smart|raw]           Control line wrapping:    │
+  │                                                    auto (default: smart for  │
+  │                                                    TTY, raw for              │
+  │                                                    pipes/files), smart       │
+  │                                                    (Rich's intelligent       │
+  │                                                    wrapping at word          │
+  │                                                    boundaries), raw (natural │
+  │                                                    terminal wrapping, no     │
+  │                                                    constraints).             │
   │ --quiet             -q                             Suppress all output.      │
   │ --verbose           -v  INTEGER RANGE              Verbose output (can be    │
   │                                                    repeated: -vv, -vvv).     │
@@ -527,21 +528,22 @@ Test no-argument help (should show main help).
   │                                                    file (default: jgo.toml). │
   │ --color                 [auto|rich|styled|plain|a  Control output            │
   │                         lways|never]               formatting: auto          │
-  │                                                    (default, detect TTY),    │
+  │                                                    (default: detect TTY),    │
   │                                                    rich (force color+style), │
   │                                                    styled (bold/italic only, │
   │                                                    no color), plain (no ANSI │
   │                                                    codes). Aliases:          │
   │                                                    always=rich, never=plain. │
   │                                                    [env var: COLOR]          │
-  │ --wrap                  [smart|raw|crop]           Control line wrapping:    │
-  │                                                    smart (default, Rich      │
-  │                                                    formatting with padding), │
-  │                                                    raw (natural terminal     │
-  │                                                    wrapping, no              │
-  │                                                    constraints), crop        │
-  │                                                    (truncate at terminal     │
-  │                                                    width).                   │
+  │ --wrap                  [auto|smart|raw]           Control line wrapping:    │
+  │                                                    auto (default: smart for  │
+  │                                                    TTY, raw for              │
+  │                                                    pipes/files), smart       │
+  │                                                    (Rich's intelligent       │
+  │                                                    wrapping at word          │
+  │                                                    boundaries), raw (natural │
+  │                                                    terminal wrapping, no     │
+  │                                                    constraints).             │
   │ --quiet             -q                             Suppress all output.      │
   │ --verbose           -v  INTEGER RANGE              Verbose output (can be    │
   │                                                    repeated: -vv, -vvv).     │
@@ -678,21 +680,22 @@ Test --help flag on main command.
   │                                                    file (default: jgo.toml). │
   │ --color                 [auto|rich|styled|plain|a  Control output            │
   │                         lways|never]               formatting: auto          │
-  │                                                    (default, detect TTY),    │
+  │                                                    (default: detect TTY),    │
   │                                                    rich (force color+style), │
   │                                                    styled (bold/italic only, │
   │                                                    no color), plain (no ANSI │
   │                                                    codes). Aliases:          │
   │                                                    always=rich, never=plain. │
   │                                                    [env var: COLOR]          │
-  │ --wrap                  [smart|raw|crop]           Control line wrapping:    │
-  │                                                    smart (default, Rich      │
-  │                                                    formatting with padding), │
-  │                                                    raw (natural terminal     │
-  │                                                    wrapping, no              │
-  │                                                    constraints), crop        │
-  │                                                    (truncate at terminal     │
-  │                                                    width).                   │
+  │ --wrap                  [auto|smart|raw]           Control line wrapping:    │
+  │                                                    auto (default: smart for  │
+  │                                                    TTY, raw for              │
+  │                                                    pipes/files), smart       │
+  │                                                    (Rich's intelligent       │
+  │                                                    wrapping at word          │
+  │                                                    boundaries), raw (natural │
+  │                                                    terminal wrapping, no     │
+  │                                                    constraints).             │
   │ --quiet             -q                             Suppress all output.      │
   │ --verbose           -v  INTEGER RANGE              Verbose output (can be    │
   │                                                    repeated: -vv, -vvv).     │

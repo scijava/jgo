@@ -1,5 +1,7 @@
 Tests jgo --color flag.
 
+See also wrap.t for more color tests.
+
 Test --color=never removes ANSI color codes.
 
   $ jgo --color=never remove
@@ -139,21 +141,22 @@ Test --color with different commands.
   │                                                    file (default: jgo.toml). │
   │ --color                 [auto|rich|styled|plain|a  Control output            │
   │                         lways|never]               formatting: auto          │
-  │                                                    (default, detect TTY),    │
+  │                                                    (default: detect TTY),    │
   │                                                    rich (force color+style), │
   │                                                    styled (bold/italic only, │
   │                                                    no color), plain (no ANSI │
   │                                                    codes). Aliases:          │
   │                                                    always=rich, never=plain. │
   │                                                    [env var: COLOR]          │
-  │ --wrap                  [smart|raw|crop]           Control line wrapping:    │
-  │                                                    smart (default, Rich      │
-  │                                                    formatting with padding), │
-  │                                                    raw (natural terminal     │
-  │                                                    wrapping, no              │
-  │                                                    constraints), crop        │
-  │                                                    (truncate at terminal     │
-  │                                                    width).                   │
+  │ --wrap                  [auto|smart|raw]           Control line wrapping:    │
+  │                                                    auto (default: smart for  │
+  │                                                    TTY, raw for              │
+  │                                                    pipes/files), smart       │
+  │                                                    (Rich's intelligent       │
+  │                                                    wrapping at word          │
+  │                                                    boundaries), raw (natural │
+  │                                                    terminal wrapping, no     │
+  │                                                    constraints).             │
   │ --quiet             -q                             Suppress all output.      │
   │ --verbose           -v  INTEGER RANGE              Verbose output (can be    │
   │                                                    repeated: -vv, -vvv).     │
@@ -182,55 +185,6 @@ Test --color with different commands.
 
   $ jgo --color=never version
   jgo 2.0.0.dev0
-
-Test --color affects help output.
-
-  $ jgo --color=never run --help
-                                                                                  
-   Usage: jgo run [OPTIONS] [ENDPOINT] [REMAINING]...                             
-                                                                                  
-   Run a Java application from Maven coordinates or jgo.toml.                     
-                                                                                  
-  ╭─ Options ────────────────────────────────────────────────────────────────────╮
-  │ --main-class     CLASS  Main class to run (supports auto-completion for      │
-  │                         simple names)                                        │
-  │ --entrypoint     NAME   Run specific entrypoint from jgo.toml                │
-  │ --add-classpath  PATH   Append to classpath (JARs, directories, etc.)        │
-  │ --help                  Show this message and exit.                          │
-  ╰──────────────────────────────────────────────────────────────────────────────╯
-                                                                                  
-   TIP: Use jgo --dry-run run to see the command without executing it.            
-                                                                                  
-
-Test --color with info commands.
-
-  $ jgo --color=never info
-                                                                                  
-   Usage: jgo info [OPTIONS] COMMAND [ARGS]...                                    
-                                                                                  
-   Show information about environment or artifact.                                
-                                                                                  
-  ╭─ Options ────────────────────────────────────────────────────────────────────╮
-  │ --help  Show this message and exit.                                          │
-  ╰──────────────────────────────────────────────────────────────────────────────╯
-  ╭─ Commands ───────────────────────────────────────────────────────────────────╮
-  │ classpath        Show classpath.                                             │
-  │ deplist          Show flat list of dependencies.                             │
-  │ deptree          Show dependency tree.                                       │
-  │ entrypoints      Show entrypoints from jgo.toml.                             │
-  │ envdir           Show environment directory path.                            │
-  │ jars             Show all JAR paths (classpath + module-path).               │
-  │ javainfo         Show Java version requirements.                             │
-  │ mains            Show classes with public main methods.                      │
-  │ manifest         Show JAR manifest.                                          │
-  │ modulepath       Show module-path.                                           │
-  │ pom              Show POM content.                                           │
-  │ versions         List available versions of an artifact.                     │
-  ╰──────────────────────────────────────────────────────────────────────────────╯
-                                                                                  
-   TIP: To see the launch command, use: jgo --dry-run run <endpoint>              
-                                                                                  
-  [2]
 
 Test --color respects environment variable COLOR.
 

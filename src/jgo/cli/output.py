@@ -188,6 +188,7 @@ def print_dependencies(
         direct_only: If True and list_mode is True, show only direct dependencies
         optional_depth: Maximum depth at which to include optional dependencies (default: 0)
     """
+
     # In "raw" mode, use NoWrapTree/Table variants and disable column truncation
     no_wrap = get_wrap_mode() == "raw"
 
@@ -205,9 +206,10 @@ def print_dependencies(
         )
 
         # Format and print using Rich
+        # Pass soft_wrap for raw mode to enable natural terminal wrapping
         lines = format_dependency_list_rich(root, deps)
         for line in lines:
-            _console.print(line, highlight=False)
+            _console.print(line, highlight=False, soft_wrap=no_wrap)
     else:
         # Tree mode - use Rich Tree for beautiful colored output
         from .rich.formatters import format_dependency_tree_rich
@@ -220,10 +222,10 @@ def print_dependencies(
             optional_depth=optional_depth,
         )
 
-        # Format and print using Rich (soft_wrap configured globally)
-        # Use NoWrapTree when wrap mode is "raw"
+        # Format and print using Rich
+        # Use NoWrapTree when wrap mode is "raw" and pass soft_wrap for natural wrapping
         rich_tree = format_dependency_tree_rich(tree, no_wrap=no_wrap)
-        _console.print(rich_tree)
+        _console.print(rich_tree, soft_wrap=no_wrap)
 
 
 def print_java_info(environment: Environment) -> None:
