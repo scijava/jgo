@@ -555,8 +555,7 @@ def global_options(f):
         metavar="PLATFORM",
         help="Target platform for profile activation. "
         "Sets os-name, os-family, and os-arch together. "
-        f"Choices: {', '.join(PLATFORMS.keys())}. "
-        f"Aliases: {', '.join(f'{k}={v}' for k, v in PLATFORM_ALIASES.items())}.",
+        "Use '[yellow]jgo --platform x[/]' to see list of options.",
     )(f)
     f = click.option(
         "--os-name",

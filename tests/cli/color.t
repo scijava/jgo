@@ -78,25 +78,9 @@ Test --color with different commands.
   │ --platform              PLATFORM                   Target platform for       │
   │                                                    profile activation. Sets  │
   │                                                    os-name, os-family, and   │
-  │                                                    os-arch together.         │
-  │                                                    Choices: linux,           │
-  │                                                    linux-arm64, linux-x32,   │
-  │                                                    linux-x64, macos,         │
-  │                                                    macos-arm64, macos-x32,   │
-  │                                                    macos-x64, windows,       │
-  │                                                    windows-arm64,            │
-  │                                                    windows-x32, windows-x64, │
-  │                                                    freebsd, freebsd-x64,     │
-  │                                                    openbsd, openbsd-x64,     │
-  │                                                    netbsd, netbsd-x64,       │
-  │                                                    solaris, solaris-x64,     │
-  │                                                    aix, aix-ppc64. Aliases:  │
-  │                                                    linux32=linux-x32,        │
-  │                                                    linux64=linux-x64,        │
-  │                                                    macos32=macos-x32,        │
-  │                                                    macos64=macos-x64,        │
-  │                                                    win32=windows-x32,        │
-  │                                                    win64=windows-x64.        │
+  │                                                    os-arch together. Use     │
+  │                                                    'jgo --platform x' to see │
+  │                                                    list of options.          │
   │ --min-heap              SIZE                       Minimum/initial heap size │
   │                                                    (e.g., 512M, 1G).         │
   │ --max-heap              SIZE                       Maximum heap size (e.g.,  │
