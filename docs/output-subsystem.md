@@ -45,8 +45,7 @@ src/jgo/
 │   └── toml.py          # TOML utilities (tomllib + load_toml_file)
 ├── cli/
 │   ├── colors.py        # Early color mode detection for rich-click
-│   ├── output.py        # Output functions (print_dry_run, handle_dry_run, print_*)
-│   └── helpers.py       # DEPRECATED: backward compatibility shims
+│   └── output.py        # Output functions (print_dry_run, handle_dry_run, print_*)
 ├── config/
 │   └── settings.py      # GlobalSettings + parse_config_key
 ├── env/
@@ -303,23 +302,6 @@ All data output functions use a consistent pattern:
 - Checks for dry-run mode and prints message if active
 - Returns True if dry run (caller should return 0), False otherwise
 - Uses `print_dry_run()` internally
-
-### Module: `cli/helpers.py` ⚠️ **DEPRECATED**
-
-This module now only contains backward compatibility shims. All functions have been moved to more appropriate locations:
-
-**Moved Functions:**
-- `handle_dry_run` → `cli/output.py` 
-- `load_spec_file` → `env/spec.py` as `EnvironmentSpec.load_or_error()`
-- `parse_config_key` → `config/settings.py`
-- `load_toml_file` → `util/toml.py`
-- `print_exception_if_verbose` → `util/logging.py` as `log_exception_if_verbose()`
-
-**Removed Functions:**
-- `verbose_print()` - REMOVED: Use `_log.debug()` instead
-- `verbose_multiline()` - REMOVED: Use logging instead
-
-The module will be removed entirely in jgo 3.0.
 
 ### Module: `util/logging.py`
 
