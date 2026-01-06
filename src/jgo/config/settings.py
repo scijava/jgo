@@ -16,19 +16,6 @@ from .manager import get_settings_path
 _log = logging.getLogger(__name__)
 
 
-def config_file_path() -> Path:
-    """
-    Get the settings file path using XDG Base Directory standard.
-
-    .. deprecated::
-        Use :func:`~jgo.config.manager.get_settings_path` instead.
-
-    Returns:
-        Path to settings file (~/.config/jgo.conf if exists, otherwise ~/.jgorc)
-    """
-    return get_settings_path()
-
-
 class GlobalSettings:
     """
     Global settings loaded from settings file and environment variables.
@@ -79,7 +66,7 @@ class GlobalSettings:
         Load global settings from file and environment variables.
 
         Args:
-            settings_file: Path to settings file (defaults to ~/.config/jgo.conf, then ~/.jgorc)
+            settings_file: Path to settings file (defaults to ~/.config/jgo.conf, or ~/.jgorc as fallback)
 
         Returns:
             GlobalSettings instance

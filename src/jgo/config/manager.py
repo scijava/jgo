@@ -60,16 +60,15 @@ def get_settings_display_name(path: Path) -> str:
 
     Returns:
         Display name for user-facing messages:
-        - "~/.jgorc" if path is the legacy location
         - "~/.config/jgo.conf" if path is the XDG location
+        - "~/.jgorc" if path is the legacy location
         - Generic "jgo settings file" for other paths
     """
+    if path.resolve() == xdg_settings_path().resolve():
+        return SETTINGS_FILE_XDG_NAME
     if path.resolve() == legacy_settings_path().resolve():
         return SETTINGS_FILE_LEGACY_NAME
-    elif path.resolve() == xdg_settings_path().resolve():
-        return SETTINGS_FILE_XDG_NAME
-    else:
-        return SETTINGS_FILE_DISPLAY_NAME
+    return SETTINGS_FILE_DISPLAY_NAME
 
 
 def format_settings_message(path: Path, action: str) -> str:
@@ -83,9 +82,7 @@ def format_settings_message(path: Path, action: str) -> str:
     Returns:
         Formatted message string
 
-    Examples:
-        >>> format_settings_message(Path.home() / ".jgorc", "created")
-        "~/.jgorc created"
+    Example:
         >>> format_settings_message(Path.home() / ".config/jgo.conf", "not found")
         "~/.config/jgo.conf not found"
     """

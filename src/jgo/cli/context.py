@@ -146,11 +146,11 @@ def create_java_runner(
 ) -> JavaRunner:
     """
     Create Java runner with 4-tier JVM configuration priority:
-    CLI > jgo.toml > ~/.jgorc > smart defaults
+    CLI > jgo.toml > ~/.config/jgo.conf > smart defaults
 
     Args:
         args: Parsed command line arguments
-        config: Global settings from ~/.jgorc
+        config: Global settings from ~/.config/jgo.conf
         spec: Optional EnvironmentSpec from jgo.toml (for project-level config)
 
     Returns:
@@ -159,7 +159,7 @@ def create_java_runner(
     java_source = JavaSource.SYSTEM if args.use_system_java else JavaSource.AUTO
 
     # ========== 4-Tier Precedence for GC Options ==========
-    # Priority: CLI > jgo.toml > ~/.jgorc > smart defaults
+    # Priority: CLI > jgo.toml > ~/.config/jgo.conf > smart defaults
     gc_options = None
 
     # Tier 1: CLI override (highest priority)
@@ -182,7 +182,7 @@ def create_java_runner(
     if gc_options is None and spec and spec.gc_options:
         gc_options = spec.gc_options.copy()
 
-    # Tier 3: Global config (~/.jgorc)
+    # Tier 3: Global config (~/.config/jgo.conf)
     if gc_options is None and "jvm" in config:
         jvm_config_section = config["jvm"]
         if "gc" in jvm_config_section or "gc_options" in jvm_config_section:
@@ -207,7 +207,7 @@ def create_java_runner(
     # Tier 2: jgo.toml
     elif spec and spec.max_heap:
         max_heap = spec.max_heap
-    # Tier 3: ~/.jgorc
+    # Tier 3: ~/.config/jgo.conf
     elif "jvm" in config and "max_heap" in config["jvm"]:
         max_heap = config["jvm"]["max_heap"]
     # Tier 4: Auto-detect (handled by JVMConfig)
@@ -221,7 +221,7 @@ def create_java_runner(
         min_heap = config["jvm"]["min_heap"]
 
     # ========== Merge Extra JVM Args (Additive + Conflict Resolution) ==========
-    # Combine from all sources: CLI -- separator + jgo.toml + ~/.jgorc
+    # Combine from all sources: CLI -- separator + jgo.toml + ~/.config/jgo.conf
     # Apply conflict resolution: structured settings win over extra args
     extra_jvm_args = []
 

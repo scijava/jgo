@@ -14,8 +14,8 @@ Test main help output.
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --version                                          Show jgo version and      │
   │                                                    exit.                     │
-  │ --ignore-config                                    Ignore ~/.jgorc           │
-  │                                                    configuration file.       │
+  │ --ignore-config                                    Ignore ~/.config/jgo.conf │
+  │                                                    file.                     │
   │ --module-path-only                                 Force all JARs to         │
   │                                                    module-path (treat as     │
   │                                                    modular).                 │
@@ -444,8 +444,8 @@ Test no-argument help (should show main help).
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --version                                          Show jgo version and      │
   │                                                    exit.                     │
-  │ --ignore-config                                    Ignore ~/.jgorc           │
-  │                                                    configuration file.       │
+  │ --ignore-config                                    Ignore ~/.config/jgo.conf │
+  │                                                    file.                     │
   │ --module-path-only                                 Force all JARs to         │
   │                                                    module-path (treat as     │
   │                                                    modular).                 │
@@ -611,8 +611,8 @@ Test --help flag on main command.
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --version                                          Show jgo version and      │
   │                                                    exit.                     │
-  │ --ignore-config                                    Ignore ~/.jgorc           │
-  │                                                    configuration file.       │
+  │ --ignore-config                                    Ignore ~/.config/jgo.conf │
+  │                                                    file.                     │
   │ --module-path-only                                 Force all JARs to         │
   │                                                    module-path (treat as     │
   │                                                    modular).                 │

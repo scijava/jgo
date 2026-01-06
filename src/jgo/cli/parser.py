@@ -615,7 +615,7 @@ def global_options(f):
     )(f)
 
     f = click.option(
-        "--ignore-config", is_flag=True, help="Ignore ~/.jgorc configuration file."
+        "--ignore-config", is_flag=True, help="Ignore ~/.config/jgo.conf file."
     )(f)
     # Hidden alias for backward compatibility
     f = click.option("--ignore-jgorc", "ignore_config", is_flag=True, hidden=True)(f)

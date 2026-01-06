@@ -40,8 +40,8 @@ MAVEN_CENTRAL_URL = "https://repo.maven.apache.org/maven2"
 
 # Settings file display names (these are truly constant)
 SETTINGS_FILE_DISPLAY_NAME = "jgo settings file"
-SETTINGS_FILE_LEGACY_NAME = "~/.jgorc"
 SETTINGS_FILE_XDG_NAME = "~/.config/jgo.conf"
+SETTINGS_FILE_LEGACY_NAME = "~/.jgorc"
 
 
 # Dynamic path functions (respect environment variables and HOME)

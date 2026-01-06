@@ -40,8 +40,8 @@ Test --color with different commands.
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --version                                          Show jgo version and      │
   │                                                    exit.                     │
-  │ --ignore-config                                    Ignore ~/.jgorc           │
-  │                                                    configuration file.       │
+  │ --ignore-config                                    Ignore ~/.config/jgo.conf │
+  │                                                    file.                     │
   │ --module-path-only                                 Force all JARs to         │
   │                                                    module-path (treat as     │
   │                                                    modular).                 │
