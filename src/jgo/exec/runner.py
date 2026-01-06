@@ -200,7 +200,8 @@ class JavaRunner:
         if app_args:
             cmd.extend(app_args)
 
-        # Print command if requested or in dry-run mode
+        # Print command if requested or in dry-run/verbose mode
+        # Print directly to stderr for clean, unwrapped output
         if print_command or self.verbose or dry_run:
             print(" ".join(cmd), file=sys.stderr)
 
@@ -275,6 +276,8 @@ class JavaRunner:
         if app_args:
             cmd.extend(app_args)
 
+        # Print command if verbose or explicitly requested
+        # Print directly to stderr for clean output
         if print_command or self.verbose:
             print(" ".join(cmd), file=sys.stderr)
 

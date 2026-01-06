@@ -6,10 +6,6 @@ Provides structured logging with verbosity levels.
 
 import logging
 
-from rich.logging import RichHandler
-
-from .console import get_err_console
-
 
 def setup_logging(verbose: int = 0) -> logging.Logger:
     """
@@ -22,8 +18,8 @@ def setup_logging(verbose: int = 0) -> logging.Logger:
         Configured logger instance
 
     Note:
-        Console configuration (color, quiet) is handled by console.setup_consoles().
-        This function only configures log levels and formatting.
+        This function only configures log levels. The CLI layer is responsible
+        for setting up handlers (e.g., Rich logging).
     """
     # Note: Must use "jgo" explicitly to configure the root jgo logger,
     # not this module's logger.
@@ -41,33 +37,6 @@ def setup_logging(verbose: int = 0) -> logging.Logger:
         level = logging.DEBUG
 
     logger.setLevel(level)
-
-    # Use the shared stderr console configured by console.setup_consoles()
-    console = get_err_console()
-
-    # Create Rich handler for colored, formatted log output
-    handler = RichHandler(
-        console=console,
-        show_time=False,
-        show_path=(verbose >= 2),  # Show module:line in debug mode
-        markup=False,  # Disable markup to prevent emoji conversion (e.g., :fiji: → 🇫🇯)
-        rich_tracebacks=True,  # Better exception formatting
-    )
-    handler.setLevel(level)
-
-    # Create formatter - RichHandler adds level colors automatically
-    if verbose >= 2:
-        # Debug mode: RichHandler's show_path will display [name:lineno]
-        formatter = logging.Formatter("%(message)s")
-    elif verbose >= 1:
-        # Info mode: show level name
-        formatter = logging.Formatter("%(message)s")
-    else:
-        # Warning/error mode: just the message
-        formatter = logging.Formatter("%(message)s")
-
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
 
     return logger
 

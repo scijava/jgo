@@ -193,7 +193,7 @@ def print_dependencies(
 
     if list_mode:
         # Flat list mode - use Rich for colored output
-        from ..maven.dependency_printer import format_dependency_list_rich
+        from .rich.formatters import format_dependency_list_rich
 
         # Get the dependency list
         root, deps = context.resolver.get_dependency_list(
@@ -210,7 +210,7 @@ def print_dependencies(
             _console.print(line, highlight=False)
     else:
         # Tree mode - use Rich Tree for beautiful colored output
-        from ..maven.dependency_printer import format_dependency_tree_rich
+        from .rich.formatters import format_dependency_tree_rich
 
         # Get the dependency tree
         tree = context.resolver.get_dependency_tree(
@@ -241,7 +241,7 @@ def print_java_info(environment: Environment) -> None:
         round_to_lts,
     )
 
-    from ..util.rich_utils import create_table
+    from .rich.widgets import create_table
 
     # In "raw" mode, use NoWrapTable variant and disable column truncation
     no_wrap = get_wrap_mode() == "raw"

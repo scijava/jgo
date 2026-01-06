@@ -11,16 +11,6 @@ from subprocess import run
 from typing import TYPE_CHECKING
 
 import requests
-from rich.progress import (
-    BarColumn,
-    DownloadColumn,
-    Progress,
-    TextColumn,
-    TimeRemainingColumn,
-    TransferSpeedColumn,
-)
-
-from jgo.util.console import get_err_console, is_quiet
 
 from .core import Dependency, DependencyNode, create_pom
 from .dependency_printer import (
@@ -31,11 +21,20 @@ from .model import Model, ProfileConstraints
 from .pom import write_temp_pom
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from contextlib import AbstractContextManager
     from typing import List, TypeVar
 
     from .core import Artifact, Component
 
     T = TypeVar("T")
+
+    # Type for progress callback:
+    # Receives (filename, total_size) and returns a context manager
+    # that yields an update function that accepts bytes_count
+    ProgressCallback = Callable[
+        [str, int], AbstractContextManager[Callable[[int], None]]
+    ]
 
 
 _log = logging.getLogger(__name__)
@@ -228,7 +227,7 @@ class Resolver(ABC):
         """
         ...
 
-    def print_dependency_list(
+    def format_dependency_list(
         self,
         components: list[Component] | Component,
         managed: bool = False,
@@ -237,12 +236,12 @@ class Resolver(ABC):
         optional_depth: int = 0,
     ) -> str:
         """
-        Print a flat list of resolved dependencies (like mvn dependency:list).
+        Format a flat list of resolved dependencies (like mvn dependency:list).
 
         This shows what will actually be used when building the environment.
 
         Args:
-            components: The component(s) for which to print dependencies.
+            components: The component(s) for which to format dependencies.
             managed: If True, use dependency management (import components as BOMs).
             boms: List of components to import as BOMs. Defaults to [component].
             transitive: If False, show only direct dependencies (non-transitive).
@@ -260,7 +259,7 @@ class Resolver(ABC):
         )
         return format_dependency_list(root, deps)
 
-    def print_dependency_tree(
+    def format_dependency_tree(
         self,
         components: list[Component] | Component,
         managed: bool = False,
@@ -268,12 +267,12 @@ class Resolver(ABC):
         optional_depth: int = 0,
     ) -> str:
         """
-        Print the full dependency tree for the given component (like mvn dependency:tree).
+        Format the full dependency tree for the given component (like mvn dependency:tree).
 
         Uses proper dependency mediation - only one version per artifact.
 
         Args:
-            components: The component(s) for which to print dependencies.
+            components: The component(s) for which to format dependencies.
             managed: If True, use dependency management (import components as BOMs).
             boms: List of components to import as BOMs. Defaults to [component].
             optional_depth: Maximum depth at which to include optional dependencies.
@@ -293,8 +292,22 @@ class PythonResolver(Resolver):
     Low overhead, but less feature complete than mvn.
     """
 
-    def __init__(self, profile_constraints: ProfileConstraints | None = None):
+    def __init__(
+        self,
+        profile_constraints: ProfileConstraints | None = None,
+        progress_callback: ProgressCallback | None = None,
+    ):
+        """
+        Initialize Python resolver.
+
+        Args:
+            profile_constraints: Profile constraints for Maven model building
+            progress_callback: Optional callback for download progress reporting.
+                Receives (filename, total_size) and returns a context manager
+                that yields an update function accepting bytes_count.
+        """
         self.profile_constraints = profile_constraints
+        self.progress_callback = progress_callback
 
     def download(self, artifact: Artifact) -> Path | None:
         # For SNAPSHOT versions, ensure we have the metadata first
@@ -333,35 +346,17 @@ class PythonResolver(Resolver):
                 # Get total size from Content-Length header
                 total_size = int(response.headers.get("content-length", 0))
 
-                # Show progress bar unless in quiet mode or NO_PROGRESS is set
-                import os
-
-                show_progress = (
-                    not is_quiet()
-                    and total_size > 0
-                    and not os.environ.get("NO_PROGRESS")
-                )
-
-                if show_progress:
-                    # Create progress bar for this download
-                    progress = Progress(
-                        TextColumn("[bold blue]{task.description}"),
-                        BarColumn(),
-                        DownloadColumn(),
-                        TransferSpeedColumn(),
-                        TimeRemainingColumn(),
-                        console=get_err_console(),
-                    )
-                    with progress:
-                        task = progress.add_task(
-                            f"Downloading {artifact.filename}", total=total_size
-                        )
+                # Use progress callback if provided and size is known
+                if self.progress_callback and total_size > 0:
+                    with self.progress_callback(
+                        artifact.filename, total_size
+                    ) as update_progress:
                         with open(cached_file, "wb") as f:
                             for chunk in response.iter_content(chunk_size=8192):
                                 f.write(chunk)
-                                progress.update(task, advance=len(chunk))
+                                update_progress(len(chunk))
                 else:
-                    # No progress bar - download without display
+                    # No progress callback - download without progress display
                     with open(cached_file, "wb") as f:
                         for chunk in response.iter_content(chunk_size=8192):
                             f.write(chunk)

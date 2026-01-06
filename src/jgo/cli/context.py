@@ -37,6 +37,8 @@ def create_maven_context(args: ParsedArgs, config: dict) -> MavenContext:
     Returns:
         Configured MavenContext instance
     """
+    from .rich.progress import download_progress_callback
+
     # Determine resolver
     if args.resolver == "python":
         profile_constraints = ProfileConstraints(
@@ -48,7 +50,10 @@ def create_maven_context(args: ParsedArgs, config: dict) -> MavenContext:
             properties=args.properties,
             lenient=args.lenient,
         )
-        resolver: Resolver = PythonResolver(profile_constraints=profile_constraints)
+        resolver: Resolver = PythonResolver(
+            profile_constraints=profile_constraints,
+            progress_callback=download_progress_callback,
+        )
     elif args.resolver == "mvn":
         mvn_command = ensure_maven_available()
         resolver = MvnResolver(
@@ -65,7 +70,8 @@ def create_maven_context(args: ParsedArgs, config: dict) -> MavenContext:
             lenient=args.lenient,
         )
         resolver = PythonResolver(
-            profile_constraints=profile_constraints
+            profile_constraints=profile_constraints,
+            progress_callback=download_progress_callback,
         )  # Default to pure Python
 
     # Get repo cache path

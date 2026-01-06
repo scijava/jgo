@@ -660,6 +660,7 @@ def cli(ctx, **kwargs):
     """
     # Configure console and logging based on CLI flags
     from ..util.console import setup_consoles
+    from .rich.logging import setup_rich_logging
 
     color = kwargs.get("color", "auto")
     quiet = kwargs.get("quiet", False)
@@ -669,8 +670,11 @@ def cli(ctx, **kwargs):
     # Setup console instances (for both data output and logging)
     setup_consoles(color=color, quiet=quiet, wrap=wrap)
 
-    # Setup logging (uses console from setup_consoles)
-    setup_logging(verbose=verbose)
+    # Setup logging levels
+    logger = setup_logging(verbose=verbose)
+
+    # Setup Rich logging handler (CLI layer responsibility)
+    setup_rich_logging(logger, verbose=verbose)
 
     # Store global options in context for subcommands
     ctx.ensure_object(dict)
