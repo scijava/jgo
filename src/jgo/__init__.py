@@ -121,7 +121,7 @@ from .jgo import (
     resolve_dependencies,
 )
 from .jgo import _jgo_main as main
-from .maven import Component, MavenContext, PythonResolver
+from .maven import Component, MavenContext
 from .util import (
     add_jvm_args_as_necessary,
     main_from_endpoint,
@@ -178,7 +178,6 @@ def run(
     context = MavenContext(
         repo_cache=config.repo_cache,
         remote_repos=remote_repos,
-        resolver=PythonResolver(),
     )
 
     # Create environment builder
@@ -255,7 +254,6 @@ def build(
     context = MavenContext(
         repo_cache=config.repo_cache,
         remote_repos=remote_repos,
-        resolver=PythonResolver(),
     )
 
     # Create environment builder
@@ -300,7 +298,6 @@ def resolve(
     context = MavenContext(
         repo_cache=config.repo_cache,
         remote_repos=remote_repos,
-        resolver=PythonResolver(),
     )
 
     # Parse endpoint to get components
