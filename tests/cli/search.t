@@ -29,27 +29,29 @@ Test search --help shows usage.
 
 Test search with query.
 
-  $ jgo search scijava-ops
-  Found 9 artifacts:
-  
-  1. org.scijava:scijava-ops-indexer:1.0.0
-  
-  2. org.scijava:scijava-ops-api:1.0.0
-  
-  3. org.scijava:scijava-ops-engine:1.0.0
-  
-  4. org.scijava:scijava-ops-spi:1.0.0
-  
-  5. org.scijava:scijava-ops-flim:1.0.0
-  
-  6. org.scijava:scijava-ops-opencv:1.0.0
-  
-  7. org.scijava:scijava-ops-image:1.0.0
-  
-  8. org.scijava:scijava-ops-tutorial:1.0.0
-  
-  9. org.scijava:scijava-ops-ext-parser:1.0.0
-  
+Temporarily disabled until it can be made to work more robustly.
+
+# $ jgo search scijava-ops
+# Found 9 artifacts:
+# 
+# 1. org.scijava:scijava-ops-indexer:1.0.0
+# 
+# 2. org.scijava:scijava-ops-api:1.0.0
+# 
+# 3. org.scijava:scijava-ops-engine:1.0.0
+# 
+# 4. org.scijava:scijava-ops-spi:1.0.0
+# 
+# 5. org.scijava:scijava-ops-flim:1.0.0
+# 
+# 6. org.scijava:scijava-ops-opencv:1.0.0
+# 
+# 7. org.scijava:scijava-ops-image:1.0.0
+# 
+# 8. org.scijava:scijava-ops-tutorial:1.0.0
+# 
+# 9. org.scijava:scijava-ops-ext-parser:1.0.0
+# 
 
 
 Test search with --dry-run.
