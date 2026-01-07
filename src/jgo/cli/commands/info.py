@@ -8,6 +8,7 @@ from pathlib import Path
 import rich_click as click
 
 from ...parse.coordinate import Coordinate
+from ..console import console_print, get_color_mode
 
 _log = logging.getLogger(__name__)
 
@@ -251,10 +252,8 @@ def javainfo(ctx, endpoint):
 def entrypoints(ctx):
     """Show available entrypoints defined in jgo.toml."""
     from ...env import EnvironmentSpec
-    from ..console import get_console
     from ..parser import _build_parsed_args
 
-    console = get_console()
     opts = ctx.obj
     args = _build_parsed_args(opts, endpoint=None, command="info")
 
@@ -267,13 +266,13 @@ def entrypoints(ctx):
     spec = EnvironmentSpec.load(spec_file)
 
     if not spec.entrypoints:
-        console.print("No entrypoints defined")
+        console_print("No entrypoints defined")
         ctx.exit(0)
 
-    console.print("Available entrypoints:")
+    console_print("Available entrypoints:")
     for name, main_class in spec.entrypoints.items():
         marker = " (default)" if name == spec.default_entrypoint else ""
-        console.print(f"  {name}: {main_class}{marker}")
+        console_print(f"  {name}: {main_class}{marker}")
 
     ctx.exit(0)
 
@@ -354,11 +353,9 @@ def pom(ctx, endpoint):
     import xml.dom.minidom
 
     from ...config import GlobalSettings
-    from ..console import get_console
     from ..context import create_maven_context
     from ..parser import _build_parsed_args
 
-    console = get_console()
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
     args = _build_parsed_args(opts, endpoint=endpoint, command="info")
@@ -404,24 +401,12 @@ def pom(ctx, endpoint):
             # If pretty-printing fails, use raw content
             xml_output = pom_content
 
-        # Use Rich console for output
-        # Console is already configured with color_system=None for plain mode,
-        # so we can always use console.print() and it will respect both color and wrap settings
-        from ..console import get_color_mode, get_wrap_mode
-
-        color_mode = get_color_mode()
-        wrap_mode = get_wrap_mode()
-
         # Disable highlighting for plain mode
         # (Rich automatically disables syntax highlighting when piping in auto mode)
-        use_highlighting = color_mode != "plain"
+        use_highlighting = get_color_mode() != "plain"
 
-        # soft_wrap parameter controls wrapping behavior:
-        #   False (smart): Rich's intelligent wrapping at word boundaries
-        #   True (raw): natural terminal wrapping
-        console.print(
-            xml_output, soft_wrap=(wrap_mode == "raw"), highlight=use_highlighting
-        )
+        # console_print auto-sets soft_wrap based on wrap mode
+        console_print(xml_output, highlight=use_highlighting)
 
     except SystemExit:
         raise

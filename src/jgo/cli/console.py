@@ -125,16 +125,6 @@ def is_quiet() -> bool:
     return _quiet
 
 
-def get_console() -> Console:
-    """
-    Get the stdout console instance.
-
-    Returns:
-        Console configured for stdout output
-    """
-    return _console
-
-
 def get_err_console() -> Console:
     """
     Get the stderr console instance.
@@ -150,23 +140,53 @@ def console_print(
     sep: str = " ",
     end: str = "\n",
     stderr: bool = False,
+    style: str | None = None,
+    justify: str | None = None,
+    overflow: str | None = None,
+    markup: bool | None = None,
+    emoji: bool = False,
     highlight: bool | None = None,
+    soft_wrap: bool | None = None,
     **kwargs,
 ) -> None:
     """
-    Print to console, respecting the global wrap setting.
+    Print to console, respecting global color and wrap settings.
 
-    This is a convenience wrapper around Console.print(). Currently not used
-    since wrap mode is configured globally on the console instances, but kept
-    for potential future use.
+    This wrapper provides consistent defaults for jgo output:
+    - Automatically sets soft_wrap based on wrap mode (smart/raw)
+    - Disables emoji by default (emoji=False)
+    - Respects color and wrap modes configured at startup
 
     Args:
         *objects: Objects to print
-        sep: Separator between objects
-        end: String to print at end
-        stderr: If True, print to stderr console
-        highlight: Enable syntax highlighting (default: None = auto)
+        sep: Separator between objects (default: " ")
+        end: String to print at end (default: "\\n")
+        stderr: If True, print to stderr console (default: False)
+        style: Rich style to apply (default: None)
+        justify: Text justification - "default", "left", "right", "center", "full" (default: None)
+        overflow: Overflow handling - "ignore", "crop", "fold", "ellipsis" (default: None)
+        markup: Enable Rich markup like [bold] (default: None = use console default)
+        emoji: Enable emoji codes (default: False, jgo doesn't use emoji)
+        highlight: Enable syntax highlighting (default: None = use console default)
+        soft_wrap: Override wrap mode - True for raw, False for smart (default: None = auto from wrap mode)
         **kwargs: Additional arguments passed to Console.print()
     """
     console = _err_console if stderr else _console
-    console.print(*objects, sep=sep, end=end, highlight=highlight, **kwargs)
+
+    # Auto-set soft_wrap based on wrap mode if not explicitly provided
+    if soft_wrap is None:
+        soft_wrap = _wrap_mode == "raw"
+
+    console.print(
+        *objects,
+        sep=sep,
+        end=end,
+        style=style,
+        justify=justify,
+        overflow=overflow,
+        markup=markup,
+        emoji=emoji,
+        highlight=highlight,
+        soft_wrap=soft_wrap,
+        **kwargs,
+    )

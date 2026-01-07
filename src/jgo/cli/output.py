@@ -9,17 +9,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .console import console_print, get_wrap_mode
+
 if TYPE_CHECKING:
     from ..env import Environment
     from ..maven import MavenContext
     from ..maven.core import Component
     from .parser import ParsedArgs
-
-# Import shared console instances (configured at startup)
-from .console import get_console, get_err_console, get_wrap_mode
-
-_console = get_console()
-_err_console = get_err_console()
 
 
 # === Message Output Functions ===
@@ -32,7 +28,7 @@ def print_dry_run(message: str) -> None:
     Args:
         message: Dry-run message (e.g., "Would add 5 dependencies")
     """
-    _console.print(r"[cyan bold]\[DRY-RUN] " + message, highlight=False)
+    console_print(r"[cyan bold]\[DRY-RUN] " + message, highlight=False)
 
 
 def handle_dry_run(args: ParsedArgs, message: str) -> bool:
@@ -65,9 +61,10 @@ def print_classpath(environment: Environment) -> None:
     # Get classpath JARs only (class-path, not module-path)
     class_path_jars = environment.class_path_jars
     if not class_path_jars:
-        _err_console.print("[red]No JARs on classpath[/]")
-        _err_console.print(
-            "[dim]TIP: Use 'jgo info module-path' to see module-path JARs[/]"
+        console_print("[red]No JARs on classpath[/]", stderr=True)
+        console_print(
+            "[dim]TIP: Use 'jgo info module-path' to see module-path JARs[/]",
+            stderr=True,
         )
         return
 
@@ -86,9 +83,9 @@ def print_modulepath(environment: Environment) -> None:
     # Get module-path JARs only (module-path, not classpath)
     module_jars = environment.module_path_jars
     if not module_jars:
-        _err_console.print("[red]No JARs on module-path[/]")
-        _err_console.print(
-            "[dim]TIP: Use 'jgo info classpath' to see classpath JARs[/]"
+        console_print("[red]No JARs on module-path[/]", stderr=True)
+        console_print(
+            "[dim]TIP: Use 'jgo info classpath' to see classpath JARs[/]", stderr=True
         )
         return
 
@@ -108,27 +105,27 @@ def print_jars(environment: Environment) -> None:
     mp_jars = environment.module_path_jars
 
     if not cp_jars and not mp_jars:
-        _err_console.print("[red]No JARs in environment[/]")
+        console_print("[red]No JARs in environment[/]", stderr=True)
         return
 
     # Print classpath JARs
     if cp_jars:
-        _console.print("[bold cyan]Classpath:[/]")
+        console_print("[bold cyan]Classpath:[/]")
         for jar_path in cp_jars:
             print(jar_path)
     else:
-        _console.print("[yellow]No classpath JARs[/]")
+        console_print("[yellow]No classpath JARs[/]")
 
     # Print module-path JARs
     if mp_jars:
         if cp_jars:
-            _console.print("\n[bold cyan]Module-path:[/]")
+            console_print("\n[bold cyan]Module-path:[/]")
         else:
-            _console.print("[bold cyan]Module-path:[/]")
+            console_print("[bold cyan]Module-path:[/]")
         for jar_path in mp_jars:
             print(jar_path)
     else:
-        _console.print("[yellow]No module-path JARs[/]")
+        console_print("[yellow]No module-path JARs[/]")
 
 
 def print_main_classes(environment: Environment) -> None:
@@ -142,7 +139,7 @@ def print_main_classes(environment: Environment) -> None:
 
     all_jars = environment.all_jars
     if not all_jars:
-        _err_console.print("[red]No JARs in environment[/]")
+        console_print("[red]No JARs in environment[/]", stderr=True)
         return
 
     # Scan all JARs for main classes
@@ -153,19 +150,19 @@ def print_main_classes(environment: Environment) -> None:
             main_classes_by_jar[jar_path.name] = main_classes
 
     if not main_classes_by_jar:
-        _err_console.print("[yellow]No classes with main methods found[/]")
+        console_print("[yellow]No classes with main methods found[/]", stderr=True)
         return
 
     # Print results grouped by JAR
-    _console.print(
+    console_print(
         f"\n[bold]Found {sum(len(v) for v in main_classes_by_jar.values())} classes with main methods:[/]\n"
     )
 
     for jar_name, main_classes in sorted(main_classes_by_jar.items()):
-        _console.print(f"[cyan]{jar_name}[/]:")
+        console_print(f"[cyan]{jar_name}[/]:")
         for cls in main_classes:
-            _console.print(f"  {cls}")
-        _console.print()
+            console_print(f"  {cls}")
+        console_print()
 
 
 def print_dependencies(
@@ -206,10 +203,10 @@ def print_dependencies(
         )
 
         # Format and print using Rich
-        # Pass soft_wrap for raw mode to enable natural terminal wrapping
+        # console_print auto-handles soft_wrap based on wrap mode
         lines = format_dependency_list_rich(root, deps)
         for line in lines:
-            _console.print(line, highlight=False, soft_wrap=no_wrap)
+            console_print(line, highlight=False)
     else:
         # Tree mode - use Rich Tree for beautiful colored output
         from .rich.formatters import format_dependency_tree_rich
@@ -223,9 +220,9 @@ def print_dependencies(
         )
 
         # Format and print using Rich
-        # Use NoWrapTree when wrap mode is "raw" and pass soft_wrap for natural wrapping
+        # Use NoWrapTree when wrap mode is "raw"
         rich_tree = format_dependency_tree_rich(tree, no_wrap=no_wrap)
-        _console.print(rich_tree, soft_wrap=no_wrap)
+        console_print(rich_tree)
 
 
 def print_java_info(environment: Environment) -> None:
@@ -251,18 +248,16 @@ def print_java_info(environment: Environment) -> None:
     # Get all JARs from both jars/ and modules/ directories
     jar_files = environment.all_jars
     if not jar_files:
-        _err_console.print("[red]No JARs in environment[/]")
+        console_print("[red]No JARs in environment[/]", stderr=True)
         return
 
     # Print environment info
-    _console.print(f"\n[bold]Environment:[/] {environment.path}")
+    console_print(f"\n[bold]Environment:[/] {environment.path}")
     if environment.has_classpath:
-        _console.print(f"[bold]Class-path JARs:[/] {len(environment.class_path_jars)}")
+        console_print(f"[bold]Class-path JARs:[/] {len(environment.class_path_jars)}")
     if environment.has_modules:
-        _console.print(
-            f"[bold]Module-path JARs:[/] {len(environment.module_path_jars)}"
-        )
-    _console.print(f"[bold]Total JARs:[/] {len(jar_files)}\n")
+        console_print(f"[bold]Module-path JARs:[/] {len(environment.module_path_jars)}")
+    console_print(f"[bold]Total JARs:[/] {len(jar_files)}\n")
 
     # Analyze each JAR
     jar_analyses = []
@@ -292,7 +287,7 @@ def print_java_info(environment: Environment) -> None:
         title="[bold]Java Version Requirements[/]",
         border_style="cyan",
     )
-    _console.print(summary_panel)
+    console_print(summary_panel)
 
     # Print per-JAR analysis in a table
     # Use NoWrapTable when wrap mode is "raw" to show full JAR names
@@ -321,23 +316,23 @@ def print_java_info(environment: Environment) -> None:
             str(total_classes),
         )
 
-    _console.print(table, soft_wrap=no_wrap)
+    console_print(table)
 
     # Print detailed breakdown for JARs with mixed bytecode versions
-    _console.print("\n[bold]Bytecode Version Details:[/]")
+    console_print("\n[bold]Bytecode Version Details:[/]")
     for jar_name, analysis in jar_analyses[:10]:  # Show first 10 for brevity
         java_ver = analysis["java_version"]
         version_counts = analysis["version_counts"]
 
         # Only show details if there are multiple bytecode versions
         if len(version_counts) > 1:
-            _console.print(f"\n[cyan]{jar_name}[/]")
+            console_print(f"\n[cyan]{jar_name}[/]")
 
             # Show distribution
             for bytecode_ver in sorted(version_counts.keys(), reverse=True):
                 count = version_counts[bytecode_ver]
                 java_v = bytecode_to_java_version(bytecode_ver)
-                _console.print(
+                console_print(
                     f"  Java {java_v:2d} (bytecode {bytecode_ver}): {count:5d} classes"
                 )
 
@@ -348,11 +343,11 @@ def print_java_info(environment: Environment) -> None:
                 (name, ver) for name, ver in high_classes if ver == max_ver
             ]
             if high_ver_only and len(high_ver_only) <= 5:
-                _console.print(f"  [dim]Classes requiring Java {java_ver}:[/]")
+                console_print(f"  [dim]Classes requiring Java {java_ver}:[/]")
                 for class_name, _ in high_ver_only:
-                    _console.print(f"    - {class_name}")
+                    console_print(f"    - {class_name}")
 
     if len(jar_analyses) > 10:
-        _console.print(
+        console_print(
             f"\n[dim]... and {len(jar_analyses) - 10} more JARs (showing first 10)[/]"
         )

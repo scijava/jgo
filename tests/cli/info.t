@@ -123,8 +123,7 @@ Test info javainfo with endpoint.
 
   $ jgo info javainfo com.google.guava:guava:33.0.0-jre
   
-  Environment: 
-  */.cache/jgo/envs/com/google/guava/guava/* (glob)
+  Environment: */.cache/jgo/envs/com/google/guava/guava/* (glob)
   Module-path JARs: 7
   Total JARs: 7
   

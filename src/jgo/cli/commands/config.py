@@ -3,21 +3,18 @@
 from __future__ import annotations
 
 import logging
-import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import rich_click as click
 from rich.markup import escape
 
+from ..console import console_print
+
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
-# Import console for styled output
-from ..console import get_console
-
 _log = logging.getLogger(__name__)
-_console = get_console()
 
 
 @click.group(help="Manage jgo configuration.", invoke_without_command=True)
@@ -112,7 +109,7 @@ def execute(
 def _list_config(config_file: Path, config_type: str, args: ParsedArgs) -> int:
     """List all configuration values."""
     if not config_file.exists():
-        _console.print(f"No {config_type} configuration file found at {config_file}")
+        console_print(f"No {config_type} configuration file found at {config_file}")
         return 0
 
     if config_type == "global":
@@ -127,30 +124,30 @@ def _list_jgorc(config_file: Path, args: ParsedArgs) -> int:
 
     settings = GlobalSettings.load(config_file)
 
-    _console.print(f"Configuration from {config_file}:")
-    _console.print()
+    console_print(f"Configuration from {config_file}:")
+    console_print()
 
     # Print [settings] section
     # Use escape() to prevent Rich from interpreting [...] as markup
-    _console.print(escape("[settings]"))
-    _console.print(f"  cache_dir = {settings.cache_dir}")
-    _console.print(f"  repo_cache = {settings.repo_cache}")
-    _console.print(f"  links = {settings.links}")
-    _console.print()
+    console_print(escape("[settings]"))
+    console_print(f"  cache_dir = {settings.cache_dir}")
+    console_print(f"  repo_cache = {settings.repo_cache}")
+    console_print(f"  links = {settings.links}")
+    console_print()
 
     # Print [repositories] section if any
     if settings.repositories:
-        _console.print(escape("[repositories]"))
+        console_print(escape("[repositories]"))
         for name, url in settings.repositories.items():
-            _console.print(f"  {name} = {url}")
-        _console.print()
+            console_print(f"  {name} = {url}")
+        console_print()
 
     # Print [shortcuts] section if any
     if settings.shortcuts:
-        _console.print(escape("[shortcuts]"))
+        console_print(escape("[shortcuts]"))
         for name, replacement in settings.shortcuts.items():
-            _console.print(f"  {name} = {replacement}")
-        _console.print()
+            console_print(f"  {name} = {replacement}")
+        console_print()
 
     return 0
 
@@ -163,23 +160,23 @@ def _list_toml(config_file: Path, args: ParsedArgs) -> int:
     if data is None:
         return 1
 
-    _console.print(f"Configuration from {config_file}:")
-    _console.print()
+    console_print(f"Configuration from {config_file}:")
+    console_print()
 
     # Show settings section
     # Use escape() to prevent Rich from interpreting [...] as markup
     if "settings" in data:
-        _console.print(escape("[settings]"))
+        console_print(escape("[settings]"))
         for key, value in data["settings"].items():
-            _console.print(f"  {key} = {value}")
-        _console.print()
+            console_print(f"  {key} = {value}")
+        console_print()
 
     # Show repositories
     if "repositories" in data:
-        _console.print(escape("[repositories]"))
+        console_print(escape("[repositories]"))
         for key, value in data["repositories"].items():
-            _console.print(f"  {key} = {value}")
-        _console.print()
+            console_print(f"  {key} = {value}")
+        console_print()
 
     return 0
 
@@ -189,9 +186,9 @@ def _get_config(config_file: Path, config_type: str, key: str, args: ParsedArgs)
     from ...config.settings import parse_config_key
 
     if not config_file.exists():
-        _console.print(
+        console_print(
             f"[red]Error:[/] No {config_type} configuration file found at {config_file}",
-            file=sys.stderr,
+            stderr=True,
         )
         return 1
 
@@ -331,12 +328,12 @@ def _set_toml(
     # Read existing file
     data = load_toml_file(config_file)
     if data is None:
-        _console.print(
+        console_print(
             f"[red]Error:[/] No local configuration file found at {config_file}",
-            file=sys.stderr,
+            stderr=True,
         )
-        _console.print(
-            "Run 'jgo init' to create a new environment file first.", file=sys.stderr
+        console_print(
+            "Run 'jgo init' to create a new environment file first.", stderr=True
         )
         return 1
 
@@ -370,9 +367,9 @@ def _unset_config(
     from ...config.settings import parse_config_key
 
     if not config_file.exists():
-        _console.print(
+        console_print(
             f"[red]Error:[/] No {config_type} configuration file found at {config_file}",
-            file=sys.stderr,
+            stderr=True,
         )
         return 1
 
@@ -392,9 +389,9 @@ def _unset_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) ->
     from ..output import handle_dry_run
 
     if not config_file.exists():
-        _console.print(
+        console_print(
             f"[red]Error:[/] No configuration file found at {config_file}",
-            file=sys.stderr,
+            stderr=True,
         )
         return 1
 

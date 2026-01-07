@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import rich_click as click
 
 from ...util import is_info_enabled
-from ..console import get_console, get_err_console
+from ..console import console_print
 
 if TYPE_CHECKING:
     from click import Context
@@ -18,8 +18,6 @@ if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
 _log = logging.getLogger(__name__)
-_console = get_console()
-_err_console = get_err_console()
 
 
 @click.command(name="shortcut", help="Manage global endpoint shortcuts.")
@@ -147,29 +145,29 @@ def _list_shortcuts(config_file: Path, config: dict, args: ParsedArgs) -> int:
     shortcuts = config.get("shortcuts", {})
 
     if not shortcuts:
-        _console.print("No shortcuts configured.")
-        _console.print()
-        _console.print("Add shortcuts with:")
-        _console.print("  jgo config shortcut NAME ENDPOINT")
-        _console.print()
-        _console.print("Example:")
-        _console.print(
+        console_print("No shortcuts configured.")
+        console_print()
+        console_print("Add shortcuts with:")
+        console_print("  jgo config shortcut NAME ENDPOINT")
+        console_print()
+        console_print("Example:")
+        console_print(
             "  jgo config shortcut repl org.scijava:scijava-common@ScriptREPL"
         )
         return 0
 
-    _console.print(f"Shortcuts from {config_file}:")
-    _console.print()
+    console_print(f"Shortcuts from {config_file}:")
+    console_print()
 
     # Find the longest shortcut name for alignment
     max_name_len = max(len(name) for name in shortcuts.keys())
 
     for name in sorted(shortcuts.keys()):
         endpoint = shortcuts[name]
-        _console.print(f"  {name:<{max_name_len}}  →  {endpoint}")
+        console_print(f"  {name:<{max_name_len}}  →  {endpoint}")
 
-    _console.print()
-    _console.print(f"Total: {len(shortcuts)} shortcut(s)")
+    console_print()
+    console_print(f"Total: {len(shortcuts)} shortcut(s)")
     return 0
 
 
@@ -179,11 +177,11 @@ def _show_shortcut(config_file: Path, config: dict, name: str, args: ParsedArgs)
 
     if name not in shortcuts:
         _log.error(f"Shortcut '{name}' not found")
-        _err_console.print("Use 'jgo config shortcut' to list all shortcuts")
+        console_print("Use 'jgo config shortcut' to list all shortcuts", stderr=True)
         return 1
 
     endpoint = shortcuts[name]
-    _console.print(f"{name} → {endpoint}")
+    console_print(f"{name} → {endpoint}")
     return 0
 
 
@@ -194,7 +192,7 @@ def _add_shortcut(config_file: Path, name: str, endpoint: str, args: ParsedArgs)
     # Validate shortcut name
     if not name or not name[0].isalnum():
         _log.error(f"Invalid shortcut name '{name}'")
-        _err_console.print("Shortcut names must start with a letter or number")
+        console_print("Shortcut names must start with a letter or number", stderr=True)
         return 1
 
     # Check if shortcut already exists
@@ -208,7 +206,7 @@ def _add_shortcut(config_file: Path, name: str, endpoint: str, args: ParsedArgs)
     if args.dry_run:
         action = "update" if is_update else "add"
         print_dry_run(f"Would {action} shortcut: {name} → {endpoint}")
-        _console.print(f"In file: {config_file}")
+        console_print(f"In file: {config_file}")
         return 0
 
     # Create shortcuts section if it doesn't exist
@@ -224,7 +222,7 @@ def _add_shortcut(config_file: Path, name: str, endpoint: str, args: ParsedArgs)
         parser.write(f)
 
     action = "Updated" if is_update else "Added"
-    _console.print(f"{action} shortcut: {name} → {endpoint}")
+    console_print(f"{action} shortcut: {name} → {endpoint}")
 
     if is_info_enabled():
         _log.info(f"Saved to: {config_file}")
@@ -271,7 +269,7 @@ def _remove_shortcut(config_file: Path, name: str, args: ParsedArgs) -> int:
     with open(config_file, "w") as f:
         parser.write(f)
 
-    _console.print(f"Removed shortcut: {name} → {endpoint}")
+    console_print(f"Removed shortcut: {name} → {endpoint}")
 
     if is_info_enabled():
         _log.info(f"Updated: {config_file}")

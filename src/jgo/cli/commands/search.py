@@ -11,14 +11,12 @@ from typing import TYPE_CHECKING
 import rich_click as click
 
 from ...util import is_info_enabled
-from ..console import get_console, get_err_console
+from ..console import console_print
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
 _log = logging.getLogger(__name__)
-_console = get_console()
-_err_console = get_err_console()
 
 
 @click.command(help="Search for artifacts in [magenta]Maven repositories[/].")
@@ -107,8 +105,9 @@ def execute(
     # For now, only support Maven Central
     # Future enhancement: support custom repositories
     if repository and repository != "central":
-        _err_console.print(
-            f"Error: Repository '{repository}' is not supported. Only 'central' is currently supported."
+        console_print(
+            f"Error: Repository '{repository}' is not supported. Only 'central' is currently supported.",
+            stderr=True,
         )
         return 1
 
@@ -128,7 +127,7 @@ def execute(
         results = _search_maven_central(query, limit)
 
         if not results:
-            _console.print(f"No artifacts found for query: {query}")
+            console_print(f"No artifacts found for query: {query}")
             return 0
 
         # Display results
@@ -209,8 +208,8 @@ def _display_results(results: list[dict]) -> None:
     """
     verbose = is_info_enabled()
 
-    _console.print(f"Found {len(results)} artifacts:")
-    _console.print()
+    console_print(f"Found {len(results)} artifacts:")
+    console_print()
 
     for i, result in enumerate(results, 1):
         group_id = result["group_id"]
@@ -221,7 +220,7 @@ def _display_results(results: list[dict]) -> None:
         from ...parse.coordinate import Coordinate
 
         coord = Coordinate(group_id, artifact_id, version)
-        _console.print(f"{i}. {coord.rich()}")
+        console_print(f"{i}. {coord.rich()}")
 
         if verbose:
             # Show additional details in verbose mode
@@ -229,10 +228,10 @@ def _display_results(results: list[dict]) -> None:
             description = result.get("description", "")
 
             if version_count > 1:
-                _console.print(f"   Available versions: {version_count}")
+                console_print(f"   Available versions: {version_count}")
 
             if description:
-                _console.print(f"   Packaging: {description}")
+                console_print(f"   Packaging: {description}")
 
             if "last_updated" in result:
                 # Convert timestamp to readable format
@@ -241,6 +240,6 @@ def _display_results(results: list[dict]) -> None:
                 from datetime import datetime
 
                 dt = datetime.fromtimestamp(timestamp / 1000)
-                _console.print(f"   Last updated: {dt.strftime('%Y-%m-%d')}")
+                console_print(f"   Last updated: {dt.strftime('%Y-%m-%d')}")
 
-        _console.print()
+        console_print()

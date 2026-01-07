@@ -39,8 +39,7 @@ The table should be as wide as it needs to be to fully render the content.
 
   $ jgo --color=plain --wrap=raw info javainfo com.google.guava:guava:33.0.0-jre
   
-  Environment: 
-  /Users/curtis/.cache/jgo/envs/com/google/guava/guava/d1c57891c188d58a
+  Environment: */envs/com/google/guava/guava/d1c57891c188d58a (glob)
   Module-path JARs: 7
   Total JARs: 7
   
@@ -70,7 +69,7 @@ Ellipses should be used to keep table width within terminal width (80 chars).
   $ jgo --color=plain --wrap=smart info javainfo com.google.guava:guava:33.0.0-jre
   
   Environment: 
-  /Users/curtis/.cache/jgo/envs/com/google/guava/guava/d1c57891c188d58a
+  */envs/com/google/guava/guava/d1c57891c188d58a (glob)
   Module-path JARs: 7
   Total JARs: 7
   
@@ -97,8 +96,7 @@ Ellipses should be used to keep table width within terminal width (80 chars).
 
   $ jgo --color=styled --wrap=raw info javainfo com.google.guava:guava:33.0.0-jre
   
-  Environment: 
-  /Users/curtis/.cache/jgo/envs/com/google/guava/guava/d1c57891c188d58a
+  Environment: */envs/com/google/guava/guava/d1c57891c188d58a (glob)
   Module-path JARs: 7
   Total JARs: 7
   
@@ -125,7 +123,7 @@ Ellipses should be used to keep table width within terminal width (80 chars).
   $ jgo --color=styled --wrap=smart info javainfo com.google.guava:guava:33.0.0-jre
   
   Environment: 
-  /Users/curtis/.cache/jgo/envs/com/google/guava/guava/d1c57891c188d58a
+  */envs/com/google/guava/guava/d1c57891c188d58a (glob)
   Module-path JARs: 7
   Total JARs: 7
   
@@ -151,8 +149,7 @@ Ellipses should be used to keep table width within terminal width (80 chars).
 
   $ jgo --color=rich --wrap=raw info javainfo com.google.guava:guava:33.0.0-jre
   
-  \x1b[1mEnvironment:\x1b[0m  (esc)
-  \x1b[35m/Users/curtis/.cache/jgo/envs/com/google/guava/guava/\x1b[0m\x1b[95md1c57891c188d58a\x1b[0m (esc)
+  \x1b[1mEnvironment:\x1b[0m \x1b[35m*/envs/com/google/guava/guava/\x1b[0m\x1b[95md1c57891c188d58a\x1b[0m (esc) (glob)
   \x1b[1mModule-path JARs:\x1b[0m \x1b[1;36m7\x1b[0m (esc)
   \x1b[1mTotal JARs:\x1b[0m \x1b[1;36m7\x1b[0m (esc)
   
@@ -179,7 +176,7 @@ Ellipses should be used to keep table width within terminal width (80 chars).
   $ jgo --color=rich --wrap=smart info javainfo com.google.guava:guava:33.0.0-jre
   
   \x1b[1mEnvironment:\x1b[0m  (esc)
-  \x1b[35m/Users/curtis/.cache/jgo/envs/com/google/guava/guava/\x1b[0m\x1b[95md1c57891c188d58a\x1b[0m (esc)
+  \x1b[35m*/envs/com/google/guava/guava/\x1b[0m\x1b[95md1c57891c188d58a\x1b[0m (esc) (glob)
   \x1b[1mModule-path JARs:\x1b[0m \x1b[1;36m7\x1b[0m (esc)
   \x1b[1mTotal JARs:\x1b[0m \x1b[1;36m7\x1b[0m (esc)
   
