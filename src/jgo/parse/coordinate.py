@@ -87,7 +87,7 @@ class Coordinate:
         - packaging: default color
         - classifier: default color
         - scope: dim
-        - colons: dim (prevents emoji substitution like :fiji: → 🇫🇯)
+        - colons: dim
 
         The markup is automatically stripped by Rich when --color=plain is used.
 
@@ -316,7 +316,7 @@ def coord2str(
     rich_p = tag(packaging, None)
     rich_s = tag(scope, None)
     opt = tag("(optional)", "dim")
-    colon = tag(":", "dim")  # Prevents emojification (e.g., :fiji: → 🇫🇯)
+    colon = tag(":", "dim")
     bang = tag("!", "dim")
     cp = tag("(c)", "dim")
     mp = tag("(m)", "dim")
