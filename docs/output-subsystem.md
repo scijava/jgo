@@ -71,7 +71,7 @@ src/jgo/
 
 **Channel**: stderr (via `_err_console` or Python logging)
 
-**Control**: 
+**Control**:
 - Verbosity level: `-v` (INFO), `-vv` (DEBUG)
 - Suppression: `--quiet` (suppresses all logging)
 - Color/style: `--color` flag
@@ -94,28 +94,32 @@ _log.error("Failed to load jgo.toml")              # always (unless --quiet)
 
 **Purpose**: Produce structured information for consumption by users or other tools
 
-**Channel**: stdout (via `print()` or `_console.print()`)
+**Channel**: stdout (via `console_print()`)
 
 **Control**:
 - Suppression: `--quiet` (suppresses all output including data)
-- Color/style: `--color` flag
-- Wrapping: `--wrap` flag (`auto` for TTY detection, `smart` for word-boundary wrapping, `raw` for natural terminal wrapping)
+- Color/style: `--color` flag (automatically respected)
+- Wrapping: `--wrap` flag (automatically handled) - `auto` for TTY detection, `smart` for word-boundary wrapping, `raw` for natural terminal wrapping
 
-**Examples**:
+**Both raw and formatted data use the same function**:
 ```python
-# Raw data (machine-parseable) - use print()
+from ..console import console_print
+
+# Raw data (machine-parseable) - use console_print()
 for jar_path in environment.class_path_jars:
-    print(jar_path)
+    console_print(jar_path)
 
-# Formatted data (human-friendly) - use _console.print()
-from ..util.console import get_console
-_console = get_console()
+# Formatted data (human-friendly) - use console_print() with Rich markup
+console_print("[cyan]Dependencies:[/]")
+console_print(f"  {dependency_count} resolved")
 
-_console.print("[cyan]Dependencies:[/]")
-_console.print(f"  {dependency_count} resolved")
+# Works correctly for piping:
+# - With --color=plain: outputs plain text, no ANSI codes
+# - With --color=rich: outputs colored text for TTY
+# - Works with pipes and file redirection automatically
 ```
 
-**When to use**: Outputting requested information (classpaths, dependency lists, version info, search results).
+**When to use**: Outputting requested information (classpaths, dependency lists, version info, search results). The `console_print()` function automatically respects all color and wrap settings, so it works correctly for both interactive terminal use and scripting via pipes.
 
 ## Console Management
 
@@ -213,10 +217,9 @@ _log.info("Added 3 dependencies")
 # ❌ Don't use markup in log messages (won't work)
 _log.debug("[cyan]Processing[/] sc.fiji:fiji:2.17.0")  # Tags shown literally
 
-# ✅ For styled user messages, use console.print() instead
-from ..util.console import get_console
-_console = get_console()
-_console.print("[cyan]Processing:[/] sc.fiji:fiji:2.17.0")
+# ✅ For styled user messages, use console_print() instead
+from ..console import console_print
+console_print("[cyan]Processing:[/] sc.fiji:fiji:2.17.0")
 ```
 
 **Note:** If you need to include text with literal square brackets (e.g., `[settings]` section names) in console output, use `rich.markup.escape()` to prevent misinterpretation as markup tags.
@@ -259,53 +262,60 @@ High-level output functions for CLI commands that produce data.
 
 **`print_dry_run(message: str)`**
 - Prints a cyan `[DRY-RUN]` prefixed message
-- Uses `_console.print()` → stdout
+- Uses `console_print()` → stdout
 - Example: `[DRY-RUN] Would add 5 dependencies`
 
 #### Data Output Functions
 
 All data output functions use a consistent pattern:
-- Print actual data with `print()` (raw, no Rich formatting) for machine-parseability
-- Print headers/messages with `_console.print()` or `_err_console.print()` (Rich formatted)
-- Send errors to `_err_console` (stderr)
+- Print all data (raw and formatted) with `console_print()`
+- Print headers/messages with `console_print()` (Rich markup is supported)
+- Send errors to `_err_console` or `console_print(..., stderr=True)` (stderr)
+
+The `console_print()` function automatically respects `--color` and `--wrap` flags, so the same code works for both interactive terminal use and piping.
 
 **`print_classpath(environment)`**
 - Prints classpath JARs, one per line
-- Uses `print()` for actual paths → stdout (pipeable!)
-- Uses `_err_console.print()` for errors → stderr
+- Uses `console_print()` for actual paths → stdout
+- With `--color=plain`: outputs paths without ANSI codes (perfect for piping)
+- With `--color=rich`: outputs colored paths for TTY
+- Errors go to stderr
 
 **`print_modulepath(environment)`**
 - Prints module-path JARs, one per line
-- Same pattern: `print()` for data, `_err_console` for errors
+- Same pattern: all output uses `console_print()`
 
 **`print_jars(environment)`**
 - Prints both classpath and module-path JARs with headers
-- Headers use `_console.print()` with Rich markup
-- JARs use `print()` for machine-parseability
+- Headers use `console_print()` with Rich markup
+- JARs use `console_print()`
+- All output respects color and wrap settings
 
 **`print_main_classes(environment)`**
 - Scans JARs for classes with main methods
 - Groups by JAR name, pretty-printed with Rich
+- Uses `console_print()` for formatted output
 
 **`pom` command (in `cli/commands/info.py`)**
 - Shows POM content with syntax highlighting
-- Uses `console.print()` directly (not Rich Syntax object)
+- Uses `console_print()` with XML string directly (not a Rich Syntax object)
 - Behavior by color mode:
   - `plain` or `auto` (non-TTY): Plain XML without ANSI codes
   - `rich` or `auto` (TTY): Colored XML with basic highlighting (tags, slashes)
   - `styled`: Plain XML (Rich's no_color mode limitation - no syntax highlighting)
-- Respects `--wrap` mode via `soft_wrap` parameter
+- Respects `--wrap` mode via automatic `soft_wrap` handling in `console_print()`
 
 **`print_dependencies(components, context, boms, list_mode, direct_only)`**
 - Prints dependency list (flat) or tree
-- List mode: Uses `format_dependency_list_rich()` → colored lines
-- Tree mode: Uses `format_dependency_tree_rich()` → Rich Tree (NoWrapTree variant for raw mode)
-- Respects `--wrap` mode by passing `soft_wrap` parameter to `console.print()`
+- List mode: Uses `format_dependency_list()` → colored lines via `console_print()`
+- Tree mode: Uses `format_dependency_tree()` → Rich Tree (NoWrapTree variant for raw mode)
+- Respects `--wrap` mode via automatic `soft_wrap` handling in `console_print()`
 
 **`print_java_info(environment)`**
 - Analyzes bytecode to determine Java requirements
 - Uses Rich Panel, Table (NoWrapTable variant for raw mode), and formatted output
-- Respects `--wrap` mode for table column widths
+- Uses `console_print()` for all output
+- Respects `--wrap` mode automatically
 
 **`handle_dry_run(args, message) -> bool`**
 - Checks for dry-run mode and prints message if active
@@ -354,17 +364,17 @@ All data output functions use a consistent pattern:
 
 Formats dependency data as trees and lists with Rich markup.
 
-**`format_dependency_list_rich(root, dependencies) -> list[str]`**
+**`format_dependency_list(root, dependencies) -> list[str]`**
 - Rich markup formatting with colors:
   - Cyan: groupId
   - Bold: artifactId
   - Green: version
 - Returns list of formatted lines
 
-**`format_dependency_tree_rich(root, no_wrap=False) -> Tree`**
+**`format_dependency_tree(root, no_wrap=False) -> Tree`**
 - Rich Tree object with colored nodes
 - Uses `NoWrapTree` if `no_wrap=True`
-- Returns Rich Tree for printing with `console.print(tree, soft_wrap=no_wrap)`
+- Returns Rich Tree for printing with `console_print(tree)`
 
 ## Rich Integration
 
@@ -384,7 +394,7 @@ Formats dependency data as trees and lists with Rich markup.
 - Provides two Console instances: stdout and stderr
 - Configured at startup based on `--color`, `--quiet`, `--wrap`
 - Both consoles respect the same color settings
-- Wrap mode is applied per-call via `soft_wrap` parameter to `console.print()`
+- Wrap mode is applied per-call via `soft_wrap` parameter to `console_print()`
 
 ### Custom Rich Components
 
@@ -394,13 +404,13 @@ Formats dependency data as trees and lists with Rich markup.
 - Tree that renders with unlimited width when printed with `soft_wrap=True`
 - Allows full dependency names to wrap naturally at terminal edge
 - Used when `--wrap=raw` flag is set
-- Combined with `console.print(tree, soft_wrap=True)` for natural wrapping
+- Combined with `console_print(tree)` for natural wrapping
 
 **`NoWrapTable(Table)`**
 - Table that renders with unlimited width when printed with `soft_wrap=True`
 - Allows full column content without truncation, wrapping naturally
 - Used when `--wrap=raw` flag is set
-- Combined with `console.print(table, soft_wrap=True)` for natural wrapping
+- Combined with `console_print(table)` for natural wrapping
 
 **`create_tree(label, no_wrap=False, **kwargs) -> Tree | NoWrapTree`**
 - Factory function: returns NoWrapTree if `no_wrap=True`, else Tree
@@ -410,7 +420,7 @@ Formats dependency data as trees and lists with Rich markup.
 
 ### Wrap Mode Implementation
 
-Wrap modes are implemented by passing the `soft_wrap` parameter to `console.print()`:
+Wrap modes are implemented in `console_print()` by passing the `soft_wrap` parameter to `console.print()`:
 
 **Auto mode** (`--wrap=auto`, default):
 - Resolved at startup in `setup_consoles()` using `console.is_terminal`
@@ -440,7 +450,7 @@ wrap_mode = get_wrap_mode()  # Returns "smart" or "raw"
 no_wrap = wrap_mode == "raw"
 
 # For trees
-rich_tree = format_dependency_tree_rich(tree, no_wrap=no_wrap)
+rich_tree = format_dependency_tree(tree, no_wrap=no_wrap)
 console.print(rich_tree, soft_wrap=no_wrap)
 
 # For tables
@@ -461,15 +471,18 @@ console.print(xml_output, soft_wrap=(wrap_mode == "raw"))
 
 1. **Logging in resolvers/builders**: `maven/resolver.py`, `env/builder.py` properly use `_log.debug()`, `_log.info()`, `_log.warning()`, `_log.error()` for progress reporting
 
-2. **Data output in CLI commands**: Commands like `print_classpath()` use `print()` for actual data (machine-parseable) and `_console.print()` for headers/messages
+2. **Unified data output**: All CLI commands use `console_print()` for data output (both raw and formatted)
+   - Example: `print_classpath()` uses `console_print()` for paths
+   - Works correctly for piping with `--color=plain` and interactive use with colors
 
 3. **Separation of channels**: All code correctly sends logging to stderr and data to stdout
+   - Use `console_print(..., stderr=True)` or `_err_console.print()` for stderr output
 
 4. **Module-level loggers**: All modules create loggers as `_log = logging.getLogger(__name__)`
 
 5. **Helper functions organized**: Functions moved to appropriate modules (config, logging, util, env)
 
-6. **Config command fixed**: Now uses `_console.print()` for formatted output and `_log.debug()` for verbose messages
+6. **Output consistency**: All commands use `console_print()` for formatted output
 
 #### ⚠️ Remaining Issues
 
@@ -479,34 +492,31 @@ console.print(xml_output, soft_wrap=(wrap_mode == "raw"))
    - `env/builder.py`: No logging for JAR linking operations
    - `cli/commands/sync.py`: Minimal progress reporting during sync
 
-2. **Some commands still use plain `print()` for messages**:
-   - `cli/commands/search.py`: Uses `print()` for result display (should arguably use `_console.print()` with highlight=False)
-   - Some config error messages could benefit from Rich formatting
-
-3. **No progress bars**: Long operations (downloads, linking) have no visual feedback
+2. **No progress bars**: Long-running operations don't have visual progress indicators
+   - Recommendation: Add Rich Progress bars shown at `-v` verbosity level
 
 ### Best Practices
 
-#### When to Use `print()` vs `_console.print()` vs Logging
+#### When to Use `console_print()` vs `_err_console.print()` vs Logging
 
-After refactoring and testing, here's the **verified clean output approach**:
+After refactoring and testing, here's the **verified unified output approach**:
 
-**Use `print()`** for:
-- ✅ Machine-parseable data (classpaths, coordinates)
+**Use `console_print()`** for:
+- ✅ All stdout data output (machine-parseable classpaths, coordinates)
 - ✅ Data intended for piping to other tools
-- ✅ Simple, unformatted output where styling adds no value
-
-**Use `_console.print()`** for:
 - ✅ Headers, labels, section dividers
 - ✅ Formatted/styled output (colors, bold, etc.)
 - ✅ Messages to the user (but not progress → use logging!)
 - ✅ Dry-run messages
+- ✅ Both raw and formatted data - `console_print()` handles all cases
 - ⚠️ **Important**: Use `rich.markup.escape()` for text containing `[...]` that should be printed literally (e.g., `[settings]` section headers)
+- **How it works**: Automatically respects `--color` and `--wrap` flags, making it safe for piping to other tools
 
-**Use `_err_console.print()`** for:
+**Use `console_print(..., stderr=True)` or `_err_console.print()`** for:
 - ✅ Error messages that aren't Python exceptions
 - ✅ Warnings that aren't part of logging
 - ✅ Tips/hints to the user about errors
+- ✅ Output that should go to stderr instead of stdout
 
 **Use logging (`_log.*`)** for:
 - ✅ Progress reporting ("Resolving dependencies...")
@@ -519,18 +529,19 @@ After refactoring and testing, here's the **verified clean output approach**:
 #### Systematic Approach
 
 ```python
-# === Data Output Pattern ===
-from ..util.console import get_console
-_console = get_console()
+# === Data Output Pattern (unified approach) ===
+from ..console import console_print
 
 def print_some_data(data):
-    """Print data for consumption."""
-    # Headers and labels: Rich formatted
-    _console.print("[cyan]Results:[/]")
-    
-    # Actual data: Plain print for machine-parseability
+    """Print data for consumption (works for both raw and formatted output)."""
+    # Headers and labels: Rich formatted with console_print()
+    console_print("[cyan]Results:[/]")
+
+    # Actual data: Also use console_print() - it automatically handles color modes
+    # With --color=plain: outputs plain text, no ANSI codes (perfect for piping)
+    # With --color=rich: outputs colored text for TTY
     for item in data:
-        print(item)
+        console_print(item)
 
 # === Text with Square Brackets Pattern ===
 from rich.markup import escape
@@ -538,8 +549,14 @@ from rich.markup import escape
 def print_config_section():
     """Print configuration with section headers like [settings]."""
     # Use escape() to prevent Rich from interpreting [...] as markup
-    _console.print(escape("[settings]"))
-    _console.print(f"  cache_dir = {cache_dir}")
+    console_print(escape("[settings]"))
+    console_print(f"  cache_dir = {cache_dir}")
+
+# === Data to stderr Pattern ===
+def print_error_info():
+    """Print diagnostic info to stderr."""
+    console_print("Diagnostic information:", stderr=True)
+    console_print(f"  Error code: 42", stderr=True)
 
 # === Progress Reporting Pattern ===
 import logging
@@ -548,11 +565,11 @@ _log = logging.getLogger(__name__)
 def do_operation(args):
     """Perform an operation with progress reporting."""
     _log.info("Starting operation...")
-    
+
     for item in items:
         _log.debug(f"Processing {item}")
         # do work
-    
+
     _log.info(f"Completed: processed {len(items)} items")
 
 # === Error Handling Pattern ===
@@ -569,7 +586,7 @@ def command_with_errors(args):
         _log.error(f"Operation failed: {e}")
         log_exception_if_verbose(args.verbose)
         return 1
-    
+
     return 0
 ```
 
@@ -582,24 +599,28 @@ def command_with_errors(args):
    - `load_toml_file` → `util/toml.py`
    - `print_exception_if_verbose` → `util/logging.py` as `log_exception_if_verbose()`
 
-2. **✅ Fixed config command**: Converted to use `_console.print()` for formatted output and proper logging
+2. **✅ Fixed config command**: Converted to use `console_print()` for formatted output and proper logging
 
 3. **✅ Removed deprecated functions**: `verbose_print()` and `verbose_multiline()` removed
 
-4. **✅ Verified clean output**: Tested that `_console.print()` with `--color=plain` produces no ANSI codes
+4. **✅ Verified clean output**: Tested that `console_print()` with `--color=plain` produces no ANSI codes
+
+5. **✅ Unified output approach**: All data output now uses `console_print()` instead of plain `print()`
+   - `console_print()` function in `cli/console.py` automatically handles `--color` and `--wrap` flags
+   - Both raw and formatted data use the same function
+   - Piping works correctly: `--color=plain` produces machine-parseable output, `--color=rich` adds colors for TTY
+   - No distinction between "pure data" and "formatted data" - one unified approach
 
 ### Recommendations for Future Work
 
-1. **Convert search command output**: Change `cli/commands/search.py` to use `_console.print()` for formatted output
-
-2. **Add progress logging**: 
+1. **Add progress logging**:
    - `maven/resolver.py`: Use `_log.info()` for all downloads (not just snapshots)
    - `env/builder.py`: Add `_log.info()` for JAR linking progress
    - `cli/commands/sync.py`: Add `_log.info()` for resolution steps
 
-3. **Add Rich Progress bars** (see Progress Bars section below)
-
-4. **Standardize on `_console.print()` everywhere**: Consider using `_console.print()` with `highlight=False` even for data output, with documentation that scripts should use `--color=plain`
+2. **Add Rich Progress bars** (see Progress Bars section below)
+   - Complements logging with visual progress indicators
+   - Shown at `-v` verbosity level
 
 ## Progress Bars
 
@@ -750,22 +771,20 @@ jgo's output subsystem provides:
 - ✅ Flexible color/style control via `--color` flag
 - ✅ Consistent verbosity control via `-v` flags
 - ✅ Rich formatting for beautiful terminal output
-- ✅ Machine-parseable data output via plain `print()` or `_console.print()` with `--color=plain`
+- ✅ **Unified output via `console_print()`**: Machine-parseable data and formatted output use the same function
+  - With `--color=plain --wrap=raw`: outputs clean, pipeable data
+  - With `--color=rich --wrap=smart`: outputs colored text for interactive use
 - ✅ Well-organized helper functions in appropriate modules
-- ✅ Config command using proper output methods
+- ✅ All commands using proper output methods
 - ✅ Deprecated functions removed
 - ⚠️ Could benefit from progress bars for long operations
 - ⚠️ Could benefit from more INFO-level logging for user feedback
 
 **Completed in this refactoring**:
 1. ✅ Moved helper functions to appropriate modules
-2. ✅ Fixed config command output to use `_console.print()` and logging
+2. ✅ Fixed config command output to use `console_print()` and logging
 3. ✅ Removed `verbose_print()` and `verbose_multiline()`
 4. ✅ Added `log_exception_if_verbose()` to util/logging.py
-5. ✅ Verified `_console.print()` produces clean output with `--color=plain`
-6. ✅ All 502 tests passing
-
-**Next steps**:
-1. Add Rich Progress bars for downloads and linking operations
-2. Increase INFO-level logging for better user feedback
-3. Consider standardizing on `_console.print()` everywhere for consistency
+5. ✅ Verified `console_print()` produces clean output with `--color=plain`
+6. ✅ Unified all data output to use `console_print()` instead of `print()` or `_console.print()`
+7. ✅ All tests passing
