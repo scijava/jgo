@@ -68,9 +68,9 @@ def print_classpath(environment: Environment) -> None:
         )
         return
 
-    # Print one classpath element per line (raw output, no Rich formatting)
+    # Print one classpath element per line
     for jar_path in class_path_jars:
-        print(jar_path)
+        console_print(jar_path)
 
 
 def print_modulepath(environment: Environment) -> None:
@@ -89,9 +89,9 @@ def print_modulepath(environment: Environment) -> None:
         )
         return
 
-    # Print one module-path element per line (raw output, no Rich formatting)
+    # Print one module-path element per line
     for jar_path in module_jars:
-        print(jar_path)
+        console_print(jar_path)
 
 
 def print_jars(environment: Environment) -> None:
@@ -112,7 +112,7 @@ def print_jars(environment: Environment) -> None:
     if cp_jars:
         console_print("[bold cyan]Classpath:[/]")
         for jar_path in cp_jars:
-            print(jar_path)
+            console_print(jar_path)
     else:
         console_print("[yellow]No classpath JARs[/]")
 
@@ -123,7 +123,7 @@ def print_jars(environment: Environment) -> None:
         else:
             console_print("[bold cyan]Module-path:[/]")
         for jar_path in mp_jars:
-            print(jar_path)
+            console_print(jar_path)
     else:
         console_print("[yellow]No module-path JARs[/]")
 

@@ -180,49 +180,49 @@ Test info manifest with endpoint.
 Test info manifest --raw flag.
 
   $ jgo info manifest --raw com.google.guava:guava:33.0.0-jre
-  Manifest-Version: 1.0\r (esc)
-  Automatic-Module-Name: com.google.common\r (esc)
-  Build-Jdk-Spec: 11\r (esc)
-  Bundle-Description: Guava is a suite of core and expanded libraries th\r (esc)
-   at include    utility classes, Google's collections, I/O classes, and\r (esc)
-       much more.\r (esc)
-  Bundle-DocURL: https://github.com/google/guava/\r (esc)
-  Bundle-License: http://www.apache.org/licenses/LICENSE-2.0.txt\r (esc)
-  Bundle-ManifestVersion: 2\r (esc)
-  Bundle-Name: Guava: Google Core Libraries for Java\r (esc)
-  Bundle-SymbolicName: com.google.guava\r (esc)
-  Bundle-Version: 33.0.0.jre\r (esc)
-  Created-By: Apache Maven Bundle Plugin 5.1.8\r (esc)
-  Export-Package: com.google.common.annotations;version="33.0.0",com.goo\r (esc)
-   gle.common.base;version="33.0.0";uses:="javax.annotation",com.google.\r (esc)
-   common.cache;version="33.0.0";uses:="com.google.common.base,com.googl\r (esc)
-   e.common.collect,com.google.common.util.concurrent,javax.annotation",\r (esc)
-   com.google.common.collect;version="33.0.0";uses:="com.google.common.b\r (esc)
-   ase,javax.annotation",com.google.common.escape;version="33.0.0";uses:\r (esc)
-   ="com.google.common.base,javax.annotation",com.google.common.eventbus\r (esc)
-   ;version="33.0.0",com.google.common.graph;version="33.0.0";uses:="com\r (esc)
-   .google.common.collect,javax.annotation",com.google.common.hash;versi\r (esc)
-   on="33.0.0";uses:="com.google.common.base,javax.annotation",com.googl\r (esc)
-   e.common.html;version="33.0.0";uses:="com.google.common.escape",com.g\r (esc)
-   oogle.common.io;version="33.0.0";uses:="com.google.common.base,com.go\r (esc)
-   ogle.common.collect,com.google.common.graph,com.google.common.hash,ja\r (esc)
-   vax.annotation",com.google.common.math;version="33.0.0";uses:="javax.\r (esc)
-   annotation",com.google.common.net;version="33.0.0";uses:="com.google.\r (esc)
-   common.base,com.google.common.collect,com.google.common.escape,javax.\r (esc)
-   annotation",com.google.common.primitives;version="33.0.0";uses:="com.\r (esc)
-   google.common.base,javax.annotation",com.google.common.reflect;versio\r (esc)
-   n="33.0.0";uses:="com.google.common.collect,com.google.common.io,java\r (esc)
-   x.annotation",com.google.common.util.concurrent;version="33.0.0";uses\r (esc)
-   :="com.google.common.base,com.google.common.collect,com.google.common\r (esc)
-   .util.concurrent.internal,javax.annotation",com.google.common.xml;ver\r (esc)
-   sion="33.0.0";uses:="com.google.common.escape"\r (esc)
-  Import-Package: com.google.common.util.concurrent.internal;version="[1\r (esc)
-   .0,2)",javax.annotation;resolution:=optional;version="[3.0,4)",javax.\r (esc)
-   crypto;resolution:=optional,javax.crypto.spec;resolution:=optional,su\r (esc)
-   n.misc;resolution:=optional\r (esc)
-  Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"\r (esc)
-  Tool: Bnd-6.3.1.202206071316\r (esc)
-  \r (esc)
+  Manifest-Version: 1.0
+  Automatic-Module-Name: com.google.common
+  Build-Jdk-Spec: 11
+  Bundle-Description: Guava is a suite of core and expanded libraries th
+   at include    utility classes, Google's collections, I/O classes, and
+       much more.
+  Bundle-DocURL: https://github.com/google/guava/
+  Bundle-License: http://www.apache.org/licenses/LICENSE-2.0.txt
+  Bundle-ManifestVersion: 2
+  Bundle-Name: Guava: Google Core Libraries for Java
+  Bundle-SymbolicName: com.google.guava
+  Bundle-Version: 33.0.0.jre
+  Created-By: Apache Maven Bundle Plugin 5.1.8
+  Export-Package: com.google.common.annotations;version="33.0.0",com.goo
+   gle.common.base;version="33.0.0";uses:="javax.annotation",com.google.
+   common.cache;version="33.0.0";uses:="com.google.common.base,com.googl
+   e.common.collect,com.google.common.util.concurrent,javax.annotation",
+   com.google.common.collect;version="33.0.0";uses:="com.google.common.b
+   ase,javax.annotation",com.google.common.escape;version="33.0.0";uses:
+   ="com.google.common.base,javax.annotation",com.google.common.eventbus
+   ;version="33.0.0",com.google.common.graph;version="33.0.0";uses:="com
+   .google.common.collect,javax.annotation",com.google.common.hash;versi
+   on="33.0.0";uses:="com.google.common.base,javax.annotation",com.googl
+   e.common.html;version="33.0.0";uses:="com.google.common.escape",com.g
+   oogle.common.io;version="33.0.0";uses:="com.google.common.base,com.go
+   ogle.common.collect,com.google.common.graph,com.google.common.hash,ja
+   vax.annotation",com.google.common.math;version="33.0.0";uses:="javax.
+   annotation",com.google.common.net;version="33.0.0";uses:="com.google.
+   common.base,com.google.common.collect,com.google.common.escape,javax.
+   annotation",com.google.common.primitives;version="33.0.0";uses:="com.
+   google.common.base,javax.annotation",com.google.common.reflect;versio
+   n="33.0.0";uses:="com.google.common.collect,com.google.common.io,java
+   x.annotation",com.google.common.util.concurrent;version="33.0.0";uses
+   :="com.google.common.base,com.google.common.collect,com.google.common
+   .util.concurrent.internal,javax.annotation",com.google.common.xml;ver
+   sion="33.0.0";uses:="com.google.common.escape"
+  Import-Package: com.google.common.util.concurrent.internal;version="[1
+   .0,2)",javax.annotation;resolution:=optional;version="[3.0,4)",javax.
+   crypto;resolution:=optional,javax.crypto.spec;resolution:=optional,su
+   n.misc;resolution:=optional
+  Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
+  Tool: Bnd-6.3.1.202206071316
+  
 
 Test info pom requires endpoint.
 

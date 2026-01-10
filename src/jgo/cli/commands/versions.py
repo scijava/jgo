@@ -71,7 +71,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
         # Get available versions
         metadata = project.metadata
         if not metadata or not metadata.versions:
-            # Use rich() for styled output
             console_print(f"No versions found for {coord.rich()}")
             return 0
 
@@ -79,15 +78,14 @@ def execute(args: ParsedArgs, config: dict) -> int:
         release_version = project.release
         latest_version = project.latest
 
-        # Data output - use str() for plain text (no Rich markup)
-        print(f"Available versions for {coord}:")
+        console_print(f"Available versions for {coord.rich()}:")
         for version in metadata.versions:
             marker = ""
             if release_version and version == release_version:
                 marker = " (release)"
             elif latest_version and version == latest_version:
                 marker = " (latest)"
-            print(f"  {version}{marker}")
+            console_print(f"  {version}[dim]{marker}[/]")
 
     except Exception as e:
         _log.error(f"Error fetching versions: {e}")

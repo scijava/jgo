@@ -8,7 +8,7 @@ from pathlib import Path
 import rich_click as click
 
 from ...parse.coordinate import Coordinate
-from ..console import console_print, get_color_mode
+from ..console import console_print
 
 _log = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ def envdir(ctx, endpoint):
             ctx.exit(1)
         environment = builder.from_endpoint(endpoint, update=args.update)
 
-    print(environment.path)
+    console_print(environment.path)
     ctx.exit(0)
 
 
@@ -327,7 +327,7 @@ def manifest(ctx, endpoint, raw):
             if manifest_content is None:
                 _log.error(f"No MANIFEST.MF found in {jar_path}")
                 ctx.exit(1)
-            print(manifest_content, end="")
+            console_print(manifest_content, end="")
         else:
             manifest_dict = parse_manifest(jar_path)
             if manifest_dict is None:
@@ -336,7 +336,7 @@ def manifest(ctx, endpoint, raw):
 
             # Display parsed manifest
             for key, value in manifest_dict.items():
-                print(f"{key}: {value}")
+                console_print(f"{key}: {value}")
 
     except SystemExit:
         raise
@@ -401,12 +401,7 @@ def pom(ctx, endpoint):
             # If pretty-printing fails, use raw content
             xml_output = pom_content
 
-        # Disable highlighting for plain mode
-        # (Rich automatically disables syntax highlighting when piping in auto mode)
-        use_highlighting = get_color_mode() != "plain"
-
-        # console_print auto-sets soft_wrap based on wrap mode
-        console_print(xml_output, highlight=use_highlighting)
+        console_print(xml_output)
 
     except SystemExit:
         raise

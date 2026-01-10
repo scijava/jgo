@@ -210,23 +210,23 @@ def _get_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) -> i
     # Get value based on section
     if section == "settings":
         if key == "cache_dir":
-            print(settings.cache_dir)
+            console_print(settings.cache_dir)
         elif key == "repo_cache":
-            print(settings.repo_cache)
+            console_print(settings.repo_cache)
         elif key == "links":
-            print(settings.links)
+            console_print(settings.links)
         else:
             _log.error(f"Unknown setting: {key}")
             return 1
     elif section == "repositories":
         if key in settings.repositories:
-            print(settings.repositories[key])
+            console_print(settings.repositories[key])
         else:
             _log.error(f"Repository '{key}' not found")
             return 1
     elif section == "shortcuts":
         if key in settings.shortcuts:
-            print(settings.shortcuts[key])
+            console_print(settings.shortcuts[key])
         else:
             _log.error(f"Shortcut '{key}' not found")
             return 1
@@ -254,7 +254,7 @@ def _get_toml(config_file: Path, section: str, key: str, args: ParsedArgs) -> in
         return 1
 
     value = data[section][key]
-    print(value)
+    console_print(value)
     return 0
 
 
