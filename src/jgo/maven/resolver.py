@@ -13,10 +13,6 @@ from typing import TYPE_CHECKING
 import requests
 
 from .core import Dependency, DependencyNode, create_pom
-from .dependency_printer import (
-    format_dependency_list,
-    format_dependency_tree,
-)
 from .model import Model, ProfileConstraints
 from .pom import write_temp_pom
 
@@ -226,64 +222,6 @@ class Resolver(ABC):
             recursively to form the complete dependency tree.
         """
         ...
-
-    def format_dependency_list(
-        self,
-        components: list[Component] | Component,
-        managed: bool = False,
-        boms: list[Component] | None = None,
-        transitive: bool = True,
-        optional_depth: int = 0,
-    ) -> str:
-        """
-        Format a flat list of resolved dependencies (like mvn dependency:list).
-
-        This shows what will actually be used when building the environment.
-
-        Args:
-            components: The component(s) for which to format dependencies.
-            managed: If True, use dependency management (import components as BOMs).
-            boms: List of components to import as BOMs. Defaults to [component].
-            transitive: If False, show only direct dependencies (non-transitive).
-            optional_depth: Maximum depth at which to include optional dependencies.
-
-        Returns:
-            The dependency list as a string.
-        """
-        root, deps = self.get_dependency_list(
-            components,
-            managed=managed,
-            boms=boms,
-            transitive=transitive,
-            optional_depth=optional_depth,
-        )
-        return format_dependency_list(root, deps)
-
-    def format_dependency_tree(
-        self,
-        components: list[Component] | Component,
-        managed: bool = False,
-        boms: list[Component] | None = None,
-        optional_depth: int = 0,
-    ) -> str:
-        """
-        Format the full dependency tree for the given component (like mvn dependency:tree).
-
-        Uses proper dependency mediation - only one version per artifact.
-
-        Args:
-            components: The component(s) for which to format dependencies.
-            managed: If True, use dependency management (import components as BOMs).
-            boms: List of components to import as BOMs. Defaults to [component].
-            optional_depth: Maximum depth at which to include optional dependencies.
-
-        Returns:
-            The dependency tree as a string.
-        """
-        root = self.get_dependency_tree(
-            components, managed=managed, boms=boms, optional_depth=optional_depth
-        )
-        return format_dependency_tree(root)
 
 
 class PythonResolver(Resolver):

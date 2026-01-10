@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from ...maven.core import DependencyNode
 
 
-def format_dependency_list_rich(
+def format_dependency_list(
     root: DependencyNode, dependencies: list[DependencyNode]
 ) -> list[str]:
     """
@@ -88,7 +88,7 @@ def format_dependency_list_rich(
     return lines
 
 
-def format_dependency_tree_rich(root: DependencyNode, no_wrap: bool = False) -> Tree:
+def format_dependency_tree(root: DependencyNode, no_wrap: bool = False) -> Tree:
     """
     Format a dependency tree using Rich Tree for beautiful colored output.
 
@@ -102,7 +102,7 @@ def format_dependency_tree_rich(root: DependencyNode, no_wrap: bool = False) -> 
     # Choose tree class based on no_wrap setting
     TreeClass = NoWrapTree if no_wrap else Tree
 
-    def add_children_rich(tree: Tree, nodes: list[DependencyNode]):
+    def add_children(tree: Tree, nodes: list[DependencyNode]):
         """Recursively add child nodes to Rich tree."""
         for node in nodes:
             # Format coordinate with colors
@@ -119,7 +119,7 @@ def format_dependency_tree_rich(root: DependencyNode, no_wrap: bool = False) -> 
             # Add branch and recurse
             branch = tree.add(coord)
             if node.children:
-                add_children_rich(branch, node.children)
+                add_children(branch, node.children)
 
     # Skip INTERNAL-WRAPPER root and treat children as top-level
     if (
@@ -136,7 +136,7 @@ def format_dependency_tree_rich(root: DependencyNode, no_wrap: bool = False) -> 
             )
             branch = tree.add(coord)
             if child.children:
-                add_children_rich(branch, child.children)
+                add_children(branch, child.children)
     else:
         # Create tree with root as label
         coord = (
@@ -146,6 +146,6 @@ def format_dependency_tree_rich(root: DependencyNode, no_wrap: bool = False) -> 
         )
         tree = TreeClass(coord)
         if root.children:
-            add_children_rich(tree, root.children)
+            add_children(tree, root.children)
 
     return tree

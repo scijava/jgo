@@ -191,7 +191,7 @@ def print_dependencies(
 
     if list_mode:
         # Flat list mode - use Rich for colored output
-        from .rich.formatters import format_dependency_list_rich
+        from .rich.formatters import format_dependency_list
 
         # Get the dependency list
         root, deps = context.resolver.get_dependency_list(
@@ -204,12 +204,12 @@ def print_dependencies(
 
         # Format and print using Rich
         # console_print auto-handles soft_wrap based on wrap mode
-        lines = format_dependency_list_rich(root, deps)
+        lines = format_dependency_list(root, deps)
         for line in lines:
             console_print(line, highlight=False)
     else:
         # Tree mode - use Rich Tree for beautiful colored output
-        from .rich.formatters import format_dependency_tree_rich
+        from .rich.formatters import format_dependency_tree
 
         # Get the dependency tree
         tree = context.resolver.get_dependency_tree(
@@ -221,7 +221,7 @@ def print_dependencies(
 
         # Format and print using Rich
         # Use NoWrapTree when wrap mode is "raw"
-        rich_tree = format_dependency_tree_rich(tree, no_wrap=no_wrap)
+        rich_tree = format_dependency_tree(tree, no_wrap=no_wrap)
         console_print(rich_tree)
 
 
