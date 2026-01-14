@@ -1,6 +1,12 @@
 """Pytest configuration and shared fixtures."""
 
+import shutil
+import subprocess
+from pathlib import Path
+
 import pytest
+
+from jgo.util.maven import ensure_maven_available
 from tests.fixtures.thicket import DEFAULT_SEED, generate_thicket
 
 
@@ -23,3 +29,45 @@ def thicket_poms(tmp_path_factory):
     generate_thicket(pom_dir, seed=DEFAULT_SEED)
 
     return pom_dir
+
+
+@pytest.fixture(scope="session")
+def m2_repo(tmp_path_factory):
+    """
+    Provide a bootstrapped Maven repository for testing.
+
+    This fixture creates a cached Maven repository in .cache/m2_repo that
+    contains Maven's own infrastructure JARs. On first run, these are
+    downloaded from Maven Central. On subsequent runs, the cache is reused,
+    making tests much faster.
+
+    For each test session, the cache is copied to a temporary directory to
+    provide test isolation while still benefiting from pre-downloaded Maven
+    infrastructure.
+
+    Returns:
+        Path: Temporary Maven repository directory for this test session
+    """
+    # Ensure cache directory exists
+    cache_dir = Path(".cache/m2_repo")
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    # Bootstrap Maven infrastructure by running commands that will download
+    # Maven's own plugins and dependencies
+    bootstrap_pom = Path(__file__).parent / "fixtures" / "bootstrap-pom.xml"
+    maven_cmd = ensure_maven_available()
+
+    # Run the Maven commands that tests will actually use
+    # If cache is already populated, these will be quick no-ops
+    for goal in ["dependency:list", "dependency:tree"]:
+        subprocess.run(
+            [maven_cmd, "-f", str(bootstrap_pom), f"-Dmaven.repo.local={cache_dir}", goal],
+            check=True,
+            capture_output=True,
+        )
+
+    # Copy cache to temp directory for test isolation
+    test_repo = tmp_path_factory.mktemp("m2_repo")
+    shutil.copytree(cache_dir, test_repo, dirs_exist_ok=True)
+
+    return test_repo

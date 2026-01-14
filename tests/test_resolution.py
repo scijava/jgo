@@ -200,12 +200,10 @@ def mvn_resolver(maven_command):
     RESOLUTION_SCENARIOS,
     ids=lambda case: case.endpoint,
 )
-def test_resolution_modes(tmp_path, scenario, mvn_resolver):
-    repo_cache = tmp_path / "m2_repo"
-    repo_cache.mkdir(parents=True, exist_ok=True)
+def test_resolution_modes(m2_repo, scenario, mvn_resolver):
 
     python_resolver = PythonResolver()
-    context = MavenContext(repo_cache=repo_cache, resolver=python_resolver)
+    context = MavenContext(repo_cache=m2_repo, resolver=python_resolver)
     components = components_from_endpoint(context, scenario.endpoint)
 
     truth = resolve_dependency_set(mvn_resolver, components, managed=True)
@@ -231,14 +229,14 @@ def test_resolution_modes(tmp_path, scenario, mvn_resolver):
     )
 
 
-def test_no_test_scope_in_resolution(tmp_path):
+def test_no_test_scope_in_resolution(m2_repo):
     """
     Test that test scope dependencies are excluded from resolution.
 
     org.scijava:minimaven:2.2.2 has junit and hamcrest-core as test dependencies,
     which should not appear in the resolved dependency list.
     """
-    context = MavenContext(repo_cache=tmp_path / "m2_repo")
+    context = MavenContext(repo_cache=m2_repo)
     component = context.project("org.scijava", "minimaven").at_version("2.2.2")
 
     resolver = PythonResolver()
@@ -252,14 +250,14 @@ def test_no_test_scope_in_resolution(tmp_path):
         )
 
 
-def test_component_not_in_dependency_list(tmp_path):
+def test_component_not_in_dependency_list(m2_repo):
     """
     Test that the component itself does not appear in its dependency list.
 
     When using wrapper POMs, the component is added to the POM's dependencies section,
     but it should be filtered out of the final dependency list.
     """
-    context = MavenContext(repo_cache=tmp_path / "m2_repo")
+    context = MavenContext(repo_cache=m2_repo)
     component = context.project("org.scijava", "minimaven").at_version("2.2.2")
 
     resolver = PythonResolver()
@@ -272,7 +270,7 @@ def test_component_not_in_dependency_list(tmp_path):
         )
 
 
-def test_multi_component_resolution(tmp_path):
+def test_multi_component_resolution(m2_repo):
     """
     Test that multi-component resolution works correctly with PythonResolver.
 
@@ -282,7 +280,7 @@ def test_multi_component_resolution(tmp_path):
     3. Dependencies are properly merged without duplicates
     4. Version conflicts are resolved correctly
     """
-    context = MavenContext(repo_cache=tmp_path / "m2_repo")
+    context = MavenContext(repo_cache=m2_repo)
     comp1 = context.project("org.scijava", "minimaven").at_version("2.2.2")
     comp2 = context.project("org.scijava", "parsington").at_version("3.1.0")
 
@@ -302,7 +300,7 @@ def test_multi_component_resolution(tmp_path):
     assert ("org.scijava", "scijava-common") in dep_coords
 
 
-def test_managed_version_resolution(tmp_path):
+def test_managed_version_resolution(m2_repo):
     """
     Test that MANAGED version string is resolved from dependency management.
 
@@ -313,7 +311,7 @@ def test_managed_version_resolution(tmp_path):
     Uses org.scijava:scijava-common:2.66.0 which has minimaven in its
     dependencyManagement at version 2.2.1.
     """
-    context = MavenContext(repo_cache=tmp_path / "m2_repo")
+    context = MavenContext(repo_cache=m2_repo)
 
     # Create primary component with concrete version
     primary = context.project("org.scijava", "scijava-common").at_version("2.66.0")
