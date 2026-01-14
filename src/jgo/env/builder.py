@@ -14,9 +14,10 @@ from typing import TYPE_CHECKING
 from ..constants import DEFAULT_JGO_CACHE
 from ..parse.coordinate import Coordinate
 from .bytecode import detect_jar_java_version
-from .cache import write_metadata_cache
+from .cache import is_cache_valid, read_metadata_cache, write_metadata_cache
 from .environment import Environment
 from .jar import (
+    ModuleInfo,
     autocomplete_main_class,
     classify_jar,
     detect_main_class_from_jar,
@@ -875,45 +876,68 @@ class EnvironmentBuilder:
             # Compute SHA256 first (needed for cache and lockfile)
             sha256 = compute_sha256(source_path) if source_path.exists() else None
 
-            # Detect minimum Java version from bytecode
-            min_java_ver = detect_jar_java_version(source_path)
-
-            # Use fast module detection (no subprocess)
-            module_info = detect_module_info(source_path)
-
-            # Get jar tool lazily only when we need it
-            jar_tool = get_jar_tool_lazy()
-
-            if jar_tool:
-                # Baseline jar tool available - use precise classification
-                if module_info.is_modular:
-                    # Fast path: JAR has module-info.class or Automatic-Module-Name
-                    # Type 1: Has module-info.class (not automatic)
-                    # Type 2: Has Automatic-Module-Name (is automatic)
-                    jar_type = 2 if module_info.is_automatic else 1
-                else:
-                    # Slow path: Need subprocess to distinguish type 3 vs 4
-                    _log.debug(
-                        f"Analyzing JAR for modularizability: {artifact.filename}"
-                    )
-                    jar_type = classify_jar(source_path, jar_tool)
-            else:
-                # No jar tool available - use simple module detection
-                jar_type = None  # Not classified
-
-            # Write to cache for next time
+            # Try to read from metadata cache first
+            cached_metadata = None
             if sha256:
-                write_metadata_cache(
+                cached_metadata = read_metadata_cache(
                     artifact.groupId,
                     artifact.artifactId,
                     artifact.version,
                     artifact.filename,
                     self.cache_dir,
-                    sha256,
-                    jar_type,
-                    min_java_ver,
-                    module_info,
                 )
+                # Validate cache by SHA256
+                if cached_metadata and is_cache_valid(cached_metadata, sha256):
+                    # Cache hit! Use cached values
+                    min_java_ver = cached_metadata.min_java_version
+                    jar_type = cached_metadata.jar_type
+                    module_info = ModuleInfo(**cached_metadata.module_info)
+                    _log.debug(f"Using cached metadata for {artifact.filename}")
+                else:
+                    # Cache miss or invalid - will compute below
+                    cached_metadata = None
+
+            # If we didn't get valid cached data, compute it now
+            if cached_metadata is None:
+                # Detect minimum Java version from bytecode
+                min_java_ver = detect_jar_java_version(source_path)
+
+                # Use fast module detection (no subprocess)
+                module_info = detect_module_info(source_path)
+
+                # Get jar tool lazily only when we need it
+                jar_tool = get_jar_tool_lazy()
+
+                if jar_tool:
+                    # Baseline jar tool available - use precise classification
+                    if module_info.is_modular:
+                        # Fast path: JAR has module-info.class or Automatic-Module-Name
+                        # Type 1: Has module-info.class (not automatic)
+                        # Type 2: Has Automatic-Module-Name (is automatic)
+                        jar_type = 2 if module_info.is_automatic else 1
+                    else:
+                        # Slow path: Need subprocess to distinguish type 3 vs 4
+                        _log.debug(
+                            f"Analyzing JAR for modularizability: {artifact.filename}"
+                        )
+                        jar_type = classify_jar(source_path, jar_tool)
+                else:
+                    # No jar tool available - use simple module detection
+                    jar_type = None  # Not classified
+
+                # Write to cache for next time
+                if sha256:
+                    write_metadata_cache(
+                        artifact.groupId,
+                        artifact.artifactId,
+                        artifact.version,
+                        artifact.filename,
+                        self.cache_dir,
+                        sha256,
+                        jar_type,
+                        min_java_ver,
+                        module_info,
+                    )
 
             # Determine target directory based on jar_type
             if jar_type is not None:
