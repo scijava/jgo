@@ -173,7 +173,7 @@ class Model:
 
             if managed is None:
                 # No managed version available
-                if not dep.version:  # Check for None or empty string
+                if not dep.version or dep.version == "MANAGED":
                     if lenient:
                         _log.warning(f"No version available for dependency {dep}")
                         deps_to_remove.append(gact)
@@ -187,7 +187,7 @@ class Model:
             )
 
             # Inject version if not set, or if root_dep_mgmt overrides it
-            if not dep.version:  # Check for None or empty string
+            if not dep.version or dep.version == "MANAGED":
                 _log.debug(
                     f"{self.gav}: {dep_ga}: version set to {managed.version} (from {source})"
                 )
@@ -429,6 +429,15 @@ class Model:
         for dep in candidates.values():
             if not (dep.scope == "import" and dep.type == "pom"):
                 continue
+
+            # Fail fast if BOM has MANAGED version - this indicates a bug.
+            # MANAGED versions should be resolved before Model construction.
+            if dep.version == "MANAGED":
+                raise ValueError(
+                    f"{self.gav}: BOM {dep.groupId}:{dep.artifactId} has unresolved "
+                    f"MANAGED version. MANAGED versions must be resolved before "
+                    f"creating the wrapper POM."
+                )
 
             bom_gav = f"{dep.groupId}:{dep.artifactId}:{dep.version}"
             _log.debug(f"{self.gav}: importing BOM {bom_gav}")

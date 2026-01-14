@@ -1001,13 +1001,23 @@ def generate_pom_xml(
     # Generate dependencies section
     dep_entries = []
     for component in components:
-        dep_entries.append(
-            f"""        <dependency>
+        # For MANAGED versions, omit the <version> tag entirely.
+        # The Model will resolve the version from imported BOMs' dependencyManagement.
+        if component.version == "MANAGED":
+            dep_entries.append(
+                f"""        <dependency>
+            <groupId>{component.groupId}</groupId>
+            <artifactId>{component.artifactId}</artifactId>
+        </dependency>"""
+            )
+        else:
+            dep_entries.append(
+                f"""        <dependency>
             <groupId>{component.groupId}</groupId>
             <artifactId>{component.artifactId}</artifactId>
             <version>{component.resolved_version}</version>
         </dependency>"""
-        )
+            )
 
     deps_section = "\n".join(dep_entries)
 

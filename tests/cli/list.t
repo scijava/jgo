@@ -51,3 +51,10 @@ Test list with --offline (uses cache).
      com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
      com.google.j2objc:j2objc-annotations:jar:2.8:compile
      org.checkerframework:checker-qual:jar:3.41.0:compile
+
+Test list with MANAGED secondary coordinate.
+
+  $ jgo list org.scijava:scijava-common:2.99.2+org.scijava:minimaven:MANAGED
+  org.scijava:scijava-common:2.99.2
+  org.scijava:minimaven:2.2.2
+     org.scijava:parsington:jar:3.1.0:compile

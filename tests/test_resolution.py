@@ -300,3 +300,39 @@ def test_multi_component_resolution(tmp_path):
     # Should have scijava-common (from both minimaven and parsington's dependencies)
     # Version should be resolved correctly
     assert ("org.scijava", "scijava-common") in dep_coords
+
+
+def test_managed_version_resolution(tmp_path):
+    """
+    Test that MANAGED version string is resolved from dependency management.
+
+    When a dependency has version "MANAGED", it should be resolved from the
+    dependencyManagement section of the primary component. This test verifies
+    that the PythonResolver correctly handles this case.
+
+    Uses org.scijava:scijava-common:2.66.0 which has minimaven in its
+    dependencyManagement at version 2.2.1.
+    """
+    context = MavenContext(repo_cache=tmp_path / "m2_repo")
+
+    # Create primary component with concrete version
+    primary = context.project("org.scijava", "scijava-common").at_version("2.66.0")
+
+    # Create secondary component with MANAGED version
+    secondary = context.project("org.scijava", "minimaven").at_version("MANAGED")
+
+    resolver = PythonResolver()
+    # Use get_dependency_list which returns root node with components as children
+    root, deps = resolver.get_dependency_list([primary, secondary], managed=True)
+
+    # The root's children should include the resolved components
+    # Find minimaven in root's children
+    optional_nodes = [
+        child for child in root.children if child.dep.artifactId == "minimaven"
+    ]
+    assert len(optional_nodes) == 1, "Expected minimaven as root child"
+    # The version should be resolved from dependency management (2.2.1)
+    assert optional_nodes[0].dep.version == "2.2.1", (
+        f"Expected minimaven version 2.2.1 from dependency management, "
+        f"got {optional_nodes[0].dep.version}"
+    )

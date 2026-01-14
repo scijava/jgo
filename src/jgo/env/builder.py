@@ -106,9 +106,14 @@ def filter_managed_components(
         coordinates: List of parsed coordinates (parallel to components)
 
     Returns:
-        List of components that should be managed (coordinates without raw flag)
+        List of components that should be managed (coordinates without raw flag,
+        which are not themselves at MANAGED version)
     """
-    return [comp for comp, coord in zip(components, coordinates) if not coord.raw]
+    return [
+        comp
+        for comp, coord in zip(components, coordinates)
+        if not coord.raw and coord.version != "MANAGED"
+    ]
 
 
 def is_coordinate_reference(entrypoint_value: str) -> bool:

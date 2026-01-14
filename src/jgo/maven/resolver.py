@@ -44,9 +44,16 @@ def _listify(items: List[T] | T) -> List[T]:
 def _resolve_boms(
     components: list[Component], managed: bool, boms: list[Component] | None
 ) -> list[Component] | None:
-    """Determine which components to use as BOMs."""
+    """
+    Determine which components to use as BOMs.
+
+    When managed=True and boms is not explicitly provided, uses components
+    with concrete versions as BOMs. MANAGED-versioned components are excluded
+    since they consume dependency management rather than provide it.
+    """
     if boms is None and managed:
-        return components
+        # Exclude MANAGED components - they can't provide dependency management
+        return [c for c in components if c.version != "MANAGED"]
     return boms
 
 
@@ -374,14 +381,45 @@ class PythonResolver(Resolver):
             Tuple of (root_node, flat_list_of_dependencies)
         """
         components = _listify(components)
-        deps = self.dependencies(
-            components,
-            managed=managed,
-            boms=boms,
-            transitive=transitive,
-            optional_depth=optional_depth,
+
+        if not components:
+            raise ValueError("At least one component is required")
+
+        boms = _resolve_boms(components, managed, boms)
+
+        pom = create_pom(components, boms)
+        model = Model(
+            pom, components[0].context, profile_constraints=self.profile_constraints
         )
-        return self._build_dependency_list(components, deps)
+
+        # Create resolved components list using model.deps for MANAGED versions
+        resolved_components = []
+        for comp in components:
+            if comp.version == "MANAGED":
+                # Find resolved version in model.deps
+                resolved_version = None
+                for dep in model.deps.values():
+                    if (
+                        dep.groupId == comp.groupId
+                        and dep.artifactId == comp.artifactId
+                    ):
+                        resolved_version = dep.version
+                        break
+                if resolved_version:
+                    resolved_components.append(
+                        comp.project.at_version(resolved_version)
+                    )
+                else:
+                    resolved_components.append(comp)  # fallback
+            else:
+                resolved_components.append(comp)
+
+        max_depth = 1 if not transitive else None
+        deps, _ = model.dependencies(max_depth=max_depth, optional_depth=optional_depth)
+        deps = _filter_component_deps(deps, resolved_components)
+        deps = [dep for dep in deps if dep.scope not in ("test",)]
+
+        return self._build_dependency_list(resolved_components, deps)
 
     def get_dependency_tree(
         self,
