@@ -64,9 +64,19 @@ def maven_scijava_repository():
     """
     Get the SciJava Maven repository URL.
 
+    .. deprecated::
+        This function is deprecated and will be removed in jgo 3.0.
+        Use the URL directly: "https://maven.scijava.org/content/groups/public"
+
     Returns:
         SciJava repository URL.
     """
+    warnings.warn(
+        "maven_scijava_repository() is deprecated and will be removed in jgo 3.0. "
+        'Use the URL directly: "https://maven.scijava.org/content/groups/public"',
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return "https://maven.scijava.org/content/groups/public"
 
 

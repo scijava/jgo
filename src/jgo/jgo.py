@@ -37,11 +37,24 @@ _log = logging.getLogger(os.getenv("JGO_LOGGER_NAME", "jgo"))
 
 
 def classpath_separator():
+    warnings.warn(
+        "classpath_separator() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0. "
+        "Use os.pathsep for the classpath separator.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return _classpath_separator
 
 
 class NoMainClassInManifest(Exception):
     def __init__(self, jar):
+        warnings.warn(
+            "NoMainClassInManifest is part of the deprecated jgo 1.x API "
+            "and will be removed in jgo 3.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super(NoMainClassInManifest, self).__init__(
             "{} manifest does not specify Main-Class".format(jar)
         )
@@ -50,6 +63,12 @@ class NoMainClassInManifest(Exception):
 
 class ExecutableNotFound(Exception):
     def __init__(self, executable, path):
+        warnings.warn(
+            "ExecutableNotFound is part of the deprecated jgo 1.x API "
+            "and will be removed in jgo 3.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super(ExecutableNotFound, self).__init__(
             "{} not found on path {}".format(executable, path)
         )
@@ -57,6 +76,12 @@ class ExecutableNotFound(Exception):
 
 class InvalidEndpoint(Exception):
     def __init__(self, endpoint, reason):
+        warnings.warn(
+            "InvalidEndpoint is part of the deprecated jgo 1.x API "
+            "and will be removed in jgo 3.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super(InvalidEndpoint, self).__init__(
             "Invalid endpoint {}: {}".format(endpoint, reason)
         )
@@ -66,6 +91,12 @@ class InvalidEndpoint(Exception):
 
 class UnableToAutoComplete(Exception):
     def __init__(self, clazz):
+        warnings.warn(
+            "UnableToAutoComplete is part of the deprecated jgo 1.x API "
+            "and will be removed in jgo 3.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super(UnableToAutoComplete, self).__init__(
             "Unable to auto-complete {}".format(clazz)
         )
@@ -74,12 +105,24 @@ class UnableToAutoComplete(Exception):
 
 class HelpRequested(Exception):
     def __init__(self, argv):
+        warnings.warn(
+            "HelpRequested is part of the deprecated jgo 1.x API "
+            "and will be removed in jgo 3.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super(HelpRequested, self).__init__("Help requested {}".format(argv))
         self.argv = argv
 
 
 class NoEndpointProvided(Exception):
     def __init__(self, argv):
+        warnings.warn(
+            "NoEndpointProvided is part of the deprecated jgo 1.x API "
+            "and will be removed in jgo 3.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super(NoEndpointProvided, self).__init__(
             "No endpoint found in provided arguments: {}".format(argv)
         )
@@ -99,6 +142,13 @@ class Endpoint:
         classifier=None,
         main_class=None,
     ):
+        warnings.warn(
+            "Endpoint is part of the deprecated jgo 1.x API "
+            "and will be removed in jgo 3.0. "
+            "Use the new jgo 2.x API instead: jgo.run(), jgo.build(), or jgo.resolve()",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super(Endpoint, self).__init__()
         self.groupId = groupId
         self.artifactId = artifactId
@@ -200,6 +250,13 @@ class Endpoint:
 
 
 def executable_path_or_raise(tool):
+    warnings.warn(
+        "executable_path_or_raise() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0. "
+        "Use shutil.which() instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     path = executable_path(tool)
     if path is None:
         raise ExecutableNotFound(tool, os.getenv("PATH"))
@@ -207,10 +264,24 @@ def executable_path_or_raise(tool):
 
 
 def executable_path(tool):
+    warnings.warn(
+        "executable_path() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0. "
+        "Use shutil.which() instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return shutil.which(tool)
 
 
 def link(source, link_name, link_type="auto"):
+    warnings.warn(
+        "link() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0. "
+        "Use os.link(), os.symlink(), or shutil.copy() instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     _log.debug(
         "Linking source %s to target %s with link_type %s", source, link_name, link_type
     )
@@ -242,6 +313,13 @@ def link(source, link_name, link_type="auto"):
 
 
 def m2_home() -> Path:
+    warnings.warn(
+        "m2_home() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0. "
+        "Use Path.home() / '.m2' or os.getenv('M2_HOME') instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     value = os.getenv("M2_HOME", None)
     if value is not None:
         return Path(value)
@@ -249,6 +327,13 @@ def m2_home() -> Path:
 
 
 def m2_repo() -> Path:
+    warnings.warn(
+        "m2_repo() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0. "
+        "Use Path.home() / '.m2' / 'repository' or os.getenv('M2_REPO') instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     value = os.getenv("M2_REPO", None)
     if value is not None:
         return Path(value)
@@ -275,6 +360,13 @@ def launch_java(
     stderr=None,
     **subprocess_run_kwargs,
 ):
+    warnings.warn(
+        "launch_java() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0. "
+        "Use jgo.run() or jgo.exec.JavaRunner instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     java = executable_path("java")
     if not java:
         raise ExecutableNotFound("java", os.getenv("PATH"))
@@ -291,12 +383,25 @@ def launch_java(
 
 
 def run_and_combine_outputs(command, *args):
+    warnings.warn(
+        "run_and_combine_outputs() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0. "
+        "Use subprocess.check_output() instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     command_string = (command,) + args
     _log.debug(f"Executing: {command_string}")
     return subprocess.check_output(command_string, stderr=subprocess.STDOUT)
 
 
 def find_endpoint(argv, shortcuts={}):
+    warnings.warn(
+        "find_endpoint() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     # endpoint is first positional argument
     pattern = re.compile("(.*https?://.*|[a-zA-Z]:\\.*)")
     indices = []
@@ -319,6 +424,12 @@ _default_log_levels = (
 
 
 def jgo_parser(log_levels=_default_log_levels):
+    warnings.warn(
+        "jgo_parser() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     usage = (
         "usage: jgo [-v] [-u] [-U] [-m] [-q] [--log-level] [--ignore-jgorc]\n"
         "           [--link-type type] [--additional-jars jar [jar ...]]\n"
@@ -452,12 +563,25 @@ def _jgo_main(argv=sys.argv[1:], stdout=None, stderr=None):
 
 
 def jgo_cache_dir_environment_variable():
+    warnings.warn(
+        "jgo_cache_dir_environment_variable() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return "JGO_CACHE_DIR"
 
 
 def default_config():
     # DEPRECATED: Use GlobalSettings._default_config() instead (see src/jgo/config/settings.py)
     # This function is kept for backward compatibility with jgo 1.x and will be removed in 3.0
+    warnings.warn(
+        "default_config() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0. "
+        "Use jgo.config.GlobalSettings instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     config = configparser.ConfigParser()
 
     # settings
@@ -482,6 +606,13 @@ def default_config():
 def expand_coordinate(coordinate, shortcuts={}):
     # DEPRECATED: Use GlobalSettings.expand_shortcuts() instead (see src/jgo/config/settings.py)
     # This function is kept for backward compatibility with jgo 1.x and will be removed in 3.0
+    warnings.warn(
+        "expand_coordinate() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0. "
+        "Use jgo.config.GlobalSettings.expand_shortcuts() instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     was_changed = True
     used_shortcuts = set()
     while was_changed:
@@ -501,6 +632,12 @@ def expand_coordinate(coordinate, shortcuts={}):
 
 
 def autocomplete_main_class(main_class, artifactId, workspace):
+    warnings.warn(
+        "autocomplete_main_class() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     main_class = main_class.replace("/", ".")
     jar_cmd = executable_path_or_raise("jar")
     args = ("tf",)
@@ -525,12 +662,24 @@ def autocomplete_main_class(main_class, artifactId, workspace):
 
 
 def split_endpoint_string(endpoint_string):
+    warnings.warn(
+        "split_endpoint_string() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     endpoint_strings = endpoint_string.split("+")
     endpoint_strings = endpoint_strings[0:1] + sorted(endpoint_strings[1:])
     return endpoint_strings
 
 
 def endpoints_from_strings(endpoint_strings, shortcuts={}):
+    warnings.warn(
+        "endpoints_from_strings() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return [
         Endpoint.parse_endpoint(expand_coordinate(ep, shortcuts=shortcuts))
         for ep in endpoint_strings
@@ -538,10 +687,22 @@ def endpoints_from_strings(endpoint_strings, shortcuts={}):
 
 
 def coordinates_from_endpoints(endpoints):
+    warnings.warn(
+        "coordinates_from_endpoints() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return [ep.get_coordinates() for ep in endpoints]
 
 
 def workspace_dir_from_coordinates(coordinates, cache_dir):
+    warnings.warn(
+        "workspace_dir_from_coordinates() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     coord_string = "+".join(["-".join(c) for c in coordinates])
     hash_path = hashlib.sha256(coord_string.encode("utf-8")).hexdigest()
     workspace = os.path.join(cache_dir, *coordinates[0], hash_path)
@@ -553,6 +714,12 @@ def workspace_dir_from_endpoint_strings(
     endpoint_strings, cache_dir, shortcuts={}
 ):  # pragma: no cover
     """Unused"""
+    warnings.warn(
+        "workspace_dir_from_endpoint_strings() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     if isinstance(endpoint_strings, str):
         return workspace_dir_from_endpoint_strings(
             split_endpoint_string(endpoint_strings)
@@ -762,6 +929,13 @@ def resolve_dependencies(
 
 
 def run(parser, argv=sys.argv[1:], stdout=None, stderr=None):
+    warnings.warn(
+        "jgo.jgo.run() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0. "
+        "Use the new jgo.run() API instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     config = default_config()
     if "--ignore-jgorc" not in argv:
         config_file = Path.home() / ".jgorc"
