@@ -5,9 +5,9 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from tests.fixtures.thicket import DEFAULT_SEED, generate_thicket
 
 from jgo.util.maven import ensure_maven_available
-from tests.fixtures.thicket import DEFAULT_SEED, generate_thicket
 
 
 @pytest.fixture(scope="session")
@@ -61,7 +61,13 @@ def m2_repo(tmp_path_factory):
     # If cache is already populated, these will be quick no-ops
     for goal in ["dependency:list", "dependency:tree"]:
         subprocess.run(
-            [maven_cmd, "-f", str(bootstrap_pom), f"-Dmaven.repo.local={cache_dir}", goal],
+            [
+                maven_cmd,
+                "-f",
+                str(bootstrap_pom),
+                f"-Dmaven.repo.local={cache_dir}",
+                goal,
+            ],
             check=True,
             capture_output=True,
         )

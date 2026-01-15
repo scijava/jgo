@@ -10,8 +10,10 @@ from typing import TYPE_CHECKING
 
 import rich_click as click
 
+from ...parse.coordinate import Coordinate
 from ...util import is_info_enabled
 from ..console import console_print
+from ..rich.formatters import format_coordinate
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
@@ -217,10 +219,8 @@ def _display_results(results: list[dict]) -> None:
         version = result["latest_version"]
 
         # Basic format: coordinate and latest version
-        from ...parse.coordinate import Coordinate
-
         coord = Coordinate(group_id, artifact_id, version)
-        console_print(f"{i}. {coord.rich()}")
+        console_print(f"{i}. {format_coordinate(coord)}")
 
         if verbose:
             # Show additional details in verbose mode

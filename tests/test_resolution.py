@@ -201,7 +201,6 @@ def mvn_resolver(maven_command):
     ids=lambda case: case.endpoint,
 )
 def test_resolution_modes(m2_repo, scenario, mvn_resolver):
-
     python_resolver = PythonResolver()
     context = MavenContext(repo_cache=m2_repo, resolver=python_resolver)
     components = components_from_endpoint(context, scenario.endpoint)

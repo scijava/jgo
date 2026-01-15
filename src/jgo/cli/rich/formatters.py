@@ -11,10 +11,53 @@ from typing import TYPE_CHECKING
 
 from rich.tree import Tree
 
+from ...parse.coordinate import coord2str
 from .widgets import NoWrapTree
 
 if TYPE_CHECKING:
     from ...maven.core import DependencyNode
+    from ...parse.coordinate import Coordinate
+
+
+def format_coordinate(coord: Coordinate) -> str:
+    """
+    Format a Maven coordinate with Rich markup for semantic coloring.
+
+    Uses Rich markup to colorize components based on their semantic meaning:
+    - groupId: bold cyan
+    - artifactId: bold
+    - version: green
+    - packaging: default color
+    - classifier: default color
+    - scope: dim
+    - colons: dim
+
+    The markup is automatically stripped by Rich when --color=plain is used.
+
+    Args:
+        coord: The Coordinate to format
+
+    Returns:
+        Formatted string with Rich markup
+
+    Examples:
+        >>> from jgo.parse.coordinate import Coordinate
+        >>> coord = Coordinate("sc.fiji", "fiji", "2.17.0")
+        >>> format_coordinate(coord)
+        '[bold cyan]sc.fiji[/][dim]:[/][bold]fiji[/][dim]:[/][green]2.17.0[/]'
+    """
+    return coord2str(
+        coord.groupId,
+        coord.artifactId,
+        coord.version,
+        coord.classifier,
+        coord.packaging,
+        coord.scope,
+        coord.optional,
+        coord.raw,
+        coord.placement,
+        rich=True,
+    )
 
 
 def format_dependency_list(

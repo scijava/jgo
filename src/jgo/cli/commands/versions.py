@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import rich_click as click
 
 from ..console import console_print
+from ..rich.formatters import format_coordinate
 
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
@@ -71,14 +72,14 @@ def execute(args: ParsedArgs, config: dict) -> int:
         # Get available versions
         metadata = project.metadata
         if not metadata or not metadata.versions:
-            console_print(f"No versions found for {coord.rich()}")
+            console_print(f"No versions found for {format_coordinate(coord)}")
             return 0
 
         # Use project's smart release/latest resolution
         release_version = project.release
         latest_version = project.latest
 
-        console_print(f"Available versions for {coord.rich()}:")
+        console_print(f"Available versions for {format_coordinate(coord)}:")
         for version in metadata.versions:
             marker = ""
             if release_version and version == release_version:

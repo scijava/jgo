@@ -76,42 +76,6 @@ class Coordinate:
             self.placement,
         )
 
-    def rich(self) -> str:
-        """
-        Return Rich-formatted string representation with semantic colors.
-
-        Uses Rich markup to colorize components based on their semantic meaning:
-        - groupId: bold cyan
-        - artifactId: bold
-        - version: green
-        - packaging: default color
-        - classifier: default color
-        - scope: dim
-        - colons: dim
-
-        The markup is automatically stripped by Rich when --color=plain is used.
-
-        Returns:
-            Formatted string with Rich markup
-
-        Examples:
-            >>> coord = Coordinate("sc.fiji", "fiji", "2.17.0")
-            >>> coord.rich()
-            '[bold cyan]sc.fiji[/][dim]:[/][bold]fiji[/][dim]:[/][green]2.17.0[/]'
-        """
-        return coord2str(
-            self.groupId,
-            self.artifactId,
-            self.version,
-            self.classifier,
-            self.packaging,
-            self.scope,
-            self.optional,
-            self.raw,
-            self.placement,
-            rich=True,
-        )
-
     @classmethod
     def parse(cls, coordinate: "Coordinate" | str) -> "Coordinate":
         """
