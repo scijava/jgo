@@ -314,7 +314,7 @@ class TestThicketPythonResolver:
 
         # Resolve with Python resolver - should not raise any errors
         python_resolver = PythonResolver()
-        python_deps = python_resolver.dependencies([component], managed=True)
+        _, python_deps = python_resolver.dependencies([component], managed=True)
 
         # We can't compare against a hardcoded truth since the thicket is randomly generated,
         # but we can verify basic properties:
@@ -351,7 +351,7 @@ class TestThicketPythonResolver:
 
         # Resolve with Python resolver
         python_resolver = PythonResolver()
-        python_deps = python_resolver.dependencies([component], managed=False)
+        _, python_deps = python_resolver.dependencies([component], managed=False)
 
         # Verify all dependencies are properly resolved
         for dep in python_deps:

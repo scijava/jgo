@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ..constants import DEFAULT_JGO_CACHE
+from ..maven import Dependency
 from ..parse.coordinate import Coordinate
 from .bytecode import detect_jar_java_version
 from .cache import is_cache_valid, read_metadata_cache, write_metadata_cache
@@ -27,7 +28,7 @@ from .linking import LinkStrategy, link_file
 from .lockfile import LockedDependency, LockFile, compute_sha256, compute_spec_hash
 
 if TYPE_CHECKING:
-    from ..maven import Component, Dependency, MavenContext
+    from ..maven import Component, MavenContext
     from .spec import EnvironmentSpec
 
 _log = logging.getLogger(__name__)
@@ -828,7 +829,12 @@ class EnvironmentBuilder:
 
         # Resolve all components together (not separately!)
         # This ensures Maven handles version conflicts across all components
-        all_deps = components[0].context.resolver.dependencies(
+        # Returns (resolved_components, resolved_deps) where:
+        # - resolved_components: Components with MANAGED versions resolved
+        # - resolved_deps: Transitive dependencies (excludes components)
+        resolved_components, resolved_deps = components[
+            0
+        ].context.resolver.dependencies(
             components,
             managed=bool(boms),
             boms=boms,
@@ -841,10 +847,11 @@ class EnvironmentBuilder:
         # Collect all artifact paths to determine min Java version
         # We need to know the target Java version before classifying JARs
         all_artifact_paths = []
-        for component in components:
-            artifact = component.artifact()
-            all_artifact_paths.append(artifact.resolve())
-        for dep in all_deps:
+        # Process resolved components first
+        for dep in resolved_components:
+            all_artifact_paths.append(dep.artifact.resolve())
+        # Then transitive dependencies
+        for dep in resolved_deps:
             if dep.scope in ("compile", "runtime"):
                 all_artifact_paths.append(dep.artifact.resolve())
 
@@ -965,24 +972,30 @@ class EnvironmentBuilder:
                 jar_type=jar_type,
             )
 
-        # First, link the components themselves
-        for component in components:
-            artifact = component.artifact()
+        # Process components and their transitive dependencies
+        # Track processed artifacts to avoid duplicates
+        processed = set()
+
+        # First, process the resolved components (with MANAGED versions resolved)
+        for dep in resolved_components:
+            artifact = dep.artifact
+            key = (artifact.groupId, artifact.artifactId, artifact.version)
+            if key in processed:
+                continue  # Skip duplicates
+            processed.add(key)
+
             source_path = artifact.resolve()
             locked_deps.append(process_artifact(artifact, source_path))
 
-        # Track which artifacts we've already processed (from components)
-        processed = {(c.groupId, c.artifactId, c.version) for c in components}
-
-        # Link/copy dependency JARs
-        for dep in all_deps:
+        # Then, process transitive dependencies
+        for dep in resolved_deps:
             if dep.scope not in ("compile", "runtime"):
                 continue  # Skip test deps, etc.
 
             artifact = dep.artifact
             key = (artifact.groupId, artifact.artifactId, artifact.version)
             if key in processed:
-                continue  # Already handled as a component
+                continue  # Skip duplicates
             processed.add(key)
 
             source_path = artifact.resolve()

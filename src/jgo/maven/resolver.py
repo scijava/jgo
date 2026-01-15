@@ -110,7 +110,7 @@ class Resolver(ABC):
         managed: bool = False,
         boms: list[Component] | None = None,
         transitive: bool = True,
-    ) -> list[Dependency]:
+    ) -> tuple[list[Dependency], list[Dependency]]:
         """
         Determine dependencies for the given Maven component.
 
@@ -122,7 +122,9 @@ class Resolver(ABC):
             transitive: Whether to include transitive dependencies.
 
         Returns:
-            The list of dependencies.
+            Tuple of (resolved_components, resolved_deps) where:
+            - resolved_components: Components with MANAGED versions resolved
+            - resolved_deps: Transitive dependencies (excludes the components themselves)
         """
         ...
 
@@ -324,7 +326,7 @@ class PythonResolver(Resolver):
         boms: list[Component] | None = None,
         transitive: bool = True,
         optional_depth: int = 0,
-    ) -> list[Dependency]:
+    ) -> tuple[list[Dependency], list[Dependency]]:
         """
         Get all dependencies for the given components.
 
@@ -336,7 +338,9 @@ class PythonResolver(Resolver):
             optional_depth: Maximum depth at which to include optional dependencies
 
         Returns:
-            Flat list of dependencies
+            Tuple of (resolved_components, resolved_deps) where:
+            - resolved_components: Components with MANAGED versions resolved
+            - resolved_deps: Transitive dependencies (excludes the components themselves)
         """
         components = _listify(components)
 
@@ -354,10 +358,38 @@ class PythonResolver(Resolver):
         max_depth = 1 if not transitive else None
         deps, _ = model.dependencies(max_depth=max_depth, optional_depth=optional_depth)
 
-        deps = _filter_component_deps(deps, components)
+        # Build resolved component dependencies
+        # For MANAGED components, find their resolved versions in deps
+        resolved_components = []
+        component_coords = set()
+        for comp in components:
+            if comp.version == "MANAGED":
+                # Find the resolved version in deps
+                for dep in deps:
+                    if (
+                        dep.groupId == comp.groupId
+                        and dep.artifactId == comp.artifactId
+                    ):
+                        resolved_components.append(dep)
+                        component_coords.add((dep.groupId, dep.artifactId, dep.version))
+                        break
+            else:
+                resolved_components.append(Dependency(comp.artifact()))
+                component_coords.add(
+                    (comp.groupId, comp.artifactId, comp.resolved_version)
+                )
+
+        # Filter out components from transitive deps list
+        resolved_deps = [
+            dep
+            for dep in deps
+            if (dep.groupId, dep.artifactId, dep.version) not in component_coords
+        ]
 
         # Filter out test scope dependencies (they're not needed for running the application)
-        return [dep for dep in deps if dep.scope not in ("test",)]
+        resolved_deps = [dep for dep in resolved_deps if dep.scope not in ("test",)]
+
+        return resolved_components, resolved_deps
 
     def get_dependency_list(
         self,
@@ -605,7 +637,7 @@ class MvnResolver(Resolver):
         boms: list[Component] | None = None,
         transitive: bool = True,
         optional_depth: int = 0,
-    ) -> list[Dependency]:
+    ) -> tuple[list[Dependency], list[Dependency]]:
         """
         Get all dependencies for the given components.
 
@@ -619,7 +651,9 @@ class MvnResolver(Resolver):
                 excludes optional transitive dependencies (equivalent to optional_depth=0).
 
         Returns:
-            Flat list of dependencies
+            Tuple of (resolved_components, resolved_deps) where:
+            - resolved_components: Components with MANAGED versions resolved
+            - resolved_deps: Transitive dependencies (excludes the components themselves)
         """
         if optional_depth > 0:
             _log.warning(
@@ -627,6 +661,8 @@ class MvnResolver(Resolver):
                 "Maven always excludes optional transitive dependencies. "
                 "Use PythonResolver (--resolver=python) for custom optional_depth."
             )
+
+        components = _listify(components)
 
         if not transitive:
             # Use get_dependency_tree and extract only direct children (depth 1)
@@ -640,10 +676,15 @@ class MvnResolver(Resolver):
                 dependencies.extend(component_node.children)
 
             # Convert DependencyNodes back to Dependency objects
-            return [node.dep for node in dependencies]
+            resolved_deps = [node.dep for node in dependencies]
+
+            # Build resolved components - for non-transitive, components are just themselves
+            # (MANAGED versions would have been resolved during tree building)
+            resolved_components = [node.dep for node in root.children]
+
+            return resolved_components, resolved_deps
 
         # For transitive=True, use dependency:list
-        components = _listify(components)
 
         if not components:
             raise ValueError("At least one component is required")
@@ -694,9 +735,38 @@ class MvnResolver(Resolver):
             # Create dependency object from coordinate
             dependencies.append(dep)
 
-        filtered = _filter_component_deps(dependencies, components)
+        # Build resolved component dependencies
+        # For MANAGED components, find their resolved versions in dependencies
+        resolved_components = []
+        component_coords = set()
+        for comp in components:
+            if comp.version == "MANAGED":
+                # Find the resolved version in dependencies
+                for dep in dependencies:
+                    if (
+                        dep.groupId == comp.groupId
+                        and dep.artifactId == comp.artifactId
+                    ):
+                        resolved_components.append(dep)
+                        component_coords.add((dep.groupId, dep.artifactId, dep.version))
+                        break
+            else:
+                resolved_components.append(Dependency(comp.artifact()))
+                component_coords.add(
+                    (comp.groupId, comp.artifactId, comp.resolved_version)
+                )
+
+        # Filter out components from transitive deps list
+        resolved_deps = [
+            dep
+            for dep in dependencies
+            if (dep.groupId, dep.artifactId, dep.version) not in component_coords
+        ]
+
         # Filter to runtime scopes only (compensate for Maven's -Dscope quirk)
-        return self._filter_dep_scopes(filtered, "runtime")
+        resolved_deps = self._filter_dep_scopes(resolved_deps, "runtime")
+
+        return resolved_components, resolved_deps
 
     def get_dependency_list(
         self,
@@ -721,14 +791,14 @@ class MvnResolver(Resolver):
             Tuple of (root_node, flat_list_of_dependencies)
         """
         components = _listify(components)
-        deps = self.dependencies(
+        resolved_components, resolved_deps = self.dependencies(
             components,
             managed=managed,
             boms=boms,
             transitive=transitive,
             optional_depth=optional_depth,
         )
-        return self._build_dependency_list(components, deps)
+        return self._build_dependency_list(components, resolved_deps)
 
     def get_dependency_tree(
         self,

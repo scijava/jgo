@@ -155,8 +155,8 @@ def dependency_fingerprint(dep: Dependency) -> str:
 def resolve_dependency_set(
     resolver, components: list[Component], *, managed: bool
 ) -> set[str]:
-    deps = resolver.dependencies(components, managed=managed)
-    return {dependency_fingerprint(dep) for dep in deps}
+    _, resolved_deps = resolver.dependencies(components, managed=managed)
+    return {dependency_fingerprint(dep) for dep in resolved_deps}
 
 
 def components_from_endpoint(context: MavenContext, endpoint: str) -> list[Component]:
@@ -239,10 +239,10 @@ def test_no_test_scope_in_resolution(m2_repo):
     component = context.project("org.scijava", "minimaven").at_version("2.2.2")
 
     resolver = PythonResolver()
-    deps = resolver.dependencies([component], managed=True)
+    _, resolved_deps = resolver.dependencies([component], managed=True)
 
     # Check that no test dependencies are present
-    for dep in deps:
+    for dep in resolved_deps:
         assert dep.groupId != "junit", "junit (test dependency) should not be included"
         assert dep.groupId != "org.hamcrest", (
             "hamcrest (test dependency) should not be included"
@@ -260,10 +260,10 @@ def test_component_not_in_dependency_list(m2_repo):
     component = context.project("org.scijava", "minimaven").at_version("2.2.2")
 
     resolver = PythonResolver()
-    deps = resolver.dependencies([component], managed=True)
+    _, resolved_deps = resolver.dependencies([component], managed=True)
 
     # The component itself should not be in the dependency list
-    for dep in deps:
+    for dep in resolved_deps:
         assert not (dep.groupId == "org.scijava" and dep.artifactId == "minimaven"), (
             "The component itself should not appear in its dependency list"
         )
@@ -284,15 +284,17 @@ def test_multi_component_resolution(m2_repo):
     comp2 = context.project("org.scijava", "parsington").at_version("3.1.0")
 
     resolver = PythonResolver()
-    deps = resolver.dependencies([comp1, comp2], managed=True)
+    _, resolved_deps = resolver.dependencies([comp1, comp2], managed=True)
 
     # Neither component should appear in the dependency list
-    dep_coords = {(d.groupId, d.artifactId) for d in deps}
+    dep_coords = {(d.groupId, d.artifactId) for d in resolved_deps}
     assert ("org.scijava", "minimaven") not in dep_coords
     assert ("org.scijava", "parsington") not in dep_coords
 
     # All dependencies should be unique (no duplicates)
-    assert len(deps) == len(set((d.groupId, d.artifactId, d.version) for d in deps))
+    assert len(resolved_deps) == len(
+        set((d.groupId, d.artifactId, d.version) for d in resolved_deps)
+    )
 
     # Should have scijava-common (from both minimaven and parsington's dependencies)
     # Version should be resolved correctly
