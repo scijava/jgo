@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.scijava.jgo.test</groupId>
+    <artifactId>bootstrap</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <description>
+        Minimal POM used to bootstrap Maven infrastructure in test environment.
+        Running Maven commands against this POM will download and cache Maven's
+        own infrastructure JARs without fetching any actual dependencies.
+    </description>
+</project>
