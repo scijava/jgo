@@ -156,7 +156,7 @@ Test help for specific commands.
 
   $ jgo help run
                                                                                   
-   Usage: jgo jgo [OPTIONS] [ENDPOINT] [REMAINING]...                             
+   Usage: jgo run [OPTIONS] [ENDPOINT] [REMAINING]...                             
                                                                                   
    Run a Java application from Maven coordinates or jgo.toml.                     
                                                                                   
@@ -172,9 +172,9 @@ Test help for specific commands.
                                                                                   
 
   $ jgo help version
-                                                                                  
-   Usage: jgo jgo [OPTIONS]                                                       
-                                                                                  
+
+   Usage: jgo version [OPTIONS]
+
    Display jgo's version.                                                         
                                                                                   
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
@@ -183,7 +183,7 @@ Test help for specific commands.
 
   $ jgo help add
                                                                                   
-   Usage: jgo jgo [OPTIONS] COORDINATES...                                        
+   Usage: jgo add [OPTIONS] COORDINATES...                                        
                                                                                   
    Add dependencies to jgo.toml.                                                  
                                                                                   
@@ -194,7 +194,7 @@ Test help for specific commands.
 
   $ jgo help remove
                                                                                   
-   Usage: jgo jgo [OPTIONS] COORDINATES...                                        
+   Usage: jgo remove [OPTIONS] COORDINATES...                                        
                                                                                   
    Remove dependencies from jgo.toml.                                             
                                                                                   
@@ -205,7 +205,7 @@ Test help for specific commands.
 
   $ jgo help init
                                                                                   
-   Usage: jgo jgo [OPTIONS] [ENDPOINT]                                            
+   Usage: jgo init [OPTIONS] [ENDPOINT]                                            
                                                                                   
    Create a new jgo.toml environment file.                                        
                                                                                   
@@ -215,7 +215,7 @@ Test help for specific commands.
 
   $ jgo help list
                                                                                   
-   Usage: jgo jgo [OPTIONS] [ENDPOINT]                                            
+   Usage: jgo list [OPTIONS] [ENDPOINT]                                            
                                                                                   
    List resolved dependencies (flat list).                                        
                                                                                   
@@ -226,7 +226,7 @@ Test help for specific commands.
 
   $ jgo help tree
                                                                                   
-   Usage: jgo jgo [OPTIONS] [ENDPOINT]                                            
+   Usage: jgo tree [OPTIONS] [ENDPOINT]                                            
                                                                                   
    Show dependency tree.                                                          
                                                                                   
@@ -236,7 +236,7 @@ Test help for specific commands.
 
   $ jgo help sync
                                                                                   
-   Usage: jgo jgo [OPTIONS]                                                       
+   Usage: jgo sync [OPTIONS]                                                       
                                                                                   
    Resolve dependencies and build environment.                                    
                                                                                   
@@ -247,7 +247,7 @@ Test help for specific commands.
 
   $ jgo help lock
                                                                                   
-   Usage: jgo jgo [OPTIONS]                                                       
+   Usage: jgo lock [OPTIONS]                                                       
                                                                                   
    Update jgo.lock.toml without building environment.                             
                                                                                   
@@ -258,7 +258,7 @@ Test help for specific commands.
 
   $ jgo help update
                                                                                   
-   Usage: jgo jgo [OPTIONS]                                                       
+   Usage: jgo update [OPTIONS]                                                       
                                                                                   
    Update dependencies to latest versions.                                        
                                                                                   
@@ -268,11 +268,16 @@ Test help for specific commands.
   ╰──────────────────────────────────────────────────────────────────────────────╯
 
   $ jgo help search
-                                                                                  
-   Usage: jgo jgo [OPTIONS] QUERY...                                              
-                                                                                  
-   Search for artifacts in Maven repositories.                                    
-                                                                                  
+
+   Usage: jgo search [OPTIONS] QUERY...
+
+   Search for artifacts in Maven repositories. Supports plain text, coordinates
+   (g:a:v), or SOLR syntax (g: a:).
+
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ *  QUERY  TEXT  Search terms. Supports plain text, coordinates (g:a:v), or   │
+  │                 SOLR syntax (g: a:) [required]                               │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --limit       N     Limit number of results (default: 20)                    │
   │ --repository  NAME  Search specific repository (default: central)            │
@@ -285,9 +290,12 @@ Test help for specific commands.
                                                                                   
 
 
+   TIP: Try g:groupId a:artifactId for SOLR syntax, groupId:artifactId for
+   coordinates, or plain text. Use * for wildcards and ~ for fuzzy search.
+
   $ jgo help config
                                                                                   
-   Usage: jgo jgo [OPTIONS] COMMAND [ARGS]...                                     
+   Usage: jgo config [OPTIONS] COMMAND [ARGS]...                                     
                                                                                   
    Manage jgo configuration.                                                      
                                                                                   
@@ -303,9 +311,9 @@ Test help for specific commands.
   ╰──────────────────────────────────────────────────────────────────────────────╯
 
   $ jgo help info
-                                                                                  
-   Usage: jgo jgo [OPTIONS] COMMAND [ARGS]...                                     
-                                                                                  
+
+   Usage: jgo info [OPTIONS] COMMAND [ARGS]...
+
    Show information about environment or artifact.                                
                                                                                   
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
@@ -332,9 +340,9 @@ Test help for specific commands.
 Test nested help for config subcommands.
 
   $ jgo help config shortcut
-                                                                                  
-   Usage: jgo config jgo [OPTIONS] [NAME] [ENDPOINT]                              
-                                                                                  
+
+   Usage: jgo config shortcut [OPTIONS] [NAME] [ENDPOINT]
+
    Manage global endpoint shortcuts.                                              
                                                                                   
   ╭─ Options ────────────────────────────────────────────────────────────────────╮

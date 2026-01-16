@@ -14,7 +14,14 @@ _log = logging.getLogger(__name__)
 
 
 @click.command(help="Remove dependencies from [cyan]jgo.toml[/].")
-@click.argument("coordinates", nargs=-1, required=True)
+@click.argument(
+    "coordinates",
+    nargs=-1,
+    required=True,
+    cls=click.RichArgument,
+    help="One or more Maven coordinates in format "
+    "[cyan]groupId:artifactId[/] (version optional)",
+)
 @click.option(
     "--no-sync",
     is_flag=True,

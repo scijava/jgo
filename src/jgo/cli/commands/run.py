@@ -37,8 +37,21 @@ _log = logging.getLogger(__name__)
     metavar="PATH",
     help="Append to classpath ([dim]JARs, directories, etc.[/])",
 )
-@click.argument("endpoint", required=False)
-@click.argument("remaining", nargs=-1, type=click.UNPROCESSED)
+@click.argument(
+    "endpoint",
+    required=False,
+    cls=click.RichArgument,
+    help="Maven coordinates (single or combined with [yellow]+[/]) "
+    "optionally followed by [yellow]@MainClass[/]",
+)
+@click.argument(
+    "remaining",
+    nargs=-1,
+    type=click.UNPROCESSED,
+    cls=click.RichArgument,
+    help="JVM arguments and program arguments, separated by [yellow]--[/]. "
+    "Example: [dim]-- -Xmx2G -- script.py[/]",
+)
 @click.pass_context
 def run(ctx, main_class, entrypoint, add_classpath, endpoint, remaining):
     """

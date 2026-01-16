@@ -14,7 +14,13 @@ _log = logging.getLogger(__name__)
 
 
 @click.command(help="Show classpath.")
-@click.argument("endpoint", required=False)
+@click.argument(
+    "endpoint",
+    required=False,
+    cls=click.RichArgument,
+    help="Maven coordinates (single or combined with [yellow]+[/]) "
+    "optionally followed by [yellow]@MainClass[/]",
+)
 @click.pass_context
 def classpath(ctx, endpoint):
     """Show the classpath for the given endpoint."""
@@ -50,7 +56,13 @@ def classpath(ctx, endpoint):
 
 
 @click.command(help="Show environment directory path.")
-@click.argument("endpoint", required=False)
+@click.argument(
+    "endpoint",
+    required=False,
+    cls=click.RichArgument,
+    help="Maven coordinates (single or combined with [yellow]+[/]) "
+    "optionally followed by [yellow]@MainClass[/]",
+)
 @click.pass_context
 def envdir(ctx, endpoint):
     """Show the cache/environment directory for the given endpoint or jgo project."""
@@ -85,7 +97,13 @@ def envdir(ctx, endpoint):
 
 
 @click.command(help="Show all JAR paths (classpath + module-path).")
-@click.argument("endpoint", required=False)
+@click.argument(
+    "endpoint",
+    required=False,
+    cls=click.RichArgument,
+    help="Maven coordinates (single or combined with [yellow]+[/]) "
+    "optionally followed by [yellow]@MainClass[/]",
+)
 @click.pass_context
 def jars(ctx, endpoint):
     """Show all JAR paths with section headers for classpath and module-path."""
@@ -278,11 +296,16 @@ def entrypoints(ctx):
 
 
 @click.command(help="Show JAR manifest.")
-@click.argument("endpoint", required=True)
+@click.argument(
+    "coordinate",
+    required=True,
+    cls=click.RichArgument,
+    help="Maven coordinate in format [cyan]groupId:artifactId[:version][:classifier][/]",
+)
 @click.option("--raw", is_flag=True, help="Show raw manifest contents")
 @click.pass_context
-def manifest(ctx, endpoint, raw):
-    """Show the JAR manifest for the given endpoint."""
+def manifest(ctx, coordinate, raw):
+    """Show the JAR manifest for the given coordinate."""
     import zipfile
 
     from ...config import GlobalSettings
@@ -292,15 +315,14 @@ def manifest(ctx, endpoint, raw):
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+    args = _build_parsed_args(opts, endpoint=coordinate, command="info")
 
     try:
         # Create Maven context
         maven_context = create_maven_context(args, config.to_dict())
 
-        # Parse endpoint to get G:A:V
-        # FIXME: Multi-coordinate endpoints!
-        coord = _parse_coord_or_die(ctx, endpoint)
+        # Parse coordinate to get G:A:V
+        coord = _parse_coord_or_die(ctx, coordinate)
         version = coord.version or "RELEASE"
 
         # Get component
@@ -313,7 +335,7 @@ def manifest(ctx, endpoint, raw):
         jar_path = artifact.resolve()
 
         if not jar_path:
-            _log.error(f"Could not resolve artifact: {endpoint}")
+            _log.error(f"Could not resolve artifact: {coordinate}")
             ctx.exit(1)
 
         # Verify it's a valid JAR file
@@ -346,9 +368,14 @@ def manifest(ctx, endpoint, raw):
 
 
 @click.command(help="Show POM content.")
-@click.argument("endpoint", required=True)
+@click.argument(
+    "coordinate",
+    required=True,
+    cls=click.RichArgument,
+    help="Maven coordinate in format [cyan]groupId:artifactId[:version][:classifier][/]",
+)
 @click.pass_context
-def pom(ctx, endpoint):
+def pom(ctx, coordinate):
     """Show the POM for the given component."""
     import xml.dom.minidom
 
@@ -358,15 +385,14 @@ def pom(ctx, endpoint):
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+    args = _build_parsed_args(opts, endpoint=coordinate, command="info")
 
     try:
         # Create Maven context
         maven_context = create_maven_context(args, config.to_dict())
 
-        # Parse endpoint to get G:A:V
-        # FIXME: Multi-coordinate endpoints!
-        coord = _parse_coord_or_die(ctx, endpoint)
+        # Parse coordinate to get G:A:V
+        coord = _parse_coord_or_die(ctx, coordinate)
         version = coord.version or "RELEASE"
 
         # Get component
@@ -378,7 +404,7 @@ def pom(ctx, endpoint):
         pom_obj = component.pom()
 
         if not pom_obj or not pom_obj.source:
-            _log.error(f"Could not resolve POM for: {endpoint}")
+            _log.error(f"Could not resolve POM for: {coordinate}")
             ctx.exit(1)
 
         # Read POM content

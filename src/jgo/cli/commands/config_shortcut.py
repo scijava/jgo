@@ -35,8 +35,18 @@ _log = logging.getLogger(__name__)
     is_flag=True,
     help="List all shortcuts",
 )
-@click.argument("name", required=False)
-@click.argument("endpoint", required=False)
+@click.argument(
+    "name",
+    required=False,
+    cls=click.RichArgument,
+    help="Shortcut name (e.g., [cyan]imagej[/])",
+)
+@click.argument(
+    "endpoint",
+    required=False,
+    cls=click.RichArgument,
+    help="Maven coordinates to associate with the shortcut",
+)
 @click.pass_context
 def shortcut(ctx, remove_name, list_all, name, endpoint):
     """

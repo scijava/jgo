@@ -539,7 +539,11 @@ def list_cmd(ctx, global_config, local_config):
 
 
 @config.command(name="get", help="Get a configuration value.")
-@click.argument("key")
+@click.argument(
+    "key",
+    cls=click.RichArgument,
+    help="Configuration key in dot notation (e.g., [cyan]repositories.scijava[/])",
+)
 @click.option(
     "--global",
     "global_config",
@@ -576,8 +580,12 @@ def get_cmd(ctx, key, global_config, local_config):
 
 
 @config.command(name="set", help="Set a configuration value.")
-@click.argument("key")
-@click.argument("value")
+@click.argument(
+    "key",
+    cls=click.RichArgument,
+    help="Configuration key in dot notation (e.g., [cyan]repositories.scijava[/])",
+)
+@click.argument("value", cls=click.RichArgument, help="Configuration value to set")
 @click.option(
     "--global",
     "global_config",
@@ -614,7 +622,11 @@ def set_cmd(ctx, key, value, global_config, local_config):
 
 
 @config.command(name="unset", help="Remove a configuration value.")
-@click.argument("key")
+@click.argument(
+    "key",
+    cls=click.RichArgument,
+    help="Configuration key in dot notation (e.g., [cyan]repositories.scijava[/])",
+)
 @click.option(
     "--global",
     "global_config",

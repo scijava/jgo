@@ -14,7 +14,13 @@ _log = logging.getLogger(__name__)
 
 
 @click.command(name="list", help="List resolved dependencies (flat list).")
-@click.argument("endpoint", required=False)
+@click.argument(
+    "endpoint",
+    required=False,
+    cls=click.RichArgument,
+    help="Maven coordinates (single or combined with [yellow]+[/]) "
+    "optionally followed by [yellow]@MainClass[/]",
+)
 @click.option(
     "--direct", is_flag=True, help="Show only direct dependencies (non-transitive)"
 )

@@ -796,8 +796,24 @@ def help(ctx, commands):
 
         # If this is the last command, show its help
         if i == len(commands) - 1:
-            # Invoke the command with --help to trigger rich-click's help rendering
-            cmd.main(["--help"], standalone_mode=False, parent=current_ctx)
+            # Build the full command path for correct usage line
+            # Use only info_names from intermediate groups, not the root prog_name
+            # This gives us "jgo search" instead of "python -m jgo search"
+            path_parts = []
+            temp_ctx = current_ctx
+            while temp_ctx and temp_ctx.parent is not None:  # Skip root context
+                if temp_ctx.info_name:
+                    path_parts.insert(0, temp_ctx.info_name)
+                temp_ctx = temp_ctx.parent
+            # Start with "jgo" (or the root info_name if it exists)
+            if current_ctx.find_root().info_name:
+                root_name = current_ctx.find_root().info_name
+                # Normalize "python -m jgo" to "jgo"
+                if "python" in root_name:
+                    root_name = "jgo"
+                path_parts.insert(0, root_name)
+            prog_name = " ".join(path_parts + [cmd_name])
+            cmd.main(["--help"], prog_name=prog_name, standalone_mode=False)
             return
 
         # Otherwise, navigate deeper if it's a group

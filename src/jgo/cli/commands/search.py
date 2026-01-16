@@ -22,7 +22,8 @@ _log = logging.getLogger(__name__)
 
 
 @click.command(
-    help="Search for artifacts in [magenta]Maven repositories[/].",
+    help="Search for artifacts in [magenta]Maven repositories[/]. "
+    "Supports plain text, coordinates ([cyan]g:a:v[/]), or SOLR syntax ([cyan]g: a:[/]).",
     epilog="[dim]TIP: Try [yellow]g:groupId a:artifactId[/] for SOLR syntax, "
     "[yellow]groupId:artifactId[/] for coordinates, or plain text. "
     "Use [yellow]*[/] for wildcards and [yellow]~[/] for fuzzy search.[/]",
@@ -44,51 +45,52 @@ _log = logging.getLogger(__name__)
     is_flag=True,
     help="Show detailed metadata for each result",
 )
-@click.argument("query", nargs=-1, required=True)
+@click.argument(
+    "query",
+    nargs=-1,
+    required=True,
+    cls=click.RichArgument,
+    help="Search terms. Supports plain text, coordinates (g:a:v), or SOLR syntax (g: a:)",
+)
 @click.pass_context
 def search(ctx, limit, repository, detailed, query):
     """
     Search for artifacts in Maven repositories.
 
-    Supports three query styles:
+    The QUERY argument supports three input styles:
 
-    1. PLAIN TEXT - Searches across all fields:
-         jgo search apache commons
-         jgo search junit
+    1. **Plain Text** - Searches across all fields (groupId, artifactId, description):
+       - jgo search apache commons
+       - jgo search junit
 
-    2. MAVEN COORDINATES - Converts to SOLR query:
-         jgo search org.apache.commons:commons-lang3
-         jgo search junit:junit:4.13.2
+    2. **Maven Coordinates** - Automatically converted to SOLR query:
+       - jgo search org.apache.commons:commons-lang3
+       - jgo search junit:junit:4.13.2
 
-    3. SOLR SYNTAX - Direct field queries:
-         jgo search g:org.apache.commons
-         jgo search g:org.apache.commons a:commons-lang3
-         jgo search a:jackson-databind v:2.15*
+    3. **SOLR Field Syntax** - Direct field queries with advanced features:
+       - jgo search g:org.apache.commons a:commons-lang3
+       - jgo search a:jackson-databind v:2.15*
+       - jgo search a:jacksn~ (fuzzy search)
 
-    SOLR FIELD NAMES:
-      g:groupId              Search by group ID
-      a:artifactId           Search by artifact ID
-      v:version              Search by version
-      p:packaging            Search by packaging (jar, pom, etc.)
-      c:classifier           Search by classifier
+    SOLR Field Names:
+      - g:groupId - Search by group ID
+      - a:artifactId - Search by artifact ID
+      - v:version - Search by version
+      - p:packaging - Search by packaging type (jar, pom, etc.)
+      - c:classifier - Search by classifier
 
-    ADVANCED FEATURES:
-      Wildcards:
-        jgo search a:jackson-*         # Match any artifact starting with 'jackson-'
-        jgo search a:sc?java           # Match single character
+    Advanced SOLR Features (work with field syntax only):
+      - Wildcards: Use * for multiple characters, ? for single character
+        Example: jgo search a:jackson-*
+      - Fuzzy Search: Use ~ for typo tolerance (edit distance 0-2)
+        Example: jgo search a:jacksn~ (finds "jackson")
+        Example: jgo search a:scijav~1 (edit distance 1)
 
-      Fuzzy search:
-        jgo search a:jacksn~           # Find 'jackson' despite typo (edit distance 2)
-        jgo search a:scijav~1          # Find 'scijava' with edit distance 1
-
-    EXAMPLES:
-      jgo search --limit 10 jackson                    # Limit to 10 results
-      jgo search --detailed junit:junit                # Show detailed metadata
-      jgo search g:org.scijava a:scijava-common        # Specific artifact
-      jgo search a:jackson* v:2.15*                    # Wildcard version
-
-    TIP:
-      Wildcards (*) and fuzzy search (~) work with SOLR field syntax only.
+    Args:
+        query: One or more search terms
+        limit: Maximum number of results to return (default: 20)
+        repository: Repository to search (currently only 'central' supported)
+        detailed: Show additional metadata (version count, packaging, last updated)
     """
     from ...config import GlobalSettings
     from ..parser import _build_parsed_args

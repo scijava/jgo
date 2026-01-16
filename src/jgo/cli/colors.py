@@ -11,6 +11,8 @@ import rich_click as click
 
 # Configure rich-click for better help screens.
 click.rich_click.USE_RICH_MARKUP = True  # Enable [cyan]colored[/] markup like this.
+click.rich_click.SHOW_ARGUMENTS = True  # Show arguments in a separate box like options
+click.rich_click.USE_MARKDOWN_EMOJI = False  # Disable emoji conversion (e.g., :a: -> 🅰)
 
 
 # Early color mode detection

@@ -14,7 +14,13 @@ _log = logging.getLogger(__name__)
 
 
 @click.command(help="Show dependency tree.")
-@click.argument("endpoint", required=False)
+@click.argument(
+    "endpoint",
+    required=False,
+    cls=click.RichArgument,
+    help="Maven coordinates (single or combined with [yellow]+[/]) "
+    "optionally followed by [yellow]@MainClass[/]",
+)
 @click.pass_context
 def tree(ctx, endpoint):
     """Show the dependency tree for an endpoint or jgo.toml."""
