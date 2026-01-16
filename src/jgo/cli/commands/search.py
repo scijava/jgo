@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import urllib.parse
 import urllib.request
 from typing import TYPE_CHECKING
@@ -11,7 +12,6 @@ from typing import TYPE_CHECKING
 import rich_click as click
 
 from ...parse.coordinate import Coordinate
-from ...util import is_info_enabled
 from ..console import console_print
 from ..rich.formatters import format_coordinate
 
@@ -34,9 +34,14 @@ _log = logging.getLogger(__name__)
     metavar="NAME",
     help="Search specific repository [dim](default: central)[/]",
 )
+@click.option(
+    "--detailed",
+    is_flag=True,
+    help="Show detailed metadata for each result",
+)
 @click.argument("query", nargs=-1, required=True)
 @click.pass_context
-def search(ctx, limit, repository, query):
+def search(ctx, limit, repository, detailed, query):
     """
     Search for artifacts in Maven repositories.
 
@@ -76,6 +81,7 @@ def search(ctx, limit, repository, query):
         query=query_str,
         limit=limit,
         repository=repository,
+        detailed=detailed,
     )
     ctx.exit(exit_code)
 
@@ -86,6 +92,7 @@ def execute(
     query: str,
     limit: int = 20,
     repository: str | None = None,
+    detailed: bool = False,
 ) -> int:
     """
     Execute the search command.
@@ -96,6 +103,7 @@ def execute(
         query: Search query
         limit: Maximum number of results to show
         repository: Specific repository to search (currently only 'central' supported)
+        detailed: Show detailed metadata for each result
 
     Returns:
         Exit code (0 for success, non-zero for failure)
@@ -133,7 +141,7 @@ def execute(
             return 0
 
         # Display results
-        _display_results(results)
+        _display_results(results, detailed=detailed)
 
         return 0
 
@@ -141,6 +149,53 @@ def execute(
         _log.error(f"Failed to search Maven Central: {e}")
         log_exception_if_verbose(args.verbose)
         return 1
+
+
+def _convert_query_to_solr(query: str) -> str:
+    """
+    Convert a query to SOLR syntax if needed.
+
+    Handles three cases:
+    1. Already SOLR syntax (has field prefixes like g:, a:, v:) → pass through
+    2. Maven coordinate format (G:A or G:A:V) → convert to SOLR AND query
+    3. Plain text → pass through for default SOLR full-text search
+
+    Args:
+        query: The search query string
+
+    Returns:
+        SOLR-formatted query string
+    """
+    # Check if already SOLR syntax (field prefixes)
+    # Common SOLR fields: g, a, v, p, c, l, ec, fc
+    if re.search(r"\b(g|a|v|p|c|l|ec|fc):", query):
+        _log.debug(f"Query already in SOLR syntax: {query}")
+        return query
+
+    # Try parsing as Maven coordinate (contains : but not SOLR syntax)
+    if ":" in query:
+        try:
+            from ...parse.coordinate import Coordinate
+
+            coord = Coordinate.parse(query)
+            parts = [f"g:{coord.groupId}", f"a:{coord.artifactId}"]
+            if coord.version:
+                parts.append(f"v:{coord.version}")
+            if coord.packaging:
+                parts.append(f"p:{coord.packaging}")
+            if coord.classifier:
+                parts.append(f"c:{coord.classifier}")
+            solr_query = " AND ".join(parts)
+            _log.debug(f"Converted coordinate '{query}' to SOLR: {solr_query}")
+            return solr_query
+        except ValueError:
+            # Not a valid coordinate, treat as plain text
+            _log.debug(f"Failed to parse as coordinate, using as plain text: {query}")
+            pass
+
+    # Plain text - pass through
+    _log.debug(f"Using plain text query: {query}")
+    return query
 
 
 def _search_maven_central(query: str, limit: int) -> list[dict]:
@@ -154,10 +209,13 @@ def _search_maven_central(query: str, limit: int) -> list[dict]:
     Returns:
         List of artifact dictionaries
     """
+    # Convert query to SOLR syntax if needed
+    solr_query = _convert_query_to_solr(query)
+
     # Build query URL
     base_url = "https://search.maven.org/solrsearch/select"
     params = {
-        "q": query,
+        "q": solr_query,
         "rows": str(limit),
         "wt": "json",
     }
@@ -184,12 +242,33 @@ def _search_maven_central(query: str, limit: int) -> list[dict]:
     # Convert to simplified format
     results = []
     for doc in docs:
+        # Extract description from text array (if available)
+        # The text array contains various searchable text, so we need to be selective
+        description = ""
+        if "text" in doc and isinstance(doc["text"], list):
+            # Look for text that looks like actual description (not coordinates, filenames, etc.)
+            for text in doc["text"]:
+                if not text:
+                    continue
+                # Skip if it looks like a coordinate, filename, or single word
+                if (
+                    ":" in text
+                    or "." in text[-5:]  # likely a file extension
+                    or len(text.split()) < 2  # single word, probably not a description
+                    or text.startswith("-")  # likely a classifier or flag
+                ):
+                    continue
+                # Found something that might be a description
+                description = text
+                break
+
         result = {
             "group_id": doc.get("g", ""),
             "artifact_id": doc.get("a", ""),
             "latest_version": doc.get("latestVersion", ""),
             "version_count": doc.get("versionCount", 0),
-            "description": doc.get("p", ""),  # Packaging type (jar, pom, etc.)
+            "packaging": doc.get("p", "jar"),  # Packaging type (jar, pom, etc.)
+            "description": description,
         }
 
         # Add timestamp if available
@@ -201,15 +280,14 @@ def _search_maven_central(query: str, limit: int) -> list[dict]:
     return results
 
 
-def _display_results(results: list[dict]) -> None:
+def _display_results(results: list[dict], detailed: bool = False) -> None:
     """
     Display search results.
 
     Args:
         results: List of artifact dictionaries
+        detailed: Show detailed metadata for each result
     """
-    verbose = is_info_enabled()
-
     console_print(f"Found {len(results)} artifacts:")
     console_print()
 
@@ -222,16 +300,21 @@ def _display_results(results: list[dict]) -> None:
         coord = Coordinate(group_id, artifact_id, version)
         console_print(f"{i}. {format_coordinate(coord)}")
 
-        if verbose:
-            # Show additional details in verbose mode
+        # Show description by default (if available)
+        description = result.get("description", "")
+        if description:
+            console_print(f"   {description}")
+
+        # Show additional details in detailed mode
+        if detailed:
             version_count = result.get("version_count", 0)
-            description = result.get("description", "")
+            packaging = result.get("packaging", "")
 
             if version_count > 1:
                 console_print(f"   Available versions: {version_count}")
 
-            if description:
-                console_print(f"   Packaging: {description}")
+            if packaging:
+                console_print(f"   Packaging: {packaging}")
 
             if "last_updated" in result:
                 # Convert timestamp to readable format

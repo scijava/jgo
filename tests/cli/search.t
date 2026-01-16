@@ -24,6 +24,7 @@ Test search --help shows usage.
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --limit       N     Limit number of results (default: 20)                    │
   │ --repository  NAME  Search specific repository (default: central)            │
+  │ --detailed          Show detailed metadata for each result                   │
   │ --help              Show this message and exit.                              │
   ╰──────────────────────────────────────────────────────────────────────────────╯
 
