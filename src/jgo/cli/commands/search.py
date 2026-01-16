@@ -21,7 +21,12 @@ if TYPE_CHECKING:
 _log = logging.getLogger(__name__)
 
 
-@click.command(help="Search for artifacts in [magenta]Maven repositories[/].")
+@click.command(
+    help="Search for artifacts in [magenta]Maven repositories[/].",
+    epilog="[dim]TIP: Try [yellow]g:groupId a:artifactId[/] for SOLR syntax, "
+    "[yellow]groupId:artifactId[/] for coordinates, or plain text. "
+    "Use [yellow]*[/] for wildcards and [yellow]~[/] for fuzzy search.[/]",
+)
 @click.option(
     "--limit",
     type=int,
@@ -45,25 +50,45 @@ def search(ctx, limit, repository, detailed, query):
     """
     Search for artifacts in Maven repositories.
 
-    The query can be a simple text search or use Maven Central's advanced query syntax.
+    Supports three query styles:
 
-    EXAMPLES:
-      jgo search apache commons          # Search for "apache commons"
-      jgo search junit                   # Search for "junit"
-      jgo search g:org.apache.commons    # Search by groupId
-      jgo search a:commons-lang3         # Search by artifactId
-      jgo search --limit 10 jackson      # Limit to 10 results
-      jgo search --repository central gson  # Search specific repository
+    1. PLAIN TEXT - Searches across all fields:
+         jgo search apache commons
+         jgo search junit
 
-    ADVANCED QUERY SYNTAX:
+    2. MAVEN COORDINATES - Converts to SOLR query:
+         jgo search org.apache.commons:commons-lang3
+         jgo search junit:junit:4.13.2
+
+    3. SOLR SYNTAX - Direct field queries:
+         jgo search g:org.apache.commons
+         jgo search g:org.apache.commons a:commons-lang3
+         jgo search a:jackson-databind v:2.15*
+
+    SOLR FIELD NAMES:
       g:groupId              Search by group ID
       a:artifactId           Search by artifact ID
       v:version              Search by version
       p:packaging            Search by packaging (jar, pom, etc.)
       c:classifier           Search by classifier
 
-    Multiple terms can be combined:
-      jgo search g:org.apache.commons a:commons-lang3
+    ADVANCED FEATURES:
+      Wildcards:
+        jgo search a:jackson-*         # Match any artifact starting with 'jackson-'
+        jgo search a:sc?java           # Match single character
+
+      Fuzzy search:
+        jgo search a:jacksn~           # Find 'jackson' despite typo (edit distance 2)
+        jgo search a:scijav~1          # Find 'scijava' with edit distance 1
+
+    EXAMPLES:
+      jgo search --limit 10 jackson                    # Limit to 10 results
+      jgo search --detailed junit:junit                # Show detailed metadata
+      jgo search g:org.scijava a:scijava-common        # Specific artifact
+      jgo search a:jackson* v:2.15*                    # Wildcard version
+
+    TIP:
+      Wildcards (*) and fuzzy search (~) work with SOLR field syntax only.
     """
     from ...config import GlobalSettings
     from ..parser import _build_parsed_args

@@ -27,6 +27,11 @@ Test search --help shows usage.
   │ --detailed          Show detailed metadata for each result                   │
   │ --help              Show this message and exit.                              │
   ╰──────────────────────────────────────────────────────────────────────────────╯
+                                                                                  
+   TIP: Try g:groupId a:artifactId for SOLR syntax, groupId:artifactId for        
+   coordinates, or plain text. Use * for wildcards and ~ for fuzzy search.        
+                                                                                  
+
 
 Test search with query.
 
