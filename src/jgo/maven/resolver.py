@@ -104,7 +104,7 @@ class Resolver(ABC):
         ...
 
     @abstractmethod
-    def dependencies(
+    def resolve(
         self,
         components: list[Component] | Component,
         managed: bool = False,
@@ -112,7 +112,7 @@ class Resolver(ABC):
         transitive: bool = True,
     ) -> tuple[list[Dependency], list[Dependency]]:
         """
-        Determine dependencies for the given Maven component.
+        Resolve dependencies for the given Maven component.
 
         Args:
             components: The component(s) for which to determine the dependencies.
@@ -319,7 +319,7 @@ class PythonResolver(Resolver):
             f"{artifact.context.remote_repos}"
         )
 
-    def dependencies(
+    def resolve(
         self,
         components: list[Component] | Component,
         managed: bool = False,
@@ -483,9 +483,9 @@ class PythonResolver(Resolver):
         model = Model(
             pom, components[0].context, profile_constraints=self.profile_constraints
         )
-        _, tree_root = model.dependencies(optional_depth=optional_depth)
+        _, root = model.dependencies(optional_depth=optional_depth)
 
-        return tree_root
+        return root
 
 
 class MvnResolver(Resolver):
@@ -630,7 +630,7 @@ class MvnResolver(Resolver):
         assert artifact.cached_path and artifact.cached_path.exists()
         return artifact.cached_path
 
-    def dependencies(
+    def resolve(
         self,
         components: list[Component] | Component,
         managed: bool = False,
@@ -791,7 +791,7 @@ class MvnResolver(Resolver):
             Tuple of (root_node, flat_list_of_dependencies)
         """
         components = _listify(components)
-        resolved_components, resolved_deps = self.dependencies(
+        resolved_components, resolved_deps = self.resolve(
             components,
             managed=managed,
             boms=boms,

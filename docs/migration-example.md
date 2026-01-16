@@ -127,7 +127,7 @@ from jgo.maven import MavenContext, Model
 env = Environment()
 component = maven.project('org.scijava', 'scijava-common').at_version('2.96.0')
 model = Model(component.pom())
-deps = model.dependencies()
+deps, root = model.dependencies()
 
 for dep in deps:
     print(f"{dep.groupId}:{dep.artifactId}:{dep.version}:{dep.scope}")
@@ -402,7 +402,7 @@ def analyze_dependencies(gav: str):
     env = Environment()
     component = maven.project(g, a).at_version(v)
     model = Model(component.pom())
-    deps = model.dependencies()
+    deps, root = model.dependencies()
 
     # Group by scope
     by_scope = {}

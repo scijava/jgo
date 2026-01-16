@@ -68,13 +68,14 @@ Project (G:A)
 ### Use Cases
 
 **Standalone Maven resolution**:
+
 ```python
 from jgo.maven import MavenContext
 
 maven = MavenContext()
 component = maven.project("org.example", "mylib").at_version("1.0.0")
 model = component.model()
-deps = model.dependencies()
+deps, root = model.dependencies()
 
 for dep in deps:
     print(f"{dep.groupId}:{dep.artifactId}:{dep.version} ({dep.scope})")

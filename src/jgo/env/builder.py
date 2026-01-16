@@ -832,9 +832,7 @@ class EnvironmentBuilder:
         # Returns (resolved_components, resolved_deps) where:
         # - resolved_components: Components with MANAGED versions resolved
         # - resolved_deps: Transitive dependencies (excludes components)
-        resolved_components, resolved_deps = components[
-            0
-        ].context.resolver.dependencies(
+        resolved_components, resolved_deps = components[0].context.resolver.resolve(
             components,
             managed=bool(boms),
             boms=boms,

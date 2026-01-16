@@ -155,7 +155,7 @@ def dependency_fingerprint(dep: Dependency) -> str:
 def resolve_dependency_set(
     resolver, components: list[Component], *, managed: bool
 ) -> set[str]:
-    _, resolved_deps = resolver.dependencies(components, managed=managed)
+    _, resolved_deps = resolver.resolve(components, managed=managed)
     return {dependency_fingerprint(dep) for dep in resolved_deps}
 
 
@@ -239,7 +239,7 @@ def test_no_test_scope_in_resolution(m2_repo):
     component = context.project("org.scijava", "minimaven").at_version("2.2.2")
 
     resolver = PythonResolver()
-    _, resolved_deps = resolver.dependencies([component], managed=True)
+    _, resolved_deps = resolver.resolve([component], managed=True)
 
     # Check that no test dependencies are present
     for dep in resolved_deps:
@@ -260,7 +260,7 @@ def test_component_not_in_dependency_list(m2_repo):
     component = context.project("org.scijava", "minimaven").at_version("2.2.2")
 
     resolver = PythonResolver()
-    _, resolved_deps = resolver.dependencies([component], managed=True)
+    _, resolved_deps = resolver.resolve([component], managed=True)
 
     # The component itself should not be in the dependency list
     for dep in resolved_deps:
@@ -284,7 +284,7 @@ def test_multi_component_resolution(m2_repo):
     comp2 = context.project("org.scijava", "parsington").at_version("3.1.0")
 
     resolver = PythonResolver()
-    _, resolved_deps = resolver.dependencies([comp1, comp2], managed=True)
+    _, resolved_deps = resolver.resolve([comp1, comp2], managed=True)
 
     # Neither component should appear in the dependency list
     dep_coords = {(d.groupId, d.artifactId) for d in resolved_deps}
