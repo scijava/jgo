@@ -1003,6 +1003,8 @@ def generate_pom_xml(
     for component in components:
         # For MANAGED versions, omit the <version> tag entirely.
         # The Model will resolve the version from imported BOMs' dependencyManagement.
+        # For all other versions (including RELEASE/LATEST/ranges), write them as-is
+        # and let Maven's Model resolve them during dependency resolution.
         if component.version == "MANAGED":
             dep_entries.append(
                 f"""        <dependency>
@@ -1011,11 +1013,13 @@ def generate_pom_xml(
         </dependency>"""
             )
         else:
+            # Use raw version, not resolved_version
+            # This allows Maven to handle RELEASE/LATEST/ranges consistently
             dep_entries.append(
                 f"""        <dependency>
             <groupId>{component.groupId}</groupId>
             <artifactId>{component.artifactId}</artifactId>
-            <version>{component.resolved_version}</version>
+            <version>{component.version}</version>
         </dependency>"""
             )
 

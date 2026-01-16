@@ -359,25 +359,26 @@ class PythonResolver(Resolver):
         deps, _ = model.dependencies(max_depth=max_depth, optional_depth=optional_depth)
 
         # Build resolved component dependencies
-        # For MANAGED components, find their resolved versions in deps
+        # ALL components (including RELEASE/LATEST/ranges) are resolved by Maven's Model
+        # We extract them from the deps list with their concrete resolved versions
         resolved_components = []
         component_coords = set()
         for comp in components:
-            if comp.version == "MANAGED":
-                # Find the resolved version in deps
-                for dep in deps:
-                    if (
-                        dep.groupId == comp.groupId
-                        and dep.artifactId == comp.artifactId
-                    ):
-                        resolved_components.append(dep)
-                        component_coords.add((dep.groupId, dep.artifactId, dep.version))
-                        break
-            else:
+            # Find the resolved version in deps (resolved MANAGED/RELEASE/LATEST/ranges)
+            found = False
+            for dep in deps:
+                if dep.groupId == comp.groupId and dep.artifactId == comp.artifactId:
+                    resolved_components.append(dep)
+                    component_coords.add((dep.groupId, dep.artifactId, dep.version))
+                    found = True
+                    break
+
+            if not found:
+                # Fallback for components not found in deps (shouldn't happen normally)
+                # This preserves backward compatibility if something goes wrong
                 resolved_components.append(Dependency(comp.artifact()))
-                component_coords.add(
-                    (comp.groupId, comp.artifactId, comp.resolved_version)
-                )
+                # Use raw version since resolution failed
+                component_coords.add((comp.groupId, comp.artifactId, comp.version))
 
         # Filter out components from transitive deps list
         resolved_deps = [
@@ -736,25 +737,26 @@ class MvnResolver(Resolver):
             dependencies.append(dep)
 
         # Build resolved component dependencies
-        # For MANAGED components, find their resolved versions in dependencies
+        # ALL components (including RELEASE/LATEST/ranges) are resolved by Maven
+        # We extract them from the dependencies list with their concrete resolved versions
         resolved_components = []
         component_coords = set()
         for comp in components:
-            if comp.version == "MANAGED":
-                # Find the resolved version in dependencies
-                for dep in dependencies:
-                    if (
-                        dep.groupId == comp.groupId
-                        and dep.artifactId == comp.artifactId
-                    ):
-                        resolved_components.append(dep)
-                        component_coords.add((dep.groupId, dep.artifactId, dep.version))
-                        break
-            else:
+            # Find the resolved version in dependencies (resolved MANAGED/RELEASE/LATEST/ranges)
+            found = False
+            for dep in dependencies:
+                if dep.groupId == comp.groupId and dep.artifactId == comp.artifactId:
+                    resolved_components.append(dep)
+                    component_coords.add((dep.groupId, dep.artifactId, dep.version))
+                    found = True
+                    break
+
+            if not found:
+                # Fallback for components not found in dependencies (shouldn't happen normally)
+                # This preserves backward compatibility if something goes wrong
                 resolved_components.append(Dependency(comp.artifact()))
-                component_coords.add(
-                    (comp.groupId, comp.artifactId, comp.resolved_version)
-                )
+                # Use raw version since resolution failed
+                component_coords.add((comp.groupId, comp.artifactId, comp.version))
 
         # Filter out components from transitive deps list
         resolved_deps = [
