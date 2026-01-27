@@ -47,7 +47,7 @@ The table should be as wide as it needs to be to fully render the content.
   │ Minimum Java version: 8                                                      │
   │ (already an LTS version)                                                     │
   ╰──────────────────────────────────────────────────────────────────────────────╯
-                                   Per-JAR Analysis                                 
+   *Per-JAR Analysis * (re)
   ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┓
   ┃ JAR                                ┃ Java Version ┃ Max Bytecode ┃ Class Count ┃
   ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━┩
@@ -77,7 +77,7 @@ Ellipses should be used to keep table width within terminal width (80 chars).
   │ Minimum Java version: 8                                                      │
   │ (already an LTS version)                                                     │
   ╰──────────────────────────────────────────────────────────────────────────────╯
-                                  Per-JAR Analysis                                
+   *Per-JAR Analysis * (re)
   ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┓
   ┃ JAR                              ┃ Java Version ┃ Max Bytecode ┃ Class Count ┃
   ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━┩
@@ -104,7 +104,7 @@ Ellipses should be used to keep table width within terminal width (80 chars).
   │ Minimum Java version: 8                                                      │
   │ (already an LTS version)                                                     │
   ╰──────────────────────────────────────────────────────────────────────────────╯
-                                   Per-JAR Analysis                                 
+   *Per-JAR Analysis * (re)
   ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┓
   ┃ JAR                                ┃ Java Version ┃ Max Bytecode ┃ Class Count ┃
   ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━┩
@@ -131,7 +131,7 @@ Ellipses should be used to keep table width within terminal width (80 chars).
   │ Minimum Java version: 8                                                      │
   │ (already an LTS version)                                                     │
   ╰──────────────────────────────────────────────────────────────────────────────╯
-                                  Per-JAR Analysis                                
+   *Per-JAR Analysis * (re)
   ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┓
   ┃ JAR                              ┃ Java Version ┃ Max Bytecode ┃ Class Count ┃
   ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━┩
@@ -157,7 +157,7 @@ Ellipses should be used to keep table width within terminal width (80 chars).
   \x1b[36m│\x1b[0m \x1b[1;36mMinimum Java version:\x1b[0m 8                                                      \x1b[36m│\x1b[0m (esc)
   \x1b[36m│\x1b[0m \x1b[2m(already an LTS version)\x1b[0m                                                     \x1b[36m│\x1b[0m (esc)
   \x1b[36m╰──────────────────────────────────────────────────────────────────────────────╯\x1b[0m (esc)
-  \x1b[3m                                 Per-JAR Analysis                                 \x1b[0m (esc)
+  *Per-JAR Analysis* (glob)
   ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┓
   ┃\x1b[1;36m \x1b[0m\x1b[1;36mJAR                               \x1b[0m\x1b[1;36m \x1b[0m┃\x1b[1;36m \x1b[0m\x1b[1;36mJava Version\x1b[0m\x1b[1;36m \x1b[0m┃\x1b[1;36m \x1b[0m\x1b[1;36mMax Bytecode\x1b[0m\x1b[1;36m \x1b[0m┃\x1b[1;36m \x1b[0m\x1b[1;36mClass Count\x1b[0m\x1b[1;36m \x1b[0m┃ (esc)
   ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━┩
@@ -184,7 +184,7 @@ Ellipses should be used to keep table width within terminal width (80 chars).
   \x1b[36m│\x1b[0m \x1b[1;36mMinimum Java version:\x1b[0m 8                                                      \x1b[36m│\x1b[0m (esc)
   \x1b[36m│\x1b[0m \x1b[2m(already an LTS version)\x1b[0m                                                     \x1b[36m│\x1b[0m (esc)
   \x1b[36m╰──────────────────────────────────────────────────────────────────────────────╯\x1b[0m (esc)
-  \x1b[3m                                Per-JAR Analysis                                \x1b[0m (esc)
+  *Per-JAR Analysis* (glob)
   ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┓
   ┃\x1b[1;36m \x1b[0m\x1b[1;36mJAR                             \x1b[0m\x1b[1;36m \x1b[0m┃\x1b[1;36m \x1b[0m\x1b[1;36mJava Version\x1b[0m\x1b[1;36m \x1b[0m┃\x1b[1;36m \x1b[0m\x1b[1;36mMax Bytecode\x1b[0m\x1b[1;36m \x1b[0m┃\x1b[1;36m \x1b[0m\x1b[1;36mClass Count\x1b[0m\x1b[1;36m \x1b[0m┃ (esc)
   ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━┩

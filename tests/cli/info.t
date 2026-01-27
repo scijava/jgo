@@ -131,7 +131,7 @@ Test info javainfo with endpoint.
   │ Minimum Java version: 8                                                      │
   │ (already an LTS version)                                                     │
   ╰──────────────────────────────────────────────────────────────────────────────╯
-                                   Per-JAR Analysis                                 
+   *Per-JAR Analysis * (re)
   ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┓
   ┃ JAR                                ┃ Java Version ┃ Max Bytecode ┃ Class Count ┃
   ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━┩
