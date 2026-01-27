@@ -164,22 +164,36 @@ Common Options:
   -f FILE                 Use jgo.toml file
 
 Commands:
-  run                     Run a Java application (default)
-  info classpath          Show classpath
-  info deptree            Show dependency tree  
-  info deplist            Show flat dependency list
-  info javainfo           Show Java version requirements
-  info entrypoints        Show entrypoints from jgo.toml
-  info versions           List available artifact versions
-  init                    Create new jgo.toml file
-  version                 Display jgo version
+  run               Run a Java application (default)
+  config            Manage jgo configuration
+  search            Search for artifacts in Maven repositories
+  version           Display jgo version
+
+  init              Create new jgo.toml environment file
+  add               Add dependencies to jgo.toml
+  remove            Remove dependencies from jgo.toml
+  update            Update dependencies to latest versions
+  lock              Create or update jgo.lock.toml file
+  sync              Resolve dependencies and build environment
+
+  info deptree      Show dependency tree
+  info deplist      Show flat dependency list
+  info classpath    Show classpath
+  info modulepath   Show module-path
+  info jars         Show JAR paths (classpath + module-path)
+  info javainfo     Show Java version requirements
+  info entrypoints  Show entrypoints from jgo.toml
+  info versions     List available artifact versions
+  info mains        Show classes with main methods
+  info manifest     Show JAR manifest
+  info pom          Show POM content
 
 Endpoint Format:
   groupId:artifactId[:version][:classifier][@mainClass]
 
   Multiple artifacts: org.python:jython-standalone+org.slf4j:slf4j-simple
   Specify main class: org.scijava:scijava-common@ScriptREPL
-  Auto-completion: Use simple class name (e.g., @ScriptREPL) and it will be auto-completed
+  Auto-completion: Use simple class name (e.g., @ScriptREPL) to infer package
 
 Explicit Positioning (Advanced):
   Use empty strings (consecutive colons) to avoid heuristic parsing:
