@@ -109,7 +109,7 @@ class JavaLocator:
             if actual_version < required_version:
                 raise RuntimeError(
                     f"Java {required_version} or higher required, but system Java is version {actual_version}. "
-                    f"Please upgrade Java or use auto mode for automatic Java management."
+                    "Please upgrade Java or use auto mode for automatic Java management."
                 )
             else:
                 self._maybe_log(f"Using system Java {actual_version} at {java_path}")

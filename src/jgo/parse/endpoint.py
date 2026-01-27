@@ -139,7 +139,7 @@ class Endpoint:
             warnings.warn(
                 f"Deprecated main class syntax: '{endpoint}'. "
                 f"Use '{normalized}' instead. "
-                f"The '@MainClass' should be at the end of the endpoint.",
+                "The '@MainClass' should be at the end of the endpoint.",
                 DeprecationWarning,
                 stacklevel=2,
             )

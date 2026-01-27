@@ -23,11 +23,11 @@ _log = logging.getLogger(__name__)
 
 
 @click.command(
-    help=f"Search for artifacts in [magenta]Maven repositories[/]. "
+    help="Search for artifacts in [magenta]Maven repositories[/]. "
     f"Supports plain text, coordinates ({COORD_HELP_SHORT}), or SOLR syntax ([cyan]g: a:[/]).",
-    epilog=f"[dim]TIP: Try [yellow]g:groupId a:artifactId[/] for SOLR syntax, "
+    epilog="[dim]TIP: Try [yellow]g:groupId a:artifactId[/] for SOLR syntax, "
     f"[yellow]{COORD_HELP_FULL}[/] for coordinates, or plain text. "
-    f"Use [yellow]*[/] for wildcards and [yellow]~[/] for fuzzy search.[/]",
+    "Use [yellow]*[/] for wildcards and [yellow]~[/] for fuzzy search.[/]",
 )
 @click.option(
     "--limit",

@@ -556,7 +556,7 @@ def print_config_section():
 def print_error_info():
     """Print diagnostic info to stderr."""
     console_print("Diagnostic information:", stderr=True)
-    console_print(f"  Error code: 42", stderr=True)
+    console_print("  Error code: 42", stderr=True)
 
 # === Progress Reporting Pattern ===
 import logging

@@ -435,8 +435,8 @@ class Model:
             if dep.version == "MANAGED":
                 raise ValueError(
                     f"{self.gav}: BOM {dep.groupId}:{dep.artifactId} has unresolved "
-                    f"MANAGED version. MANAGED versions must be resolved before "
-                    f"creating the wrapper POM."
+                    "MANAGED version. MANAGED versions must be resolved before "
+                    "creating the wrapper POM."
                 )
 
             bom_gav = f"{dep.groupId}:{dep.artifactId}:{dep.version}"
@@ -599,9 +599,9 @@ class Model:
             # Check for collisions (rare, but possible)
             if new_gact in new_deps and new_gact != old_gact:
                 _log.warning(
-                    f"Interpolation caused GACT key collision: "
+                    "Interpolation caused GACT key collision: "
                     f"{old_gact} -> {new_gact}. "
-                    f"Keeping first occurrence (nearest wins)."
+                    "Keeping first occurrence (nearest wins)."
                 )
                 continue
 

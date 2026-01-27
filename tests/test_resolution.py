@@ -332,6 +332,6 @@ def test_managed_version_resolution(m2_repo):
     assert len(optional_nodes) == 1, "Expected minimaven as root child"
     # The version should be resolved from dependency management (2.2.1)
     assert optional_nodes[0].dep.version == "2.2.1", (
-        f"Expected minimaven version 2.2.1 from dependency management, "
+        "Expected minimaven version 2.2.1 from dependency management, "
         f"got {optional_nodes[0].dep.version}"
     )

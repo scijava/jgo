@@ -21,7 +21,7 @@ _log = logging.getLogger(__name__)
     nargs=-1,
     required=True,
     cls=click.RichArgument,
-    help=f"One or more Maven coordinates in format "
+    help="One or more Maven coordinates in format "
     f"{styled('g:a', g='groupId', a='artifactId')} (version optional)",
 )
 @click.option(

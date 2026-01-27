@@ -204,7 +204,7 @@ class TestThicketModel:
         # The model should have more managed dependencies than just the direct imports,
         # because BOMs import other BOMs transitively
         assert len(model.dep_mgmt) > direct_imports, (
-            f"Expected transitive BOM imports to increase managed dependencies. "
+            "Expected transitive BOM imports to increase managed dependencies. "
             f"Direct imports: {direct_imports}, total managed: {len(model.dep_mgmt)}"
         )
 
