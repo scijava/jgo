@@ -164,20 +164,21 @@ Test --color with different commands.
   │                                                    exit.                     │
   ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Commands ───────────────────────────────────────────────────────────────────╮
-  │ add        Add dependencies to jgo.toml.                                     │
-  │ config     Manage jgo configuration.                                         │
-  │ help       Show help for jgo or a specific command.                          │
-  │ info       Show information about environment or artifact.                   │
-  │ init       Create a new jgo.toml environment file.                           │
-  │ list       List resolved dependencies (flat list).                           │
-  │ lock       Update jgo.lock.toml without building environment.                │
-  │ remove     Remove dependencies from jgo.toml.                                │
-  │ run        Run a Java application from Maven coordinates or jgo.toml.        │
-  │ search     Search for artifacts in Maven repositories.                       │
-  │ sync       Resolve dependencies and build environment.                       │
-  │ tree       Show dependency tree.                                             │
-  │ update     Update dependencies to latest versions.                           │
-  │ version    Display jgo's version.                                            │
+  │ add      Add dependencies to jgo.toml.                                       │
+  │ config   Manage jgo configuration.                                           │
+  │ help     Show help for jgo or a specific command.                            │
+  │ info     Show information about environment or artifact.                     │
+  │ init     Create a new jgo.toml environment file.                             │
+  │ list     List resolved dependencies (flat list).                             │
+  │ lock     Update jgo.lock.toml without building environment.                  │
+  │ remove   Remove dependencies from jgo.toml.                                  │
+  │ run      Run a Java application from Maven coordinates or jgo.toml.          │
+  │ search   Search for artifacts in Maven repositories. Supports plain text,    │
+  │          coordinates (g:a:v), or SOLR syntax (g: a:).                        │
+  │ sync     Resolve dependencies and build environment.                         │
+  │ tree     Show dependency tree.                                               │
+  │ update   Update dependencies to latest versions.                             │
+  │ version  Display jgo's version.                                              │
   ╰──────────────────────────────────────────────────────────────────────────────╯
 
   $ jgo --color=always version

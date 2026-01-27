@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 import rich_click as click
 
 from ...parse.coordinate import Coordinate
+from ...styles import COORD_HELP_FULL, COORD_HELP_SHORT
 from ..console import console_print
 from ..rich.formatters import format_coordinate
 
@@ -22,11 +23,11 @@ _log = logging.getLogger(__name__)
 
 
 @click.command(
-    help="Search for artifacts in [magenta]Maven repositories[/]. "
-    "Supports plain text, coordinates ([cyan]g:a:v[/]), or SOLR syntax ([cyan]g: a:[/]).",
-    epilog="[dim]TIP: Try [yellow]g:groupId a:artifactId[/] for SOLR syntax, "
-    "[yellow]groupId:artifactId[/] for coordinates, or plain text. "
-    "Use [yellow]*[/] for wildcards and [yellow]~[/] for fuzzy search.[/]",
+    help=f"Search for artifacts in [magenta]Maven repositories[/]. "
+    f"Supports plain text, coordinates ({COORD_HELP_SHORT}), or SOLR syntax ([cyan]g: a:[/]).",
+    epilog=f"[dim]TIP: Try [yellow]g:groupId a:artifactId[/] for SOLR syntax, "
+    f"[yellow]{COORD_HELP_FULL}[/] for coordinates, or plain text. "
+    f"Use [yellow]*[/] for wildcards and [yellow]~[/] for fuzzy search.[/]",
 )
 @click.option(
     "--limit",
@@ -50,7 +51,7 @@ _log = logging.getLogger(__name__)
     nargs=-1,
     required=True,
     cls=click.RichArgument,
-    help="Search terms. Supports plain text, coordinates (g:a:v), or SOLR syntax (g: a:)",
+    help=f"Search terms. Supports plain text, coordinates ({COORD_HELP_SHORT}), or SOLR syntax (g: a:)",
 )
 @click.pass_context
 def search(ctx, limit, repository, detailed, query):

@@ -104,6 +104,10 @@ Test config shortcut subcommand.
                                                                                   
    Manage global endpoint shortcuts.                                              
                                                                                   
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ NAME      TEXT  Shortcut name (e.g., imagej)                                 │
+  │ ENDPOINT  TEXT  Maven coordinates to associate with the shortcut             │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --remove  -r  NAME  Remove a shortcut                                        │
   │ --list    -l        List all shortcuts                                       │
@@ -126,7 +130,7 @@ Test config shortcut --list.
   Removed shortcut: jython → org.python:jython-standalone:2.7.4
 
   $ XDG_CONFIG_HOME="$TESTDIR" jgo config shortcut --list
-  Shortcuts from */tests/cli/jgo.conf: (glob)
+  Shortcuts from */jgo.conf: (glob)
   
     jd-cli  →  com.github.kwart.jd:jd-cli:1.3.0-beta-1
   
@@ -137,7 +141,7 @@ Test config shortcut --list.
   Added shortcut: jython → org.python:jython-standalone:2.7.4
 
   $ XDG_CONFIG_HOME="$TESTDIR" jgo config shortcut --list
-  Shortcuts from */tests/cli/jgo.conf: (glob)
+  Shortcuts from */jgo.conf: (glob)
   
     jd-cli  →  com.github.kwart.jd:jd-cli:1.3.0-beta-1
     jython  →  org.python:jython-standalone:2.7.4

@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from rich.tree import Tree
 
 from ...parse.coordinate import coord2str
+from ...styles import STYLES, format_tokens
 from .widgets import NoWrapTree
 
 if TYPE_CHECKING:
@@ -79,15 +80,17 @@ def format_dependency_list(
 
     lines = []
 
-    def format_coord(dep_node: DependencyNode) -> str:
-        """Format a coordinate with Rich color markup."""
-        coord = (
-            f"[bold cyan]{dep_node.dep.groupId}[/]:"
-            f"[bold]{dep_node.dep.artifactId}[/]:"
-            f"[green]{dep_node.dep.version}[/]"
+    def format_dep_node(dep_node: DependencyNode) -> str:
+        """Format a DependencyNode coordinate with Rich color markup."""
+        coord = format_tokens(
+            [
+                (dep_node.dep.groupId, "g"),
+                (dep_node.dep.artifactId, "a"),
+                (dep_node.dep.version, "v"),
+            ]
         )
         if dep_node.dep.optional:
-            coord += " [dim](optional)[/]"
+            coord += f" [{STYLES['optional']}](optional)[/]"
         return coord
 
     # Skip INTERNAL-WRAPPER root and print its children instead
@@ -97,10 +100,10 @@ def format_dependency_list(
     ):
         # Print direct dependencies (the actual components)
         for child in root.children:
-            lines.append(format_coord(child))
+            lines.append(format_dep_node(child))
     else:
         # Print root component if it's not INTERNAL-WRAPPER
-        lines.append(format_coord(root))
+        lines.append(format_dep_node(root))
 
     # Print dependencies with indentation and coloring
     for dep in dependencies:
@@ -113,15 +116,16 @@ def format_dependency_list(
             version = parts[3] if len(parts) > 3 else ""
             scope = parts[4] if len(parts) > 4 else ""
 
-            # Format with colors
-            colored = (
-                f"   [bold cyan]{group_id}[/]:"
-                f"[bold]{artifact_id}[/]:"
-                f"{packaging}:"
-                f"[green]{version}[/]"
+            # Format with colors using centralized styling
+            colored = "   " + format_tokens(
+                [
+                    (group_id, "g"),
+                    (artifact_id, "a"),
+                    (packaging, "p"),
+                    (version, "v"),
+                    (scope, "s"),
+                ]
             )
-            if scope:
-                colored += f":[dim]{scope}[/]"
 
             lines.append(colored)
         else:
@@ -145,21 +149,23 @@ def format_dependency_tree(root: DependencyNode, no_wrap: bool = False) -> Tree:
     # Choose tree class based on no_wrap setting
     TreeClass = NoWrapTree if no_wrap else Tree
 
+    def format_node(node: DependencyNode) -> str:
+        """Format a DependencyNode for tree display."""
+        coord = format_tokens(
+            [
+                (node.dep.groupId, "g"),
+                (node.dep.artifactId, "a"),
+                (node.dep.version, "v"),
+            ]
+        )
+        if node.dep.optional:
+            coord += f" [{STYLES['optional']}](optional)[/]"
+        return coord
+
     def add_children(tree: Tree, nodes: list[DependencyNode]):
         """Recursively add child nodes to Rich tree."""
         for node in nodes:
-            # Format coordinate with colors
-            coord = (
-                f"[bold cyan]{node.dep.groupId}[/]:"
-                f"[bold]{node.dep.artifactId}[/]:"
-                f"[green]{node.dep.version}[/]"
-            )
-
-            # Add optional marker
-            if node.dep.optional:
-                coord += " [dim](optional)[/]"
-
-            # Add branch and recurse
+            coord = format_node(node)
             branch = tree.add(coord)
             if node.children:
                 add_children(branch, node.children)
@@ -172,22 +178,12 @@ def format_dependency_tree(root: DependencyNode, no_wrap: bool = False) -> Tree:
         # Create invisible root for multiple top-level items
         tree = TreeClass("")
         for child in root.children:
-            coord = (
-                f"[bold cyan]{child.dep.groupId}[/]:"
-                f"[bold]{child.dep.artifactId}[/]:"
-                f"[green]{child.dep.version}[/]"
-            )
-            branch = tree.add(coord)
+            branch = tree.add(format_node(child))
             if child.children:
                 add_children(branch, child.children)
     else:
         # Create tree with root as label
-        coord = (
-            f"[bold cyan]{root.dep.groupId}[/]:"
-            f"[bold]{root.dep.artifactId}[/]:"
-            f"[green]{root.dep.version}[/]"
-        )
-        tree = TreeClass(coord)
+        tree = TreeClass(format_node(root))
         if root.children:
             add_children(tree, root.children)
 

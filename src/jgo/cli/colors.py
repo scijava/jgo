@@ -9,6 +9,15 @@ import sys
 
 import rich_click as click
 
+# Import style constants from centralized styles module
+from ..styles import STYLES
+
+# Re-export individual style constants for backward compatibility
+G_STYLE = STYLES["g"]
+A_STYLE = STYLES["a"]
+V_STYLE = STYLES["v"]
+
+
 # Configure rich-click for better help screens.
 click.rich_click.USE_RICH_MARKUP = True  # Enable [cyan]colored[/] markup like this.
 click.rich_click.SHOW_ARGUMENTS = True  # Show arguments in a separate box like options

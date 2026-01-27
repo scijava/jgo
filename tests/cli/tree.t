@@ -14,6 +14,10 @@ Test tree --help shows usage.
                                                                                   
    Show dependency tree.                                                          
                                                                                   
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ ENDPOINT  TEXT  Maven coordinates (single or combined with +) optionally     │
+  │                 followed by @MainClass                                       │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --help  Show this message and exit.                                          │
   ╰──────────────────────────────────────────────────────────────────────────────╯

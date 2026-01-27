@@ -15,6 +15,12 @@ Test run --help output.
                                                                                   
    Run a Java application from Maven coordinates or jgo.toml.                     
                                                                                   
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ ENDPOINT   TEXT  Maven coordinates (single or combined with +) optionally    │
+  │                  followed by @MainClass                                      │
+  │ REMAINING  TEXT  JVM arguments and program arguments, separated by --.       │
+  │                  Example: -- -Xmx2G -- script.py                             │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --main-class     CLASS  Main class to run (supports auto-completion for      │
   │                         simple names)                                        │
@@ -69,13 +75,13 @@ Test --update flag forces cache refresh.
 Test --verbose flag.
 
   $ jgo -v run org.python:jython-standalone:2.7.4 -- --version
-  INFO     Building environment for org.python:jython-standalone:2.7.4.* (re)
-  INFO     Running Java application.* (re)
-  INFO     Locating Java 8.* (re)
-  INFO     Using Java 8 .* (re)
+  INFO     Building environment for org.python:jython-standalone:2.7.4...         
+  INFO     Running Java application...                                            
+  INFO     Locating Java 8...                                                     
+  INFO     Using Java 8 (zulu) at                                                 
   \s*.* (re)
   \s*.* (re)
-  .*/bin/java .* org.python.util.jython --version.* (re)
+  */bin/java * org.python.util.jython --version (glob)
   Jython 2.7.4
 
 Test --quiet flag suppresses output.

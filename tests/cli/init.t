@@ -14,6 +14,10 @@ Test init --help shows usage.
                                                                                   
    Create a new jgo.toml environment file.                                        
                                                                                   
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ ENDPOINT  TEXT  Maven coordinates (single or combined with +) optionally     │
+  │                 followed by @MainClass                                       │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --help  Show this message and exit.                                          │
   ╰──────────────────────────────────────────────────────────────────────────────╯

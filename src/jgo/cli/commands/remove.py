@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 
 import rich_click as click
 
+from ...styles import styled
+
 if TYPE_CHECKING:
     from ..parser import ParsedArgs
 
@@ -19,8 +21,8 @@ _log = logging.getLogger(__name__)
     nargs=-1,
     required=True,
     cls=click.RichArgument,
-    help="One or more Maven coordinates in format "
-    "[cyan]groupId:artifactId[/] (version optional)",
+    help=f"One or more Maven coordinates in format "
+    f"{styled('g:a', g='groupId', a='artifactId')} (version optional)",
 )
 @click.option(
     "--no-sync",

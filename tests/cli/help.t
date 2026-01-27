@@ -136,20 +136,21 @@ Test main help output.
   │                                                    exit.                     │
   ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Commands ───────────────────────────────────────────────────────────────────╮
-  │ add        Add dependencies to jgo.toml.                                     │
-  │ config     Manage jgo configuration.                                         │
-  │ help       Show help for jgo or a specific command.                          │
-  │ info       Show information about environment or artifact.                   │
-  │ init       Create a new jgo.toml environment file.                           │
-  │ list       List resolved dependencies (flat list).                           │
-  │ lock       Update jgo.lock.toml without building environment.                │
-  │ remove     Remove dependencies from jgo.toml.                                │
-  │ run        Run a Java application from Maven coordinates or jgo.toml.        │
-  │ search     Search for artifacts in Maven repositories.                       │
-  │ sync       Resolve dependencies and build environment.                       │
-  │ tree       Show dependency tree.                                             │
-  │ update     Update dependencies to latest versions.                           │
-  │ version    Display jgo's version.                                            │
+  │ add      Add dependencies to jgo.toml.                                       │
+  │ config   Manage jgo configuration.                                           │
+  │ help     Show help for jgo or a specific command.                            │
+  │ info     Show information about environment or artifact.                     │
+  │ init     Create a new jgo.toml environment file.                             │
+  │ list     List resolved dependencies (flat list).                             │
+  │ lock     Update jgo.lock.toml without building environment.                  │
+  │ remove   Remove dependencies from jgo.toml.                                  │
+  │ run      Run a Java application from Maven coordinates or jgo.toml.          │
+  │ search   Search for artifacts in Maven repositories. Supports plain text,    │
+  │          coordinates (g:a:v), or SOLR syntax (g: a:).                        │
+  │ sync     Resolve dependencies and build environment.                         │
+  │ tree     Show dependency tree.                                               │
+  │ update   Update dependencies to latest versions.                             │
+  │ version  Display jgo's version.                                              │
   ╰──────────────────────────────────────────────────────────────────────────────╯
 
 Test help for specific commands.
@@ -160,6 +161,12 @@ Test help for specific commands.
                                                                                   
    Run a Java application from Maven coordinates or jgo.toml.                     
                                                                                   
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ ENDPOINT   TEXT  Maven coordinates (single or combined with +) optionally    │
+  │                  followed by @MainClass                                      │
+  │ REMAINING  TEXT  JVM arguments and program arguments, separated by --.       │
+  │                  Example: -- -Xmx2G -- script.py                             │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --main-class     CLASS  Main class to run (supports auto-completion for      │
   │                         simple names)                                        │
@@ -172,14 +179,16 @@ Test help for specific commands.
                                                                                   
 
   $ jgo help version
-
-   Usage: jgo version [OPTIONS]
-
+                                                                                  
+   Usage: jgo version [OPTIONS]                                                   
+                                                                                  
    Display jgo's version.                                                         
                                                                                   
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --help  Show this message and exit.                                          │
   ╰──────────────────────────────────────────────────────────────────────────────╯
+
+
 
   $ jgo help add
                                                                                   
@@ -187,6 +196,10 @@ Test help for specific commands.
                                                                                   
    Add dependencies to jgo.toml.                                                  
                                                                                   
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ *  COORDINATES  TEXT  One or more Maven coordinates in format                │
+  │                       groupId:artifactId:[version:[classifier] [required]    │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --no-sync  Don't automatically sync after adding dependencies                │
   │ --help     Show this message and exit.                                       │
@@ -194,10 +207,14 @@ Test help for specific commands.
 
   $ jgo help remove
                                                                                   
-   Usage: jgo remove [OPTIONS] COORDINATES...                                        
+   Usage: jgo remove [OPTIONS] COORDINATES...                                     
                                                                                   
    Remove dependencies from jgo.toml.                                             
                                                                                   
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ *  COORDINATES  TEXT  One or more Maven coordinates in format                │
+  │                       groupId:artifactId (version optional) [required]       │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --no-sync  Don't automatically sync after removing dependencies              │
   │ --help     Show this message and exit.                                       │
@@ -205,20 +222,28 @@ Test help for specific commands.
 
   $ jgo help init
                                                                                   
-   Usage: jgo init [OPTIONS] [ENDPOINT]                                            
+   Usage: jgo init [OPTIONS] [ENDPOINT]                                           
                                                                                   
    Create a new jgo.toml environment file.                                        
                                                                                   
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ ENDPOINT  TEXT  Maven coordinates (single or combined with +) optionally     │
+  │                 followed by @MainClass                                       │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --help  Show this message and exit.                                          │
   ╰──────────────────────────────────────────────────────────────────────────────╯
 
   $ jgo help list
                                                                                   
-   Usage: jgo list [OPTIONS] [ENDPOINT]                                            
+   Usage: jgo list [OPTIONS] [ENDPOINT]                                           
                                                                                   
    List resolved dependencies (flat list).                                        
                                                                                   
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ ENDPOINT  TEXT  Maven coordinates (single or combined with +) optionally     │
+  │                 followed by @MainClass                                       │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --direct  Show only direct dependencies (non-transitive)                     │
   │ --help    Show this message and exit.                                        │
@@ -226,17 +251,21 @@ Test help for specific commands.
 
   $ jgo help tree
                                                                                   
-   Usage: jgo tree [OPTIONS] [ENDPOINT]                                            
+   Usage: jgo tree [OPTIONS] [ENDPOINT]                                           
                                                                                   
    Show dependency tree.                                                          
                                                                                   
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ ENDPOINT  TEXT  Maven coordinates (single or combined with +) optionally     │
+  │                 followed by @MainClass                                       │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --help  Show this message and exit.                                          │
   ╰──────────────────────────────────────────────────────────────────────────────╯
 
   $ jgo help sync
                                                                                   
-   Usage: jgo sync [OPTIONS]                                                       
+   Usage: jgo sync [OPTIONS]                                                      
                                                                                   
    Resolve dependencies and build environment.                                    
                                                                                   
@@ -247,7 +276,7 @@ Test help for specific commands.
 
   $ jgo help lock
                                                                                   
-   Usage: jgo lock [OPTIONS]                                                       
+   Usage: jgo lock [OPTIONS]                                                      
                                                                                   
    Update jgo.lock.toml without building environment.                             
                                                                                   
@@ -258,7 +287,7 @@ Test help for specific commands.
 
   $ jgo help update
                                                                                   
-   Usage: jgo update [OPTIONS]                                                       
+   Usage: jgo update [OPTIONS]                                                    
                                                                                   
    Update dependencies to latest versions.                                        
                                                                                   
@@ -268,12 +297,12 @@ Test help for specific commands.
   ╰──────────────────────────────────────────────────────────────────────────────╯
 
   $ jgo help search
-
-   Usage: jgo search [OPTIONS] QUERY...
-
-   Search for artifacts in Maven repositories. Supports plain text, coordinates
-   (g:a:v), or SOLR syntax (g: a:).
-
+                                                                                  
+   Usage: jgo search [OPTIONS] QUERY...                                           
+                                                                                  
+   Search for artifacts in Maven repositories. Supports plain text, coordinates   
+   (g:a:v), or SOLR syntax (g: a:).                                               
+                                                                                  
   ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
   │ *  QUERY  TEXT  Search terms. Supports plain text, coordinates (g:a:v), or   │
   │                 SOLR syntax (g: a:) [required]                               │
@@ -285,17 +314,19 @@ Test help for specific commands.
   │ --help              Show this message and exit.                              │
   ╰──────────────────────────────────────────────────────────────────────────────╯
                                                                                   
-   TIP: Try g:groupId a:artifactId for SOLR syntax, groupId:artifactId for        
-   coordinates, or plain text. Use * for wildcards and ~ for fuzzy search.        
+   TIP: Try g:groupId a:artifactId for SOLR syntax,                               
+   groupId:artifactId:[version:[classifier] for coordinates, or plain text. Use * 
+   for wildcards and ~ for fuzzy search.                                          
                                                                                   
 
 
-   TIP: Try g:groupId a:artifactId for SOLR syntax, groupId:artifactId for
-   coordinates, or plain text. Use * for wildcards and ~ for fuzzy search.
+
+
+
 
   $ jgo help config
                                                                                   
-   Usage: jgo config [OPTIONS] COMMAND [ARGS]...                                     
+   Usage: jgo config [OPTIONS] COMMAND [ARGS]...                                  
                                                                                   
    Manage jgo configuration.                                                      
                                                                                   
@@ -311,9 +342,9 @@ Test help for specific commands.
   ╰──────────────────────────────────────────────────────────────────────────────╯
 
   $ jgo help info
-
-   Usage: jgo info [OPTIONS] COMMAND [ARGS]...
-
+                                                                                  
+   Usage: jgo info [OPTIONS] COMMAND [ARGS]...                                    
+                                                                                  
    Show information about environment or artifact.                                
                                                                                   
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
@@ -337,26 +368,38 @@ Test help for specific commands.
    TIP: To see the launch command, use: jgo --dry-run run <endpoint>              
                                                                                   
 
+
+
 Test nested help for config subcommands.
 
   $ jgo help config shortcut
-
-   Usage: jgo config shortcut [OPTIONS] [NAME] [ENDPOINT]
-
+                                                                                  
+   Usage: jgo config shortcut [OPTIONS] [NAME] [ENDPOINT]                         
+                                                                                  
    Manage global endpoint shortcuts.                                              
                                                                                   
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ NAME      TEXT  Shortcut name (e.g., imagej)                                 │
+  │ ENDPOINT  TEXT  Maven coordinates to associate with the shortcut             │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --remove  -r  NAME  Remove a shortcut                                        │
   │ --list    -l        List all shortcuts                                       │
   │ --help              Show this message and exit.                              │
   ╰──────────────────────────────────────────────────────────────────────────────╯
 
+
+
   $ jgo help config get
                                                                                   
-   Usage: jgo config jgo [OPTIONS] KEY                                            
+   Usage: jgo config get [OPTIONS] KEY                                            
                                                                                   
    Get a configuration value.                                                     
                                                                                   
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ *  KEY  TEXT  Configuration key in dot notation (e.g., repositories.scijava) │
+  │               [required]                                                     │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --global  Use global configuration (~/.config/jgo.conf)                      │
   │ --local   Use local configuration (jgo.toml)                                 │
@@ -365,10 +408,15 @@ Test nested help for config subcommands.
 
   $ jgo help config set
                                                                                   
-   Usage: jgo config jgo [OPTIONS] KEY VALUE                                      
+   Usage: jgo config set [OPTIONS] KEY VALUE                                      
                                                                                   
    Set a configuration value.                                                     
                                                                                   
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ *  KEY    TEXT  Configuration key in dot notation (e.g.,                     │
+  │                 repositories.scijava) [required]                             │
+  │ *  VALUE  TEXT  Configuration value to set [required]                        │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --global  Use global configuration (~/.config/jgo.conf)                      │
   │ --local   Use local configuration (jgo.toml)                                 │
@@ -377,7 +425,7 @@ Test nested help for config subcommands.
 
   $ jgo help config list
                                                                                   
-   Usage: jgo config jgo [OPTIONS]                                                
+   Usage: jgo config list [OPTIONS]                                               
                                                                                   
    List all configuration values.                                                 
                                                                                   
@@ -391,40 +439,53 @@ Test nested help for info subcommands.
 
   $ jgo help info classpath
                                                                                   
-   Usage: jgo info jgo [OPTIONS] [ENDPOINT]                                       
+   Usage: jgo info classpath [OPTIONS] [ENDPOINT]                                 
                                                                                   
    Show classpath.                                                                
                                                                                   
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ ENDPOINT  TEXT  Maven coordinates (single or combined with +) optionally     │
+  │                 followed by @MainClass                                       │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --help  Show this message and exit.                                          │
   ╰──────────────────────────────────────────────────────────────────────────────╯
 
   $ jgo help info deptree
                                                                                   
-   Usage: jgo info jgo [OPTIONS] [ENDPOINT]                                       
+   Usage: jgo info deptree [OPTIONS] [ENDPOINT]                                   
                                                                                   
    Show dependency tree.                                                          
                                                                                   
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ ENDPOINT  TEXT                                                               │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --help  Show this message and exit.                                          │
   ╰──────────────────────────────────────────────────────────────────────────────╯
 
   $ jgo help info javainfo
                                                                                   
-   Usage: jgo info jgo [OPTIONS] [ENDPOINT]                                       
+   Usage: jgo info javainfo [OPTIONS] [ENDPOINT]                                  
                                                                                   
    Show Java version requirements.                                                
                                                                                   
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ ENDPOINT  TEXT                                                               │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --help  Show this message and exit.                                          │
   ╰──────────────────────────────────────────────────────────────────────────────╯
 
   $ jgo help info versions
                                                                                   
-   Usage: jgo info jgo [OPTIONS] COORDINATE                                       
+   Usage: jgo info versions [OPTIONS] COORDINATE                                  
                                                                                   
    List available versions of an artifact.                                        
                                                                                   
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ *  COORDINATE  TEXT  [required]                                              │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --help  Show this message and exit.                                          │
   ╰──────────────────────────────────────────────────────────────────────────────╯
@@ -565,20 +626,21 @@ Test no-argument help (should show main help).
   │                                                    exit.                     │
   ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Commands ───────────────────────────────────────────────────────────────────╮
-  │ add        Add dependencies to jgo.toml.                                     │
-  │ config     Manage jgo configuration.                                         │
-  │ help       Show help for jgo or a specific command.                          │
-  │ info       Show information about environment or artifact.                   │
-  │ init       Create a new jgo.toml environment file.                           │
-  │ list       List resolved dependencies (flat list).                           │
-  │ lock       Update jgo.lock.toml without building environment.                │
-  │ remove     Remove dependencies from jgo.toml.                                │
-  │ run        Run a Java application from Maven coordinates or jgo.toml.        │
-  │ search     Search for artifacts in Maven repositories.                       │
-  │ sync       Resolve dependencies and build environment.                       │
-  │ tree       Show dependency tree.                                             │
-  │ update     Update dependencies to latest versions.                           │
-  │ version    Display jgo's version.                                            │
+  │ add      Add dependencies to jgo.toml.                                       │
+  │ config   Manage jgo configuration.                                           │
+  │ help     Show help for jgo or a specific command.                            │
+  │ info     Show information about environment or artifact.                     │
+  │ init     Create a new jgo.toml environment file.                             │
+  │ list     List resolved dependencies (flat list).                             │
+  │ lock     Update jgo.lock.toml without building environment.                  │
+  │ remove   Remove dependencies from jgo.toml.                                  │
+  │ run      Run a Java application from Maven coordinates or jgo.toml.          │
+  │ search   Search for artifacts in Maven repositories. Supports plain text,    │
+  │          coordinates (g:a:v), or SOLR syntax (g: a:).                        │
+  │ sync     Resolve dependencies and build environment.                         │
+  │ tree     Show dependency tree.                                               │
+  │ update   Update dependencies to latest versions.                             │
+  │ version  Display jgo's version.                                              │
   ╰──────────────────────────────────────────────────────────────────────────────╯
 
 Test --help flag on main command.
@@ -717,18 +779,19 @@ Test --help flag on main command.
   │                                                    exit.                     │
   ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Commands ───────────────────────────────────────────────────────────────────╮
-  │ add        Add dependencies to jgo.toml.                                     │
-  │ config     Manage jgo configuration.                                         │
-  │ help       Show help for jgo or a specific command.                          │
-  │ info       Show information about environment or artifact.                   │
-  │ init       Create a new jgo.toml environment file.                           │
-  │ list       List resolved dependencies (flat list).                           │
-  │ lock       Update jgo.lock.toml without building environment.                │
-  │ remove     Remove dependencies from jgo.toml.                                │
-  │ run        Run a Java application from Maven coordinates or jgo.toml.        │
-  │ search     Search for artifacts in Maven repositories.                       │
-  │ sync       Resolve dependencies and build environment.                       │
-  │ tree       Show dependency tree.                                             │
-  │ update     Update dependencies to latest versions.                           │
-  │ version    Display jgo's version.                                            │
+  │ add      Add dependencies to jgo.toml.                                       │
+  │ config   Manage jgo configuration.                                           │
+  │ help     Show help for jgo or a specific command.                            │
+  │ info     Show information about environment or artifact.                     │
+  │ init     Create a new jgo.toml environment file.                             │
+  │ list     List resolved dependencies (flat list).                             │
+  │ lock     Update jgo.lock.toml without building environment.                  │
+  │ remove   Remove dependencies from jgo.toml.                                  │
+  │ run      Run a Java application from Maven coordinates or jgo.toml.          │
+  │ search   Search for artifacts in Maven repositories. Supports plain text,    │
+  │          coordinates (g:a:v), or SOLR syntax (g: a:).                        │
+  │ sync     Resolve dependencies and build environment.                         │
+  │ tree     Show dependency tree.                                               │
+  │ update   Update dependencies to latest versions.                             │
+  │ version  Display jgo's version.                                              │
   ╰──────────────────────────────────────────────────────────────────────────────╯

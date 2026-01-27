@@ -149,11 +149,11 @@ Test info manifest requires endpoint.
 
   $ jgo info manifest
                                                                                   
-   Usage: jgo info manifest [OPTIONS] ENDPOINT                                    
+   Usage: jgo info manifest [OPTIONS] COORDINATE                                  
                                                                                   
    Try 'jgo info manifest --help' for help                                        
   ╭─ Error ──────────────────────────────────────────────────────────────────────╮
-  │ Missing argument 'ENDPOINT'.                                                 │
+  │ Missing argument 'COORDINATE'.                                               │
   ╰──────────────────────────────────────────────────────────────────────────────╯
                                                                                   
   [2]
@@ -228,11 +228,11 @@ Test info pom requires endpoint.
 
   $ jgo info pom
                                                                                   
-   Usage: jgo info pom [OPTIONS] ENDPOINT                                         
+   Usage: jgo info pom [OPTIONS] COORDINATE                                       
                                                                                   
    Try 'jgo info pom --help' for help                                             
   ╭─ Error ──────────────────────────────────────────────────────────────────────╮
-  │ Missing argument 'ENDPOINT'.                                                 │
+  │ Missing argument 'COORDINATE'.                                               │
   ╰──────────────────────────────────────────────────────────────────────────────╯
                                                                                   
   [2]

@@ -21,6 +21,10 @@ Test remove --help shows usage.
                                                                                   
    Remove dependencies from jgo.toml.                                             
                                                                                   
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ *  COORDINATES  TEXT  One or more Maven coordinates in format                │
+  │                       groupId:artifactId (version optional) [required]       │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --no-sync  Don't automatically sync after removing dependencies              │
   │ --help     Show this message and exit.                                       │

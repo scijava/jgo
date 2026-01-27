@@ -19,8 +19,13 @@ Test search --help shows usage.
                                                                                   
    Usage: jgo search [OPTIONS] QUERY...                                           
                                                                                   
-   Search for artifacts in Maven repositories.                                    
+   Search for artifacts in Maven repositories. Supports plain text, coordinates   
+   (g:a:v), or SOLR syntax (g: a:).                                               
                                                                                   
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ *  QUERY  TEXT  Search terms. Supports plain text, coordinates (g:a:v), or   │
+  │                 SOLR syntax (g: a:) [required]                               │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --limit       N     Limit number of results (default: 20)                    │
   │ --repository  NAME  Search specific repository (default: central)            │
@@ -28,8 +33,9 @@ Test search --help shows usage.
   │ --help              Show this message and exit.                              │
   ╰──────────────────────────────────────────────────────────────────────────────╯
                                                                                   
-   TIP: Try g:groupId a:artifactId for SOLR syntax, groupId:artifactId for        
-   coordinates, or plain text. Use * for wildcards and ~ for fuzzy search.        
+   TIP: Try g:groupId a:artifactId for SOLR syntax,                               
+   groupId:artifactId:[version:[classifier] for coordinates, or plain text. Use * 
+   for wildcards and ~ for fuzzy search.                                          
                                                                                   
 
 

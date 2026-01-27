@@ -269,55 +269,64 @@ def coord2str(
         A formatted coordinate string (e.g., "g:a:p:c:v:s" or "g:a:v!" for raw)
         If rich=True, includes Rich markup tags for coloring
     """
+    if rich:
+        from ..styles import STYLES, format_tokens, styled
 
-    def tag(s: str, t: str | None) -> str:
-        return f"[{t}]{s}[/]" if rich and t is not None else s
+        # Build coordinate from non-empty components
+        result = format_tokens(
+            [
+                (groupId, "g"),
+                (artifactId, "a"),
+                (packaging, "p"),
+                (classifier, "c"),
+                (version, "v"),
+                (scope, "s"),
+            ]
+        )
 
-    rich_g = tag(groupId, "bold cyan")
-    rich_a = tag(artifactId, "bold")
-    rich_v = tag(version, "green")
-    rich_c = tag(classifier, None)
-    rich_p = tag(packaging, None)
-    rich_s = tag(scope, None)
-    opt = tag("(optional)", "dim")
-    colon = tag(":", "dim")
-    bang = tag("!", "dim")
-    cp = tag("(c)", "dim")
-    mp = tag("(m)", "dim")
+        # Add (optional) marker after scope if both present
+        if scope and optional:
+            result += f" [{STYLES['optional']}](optional)[/]"
 
-    # Start with groupId:artifactId
-    result = f"{rich_g}{colon}{rich_a}"
+        # Append placement suffix (before raw flag)
+        if placement == "class-path":
+            result += f"[{STYLES['placement']}](c)[/]"
+        elif placement == "module-path":
+            result += f"[{STYLES['placement']}](m)[/]"
 
-    # Add packaging if present (comes before version in Maven format)
-    if packaging:
-        result += f"{colon}{rich_p}"
+        # Append ! for raw/strict resolution (comes last)
+        if raw:
+            result += styled("!")
 
-    # Add classifier if present
-    if classifier:
-        result += f"{colon}{rich_c}"
+        return result
+    else:
+        # Plain text mode - no Rich markup
+        parts = [groupId, artifactId]
+        if packaging:
+            parts.append(packaging)
+        if classifier:
+            parts.append(classifier)
+        if version:
+            parts.append(version)
+        if scope:
+            scope_text = scope
+            if optional:
+                scope_text += " (optional)"
+            parts.append(scope_text)
 
-    # Add version if present
-    if version:
-        result += f"{colon}{rich_v}"
+        result = ":".join(parts)
 
-    # Add scope if present
-    if scope:
-        scope_text = rich_s
-        if optional:
-            scope_text += f" {opt}"
-        result += f"{colon}{scope_text}"
+        # Append placement suffix (before raw flag)
+        if placement == "class-path":
+            result += "(c)"
+        elif placement == "module-path":
+            result += "(m)"
 
-    # Append placement suffix (before raw flag)
-    if placement == "class-path":
-        result += cp
-    elif placement == "module-path":
-        result += mp
+        # Append ! for raw/strict resolution (comes last)
+        if raw:
+            result += "!"
 
-    # Append ! for raw/strict resolution (comes last)
-    if raw:
-        result += bang
-
-    return result
+        return result
 
 
 def _parse_coordinate_dict(coordinate: str) -> dict[str, str | None | bool]:

@@ -14,6 +14,10 @@ Test list --help shows usage.
                                                                                   
    List resolved dependencies (flat list).                                        
                                                                                   
+  ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+  │ ENDPOINT  TEXT  Maven coordinates (single or combined with +) optionally     │
+  │                 followed by @MainClass                                       │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --direct  Show only direct dependencies (non-transitive)                     │
   │ --help    Show this message and exit.                                        │

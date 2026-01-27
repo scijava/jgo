@@ -8,6 +8,7 @@ from pathlib import Path
 import rich_click as click
 
 from ...parse.coordinate import Coordinate
+from ...styles import COORD_HELP_FULL
 from ..console import console_print
 
 _log = logging.getLogger(__name__)
@@ -300,7 +301,7 @@ def entrypoints(ctx):
     "coordinate",
     required=True,
     cls=click.RichArgument,
-    help="Maven coordinate in format [cyan]groupId:artifactId[:version][:classifier][/]",
+    help=f"Maven coordinate in format {COORD_HELP_FULL}",
 )
 @click.option("--raw", is_flag=True, help="Show raw manifest contents")
 @click.pass_context
@@ -372,7 +373,7 @@ def manifest(ctx, coordinate, raw):
     "coordinate",
     required=True,
     cls=click.RichArgument,
-    help="Maven coordinate in format [cyan]groupId:artifactId[:version][:classifier][/]",
+    help=f"Maven coordinate in format {COORD_HELP_FULL}",
 )
 @click.pass_context
 def pom(ctx, coordinate):
