@@ -20,6 +20,31 @@ if TYPE_CHECKING:
     from ...parse.coordinate import Coordinate
 
 
+def _format_dependency(dep) -> str:
+    """
+    Format a Dependency object with Rich markup for colored output.
+
+    Args:
+        dep: A Dependency object with groupId, artifactId, type, classifier, version, scope, optional
+
+    Returns:
+        Formatted string with Rich markup (G:A:P:C:V:S format)
+    """
+    coord = format_tokens(
+        [
+            (dep.groupId, "g"),
+            (dep.artifactId, "a"),
+            (dep.type, "p"),  # type is packaging
+            (dep.classifier, "c"),
+            (dep.version, "v"),
+            (dep.scope, "s"),
+        ]
+    )
+    if dep.optional:
+        coord += f" [{STYLES['optional']}](optional)[/]"
+    return coord
+
+
 def format_coordinate(coord: Coordinate) -> str:
     """
     Format a Maven coordinate with Rich markup for semantic coloring.
@@ -80,19 +105,6 @@ def format_dependency_list(
 
     lines = []
 
-    def format_dep_node(dep_node: DependencyNode) -> str:
-        """Format a DependencyNode coordinate with Rich color markup."""
-        coord = format_tokens(
-            [
-                (dep_node.dep.groupId, "g"),
-                (dep_node.dep.artifactId, "a"),
-                (dep_node.dep.version, "v"),
-            ]
-        )
-        if dep_node.dep.optional:
-            coord += f" [{STYLES['optional']}](optional)[/]"
-        return coord
-
     # Skip INTERNAL-WRAPPER root and print its children instead
     if (
         root.dep.groupId == "org.apposed.jgo"
@@ -100,37 +112,17 @@ def format_dependency_list(
     ):
         # Print direct dependencies (the actual components)
         for child in root.children:
-            lines.append(format_dep_node(child))
+            lines.append(_format_dependency(child.dep))
     else:
         # Print root component if it's not INTERNAL-WRAPPER
-        lines.append(format_dep_node(root))
+        lines.append(_format_dependency(root.dep))
 
     # Print dependencies with indentation and coloring
     for dep in dependencies:
-        # Parse the dependency string (format: groupId:artifactId:packaging:version:scope)
-        parts = str(dep).split(":")
-        if len(parts) >= 4:
-            group_id = parts[0]
-            artifact_id = parts[1]
-            packaging = parts[2] if len(parts) > 2 else "jar"
-            version = parts[3] if len(parts) > 3 else ""
-            scope = parts[4] if len(parts) > 4 else ""
-
-            # Format with colors using centralized styling
-            colored = "   " + format_tokens(
-                [
-                    (group_id, "g"),
-                    (artifact_id, "a"),
-                    (packaging, "p"),
-                    (version, "v"),
-                    (scope, "s"),
-                ]
-            )
-
-            lines.append(colored)
-        else:
-            # Fallback for unexpected format
-            lines.append(f"   {dep}")
+        # Access dependency attributes directly instead of parsing strings
+        # Format: G:A:P:C:V:S (packaging, classifier, version, scope optional)
+        dep_obj = dep.dep if hasattr(dep, "dep") else dep
+        lines.append("   " + _format_dependency(dep_obj))
 
     return lines
 
@@ -149,23 +141,10 @@ def format_dependency_tree(root: DependencyNode, no_wrap: bool = False) -> Tree:
     # Choose tree class based on no_wrap setting
     TreeClass = NoWrapTree if no_wrap else Tree
 
-    def format_node(node: DependencyNode) -> str:
-        """Format a DependencyNode for tree display."""
-        coord = format_tokens(
-            [
-                (node.dep.groupId, "g"),
-                (node.dep.artifactId, "a"),
-                (node.dep.version, "v"),
-            ]
-        )
-        if node.dep.optional:
-            coord += f" [{STYLES['optional']}](optional)[/]"
-        return coord
-
     def add_children(tree: Tree, nodes: list[DependencyNode]):
         """Recursively add child nodes to Rich tree."""
         for node in nodes:
-            coord = format_node(node)
+            coord = _format_dependency(node.dep)
             branch = tree.add(coord)
             if node.children:
                 add_children(branch, node.children)
@@ -178,12 +157,12 @@ def format_dependency_tree(root: DependencyNode, no_wrap: bool = False) -> Tree:
         # Create invisible root for multiple top-level items
         tree = TreeClass("")
         for child in root.children:
-            branch = tree.add(format_node(child))
+            branch = tree.add(_format_dependency(child.dep))
             if child.children:
                 add_children(branch, child.children)
     else:
         # Create tree with root as label
-        tree = TreeClass(format_node(root))
+        tree = TreeClass(_format_dependency(root.dep))
         if root.children:
             add_children(tree, root.children)
 
