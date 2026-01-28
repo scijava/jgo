@@ -9,12 +9,13 @@ from __future__ import annotations
 # Style mappings for coordinate components and punctuation
 STYLES = {
     # Maven coordinate components
-    "g": "bold cyan",  # groupId
-    "a": "bold",  # artifactId
-    "v": "green",  # version
-    "p": None,  # packaging
-    "c": None,  # classifier
-    "s": None,  # scope
+    # Visual hierarchy: a > v > c > g > s > p
+    "g": "cyan",  # groupId - organizational context
+    "a": "bold",  # artifactId - maximum visibility
+    "v": "bright_green",  # version - highly visible, positive semantic
+    "p": None,  # packaging - de-emphasize (usually just "jar")
+    "c": "yellow",  # classifier - attention-grabbing for variants
+    "s": "blue",  # scope - contextual metadata
     # Structural elements
     ":": "dim",  # colon separator
     "!": "dim",  # raw/unmanaged flag
