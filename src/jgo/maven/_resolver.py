@@ -146,6 +146,26 @@ class Resolver(ABC):
         ...
 
     @abstractmethod
+    def download_batch(
+        self, artifacts: list[Artifact], max_workers: int = 4
+    ) -> dict[Artifact, Path | None]:
+        """
+        Download multiple artifacts.
+
+        Implementations must handle their own concurrency constraints:
+        - PythonResolver: Can download in parallel (independent HTTP requests)
+        - MvnResolver: Must download sequentially (Maven cache not concurrency-safe)
+
+        Args:
+            artifacts: List of artifacts to download
+            max_workers: Maximum concurrent downloads (hint for parallel implementations)
+
+        Returns:
+            Dictionary mapping artifacts to their local paths (None if download failed)
+        """
+        ...
+
+    @abstractmethod
     def resolve(
         self,
         dependencies: list[Dependency],
@@ -251,6 +271,7 @@ class PythonResolver(Resolver):
         self,
         profile_constraints: ProfileConstraints | None = None,
         progress_callback: ProgressCallback | None = None,
+        max_retries: int = 3,
     ):
         """
         Initialize Python resolver.
@@ -260,9 +281,27 @@ class PythonResolver(Resolver):
             progress_callback: Optional callback for download progress reporting.
                 Receives (filename, total_size) and returns a context manager
                 that yields an update function accepting bytes_count.
+            max_retries: Maximum number of retries for transient errors (429, 5xx).
+                Defaults to 3. Set to 0 to disable retries.
         """
         self.profile_constraints = profile_constraints
         self.progress_callback = progress_callback
+
+        # Configure requests session with retry strategy for transient errors
+        from requests.adapters import HTTPAdapter
+        from urllib3.util.retry import Retry
+
+        self.session = requests.Session()
+        retry_strategy = Retry(
+            total=max_retries,
+            status_forcelist=[429, 500, 502, 503, 504],
+            backoff_factor=1,  # 1s, 2s, 4s, 8s...
+            respect_retry_after_header=True,
+            raise_on_status=False,  # Don't raise on HTTP errors
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
 
     def download(self, artifact: Artifact) -> Path | None:
         # For SNAPSHOT versions, ensure we have the metadata first
@@ -288,7 +327,8 @@ class PythonResolver(Resolver):
             _log.debug(f"Trying {url}")
 
             # Use streaming to enable progress bar
-            response: requests.Response = requests.get(url, stream=True)
+            # Session has retry logic for 429 rate limiting and transient 5xx errors
+            response: requests.Response = self.session.get(url, stream=True)
             if response.status_code == 200:
                 # Artifact downloaded successfully.
                 # TODO: Also get MD5 and SHA1 files if available.
@@ -326,6 +366,53 @@ class PythonResolver(Resolver):
             f"Artifact {artifact} not found in remote repositories "
             f"{artifact.context.remote_repos}"
         )
+
+    def download_batch(
+        self, artifacts: list[Artifact], max_workers: int = 4
+    ) -> dict[Artifact, Path | None]:
+        """
+        Download multiple artifacts in parallel using ThreadPoolExecutor.
+
+        Args:
+            artifacts: List of artifacts to download
+            max_workers: Maximum number of concurrent downloads
+
+        Returns:
+            Dictionary mapping artifacts to their local paths (None if download failed)
+        """
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        results = {}
+        to_download = []
+
+        # Separate already-cached from needs-download
+        for artifact in artifacts:
+            if artifact.cached_path and artifact.cached_path.exists():
+                results[artifact] = artifact.cached_path
+            else:
+                to_download.append(artifact)
+
+        if not to_download:
+            return results
+
+        _log.info(f"Downloading {len(to_download)} artifact(s) in parallel (max {max_workers} workers)")
+
+        # Download uncached artifacts in parallel
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_artifact = {
+                executor.submit(self.download, artifact): artifact
+                for artifact in to_download
+            }
+
+            for future in as_completed(future_to_artifact):
+                artifact = future_to_artifact[future]
+                try:
+                    results[artifact] = future.result()
+                except Exception as e:
+                    _log.error(f"Failed to download {artifact}: {e}")
+                    results[artifact] = None
+
+        return results
 
     def resolve(
         self,
@@ -605,6 +692,32 @@ class MvnResolver(Resolver):
         # The file should now exist in the local repo cache.
         assert artifact.cached_path and artifact.cached_path.exists()
         return artifact.cached_path
+
+    def download_batch(
+        self, artifacts: list[Artifact], max_workers: int = 4
+    ) -> dict[Artifact, Path | None]:
+        """
+        Download artifacts sequentially.
+
+        Maven's local repository cache is not concurrency-safe, so we must
+        download one artifact at a time. Maven will parallelize transitive
+        dependencies internally via the -T8 flag.
+
+        Args:
+            artifacts: List of artifacts to download
+            max_workers: Ignored (sequential download required for Maven cache safety)
+
+        Returns:
+            Dictionary mapping artifacts to their local paths (None if download failed)
+        """
+        results = {}
+        for artifact in artifacts:
+            try:
+                results[artifact] = self.download(artifact)
+            except Exception as e:
+                _log.error(f"Failed to download {artifact}: {e}")
+                results[artifact] = None
+        return results
 
     def resolve(
         self,

@@ -743,8 +743,22 @@ class EnvironmentBuilder:
         # Track locked dependencies with module info
         locked_deps: list[LockedDependency] = []
 
+        # Collect all artifacts to download in batch (for parallel downloading)
+        artifacts_to_download = []
+        for dep in resolved_components:
+            artifacts_to_download.append(dep.artifact)
+        for dep in resolved_deps:
+            if dep.scope in ("compile", "runtime"):
+                artifacts_to_download.append(dep.artifact)
+
+        # Batch download all artifacts that aren't already cached
+        # This enables parallel downloads in PythonResolver while respecting
+        # MvnResolver's sequential requirement (Maven cache not thread-safe)
+        components[0].context.resolver.download_batch(artifacts_to_download, max_workers=4)
+
         # Collect all artifact paths to determine min Java version
         # We need to know the target Java version before classifying JARs
+        # Note: resolve() will now find artifacts in cache (downloaded above)
         all_artifact_paths = []
         # Process resolved artifacts first
         for dep in resolved_inputs:
