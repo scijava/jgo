@@ -11,7 +11,7 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from ..constants import DEFAULT_JGO_CACHE
+from ..constants import default_jgo_cache
 from ..exec.java_source import JavaLocator, JavaSource
 from ..maven.core import Dependency
 from ..parse.coordinate import Coordinate
@@ -216,7 +216,7 @@ class EnvironmentBuilder:
             return Path(".jgo")
 
         # Default to centralized cache
-        return DEFAULT_JGO_CACHE
+        return default_jgo_cache()
 
     @staticmethod
     def is_project_mode() -> bool:

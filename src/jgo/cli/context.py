@@ -11,7 +11,7 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from ..constants import DEFAULT_MAVEN_REPO, MAVEN_CENTRAL_URL
+from ..constants import MAVEN_CENTRAL_URL, default_maven_repo
 from ..env import EnvironmentBuilder, EnvironmentSpec, LinkStrategy
 from ..exec import JavaRunner, JavaSource, JVMConfig
 from ..exec.gc_defaults import is_gc_flag, normalize_gc_flag
@@ -78,7 +78,7 @@ def create_maven_context(args: ParsedArgs, config: dict) -> MavenContext:
     repo_cache = args.repo_cache
     if repo_cache is None:
         # Check config, then default
-        repo_cache = config.get("repo_cache", DEFAULT_MAVEN_REPO)
+        repo_cache = config.get("repo_cache", default_maven_repo())
     repo_cache = Path(repo_cache).expanduser()
 
     # Get remote repositories

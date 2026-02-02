@@ -86,8 +86,3 @@ def legacy_settings_path() -> Path:
     Get legacy settings file path (~/.jgorc).
     """
     return get_user_home() / ".jgorc"
-
-
-# Legacy constant-style access (for backward compatibility, will be removed in 3.0)
-DEFAULT_MAVEN_REPO = default_maven_repo()
-DEFAULT_JGO_CACHE = default_jgo_cache()

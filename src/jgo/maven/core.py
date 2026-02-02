@@ -31,7 +31,7 @@ from os import environ
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable
 
-from ..constants import DEFAULT_MAVEN_REPO, MAVEN_CENTRAL_URL
+from ..constants import MAVEN_CENTRAL_URL, default_maven_repo
 from ..parse.coordinate import Coordinate, coord2str
 from ..util.io import binary, text
 from .metadata import Metadatas, MetadataXML, SnapshotMetadataXML
@@ -92,7 +92,7 @@ class MavenContext:
                 By default, the PythonResolver will be used.
         """
         self.repo_cache: Path = repo_cache or Path(
-            environ.get("M2_REPO", str(DEFAULT_MAVEN_REPO))
+            environ.get("M2_REPO", default_maven_repo())
         )
         self.local_repos: list[Path] = (
             DEFAULT_LOCAL_REPOS if local_repos is None else local_repos
