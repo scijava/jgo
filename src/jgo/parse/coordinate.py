@@ -303,8 +303,8 @@ def coord2str(
             ]
         )
 
-        # Add (optional) marker after scope if both present
-        if scope and optional:
+        # Add (optional) marker if optional flag is set
+        if optional:
             result += f" [{STYLES['optional']}](optional)[/]"
 
         # Append placement suffix (before raw flag)
