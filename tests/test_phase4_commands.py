@@ -19,9 +19,9 @@ else:
 
 import tomli_w
 
+from jgo.cli.args import ParsedArgs
 from jgo.cli.commands import config as config_cmd
 from jgo.cli.commands import search as search_cmd
-from jgo.cli.parser import ParsedArgs
 
 # ============================================================================
 # Config Command Tests

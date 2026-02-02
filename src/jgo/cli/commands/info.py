@@ -3,13 +3,29 @@
 from __future__ import annotations
 
 import logging
+import xml.dom.minidom
+import zipfile
 from pathlib import Path
 
 import rich_click as click
 
+from ...config import GlobalSettings
+from ...env import EnvironmentSpec
+from ...env.builder import filter_managed_components
+from ...env.jar import parse_manifest, read_raw_manifest
 from ...parse.coordinate import Coordinate
 from ...styles import COORD_HELP_FULL
+from ..args import build_parsed_args
 from ..console import console_print
+from ..context import create_environment_builder, create_maven_context
+from ..output import (
+    print_classpath,
+    print_dependencies,
+    print_jars,
+    print_java_info,
+    print_main_classes,
+    print_modulepath,
+)
 
 _log = logging.getLogger(__name__)
 
@@ -25,15 +41,10 @@ _log = logging.getLogger(__name__)
 @click.pass_context
 def classpath(ctx, endpoint):
     """Show the classpath for the given endpoint."""
-    from ...config import GlobalSettings
-    from ...env import EnvironmentSpec
-    from ..context import create_environment_builder, create_maven_context
-    from ..output import print_classpath
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+    args = build_parsed_args(opts, endpoint=endpoint, command="info")
 
     context = create_maven_context(args, config.to_dict())
     builder = create_environment_builder(args, config.to_dict(), context)
@@ -67,14 +78,10 @@ def classpath(ctx, endpoint):
 @click.pass_context
 def envdir(ctx, endpoint):
     """Show the cache/environment directory for the given endpoint or jgo project."""
-    from ...config import GlobalSettings
-    from ...env import EnvironmentSpec
-    from ..context import create_environment_builder, create_maven_context
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+    args = build_parsed_args(opts, endpoint=endpoint, command="info")
 
     context = create_maven_context(args, config.to_dict())
     builder = create_environment_builder(args, config.to_dict(), context)
@@ -108,15 +115,10 @@ def envdir(ctx, endpoint):
 @click.pass_context
 def jars(ctx, endpoint):
     """Show all JAR paths with section headers for classpath and module-path."""
-    from ...config import GlobalSettings
-    from ...env import EnvironmentSpec
-    from ..context import create_environment_builder, create_maven_context
-    from ..output import print_jars
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+    args = build_parsed_args(opts, endpoint=endpoint, command="info")
 
     context = create_maven_context(args, config.to_dict())
     builder = create_environment_builder(args, config.to_dict(), context)
@@ -144,15 +146,10 @@ def jars(ctx, endpoint):
 @click.pass_context
 def modulepath(ctx, endpoint):
     """Show the module-path for the given endpoint."""
-    from ...config import GlobalSettings
-    from ...env import EnvironmentSpec
-    from ..context import create_environment_builder, create_maven_context
-    from ..output import print_modulepath
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+    args = build_parsed_args(opts, endpoint=endpoint, command="info")
 
     context = create_maven_context(args, config.to_dict())
     builder = create_environment_builder(args, config.to_dict(), context)
@@ -180,15 +177,10 @@ def modulepath(ctx, endpoint):
 @click.pass_context
 def mains(ctx, endpoint):
     """Find and list all classes with public static void main(String[]) methods."""
-    from ...config import GlobalSettings
-    from ...env import EnvironmentSpec
-    from ..context import create_environment_builder, create_maven_context
-    from ..output import print_main_classes
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+    args = build_parsed_args(opts, endpoint=endpoint, command="info")
 
     context = create_maven_context(args, config.to_dict())
     builder = create_environment_builder(args, config.to_dict(), context)
@@ -235,15 +227,10 @@ def deplist(ctx, endpoint, direct):
 @click.pass_context
 def javainfo(ctx, endpoint):
     """Show Java version requirements for the given endpoint."""
-    from ...config import GlobalSettings
-    from ...env import EnvironmentSpec
-    from ..context import create_environment_builder, create_maven_context
-    from ..output import print_java_info
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+    args = build_parsed_args(opts, endpoint=endpoint, command="info")
 
     context = create_maven_context(args, config.to_dict())
     builder = create_environment_builder(args, config.to_dict(), context)
@@ -270,11 +257,9 @@ def javainfo(ctx, endpoint):
 @click.pass_context
 def entrypoints(ctx):
     """Show available entrypoints defined in jgo.toml."""
-    from ...env import EnvironmentSpec
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
-    args = _build_parsed_args(opts, endpoint=None, command="info")
+    args = build_parsed_args(opts, endpoint=None, command="info")
 
     spec_file = args.file or Path("jgo.toml")
 
@@ -307,16 +292,10 @@ def entrypoints(ctx):
 @click.pass_context
 def manifest(ctx, coordinate, raw):
     """Show the JAR manifest for the given coordinate."""
-    import zipfile
-
-    from ...config import GlobalSettings
-    from ...env.jar import parse_manifest, read_raw_manifest
-    from ..context import create_maven_context
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, endpoint=coordinate, command="info")
+    args = build_parsed_args(opts, endpoint=coordinate, command="info")
 
     try:
         # Create Maven context
@@ -378,15 +357,10 @@ def manifest(ctx, coordinate, raw):
 @click.pass_context
 def pom(ctx, coordinate):
     """Show the POM for the given component."""
-    import xml.dom.minidom
-
-    from ...config import GlobalSettings
-    from ..context import create_maven_context
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, endpoint=coordinate, command="info")
+    args = build_parsed_args(opts, endpoint=coordinate, command="info")
 
     try:
         # Create Maven context
@@ -449,16 +423,10 @@ def _parse_coord_or_die(ctx, coord_str: str) -> Coordinate:
 
 def _print_deps(ctx, endpoint, list_mode: bool):
     """Common logic for deptree and deplist."""
-    from ...config import GlobalSettings
-    from ...env import EnvironmentSpec
-    from ...env.builder import filter_managed_components
-    from ..context import create_environment_builder, create_maven_context
-    from ..output import print_dependencies
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, endpoint=endpoint, command="info")
+    args = build_parsed_args(opts, endpoint=endpoint, command="info")
 
     context = create_maven_context(args, config.to_dict())
     builder = create_environment_builder(args, config.to_dict(), context)

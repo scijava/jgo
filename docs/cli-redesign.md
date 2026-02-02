@@ -397,7 +397,7 @@ import argparse
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..parser import ParsedArgs
+    from ..args import ParsedArgs
 
 def add_parser(subparsers) -> argparse.ArgumentParser:
     """Add this command's parser to the subparsers."""

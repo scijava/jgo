@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from jgo.cli.parser import ParsedArgs
+from jgo.cli.args import ParsedArgs
 
 
 def test_init_with_main_class_then_add():

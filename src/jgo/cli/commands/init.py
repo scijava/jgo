@@ -3,12 +3,19 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import rich_click as click
+import tomli_w
+
+from ...config import GlobalSettings
+from ...env import EnvironmentSpec
+from ..args import build_parsed_args
+from ..output import handle_dry_run
 
 if TYPE_CHECKING:
-    from ..parser import ParsedArgs
+    from ..args import ParsedArgs
 
 _log = logging.getLogger(__name__)
 
@@ -24,12 +31,10 @@ _log = logging.getLogger(__name__)
 @click.pass_context
 def init(ctx, endpoint):
     """Create a new jgo.toml file."""
-    from ...config import GlobalSettings
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, endpoint=endpoint, command="init")
+    args = build_parsed_args(opts, endpoint=endpoint, command="init")
 
     exit_code = execute(args, config.to_dict())
     ctx.exit(exit_code)
@@ -50,10 +55,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    from pathlib import Path
-
-    from ...config import GlobalSettings
-    from ...env import EnvironmentSpec
 
     endpoint = args.endpoint
     if not endpoint:
@@ -91,10 +92,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     # Handle dry-run mode
     if args.dry_run:
-        import tomli_w
-
-        from ..output import handle_dry_run
-
         # Generate the TOML content that would be written
         toml_content = tomli_w.dumps(spec._to_dict())
         message = f"Would create {output_file}:\n{toml_content}"

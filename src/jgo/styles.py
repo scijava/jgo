@@ -6,6 +6,11 @@ for consistent Rich markup across all jgo commands and output.
 
 from __future__ import annotations
 
+import logging
+
+_log = logging.getLogger(__name__)
+
+
 # Style mappings for coordinate components and punctuation
 STYLES = {
     # Maven coordinate components

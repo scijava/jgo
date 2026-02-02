@@ -11,6 +11,7 @@ import zipfile
 from pathlib import Path
 
 from .bytecode import detect_environment_java_version
+from .jar import detect_module_info
 from .lockfile import LockFile
 from .spec import EnvironmentSpec
 
@@ -211,8 +212,6 @@ class Environment:
                                     if dep.module_name:
                                         return dep.module_name, True
                         # Fallback: detect module name
-                        from .jar import detect_module_info
-
                         info = detect_module_info(jar)
                         return info.module_name, True
             except (zipfile.BadZipFile, IOError):

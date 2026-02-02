@@ -7,10 +7,16 @@ from typing import TYPE_CHECKING
 
 import rich_click as click
 
+from ...config import GlobalSettings
+from ...env.spec import EnvironmentSpec
+from ...parse.coordinate import Coordinate
 from ...styles import styled
+from ..args import build_parsed_args
+from ..output import handle_dry_run
+from . import sync as sync_cmd
 
 if TYPE_CHECKING:
-    from ..parser import ParsedArgs
+    from ..args import ParsedArgs
 
 _log = logging.getLogger(__name__)
 
@@ -42,12 +48,10 @@ def remove(ctx, coordinates, no_sync):
       jgo remove org.scijava:scijava-common org.scijava:parsington
       jgo remove --no-sync net.imagej:imagej
     """
-    from ...config import GlobalSettings
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, command="remove")
+    args = build_parsed_args(opts, command="remove")
     args.coordinates = list(coordinates)
     args.no_sync = no_sync
 
@@ -66,7 +70,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    from ...env.spec import EnvironmentSpec
 
     # Get the spec file path
     spec_file = args.get_spec_file()
@@ -89,8 +92,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
     for coord in coordinates:
         # Parse coordinate to extract groupId:artifactId
         try:
-            from ...parse.coordinate import Coordinate
-
             coord_obj = Coordinate.parse(coord)
             prefix = f"{coord_obj.groupId}:{coord_obj.artifactId}"
         except ValueError:
@@ -113,8 +114,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
         _log.warning("No dependencies removed")
         return 0
 
-    from ..output import handle_dry_run
-
     # Save updated spec
     if handle_dry_run(
         args, f"Would remove {removed_count} dependencies from {spec_file}"
@@ -131,8 +130,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
     # Auto-sync unless --no-sync specified
     if not getattr(args, "no_sync", False):
         _log.debug("Syncing environment...")
-        from . import sync as sync_cmd
-
         return sync_cmd.execute(args, config)
 
     return 0

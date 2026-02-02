@@ -9,10 +9,16 @@ from typing import TYPE_CHECKING
 import rich_click as click
 from rich.markup import escape
 
+from ...config import GlobalSettings
+from ...config.manager import get_settings_path
+from ...config.settings import parse_config_key
+from ...util.toml import load_toml_file
+from ..args import build_parsed_args
 from ..console import console_print
+from ..output import handle_dry_run
 
 if TYPE_CHECKING:
-    from ..parser import ParsedArgs
+    from ..args import ParsedArgs
 
 _log = logging.getLogger(__name__)
 
@@ -83,8 +89,6 @@ def execute(
         config_type = "local"
     else:
         # Default to global settings
-        from ...config.manager import get_settings_path
-
         config_file = get_settings_path()
         config_type = "global"
 
@@ -120,7 +124,6 @@ def _list_config(config_file: Path, config_type: str, args: ParsedArgs) -> int:
 
 def _list_jgorc(config_file: Path, args: ParsedArgs) -> int:
     """List all configuration from global settings file."""
-    from ...config import GlobalSettings
 
     settings = GlobalSettings.load(config_file)
 
@@ -154,7 +157,6 @@ def _list_jgorc(config_file: Path, args: ParsedArgs) -> int:
 
 def _list_toml(config_file: Path, args: ParsedArgs) -> int:
     """List all configuration from jgo.toml file."""
-    from ...util.toml import load_toml_file
 
     data = load_toml_file(config_file)
     if data is None:
@@ -183,7 +185,6 @@ def _list_toml(config_file: Path, args: ParsedArgs) -> int:
 
 def _get_config(config_file: Path, config_type: str, key: str, args: ParsedArgs) -> int:
     """Get a specific configuration value."""
-    from ...config.settings import parse_config_key
 
     if not config_file.exists():
         console_print(
@@ -203,7 +204,6 @@ def _get_config(config_file: Path, config_type: str, key: str, args: ParsedArgs)
 
 def _get_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) -> int:
     """Get value from global settings file."""
-    from ...config import GlobalSettings
 
     settings = GlobalSettings.load(config_file)
 
@@ -239,7 +239,6 @@ def _get_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) -> i
 
 def _get_toml(config_file: Path, section: str, key: str, args: ParsedArgs) -> int:
     """Get value from jgo.toml file."""
-    from ...util.toml import load_toml_file
 
     data = load_toml_file(config_file)
     if data is None:
@@ -262,7 +261,6 @@ def _set_config(
     config_file: Path, config_type: str, key: str, value: str, args: ParsedArgs
 ) -> int:
     """Set a configuration value."""
-    from ...config.settings import parse_config_key
 
     # Parse key as section.key or just key
     section, key_name = parse_config_key(key)
@@ -278,8 +276,6 @@ def _set_jgorc(
 ) -> int:
     """Set value in global settings file."""
     import configparser
-
-    from ..output import handle_dry_run
 
     # Validate section and key
     valid_settings = ("cache_dir", "repo_cache", "links")
@@ -322,9 +318,6 @@ def _set_toml(
     """Set value in jgo.toml file."""
     import tomli_w
 
-    from ...util.toml import load_toml_file
-    from ..output import handle_dry_run
-
     # Read existing file
     data = load_toml_file(config_file)
     if data is None:
@@ -364,7 +357,6 @@ def _unset_config(
     config_file: Path, config_type: str, key: str, args: ParsedArgs
 ) -> int:
     """Unset a configuration value."""
-    from ...config.settings import parse_config_key
 
     if not config_file.exists():
         console_print(
@@ -385,8 +377,6 @@ def _unset_config(
 def _unset_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) -> int:
     """Unset value in global settings file."""
     import configparser
-
-    from ..output import handle_dry_run
 
     if not config_file.exists():
         console_print(
@@ -431,9 +421,6 @@ def _unset_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) ->
 def _unset_toml(config_file: Path, section: str, key: str, args: ParsedArgs) -> int:
     """Unset value in jgo.toml file."""
     import tomli_w
-
-    from ...util.toml import load_toml_file
-    from ..output import handle_dry_run
 
     data = load_toml_file(config_file)
     if data is None:
@@ -518,12 +505,10 @@ def _parse_value(value: str) -> str | int | float | bool:
 @click.pass_context
 def list_cmd(ctx, global_config, local_config):
     """List all configuration values."""
-    from ...config import GlobalSettings
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, command="config")
+    args = build_parsed_args(opts, command="config")
 
     exit_code = execute(
         args,
@@ -559,12 +544,10 @@ def list_cmd(ctx, global_config, local_config):
 @click.pass_context
 def get_cmd(ctx, key, global_config, local_config):
     """Get a configuration value."""
-    from ...config import GlobalSettings
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, command="config")
+    args = build_parsed_args(opts, command="config")
 
     exit_code = execute(
         args,
@@ -601,12 +584,10 @@ def get_cmd(ctx, key, global_config, local_config):
 @click.pass_context
 def set_cmd(ctx, key, value, global_config, local_config):
     """Set a configuration value."""
-    from ...config import GlobalSettings
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, command="config")
+    args = build_parsed_args(opts, command="config")
 
     exit_code = execute(
         args,
@@ -642,12 +623,10 @@ def set_cmd(ctx, key, value, global_config, local_config):
 @click.pass_context
 def unset_cmd(ctx, key, global_config, local_config):
     """Remove a configuration value."""
-    from ...config import GlobalSettings
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, command="config")
+    args = build_parsed_args(opts, command="config")
 
     exit_code = execute(
         args,

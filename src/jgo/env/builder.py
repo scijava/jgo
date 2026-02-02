@@ -12,8 +12,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ..constants import DEFAULT_JGO_CACHE
-from ..maven import Dependency
+from ..exec.java_source import JavaLocator, JavaSource
+from ..maven.core import Dependency
 from ..parse.coordinate import Coordinate
+from ..parse.endpoint import Endpoint
 from .bytecode import detect_jar_java_version
 from .cache import is_cache_valid, read_metadata_cache, write_metadata_cache
 from .environment import Environment
@@ -62,8 +64,6 @@ def get_baseline_jar_tool() -> Path | None:
         # Use JavaLocator to get a baseline Java 11 (LTS version with module support)
         # This is independent of the target environment's Java version
         # Use AUTO mode to always fetch via cjdk (not system Java)
-        from ..exec.java_source import JavaLocator, JavaSource
-
         _log.debug("Locating baseline Java 11 for JAR classification...")
         locator = JavaLocator(
             java_source=JavaSource.AUTO,
@@ -623,7 +623,6 @@ class EnvironmentBuilder:
         Returns:
             List of Dependency objects with default artifact settings
         """
-        from jgo.maven.core import Dependency
 
         dependencies = []
         for component in components:
@@ -656,7 +655,6 @@ class EnvironmentBuilder:
         Returns:
             List of Dependency objects
         """
-        from jgo.maven.core import Dependency
 
         dependencies = []
         for coord in coordinates:
@@ -1016,7 +1014,6 @@ class EnvironmentBuilder:
             - coordinates_list: List of Coordinate objects (containing raw flags)
             - main_class: Main class to run
         """
-        from ..parse.endpoint import Endpoint
 
         # Use the unified parsing logic from jgo.parse.endpoint
         parsed = Endpoint.parse(endpoint)

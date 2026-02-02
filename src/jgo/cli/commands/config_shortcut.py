@@ -9,13 +9,17 @@ from typing import TYPE_CHECKING
 
 import rich_click as click
 
+from ...config import GlobalSettings
+from ...config.manager import get_settings_path
 from ...util import is_info_enabled
+from ..args import build_parsed_args
 from ..console import console_print
+from ..output import print_dry_run
 
 if TYPE_CHECKING:
     from click import Context
 
-    from ..parser import ParsedArgs
+    from ..args import ParsedArgs
 
 _log = logging.getLogger(__name__)
 
@@ -70,12 +74,10 @@ def shortcut(ctx, remove_name, list_all, name, endpoint):
       jgo config shortcut groovy org.scijava:scripting-groovy@GroovySh
       jgo config shortcut --remove repl                        # Remove
     """
-    from ...config import GlobalSettings
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, command="config")
+    args = build_parsed_args(opts, command="config")
 
     exit_code = execute(
         args,
@@ -117,8 +119,6 @@ def execute(
     """
     # Determine settings file location (always global for shortcuts)
     if config_file is None:
-        from ...config.manager import get_settings_path
-
         config_file = get_settings_path()
 
     # Handle remove
@@ -197,7 +197,6 @@ def _show_shortcut(config_file: Path, config: dict, name: str, args: ParsedArgs)
 
 def _add_shortcut(config_file: Path, name: str, endpoint: str, args: ParsedArgs) -> int:
     """Add or update a shortcut."""
-    from ..output import print_dry_run
 
     # Validate shortcut name
     if not name or not name[0].isalnum():
@@ -242,7 +241,6 @@ def _add_shortcut(config_file: Path, name: str, endpoint: str, args: ParsedArgs)
 
 def _remove_shortcut(config_file: Path, name: str, args: ParsedArgs) -> int:
     """Remove a shortcut."""
-    from ..output import print_dry_run
 
     if not config_file.exists():
         _log.error(f"No configuration file found at {config_file}")

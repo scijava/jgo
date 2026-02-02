@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 import requests
 
+from ..parse.coordinate import Coordinate
 from .core import Dependency, DependencyNode, create_pom
 from .model import Model, ProfileConstraints
 from .pom import write_temp_pom
@@ -581,8 +582,6 @@ class MvnResolver(Resolver):
             content = content.split(" -- module ")[0].strip()
 
         try:
-            from ..parse.coordinate import Coordinate
-
             coord = Coordinate.parse(content)
 
             # For dependency:list output, we need to validate the scope

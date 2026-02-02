@@ -8,10 +8,18 @@ from typing import TYPE_CHECKING
 
 import rich_click as click
 
+from ...config import GlobalSettings
+from ...env import EnvironmentSpec
 from ...util import is_debug_enabled
+from ..args import build_parsed_args, parse_remaining
+from ..context import (
+    create_environment_builder,
+    create_java_runner,
+    create_maven_context,
+)
 
 if TYPE_CHECKING:
-    from ..parser import ParsedArgs
+    from ..args import ParsedArgs
 
 _log = logging.getLogger(__name__)
 
@@ -81,8 +89,6 @@ def run(ctx, main_class, entrypoint, add_classpath, endpoint, remaining):
     TIP:
       Use 'jgo --dry-run run' to see the command without executing it.
     """
-    from ...config import GlobalSettings
-    from ..parser import _build_parsed_args, _parse_remaining
 
     # Get global options from context
     opts = ctx.obj
@@ -96,7 +102,7 @@ def run(ctx, main_class, entrypoint, add_classpath, endpoint, remaining):
         opts["add_classpath"] = add_classpath
 
     # Parse remaining args for JVM/app args
-    jvm_args, app_args = _parse_remaining(remaining)
+    jvm_args, app_args = parse_remaining(remaining)
 
     # Load config
     if opts.get("ignore_config"):
@@ -105,7 +111,7 @@ def run(ctx, main_class, entrypoint, add_classpath, endpoint, remaining):
         config = GlobalSettings.load()
 
     # Build ParsedArgs
-    args = _build_parsed_args(
+    args = build_parsed_args(
         opts, endpoint=endpoint, jvm_args=jvm_args, app_args=app_args, command="run"
     )
 
@@ -130,8 +136,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    from ...config import GlobalSettings
-    from ...env import EnvironmentSpec
 
     # Check if we're in spec mode (jgo.toml exists)
     spec_file = Path("jgo.toml")
@@ -182,12 +186,6 @@ def _run_spec(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    from ...env import EnvironmentSpec
-    from ..context import (
-        create_environment_builder,
-        create_java_runner,
-        create_maven_context,
-    )
 
     debug = is_debug_enabled()
 
@@ -242,11 +240,6 @@ def _run_endpoint(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    from ..context import (
-        create_environment_builder,
-        create_java_runner,
-        create_maven_context,
-    )
 
     debug = is_debug_enabled()
 

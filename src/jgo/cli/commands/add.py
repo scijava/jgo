@@ -7,10 +7,15 @@ from typing import TYPE_CHECKING
 
 import rich_click as click
 
+from ...config import GlobalSettings
+from ...env.spec import EnvironmentSpec
 from ...styles import COORD_HELP_FULL
+from ..args import build_parsed_args
+from ..output import handle_dry_run
+from . import sync as sync_cmd
 
 if TYPE_CHECKING:
-    from ..parser import ParsedArgs
+    from ..args import ParsedArgs
 
 _log = logging.getLogger(__name__)
 
@@ -40,12 +45,10 @@ def add(ctx, coordinates, no_sync):
       jgo add org.scijava:scijava-common org.scijava:parsington
       jgo add --no-sync net.imagej:imagej:2.15.0
     """
-    from ...config import GlobalSettings
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, command="add")
+    args = build_parsed_args(opts, command="add")
     args.coordinates = list(coordinates)
     args.no_sync = no_sync
 
@@ -64,7 +67,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    from ...env.spec import EnvironmentSpec
 
     # Get the spec file path
     spec_file = args.get_spec_file()
@@ -96,8 +98,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
         _log.warning("No new dependencies added")
         return 0
 
-    from ..output import handle_dry_run
-
     # Save updated spec
     if handle_dry_run(args, f"Would add {added_count} dependencies to {spec_file}"):
         return 0
@@ -112,8 +112,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
     # Auto-sync unless --no-sync specified
     if not getattr(args, "no_sync", False):
         _log.debug("Syncing environment...")
-        from . import sync as sync_cmd
-
         return sync_cmd.execute(args, config)
 
     return 0

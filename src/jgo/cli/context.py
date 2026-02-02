@@ -18,10 +18,11 @@ from ..exec.gc_defaults import is_gc_flag, normalize_gc_flag
 from ..maven import MavenContext, MvnResolver, PythonResolver
 from ..maven.model import ProfileConstraints
 from ..util import ensure_maven_available, is_debug_enabled, is_info_enabled
+from .rich.progress import download_progress_callback
 
 if TYPE_CHECKING:
     from ..maven import Resolver
-    from .parser import ParsedArgs
+    from .args import ParsedArgs
 
 _log = logging.getLogger(__name__)
 
@@ -37,7 +38,6 @@ def create_maven_context(args: ParsedArgs, config: dict) -> MavenContext:
     Returns:
         Configured MavenContext instance
     """
-    from .rich.progress import download_progress_callback
 
     # Determine resolver
     if args.resolver == "python":

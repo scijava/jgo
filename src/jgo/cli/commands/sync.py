@@ -8,11 +8,17 @@ from typing import TYPE_CHECKING
 
 import rich_click as click
 
+from ...config import GlobalSettings
+from ...env.lockfile import LockFile
+from ...env.spec import EnvironmentSpec
 from ...util import is_info_enabled
+from ...util.logging import log_exception_if_verbose
+from ..args import build_parsed_args
+from ..context import create_environment_builder, create_maven_context
+from ..output import handle_dry_run
 
 if TYPE_CHECKING:
-    from ...env.lockfile import LockFile
-    from ..parser import ParsedArgs
+    from ..args import ParsedArgs
 
 _log = logging.getLogger(__name__)
 
@@ -37,12 +43,10 @@ def sync(ctx, force):
       jgo sync --offline
       jgo sync -u  # Update to latest versions
     """
-    from ...config import GlobalSettings
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, command="sync")
+    args = build_parsed_args(opts, command="sync")
     args.force = force
 
     exit_code = execute(args, config.to_dict())
@@ -60,10 +64,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    from ...env.lockfile import LockFile
-    from ...env.spec import EnvironmentSpec
-    from ...util.logging import log_exception_if_verbose
-    from ..output import handle_dry_run
 
     # Get the spec file path
     spec_file = args.get_spec_file()
@@ -87,8 +87,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     # Build environment
     try:
-        from ..context import create_environment_builder, create_maven_context
-
         # Create Maven context
         context = create_maven_context(args, config)
 
@@ -142,9 +140,6 @@ def _show_version_changes(
         new_lock_path: Path to new lock file
         args: Parsed arguments for verbose level
     """
-    import logging
-
-    from ...env.lockfile import LockFile
 
     _log = logging.getLogger(__name__)
 

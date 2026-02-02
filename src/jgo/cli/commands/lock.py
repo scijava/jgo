@@ -7,8 +7,15 @@ from typing import TYPE_CHECKING
 
 import rich_click as click
 
+from ...config import GlobalSettings
+from ...env.lockfile import LockFile, compute_spec_hash
+from ...env.spec import EnvironmentSpec
+from ...util.logging import log_exception_if_verbose
+from ..args import build_parsed_args
+from ..context import create_environment_builder, create_maven_context
+
 if TYPE_CHECKING:
-    from ..parser import ParsedArgs
+    from ..args import ParsedArgs
 
 _log = logging.getLogger(__name__)
 
@@ -32,12 +39,10 @@ def lock(ctx, check):
       jgo lock --check
       jgo lock --update
     """
-    from ...config import GlobalSettings
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, command="lock")
+    args = build_parsed_args(opts, command="lock")
     args.check = check
 
     exit_code = execute(args, config.to_dict())
@@ -55,9 +60,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    from ...env.lockfile import LockFile, compute_spec_hash
-    from ...env.spec import EnvironmentSpec
-    from ...util.logging import log_exception_if_verbose
 
     # Get the spec file path
     spec_file = args.get_spec_file()
@@ -99,8 +101,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
     _log.debug(f"Updating lock file for {spec_file}")
 
     try:
-        from ..context import create_environment_builder, create_maven_context
-
         # Create Maven context
         context = create_maven_context(args, config)
 

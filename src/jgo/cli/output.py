@@ -9,13 +9,23 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from rich.panel import Panel
+
+from ..env.bytecode import (
+    analyze_jar_bytecode,
+    bytecode_to_java_version,
+    round_to_lts,
+)
+from ..env.jar import find_main_classes
 from .console import console_print, get_wrap_mode
+from .rich.formatters import format_dependency_list, format_dependency_tree
+from .rich.widgets import create_table
 
 if TYPE_CHECKING:
     from ..env import Environment
     from ..maven import MavenContext
     from ..maven.core import Component
-    from .parser import ParsedArgs
+    from .args import ParsedArgs
 
 
 # === Message Output Functions ===
@@ -135,7 +145,6 @@ def print_main_classes(environment: Environment) -> None:
     Args:
         environment: The resolved environment
     """
-    from ..env.jar import find_main_classes
 
     all_jars = environment.all_jars
     if not all_jars:
@@ -191,7 +200,6 @@ def print_dependencies(
 
     if list_mode:
         # Flat list mode - use Rich for colored output
-        from .rich.formatters import format_dependency_list
 
         # Get the dependency list
         root, deps = context.resolver.get_dependency_list(
@@ -209,7 +217,6 @@ def print_dependencies(
             console_print(line, highlight=False)
     else:
         # Tree mode - use Rich Tree for beautiful colored output
-        from .rich.formatters import format_dependency_tree
 
         # Get the dependency tree
         tree = context.resolver.get_dependency_tree(
@@ -232,15 +239,6 @@ def print_java_info(environment: Environment) -> None:
     Args:
         environment: The resolved environment
     """
-    from rich.panel import Panel
-
-    from jgo.env.bytecode import (
-        analyze_jar_bytecode,
-        bytecode_to_java_version,
-        round_to_lts,
-    )
-
-    from .rich.widgets import create_table
 
     # In "raw" mode, use NoWrapTable variant and disable column truncation
     no_wrap = get_wrap_mode() == "raw"

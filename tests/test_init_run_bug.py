@@ -11,8 +11,8 @@ from pathlib import Path
 
 import pytest
 
+from jgo.cli.args import ParsedArgs
 from jgo.cli.commands import run as run_cmd
-from jgo.cli.parser import ParsedArgs
 
 
 def test_run_with_main_class_after_init():
@@ -75,7 +75,9 @@ def test_run_with_main_class_after_init():
             mock_runner = Mock(spec=JavaRunner)
 
             # Patch create_java_runner to return our mock
-            with patch("jgo.cli.context.create_java_runner", return_value=mock_runner):
+            with patch(
+                "jgo.cli.commands.run.create_java_runner", return_value=mock_runner
+            ):
                 run_args = ParsedArgs(
                     endpoint=None,  # No endpoint - should use jgo.toml
                     command="run",

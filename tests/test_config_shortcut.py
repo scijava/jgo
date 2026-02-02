@@ -11,8 +11,8 @@ from pathlib import Path
 
 import pytest
 
+from jgo.cli.args import ParsedArgs
 from jgo.cli.commands import config_shortcut
-from jgo.cli.parser import ParsedArgs
 
 
 class TestConfigShortcut:

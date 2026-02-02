@@ -34,6 +34,8 @@ import re
 from dataclasses import dataclass
 from typing import Literal
 
+from ..styles import STYLES, format_tokens, styled
+
 
 @dataclass
 class Coordinate:
@@ -270,8 +272,6 @@ def coord2str(
         If rich=True, includes Rich markup tags for coloring
     """
     if rich:
-        from ..styles import STYLES, format_tokens, styled
-
         # Build coordinate from non-empty components
         result = format_tokens(
             [

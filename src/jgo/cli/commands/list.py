@@ -7,8 +7,16 @@ from typing import TYPE_CHECKING
 
 import rich_click as click
 
+from ...config import GlobalSettings
+from ...env import EnvironmentSpec
+from ...env.builder import filter_managed_components
+from ...parse.coordinate import Coordinate
+from ..args import build_parsed_args
+from ..context import create_environment_builder, create_maven_context
+from ..output import print_dependencies
+
 if TYPE_CHECKING:
-    from ..parser import ParsedArgs
+    from ..args import ParsedArgs
 
 _log = logging.getLogger(__name__)
 
@@ -27,13 +35,10 @@ _log = logging.getLogger(__name__)
 @click.pass_context
 def list_cmd(ctx, endpoint, direct):
     """List resolved dependencies as a flat list."""
-    from ...config import GlobalSettings
-    from ..parser import _build_parsed_args
-
     opts = ctx.obj
     opts["direct_only"] = direct
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, endpoint=endpoint, command="list")
+    args = build_parsed_args(opts, endpoint=endpoint, command="list")
 
     exit_code = execute(args, config.to_dict())
     ctx.exit(exit_code)
@@ -50,12 +55,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    from ...env import EnvironmentSpec
-    from ...env.builder import filter_managed_components
-    from ...parse.coordinate import Coordinate
-    from ..context import create_environment_builder, create_maven_context
-    from ..output import print_dependencies
-
     context = create_maven_context(args, config)
     builder = create_environment_builder(args, config, context)
 

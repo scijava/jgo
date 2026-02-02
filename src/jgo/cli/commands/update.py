@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import rich_click as click
 
-if TYPE_CHECKING:
-    pass
+from ...config import GlobalSettings
+from ..args import build_parsed_args
+from . import sync as sync_cmd
 
 
 @click.command(help="Update dependencies to latest versions.")
@@ -29,9 +28,6 @@ def update(ctx, force):
       jgo update
       jgo update --force
     """
-    from ...config import GlobalSettings
-    from ..parser import _build_parsed_args
-    from . import sync as sync_cmd
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
@@ -39,7 +35,7 @@ def update(ctx, force):
     # Force update flag to be set
     opts["update"] = True
 
-    args = _build_parsed_args(opts, command="update")
+    args = build_parsed_args(opts, command="update")
     args.force = force
 
     exit_code = sync_cmd.execute(args, config.to_dict())

@@ -11,6 +11,7 @@ import logging
 import os
 from pathlib import Path
 
+from ..constants import default_jgo_cache, default_maven_repo
 from .manager import get_settings_path
 
 _log = logging.getLogger(__name__)
@@ -51,7 +52,6 @@ class GlobalSettings:
             shortcuts: Coordinate shortcuts
             jvm_config: JVM configuration (gc, max_heap, min_heap, jvm_args, properties)
         """
-        from ..constants import default_jgo_cache, default_maven_repo
 
         self.cache_dir = cache_dir or default_jgo_cache()
         self.repo_cache = repo_cache or default_maven_repo()
@@ -114,7 +114,6 @@ class GlobalSettings:
         Returns:
             GlobalSettings with default values
         """
-        from ..constants import default_jgo_cache, default_maven_repo
 
         return cls(
             cache_dir=default_jgo_cache(),

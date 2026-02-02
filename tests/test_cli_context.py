@@ -1,13 +1,13 @@
 from unittest.mock import MagicMock
 
-from jgo.cli.context import create_maven_context
-from jgo.cli.parser import (
+from jgo.cli.args import (
     PLATFORM_ALIASES,
     PLATFORMS,
-    _build_parsed_args,
+    build_parsed_args,
     detect_os_properties,
     expand_platform,
 )
+from jgo.cli.context import create_maven_context
 from jgo.maven.resolver import PythonResolver
 
 
@@ -178,7 +178,7 @@ def test_build_parsed_args_partial_os_arch_only():
         "properties": [],
         "repository": [],
     }
-    args = _build_parsed_args(opts)
+    args = build_parsed_args(opts)
 
     # Arch should be the specified value
     assert args.os_arch == "i386"
@@ -200,7 +200,7 @@ def test_build_parsed_args_partial_os_name_only():
         "properties": [],
         "repository": [],
     }
-    args = _build_parsed_args(opts)
+    args = build_parsed_args(opts)
 
     # Name should be the specified value
     assert args.os_name == "Windows"
@@ -222,7 +222,7 @@ def test_build_parsed_args_no_platform_flags():
         "properties": [],
         "repository": [],
     }
-    args = _build_parsed_args(opts)
+    args = build_parsed_args(opts)
 
     # All should be auto-detected from current system
     detected_name, detected_family, detected_arch = detect_os_properties()
@@ -242,7 +242,7 @@ def test_build_parsed_args_platform_linux_auto_arch():
         "properties": [],
         "repository": [],
     }
-    args = _build_parsed_args(opts)
+    args = build_parsed_args(opts)
 
     # Name and family should be from platform
     assert args.os_name == "Linux"
@@ -264,7 +264,7 @@ def test_build_parsed_args_explicit_override_no_auto():
         "properties": [],
         "repository": [],
     }
-    args = _build_parsed_args(opts)
+    args = build_parsed_args(opts)
 
     # All should be from platform, no auto-detection needed
     assert args.os_name == "Linux"
@@ -283,7 +283,7 @@ def test_build_parsed_args_explicit_auto_keyword():
         "properties": [],
         "repository": [],
     }
-    args = _build_parsed_args(opts)
+    args = build_parsed_args(opts)
 
     # All should be auto-detected
     detected_name, detected_family, detected_arch = detect_os_properties()
@@ -303,7 +303,7 @@ def test_build_parsed_args_mixed_auto_and_explicit():
         "properties": [],
         "repository": [],
     }
-    args = _build_parsed_args(opts)
+    args = build_parsed_args(opts)
 
     # Name and arch should be explicit values
     assert args.os_name == "Windows"
@@ -325,7 +325,7 @@ def test_build_parsed_args_platform_override_with_auto():
         "properties": [],
         "repository": [],
     }
-    args = _build_parsed_args(opts)
+    args = build_parsed_args(opts)
 
     # Name and family from platform
     assert args.os_name == "Windows"

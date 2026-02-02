@@ -122,6 +122,7 @@ from .jgo import (
 )
 from .jgo import _jgo_main as main
 from .maven import Component, MavenContext
+from .parse.coordinate import Coordinate
 from .util import (
     add_jvm_args_as_necessary,
     main_from_endpoint,
@@ -305,8 +306,6 @@ def resolve(
     components = []
 
     for part in parts:
-        from .parse.coordinate import Coordinate
-
         coord = Coordinate.parse(part)
         version = coord.version or "RELEASE"
 

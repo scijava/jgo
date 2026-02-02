@@ -13,6 +13,11 @@ from typing import Iterable
 
 from .core import Dependency, DependencyNode, MavenContext, Project
 from .pom import POM
+from .version import (
+    parse_java_version,
+    parse_jdk_activation_range,
+    version_matches_jdk_range,
+)
 
 _log = logging.getLogger(__name__)
 
@@ -58,7 +63,6 @@ class Model:
                 to ensure consistent versions across all transitive dependencies.
             profile_constraints: Optional constraints for profile activation.
         """
-        from .core import MavenContext
 
         self.pom = pom
         self.context = context or MavenContext()
@@ -660,12 +664,6 @@ class Model:
                     jdk_spec = jdk_spec[1:]
 
                 try:
-                    from .version import (
-                        parse_java_version,
-                        parse_jdk_activation_range,
-                        version_matches_jdk_range,
-                    )
-
                     current_version = parse_java_version(self.profile_constraints.jdk)
                     lower, upper, lower_inc, upper_inc = parse_jdk_activation_range(
                         jdk_spec

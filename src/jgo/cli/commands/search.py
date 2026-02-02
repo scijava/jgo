@@ -7,17 +7,22 @@ import logging
 import re
 import urllib.parse
 import urllib.request
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 import rich_click as click
 
+from ...config import GlobalSettings
 from ...parse.coordinate import Coordinate
 from ...styles import COORD_HELP_FULL, COORD_HELP_SHORT
+from ...util.logging import log_exception_if_verbose
+from ..args import build_parsed_args
 from ..console import console_print
+from ..output import print_dry_run
 from ..rich.formatters import format_coordinate
 
 if TYPE_CHECKING:
-    from ..parser import ParsedArgs
+    from ..args import ParsedArgs
 
 _log = logging.getLogger(__name__)
 
@@ -93,12 +98,10 @@ def search(ctx, limit, repository, detailed, query):
         repository: Repository to search (currently only 'central' supported)
         detailed: Show additional metadata (version count, packaging, last updated)
     """
-    from ...config import GlobalSettings
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, command="search")
+    args = build_parsed_args(opts, command="search")
 
     # Join query parts into a single string
     query_str = " ".join(query)
@@ -153,12 +156,8 @@ def execute(
 
     # Dry run
     if args.dry_run:
-        from ..output import print_dry_run
-
         print_dry_run(f"Would search Maven Central for '{query}' with limit {limit}")
         return 0
-
-    from ...util.logging import log_exception_if_verbose
 
     # Search Maven Central
     try:
@@ -203,8 +202,6 @@ def _convert_query_to_solr(query: str) -> str:
     # Try parsing as Maven coordinate (contains : but not SOLR syntax)
     if ":" in query:
         try:
-            from ...parse.coordinate import Coordinate
-
             coord = Coordinate.parse(query)
             parts = [f"g:{coord.groupId}", f"a:{coord.artifactId}"]
             if coord.version:
@@ -348,8 +345,6 @@ def _display_results(results: list[dict], detailed: bool = False) -> None:
                 # Convert timestamp to readable format
                 timestamp = result["last_updated"]
                 # Timestamp is in milliseconds
-                from datetime import datetime
-
                 dt = datetime.fromtimestamp(timestamp / 1000)
                 console_print(f"   Last updated: {dt.strftime('%Y-%m-%d')}")
 

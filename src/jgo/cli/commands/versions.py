@@ -7,11 +7,15 @@ from typing import TYPE_CHECKING
 
 import rich_click as click
 
+from ...config import GlobalSettings
+from ...parse.coordinate import Coordinate
+from ..args import build_parsed_args
 from ..console import console_print
+from ..context import create_maven_context
 from ..rich.formatters import format_coordinate
 
 if TYPE_CHECKING:
-    from ..parser import ParsedArgs
+    from ..args import ParsedArgs
 
 _log = logging.getLogger(__name__)
 
@@ -21,12 +25,10 @@ _log = logging.getLogger(__name__)
 @click.pass_context
 def versions(ctx, coordinate):
     """List available versions of a Maven artifact."""
-    from ...config import GlobalSettings
-    from ..parser import _build_parsed_args
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = _build_parsed_args(opts, endpoint=coordinate, command="versions")
+    args = build_parsed_args(opts, endpoint=coordinate, command="versions")
 
     exit_code = execute(args, config.to_dict())
     ctx.exit(exit_code)
@@ -43,9 +45,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-
-    from ...parse.coordinate import Coordinate
-    from ..context import create_maven_context
 
     if not args.endpoint:
         _log.error("versions command requires a coordinate")

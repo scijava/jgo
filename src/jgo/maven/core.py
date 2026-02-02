@@ -23,7 +23,9 @@ For simple/low-level data structures without Maven logic, see the jgo.parse subp
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
+from functools import cmp_to_key
 from hashlib import md5, sha1
 from os import environ
 from pathlib import Path
@@ -32,10 +34,12 @@ from typing import TYPE_CHECKING, Iterable
 from ..constants import DEFAULT_MAVEN_REPO, MAVEN_CENTRAL_URL
 from ..parse.coordinate import Coordinate, coord2str
 from ..util.io import binary, text
+from .metadata import Metadatas, MetadataXML, SnapshotMetadataXML
+from .pom import POM, parse_dependency_element_to_coordinate
+from .version import compare_versions
 
 if TYPE_CHECKING:
-    from .metadata import Metadata, SnapshotMetadataXML
-    from .pom import POM
+    from .metadata import Metadata
     from .resolver import Resolver
 
 # -- Constants --
@@ -129,7 +133,6 @@ class MavenContext:
         Returns:
             The Dependency object.
         """
-        from .pom import parse_dependency_element_to_coordinate
 
         # Parse XML element to Coordinate (pom.py handles ElementTree)
         coord, exclusion_tuples = parse_dependency_element_to_coordinate(el)
@@ -197,7 +200,6 @@ class MavenContext:
         Returns:
             The parent POM object, or None if no parent.
         """
-        from .pom import POM
 
         if not pom.element("parent"):
             return None
@@ -290,8 +292,6 @@ class Project:
     def metadata(self) -> Metadata:
         """Maven metadata about this project, encompassing all known sources."""
         if self._metadata is None:
-            from .metadata import Metadatas, MetadataXML
-
             # Aggregate all locally available project maven-metadata.xml sources.
             repo_cache_dir = self.context.repo_cache / self.path_prefix
             paths = [p for p in repo_cache_dir.glob("maven-metadata*.xml")] + [
@@ -355,10 +355,6 @@ class Project:
         Returns:
             The newest non-SNAPSHOT version string, or None if no releases exist.
         """
-        from functools import cmp_to_key
-
-        from .metadata import Metadatas
-        from .version import compare_versions
 
         # For single metadata source, use its release tag
         if not isinstance(self.metadata, Metadatas):
@@ -410,10 +406,6 @@ class Project:
             The highest version string (may be SNAPSHOT or release),
             or None if no versions exist.
         """
-        from functools import cmp_to_key
-
-        from .metadata import Metadatas
-        from .version import compare_versions
 
         # For single metadata source, use its latest tag (or fall back to lastVersion)
         if not isinstance(self.metadata, Metadatas):
@@ -545,10 +537,6 @@ class Component:
             return None
 
         if self._snapshot_metadata is None:
-            import logging
-
-            from .metadata import SnapshotMetadataXML
-
             _log = logging.getLogger(__name__)
 
             # Load from cache if available
@@ -645,7 +633,6 @@ class Component:
         Returns:
             The POM content.
         """
-        from .pom import POM
 
         pom_artifact = self.artifact(packaging="pom")
         return POM(pom_artifact.resolve())
@@ -939,7 +926,6 @@ def create_pom(components: list[Component], boms: list[Component] | None) -> POM
     Returns:
         POM object created from synthetic XML string
     """
-    from .pom import POM
 
     # Generate the POM XML content
     pom_xml = generate_pom_xml(components, boms)
