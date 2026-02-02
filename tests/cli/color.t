@@ -44,6 +44,10 @@ Test --color with different commands.
   │                                                    exit.                     │
   │ --ignore-config                                    Ignore ~/.config/jgo.conf │
   │                                                    file.                     │
+  │ --full-coordinates                                 Include coordinate        │
+  │                                                    components with default   │
+  │                                                    values (jar packaging,    │
+  │                                                    compile scope).           │
   │ --module-path-only                                 Force all JARs to         │
   │                                                    module-path (treat as     │
   │                                                    modular).                 │
@@ -210,5 +214,5 @@ Verify that "bear" appears as text, not 🐻 emoji.
   $ jgo --color=plain info versions com.github.qydq:bear | head -n1
   Available versions for com.github.qydq:bear:
 
-  $ jgo --color=rich info versions com.github.qydq:bear | head -n1
-  Available versions for \x1b[1;36mcom.github.qydq\x1b[0m\x1b[2m:\x1b[0m\x1b[1mbear\x1b[0m: (esc)
+  $ jgo --color=rich --ignore-config info versions com.github.qydq:bear | head -n1
+  Available versions for \x1b[36mcom.github.qydq\x1b[0m\x1b[2m:\x1b[0m\x1b[1mbear\x1b[0m: (esc)

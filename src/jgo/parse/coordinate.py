@@ -36,6 +36,18 @@ from typing import Literal
 
 from ..styles import STYLES, format_tokens, styled
 
+# Default coordinate component values that are suppressed
+# in CLI display unless --full-coordinates is used.
+DEFAULT_PACKAGING = "jar"
+DEFAULT_SCOPE = "compile"
+
+FULL_COORDINATES: bool = False
+
+
+def set_full_coordinates(value: bool) -> None:
+    global FULL_COORDINATES
+    FULL_COORDINATES = value
+
 
 @dataclass
 class Coordinate:
@@ -250,7 +262,7 @@ def coord2str(
     optional: bool = False,
     raw: bool | None = None,
     placement: str | None = None,
-    rich: bool = False,
+    display: bool = False,
 ) -> str:
     """
     Convert Maven coordinate components to a string.
@@ -265,13 +277,20 @@ def coord2str(
         optional: Whether this is an optional dependency
         raw: Whether to use raw/strict resolution (appends ! if True)
         placement: Module path placement ("class-path" or "module-path")
-        rich: If True, format with Rich markup for semantic coloring
+        display: If True, format with Rich markup for CLI display
 
     Returns:
         A formatted coordinate string (e.g., "g:a:p:c:v:s" or "g:a:v!" for raw)
-        If rich=True, includes Rich markup tags for coloring
+        If display=True, includes Rich markup tags for coloring
     """
-    if rich:
+    if display:
+        # Suppress components with default values unless --full-coordinates
+        if not FULL_COORDINATES:
+            if packaging == DEFAULT_PACKAGING:
+                packaging = None
+            if scope == DEFAULT_SCOPE:
+                scope = None
+
         # Build coordinate from non-empty components
         result = format_tokens(
             [

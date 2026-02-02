@@ -16,6 +16,10 @@ Test main help output.
   │                                                    exit.                     │
   │ --ignore-config                                    Ignore ~/.config/jgo.conf │
   │                                                    file.                     │
+  │ --full-coordinates                                 Include coordinate        │
+  │                                                    components with default   │
+  │                                                    values (jar packaging,    │
+  │                                                    compile scope).           │
   │ --module-path-only                                 Force all JARs to         │
   │                                                    module-path (treat as     │
   │                                                    modular).                 │
@@ -506,6 +510,10 @@ Test no-argument help (should show main help).
   │                                                    exit.                     │
   │ --ignore-config                                    Ignore ~/.config/jgo.conf │
   │                                                    file.                     │
+  │ --full-coordinates                                 Include coordinate        │
+  │                                                    components with default   │
+  │                                                    values (jar packaging,    │
+  │                                                    compile scope).           │
   │ --module-path-only                                 Force all JARs to         │
   │                                                    module-path (treat as     │
   │                                                    modular).                 │
@@ -659,6 +667,10 @@ Test --help flag on main command.
   │                                                    exit.                     │
   │ --ignore-config                                    Ignore ~/.config/jgo.conf │
   │                                                    file.                     │
+  │ --full-coordinates                                 Include coordinate        │
+  │                                                    components with default   │
+  │                                                    values (jar packaging,    │
+  │                                                    compile scope).           │
   │ --module-path-only                                 Force all JARs to         │
   │                                                    module-path (treat as     │
   │                                                    modular).                 │

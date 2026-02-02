@@ -31,7 +31,7 @@ _log = logging.getLogger(__name__)
     help="Search for artifacts in [magenta]Maven repositories[/]. "
     f"Supports plain text, coordinates ({COORD_HELP_SHORT}), or SOLR syntax ([cyan]g: a:[/]).",
     epilog="[dim]TIP: Try [yellow]g:groupId a:artifactId[/] for SOLR syntax, "
-    f"[yellow]{COORD_HELP_FULL}[/] for coordinates, or plain text. "
+    f"{COORD_HELP_FULL} for coordinates, or plain text. "
     "Use [yellow]*[/] for wildcards and [yellow]~[/] for fuzzy search.[/]",
 )
 @click.option(

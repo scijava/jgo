@@ -42,7 +42,7 @@ Test tree with endpoint.
       │   │   ├── com.github.jnr:jnr-a64asm:1.0.0
       │   │   └── com.github.jnr:jnr-x86asm:1.0.2
       │   ├── com.github.jnr:jffi:1.3.13
-      │   ├── com.github.jnr:jffi:1.3.13
+      │   ├── com.github.jnr:jffi:native:1.3.13
       │   ├── org.jruby.joni:joni:2.2.6
       │   ├── org.jruby.jcodings:jcodings:1.0.63
       │   ├── org.jruby:dirgra:0.5
@@ -76,7 +76,7 @@ Test tree with --dry-run.
       │   │   ├── com.github.jnr:jnr-a64asm:1.0.0
       │   │   └── com.github.jnr:jnr-x86asm:1.0.2
       │   ├── com.github.jnr:jffi:1.3.13
-      │   ├── com.github.jnr:jffi:1.3.13
+      │   ├── com.github.jnr:jffi:native:1.3.13
       │   ├── org.jruby.joni:joni:2.2.6
       │   ├── org.jruby.jcodings:jcodings:1.0.63
       │   ├── org.jruby:dirgra:0.5
@@ -110,7 +110,7 @@ Test tree with --offline (uses cache).
       │   │   ├── com.github.jnr:jnr-a64asm:1.0.0
       │   │   └── com.github.jnr:jnr-x86asm:1.0.2
       │   ├── com.github.jnr:jffi:1.3.13
-      │   ├── com.github.jnr:jffi:1.3.13
+      │   ├── com.github.jnr:jffi:native:1.3.13
       │   ├── org.jruby.joni:joni:2.2.6
       │   ├── org.jruby.jcodings:jcodings:1.0.63
       │   ├── org.jruby:dirgra:0.5

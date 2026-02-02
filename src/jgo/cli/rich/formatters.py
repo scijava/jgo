@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 from rich.tree import Tree
 
 from ...parse.coordinate import coord2str
-from ...styles import STYLES, format_tokens
 from .widgets import NoWrapTree
 
 if TYPE_CHECKING:
@@ -30,19 +29,16 @@ def _format_dependency(dep) -> str:
     Returns:
         Formatted string with Rich markup (G:A:P:C:V:S format)
     """
-    coord = format_tokens(
-        [
-            (dep.groupId, "g"),
-            (dep.artifactId, "a"),
-            (dep.type, "p"),  # type is packaging
-            (dep.classifier, "c"),
-            (dep.version, "v"),
-            (dep.scope, "s"),
-        ]
+    return coord2str(
+        groupId=dep.groupId,
+        artifactId=dep.artifactId,
+        version=dep.version,
+        classifier=dep.classifier,
+        packaging=dep.type,
+        scope=dep.scope,
+        optional=dep.optional,
+        display=True,
     )
-    if dep.optional:
-        coord += f" [{STYLES['optional']}](optional)[/]"
-    return coord
 
 
 def format_coordinate(coord: Coordinate) -> str:
@@ -82,7 +78,7 @@ def format_coordinate(coord: Coordinate) -> str:
         coord.optional,
         coord.raw,
         coord.placement,
-        rich=True,
+        display=True,
     )
 
 

@@ -10,6 +10,7 @@ import rich_click as click
 
 from ..config.settings import GlobalSettings
 from ..constants import VERSION
+from ..parse.coordinate import set_full_coordinates
 from ..util import setup_logging
 from .args import (
     PLATFORM_ALIASES,
@@ -311,6 +312,11 @@ def global_options(f):
     )(f)
 
     f = click.option(
+        "--full-coordinates",
+        is_flag=True,
+        help="Include coordinate components with default values (jar packaging, compile scope).",
+    )(f)
+    f = click.option(
         "--ignore-config", is_flag=True, help="Ignore ~/.config/jgo.conf file."
     )(f)
     # Hidden alias for backward compatibility
@@ -362,6 +368,10 @@ def cli(ctx, **kwargs):
 
     # Setup console instances (for both data output and logging)
     setup_consoles(color=color, quiet=quiet, wrap=wrap)
+
+    # Configure coordinate display
+    full_coordinates = kwargs.get("full_coordinates", False)
+    set_full_coordinates(full_coordinates)
 
     # Setup logging levels
     logger = setup_logging(verbose=verbose)

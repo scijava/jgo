@@ -47,8 +47,8 @@ Test tree with custom repository.
       │   ├── org.openmicroscopy:ome-jai:0.1.5
       │   └── io.airlift:aircompressor:0.27
       ├── org.slf4j:slf4j-api:2.0.9
-      ├── xalan:serializer:2.7.3
-      └── xalan:xalan:2.7.3
+      ├── xalan:serializer:2.7.3:runtime
+      └── xalan:xalan:2.7.3:runtime
 
   $ jgo --ignore-config -r maven.scijava.org:https://maven.scijava.org/content/groups/public tree net.imagej:imagej-common:2.1.1
   

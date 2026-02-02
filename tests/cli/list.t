@@ -27,38 +27,38 @@ Test list with endpoint.
 
   $ jgo list com.google.guava:guava:33.0.0-jre
   com.google.guava:guava:33.0.0-jre
-     com.google.code.findbugs:jsr305:jar:3.0.2:compile
-     com.google.errorprone:error_prone_annotations:jar:2.23.0:compile
-     com.google.guava:failureaccess:jar:1.0.2:compile
-     com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
-     com.google.j2objc:j2objc-annotations:jar:2.8:compile
-     org.checkerframework:checker-qual:jar:3.41.0:compile
+     com.google.code.findbugs:jsr305:3.0.2
+     com.google.errorprone:error_prone_annotations:2.23.0
+     com.google.guava:failureaccess:1.0.2
+     com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava
+     com.google.j2objc:j2objc-annotations:2.8
+     org.checkerframework:checker-qual:3.41.0
 
 Test list with --dry-run.
 
   $ jgo --dry-run list com.google.guava:guava:33.0.0-jre
   com.google.guava:guava:33.0.0-jre
-     com.google.code.findbugs:jsr305:jar:3.0.2:compile
-     com.google.errorprone:error_prone_annotations:jar:2.23.0:compile
-     com.google.guava:failureaccess:jar:1.0.2:compile
-     com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
-     com.google.j2objc:j2objc-annotations:jar:2.8:compile
-     org.checkerframework:checker-qual:jar:3.41.0:compile
+     com.google.code.findbugs:jsr305:3.0.2
+     com.google.errorprone:error_prone_annotations:2.23.0
+     com.google.guava:failureaccess:1.0.2
+     com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava
+     com.google.j2objc:j2objc-annotations:2.8
+     org.checkerframework:checker-qual:3.41.0
 
 Test list with --offline (uses cache).
 
   $ jgo --offline list com.google.guava:guava:33.0.0-jre
   com.google.guava:guava:33.0.0-jre
-     com.google.code.findbugs:jsr305:jar:3.0.2:compile
-     com.google.errorprone:error_prone_annotations:jar:2.23.0:compile
-     com.google.guava:failureaccess:jar:1.0.2:compile
-     com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
-     com.google.j2objc:j2objc-annotations:jar:2.8:compile
-     org.checkerframework:checker-qual:jar:3.41.0:compile
+     com.google.code.findbugs:jsr305:3.0.2
+     com.google.errorprone:error_prone_annotations:2.23.0
+     com.google.guava:failureaccess:1.0.2
+     com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava
+     com.google.j2objc:j2objc-annotations:2.8
+     org.checkerframework:checker-qual:3.41.0
 
 Test list with MANAGED secondary coordinate.
 
   $ jgo list org.scijava:scijava-common:2.99.2+org.scijava:minimaven:MANAGED
   org.scijava:scijava-common:2.99.2
   org.scijava:minimaven:2.2.2
-     org.scijava:parsington:jar:3.1.0:compile
+     org.scijava:parsington:3.1.0

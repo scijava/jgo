@@ -832,9 +832,9 @@ class Dependency:
     def __init__(
         self,
         artifact: Artifact,
-        scope: str = None,
+        scope: str | None = None,
         optional: bool = False,
-        exclusions: Iterable[Project] = None,
+        exclusions: Iterable[Project] | None = None,
     ):
         # NB: scope can be None here - it will be set by dependency management injection
         # or default to "compile" later in the model building process

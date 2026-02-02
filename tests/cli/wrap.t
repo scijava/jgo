@@ -39,7 +39,7 @@ The table should be as wide as it needs to be to fully render the content.
 
   $ jgo --color=plain --wrap=raw info javainfo com.google.guava:guava:33.0.0-jre
   
-  Environment: */envs/com/google/guava/guava/d1c57891c188d58a (glob)
+  Environment: */.cache/jgo/envs/com/google/guava/guava/d1c57891c188d58a (glob)
   Module-path JARs: 7
   Total JARs: 7
   
@@ -69,7 +69,7 @@ Ellipses should be used to keep table width within terminal width (80 chars).
   $ jgo --color=plain --wrap=smart info javainfo com.google.guava:guava:33.0.0-jre
   
   Environment: 
-  */envs/com/google/guava/guava/d1c57891c188d58a (glob)
+  */.cache/jgo/envs/com/google/guava/guava/d1c57891c188d58a (glob)
   Module-path JARs: 7
   Total JARs: 7
   
@@ -96,7 +96,7 @@ Ellipses should be used to keep table width within terminal width (80 chars).
 
   $ jgo --color=styled --wrap=raw info javainfo com.google.guava:guava:33.0.0-jre
   
-  Environment: */envs/com/google/guava/guava/d1c57891c188d58a (glob)
+  Environment: */.cache/jgo/envs/com/google/guava/guava/d1c57891c188d58a (glob)
   Module-path JARs: 7
   Total JARs: 7
   
@@ -123,7 +123,7 @@ Ellipses should be used to keep table width within terminal width (80 chars).
   $ jgo --color=styled --wrap=smart info javainfo com.google.guava:guava:33.0.0-jre
   
   Environment: 
-  */envs/com/google/guava/guava/d1c57891c188d58a (glob)
+  */.cache/jgo/envs/com/google/guava/guava/d1c57891c188d58a (glob)
   Module-path JARs: 7
   Total JARs: 7
   
@@ -149,7 +149,7 @@ Ellipses should be used to keep table width within terminal width (80 chars).
 
   $ jgo --color=rich --wrap=raw info javainfo com.google.guava:guava:33.0.0-jre
   
-  \x1b[1mEnvironment:\x1b[0m \x1b[35m*/envs/com/google/guava/guava/\x1b[0m\x1b[95md1c57891c188d58a\x1b[0m (esc) (glob)
+  \x1b[1mEnvironment:\x1b[0m \x1b[35m*/.cache/jgo/envs/com/google/guava/guava/\x1b[0m\x1b[95md1c57891c188d58a\x1b[0m (esc) (glob)
   \x1b[1mModule-path JARs:\x1b[0m \x1b[1;36m7\x1b[0m (esc)
   \x1b[1mTotal JARs:\x1b[0m \x1b[1;36m7\x1b[0m (esc)
   
@@ -176,7 +176,7 @@ Ellipses should be used to keep table width within terminal width (80 chars).
   $ jgo --color=rich --wrap=smart info javainfo com.google.guava:guava:33.0.0-jre
   
   \x1b[1mEnvironment:\x1b[0m  (esc)
-  \x1b[35m*/envs/com/google/guava/guava/\x1b[0m\x1b[95md1c57891c188d58a\x1b[0m (esc) (glob)
+  \x1b[35m*/.cache/jgo/envs/com/google/guava/guava/\x1b[0m\x1b[95md1c57891c188d58a\x1b[0m (esc) (glob)
   \x1b[1mModule-path JARs:\x1b[0m \x1b[1;36m7\x1b[0m (esc)
   \x1b[1mTotal JARs:\x1b[0m \x1b[1;36m7\x1b[0m (esc)
   
@@ -202,210 +202,213 @@ Ellipses should be used to keep table width within terminal width (80 chars).
 
 One tree element per line, no matter how long.
 
-  $ jgo --color=plain --wrap=raw --include-optional tree org.apache.logging.log4j:log4j-core:2.25.1
+  $ jgo --color=plain --wrap=raw --ignore-config --include-optional --full-coordinates tree org.apache.logging.log4j:log4j-core:2.25.1
   
-  └── org.apache.logging.log4j:log4j-core:2.25.1
-      ├── org.apache.logging.log4j:log4j-api:2.25.1
-      ├── org.apache.commons:commons-compress:1.27.1 (optional)
-      │   ├── commons-codec:commons-codec:1.18.0
-      │   ├── commons-io:commons-io:2.19.0
-      │   └── org.apache.commons:commons-lang3:3.17.0
-      ├── org.apache.commons:commons-csv:1.14.0 (optional)
-      ├── com.conversantmedia:disruptor:1.2.15 (optional)
-      │   └── org.slf4j:slf4j-api:1.7.13
-      ├── com.lmax:disruptor:3.4.4 (optional)
-      ├── com.fasterxml.jackson.core:jackson-core:2.19.1 (optional)
-      ├── com.fasterxml.jackson.core:jackson-databind:2.19.1 (optional)
-      │   └── com.fasterxml.jackson.core:jackson-annotations:2.19.1
-      ├── com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.19.1 (optional)
-      │   ├── org.codehaus.woodstox:stax2-api:4.2.2
-      │   └── com.fasterxml.woodstox:woodstox-core:7.1.1
-      ├── com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.19.1 (optional)
-      │   └── org.yaml:snakeyaml:2.4
-      ├── org.jctools:jctools-core:4.0.5 (optional)
-      ├── org.zeromq:jeromq:0.6.0 (optional)
-      │   └── eu.neilalexander:jnacl:1.0.0
-      ├── org.apache.kafka:kafka-clients:3.9.1 (optional)
-      │   ├── com.github.luben:zstd-jni:1.5.7-4
-      │   ├── org.lz4:lz4-java:1.8.0
-      │   └── org.xerial.snappy:snappy-java:1.1.10.5
-      └── com.sun.mail:javax.mail:1.6.2 (optional)
-          └── javax.activation:activation:1.1
+  └── org.apache.logging.log4j:log4j-core:jar:2.25.1:compile
+      ├── org.apache.logging.log4j:log4j-api:jar:2.25.1:compile
+      ├── org.apache.commons:commons-compress:jar:1.27.1:compile (optional)
+      │   ├── commons-codec:commons-codec:jar:1.18.0:compile
+      │   ├── commons-io:commons-io:jar:2.19.0:compile
+      │   └── org.apache.commons:commons-lang3:jar:3.17.0:compile
+      ├── org.apache.commons:commons-csv:jar:1.14.0:compile (optional)
+      ├── com.conversantmedia:disruptor:jar:1.2.15:compile (optional)
+      │   └── org.slf4j:slf4j-api:jar:1.7.13:compile
+      ├── com.lmax:disruptor:jar:3.4.4:compile (optional)
+      ├── com.fasterxml.jackson.core:jackson-core:jar:2.19.1:compile (optional)
+      ├── com.fasterxml.jackson.core:jackson-databind:jar:2.19.1:compile (optional)
+      │   └── com.fasterxml.jackson.core:jackson-annotations:jar:2.19.1:compile
+      ├── com.fasterxml.jackson.dataformat:jackson-dataformat-xml:jar:2.19.1:compile (optional)
+      │   ├── org.codehaus.woodstox:stax2-api:jar:4.2.2:compile
+      │   └── com.fasterxml.woodstox:woodstox-core:jar:7.1.1:compile
+      ├── com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.19.1:compile (optional)
+      │   └── org.yaml:snakeyaml:jar:2.4:compile
+      ├── org.jctools:jctools-core:jar:4.0.5:compile (optional)
+      ├── org.zeromq:jeromq:jar:0.6.0:compile (optional)
+      │   └── eu.neilalexander:jnacl:jar:1.0.0:compile
+      ├── org.apache.kafka:kafka-clients:jar:3.9.1:compile (optional)
+      │   ├── com.github.luben:zstd-jni:jar:1.5.7-4:runtime
+      │   ├── org.lz4:lz4-java:jar:1.8.0:runtime
+      │   └── org.xerial.snappy:snappy-java:jar:1.1.10.5:runtime
+      └── com.sun.mail:javax.mail:jar:1.6.2:runtime (optional)
+          └── javax.activation:activation:jar:1.1:runtime
 
 -- Tree output | color=plain | wrap=smart --
 
 Word-wrapped (optional) qualifiers should be aligned with tree node indentation.
 
-  $ jgo --color=plain --wrap=smart --include-optional tree org.apache.logging.log4j:log4j-core:2.25.1
+  $ jgo --color=plain --wrap=smart --ignore-config --include-optional --full-coordinates tree org.apache.logging.log4j:log4j-core:2.25.1
   
-  └── org.apache.logging.log4j:log4j-core:2.25.1
-      ├── org.apache.logging.log4j:log4j-api:2.25.1
-      ├── org.apache.commons:commons-compress:1.27.1 (optional)
-      │   ├── commons-codec:commons-codec:1.18.0
-      │   ├── commons-io:commons-io:2.19.0
-      │   └── org.apache.commons:commons-lang3:3.17.0
-      ├── org.apache.commons:commons-csv:1.14.0 (optional)
-      ├── com.conversantmedia:disruptor:1.2.15 (optional)
-      │   └── org.slf4j:slf4j-api:1.7.13
-      ├── com.lmax:disruptor:3.4.4 (optional)
-      ├── com.fasterxml.jackson.core:jackson-core:2.19.1 (optional)
-      ├── com.fasterxml.jackson.core:jackson-databind:2.19.1 (optional)
-      │   └── com.fasterxml.jackson.core:jackson-annotations:2.19.1
-      ├── com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.19.1 
+  └── org.apache.logging.log4j:log4j-core:jar:2.25.1:compile
+      ├── org.apache.logging.log4j:log4j-api:jar:2.25.1:compile
+      ├── org.apache.commons:commons-compress:jar:1.27.1:compile (optional)
+      │   ├── commons-codec:commons-codec:jar:1.18.0:compile
+      │   ├── commons-io:commons-io:jar:2.19.0:compile
+      │   └── org.apache.commons:commons-lang3:jar:3.17.0:compile
+      ├── org.apache.commons:commons-csv:jar:1.14.0:compile (optional)
+      ├── com.conversantmedia:disruptor:jar:1.2.15:compile (optional)
+      │   └── org.slf4j:slf4j-api:jar:1.7.13:compile
+      ├── com.lmax:disruptor:jar:3.4.4:compile (optional)
+      ├── com.fasterxml.jackson.core:jackson-core:jar:2.19.1:compile (optional)
+      ├── com.fasterxml.jackson.core:jackson-databind:jar:2.19.1:compile 
       │   (optional)
-      │   ├── org.codehaus.woodstox:stax2-api:4.2.2
-      │   └── com.fasterxml.woodstox:woodstox-core:7.1.1
-      ├── com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.19.1 
-      │   (optional)
-      │   └── org.yaml:snakeyaml:2.4
-      ├── org.jctools:jctools-core:4.0.5 (optional)
-      ├── org.zeromq:jeromq:0.6.0 (optional)
-      │   └── eu.neilalexander:jnacl:1.0.0
-      ├── org.apache.kafka:kafka-clients:3.9.1 (optional)
-      │   ├── com.github.luben:zstd-jni:1.5.7-4
-      │   ├── org.lz4:lz4-java:1.8.0
-      │   └── org.xerial.snappy:snappy-java:1.1.10.5
-      └── com.sun.mail:javax.mail:1.6.2 (optional)
-          └── javax.activation:activation:1.1
+      │   └── com.fasterxml.jackson.core:jackson-annotations:jar:2.19.1:compile
+      ├── com.fasterxml.jackson.dataformat:jackson-dataformat-xml:jar:2.19.1:compi
+      │   le (optional)
+      │   ├── org.codehaus.woodstox:stax2-api:jar:4.2.2:compile
+      │   └── com.fasterxml.woodstox:woodstox-core:jar:7.1.1:compile
+      ├── com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.19.1:comp
+      │   ile (optional)
+      │   └── org.yaml:snakeyaml:jar:2.4:compile
+      ├── org.jctools:jctools-core:jar:4.0.5:compile (optional)
+      ├── org.zeromq:jeromq:jar:0.6.0:compile (optional)
+      │   └── eu.neilalexander:jnacl:jar:1.0.0:compile
+      ├── org.apache.kafka:kafka-clients:jar:3.9.1:compile (optional)
+      │   ├── com.github.luben:zstd-jni:jar:1.5.7-4:runtime
+      │   ├── org.lz4:lz4-java:jar:1.8.0:runtime
+      │   └── org.xerial.snappy:snappy-java:jar:1.1.10.5:runtime
+      └── com.sun.mail:javax.mail:jar:1.6.2:runtime (optional)
+          └── javax.activation:activation:jar:1.1:runtime
 
 -- Tree output | color=styled | wrap=raw --
 
-  $ jgo --color=styled --wrap=raw --include-optional tree org.apache.logging.log4j:log4j-core:2.25.1
+  $ jgo --color=styled --wrap=raw --ignore-config --include-optional --full-coordinates tree org.apache.logging.log4j:log4j-core:2.25.1
   
-  └── org.apache.logging.log4j:log4j-core:2.25.1
-      ├── org.apache.logging.log4j:log4j-api:2.25.1
-      ├── org.apache.commons:commons-compress:1.27.1 (optional)
-      │   ├── commons-codec:commons-codec:1.18.0
-      │   ├── commons-io:commons-io:2.19.0
-      │   └── org.apache.commons:commons-lang3:3.17.0
-      ├── org.apache.commons:commons-csv:1.14.0 (optional)
-      ├── com.conversantmedia:disruptor:1.2.15 (optional)
-      │   └── org.slf4j:slf4j-api:1.7.13
-      ├── com.lmax:disruptor:3.4.4 (optional)
-      ├── com.fasterxml.jackson.core:jackson-core:2.19.1 (optional)
-      ├── com.fasterxml.jackson.core:jackson-databind:2.19.1 (optional)
-      │   └── com.fasterxml.jackson.core:jackson-annotations:2.19.1
-      ├── com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.19.1 (optional)
-      │   ├── org.codehaus.woodstox:stax2-api:4.2.2
-      │   └── com.fasterxml.woodstox:woodstox-core:7.1.1
-      ├── com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.19.1 (optional)
-      │   └── org.yaml:snakeyaml:2.4
-      ├── org.jctools:jctools-core:4.0.5 (optional)
-      ├── org.zeromq:jeromq:0.6.0 (optional)
-      │   └── eu.neilalexander:jnacl:1.0.0
-      ├── org.apache.kafka:kafka-clients:3.9.1 (optional)
-      │   ├── com.github.luben:zstd-jni:1.5.7-4
-      │   ├── org.lz4:lz4-java:1.8.0
-      │   └── org.xerial.snappy:snappy-java:1.1.10.5
-      └── com.sun.mail:javax.mail:1.6.2 (optional)
-          └── javax.activation:activation:1.1
+  └── org.apache.logging.log4j:log4j-core:jar:2.25.1:compile
+      ├── org.apache.logging.log4j:log4j-api:jar:2.25.1:compile
+      ├── org.apache.commons:commons-compress:jar:1.27.1:compile (optional)
+      │   ├── commons-codec:commons-codec:jar:1.18.0:compile
+      │   ├── commons-io:commons-io:jar:2.19.0:compile
+      │   └── org.apache.commons:commons-lang3:jar:3.17.0:compile
+      ├── org.apache.commons:commons-csv:jar:1.14.0:compile (optional)
+      ├── com.conversantmedia:disruptor:jar:1.2.15:compile (optional)
+      │   └── org.slf4j:slf4j-api:jar:1.7.13:compile
+      ├── com.lmax:disruptor:jar:3.4.4:compile (optional)
+      ├── com.fasterxml.jackson.core:jackson-core:jar:2.19.1:compile (optional)
+      ├── com.fasterxml.jackson.core:jackson-databind:jar:2.19.1:compile (optional)
+      │   └── com.fasterxml.jackson.core:jackson-annotations:jar:2.19.1:compile
+      ├── com.fasterxml.jackson.dataformat:jackson-dataformat-xml:jar:2.19.1:compile (optional)
+      │   ├── org.codehaus.woodstox:stax2-api:jar:4.2.2:compile
+      │   └── com.fasterxml.woodstox:woodstox-core:jar:7.1.1:compile
+      ├── com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.19.1:compile (optional)
+      │   └── org.yaml:snakeyaml:jar:2.4:compile
+      ├── org.jctools:jctools-core:jar:4.0.5:compile (optional)
+      ├── org.zeromq:jeromq:jar:0.6.0:compile (optional)
+      │   └── eu.neilalexander:jnacl:jar:1.0.0:compile
+      ├── org.apache.kafka:kafka-clients:jar:3.9.1:compile (optional)
+      │   ├── com.github.luben:zstd-jni:jar:1.5.7-4:runtime
+      │   ├── org.lz4:lz4-java:jar:1.8.0:runtime
+      │   └── org.xerial.snappy:snappy-java:jar:1.1.10.5:runtime
+      └── com.sun.mail:javax.mail:jar:1.6.2:runtime (optional)
+          └── javax.activation:activation:jar:1.1:runtime
 
 -- Tree output | color=styled | wrap=smart --
 
-  $ jgo --color=styled --wrap=smart --include-optional tree org.apache.logging.log4j:log4j-core:2.25.1
+  $ jgo --color=styled --wrap=smart --ignore-config --include-optional --full-coordinates tree org.apache.logging.log4j:log4j-core:2.25.1
   
-  └── org.apache.logging.log4j:log4j-core:2.25.1
-      ├── org.apache.logging.log4j:log4j-api:2.25.1
-      ├── org.apache.commons:commons-compress:1.27.1 (optional)
-      │   ├── commons-codec:commons-codec:1.18.0
-      │   ├── commons-io:commons-io:2.19.0
-      │   └── org.apache.commons:commons-lang3:3.17.0
-      ├── org.apache.commons:commons-csv:1.14.0 (optional)
-      ├── com.conversantmedia:disruptor:1.2.15 (optional)
-      │   └── org.slf4j:slf4j-api:1.7.13
-      ├── com.lmax:disruptor:3.4.4 (optional)
-      ├── com.fasterxml.jackson.core:jackson-core:2.19.1 (optional)
-      ├── com.fasterxml.jackson.core:jackson-databind:2.19.1 (optional)
-      │   └── com.fasterxml.jackson.core:jackson-annotations:2.19.1
-      ├── com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.19.1 
+  └── org.apache.logging.log4j:log4j-core:jar:2.25.1:compile
+      ├── org.apache.logging.log4j:log4j-api:jar:2.25.1:compile
+      ├── org.apache.commons:commons-compress:jar:1.27.1:compile (optional)
+      │   ├── commons-codec:commons-codec:jar:1.18.0:compile
+      │   ├── commons-io:commons-io:jar:2.19.0:compile
+      │   └── org.apache.commons:commons-lang3:jar:3.17.0:compile
+      ├── org.apache.commons:commons-csv:jar:1.14.0:compile (optional)
+      ├── com.conversantmedia:disruptor:jar:1.2.15:compile (optional)
+      │   └── org.slf4j:slf4j-api:jar:1.7.13:compile
+      ├── com.lmax:disruptor:jar:3.4.4:compile (optional)
+      ├── com.fasterxml.jackson.core:jackson-core:jar:2.19.1:compile (optional)
+      ├── com.fasterxml.jackson.core:jackson-databind:jar:2.19.1:compile 
       │   (optional)
-      │   ├── org.codehaus.woodstox:stax2-api:4.2.2
-      │   └── com.fasterxml.woodstox:woodstox-core:7.1.1
-      ├── com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.19.1 
-      │   (optional)
-      │   └── org.yaml:snakeyaml:2.4
-      ├── org.jctools:jctools-core:4.0.5 (optional)
-      ├── org.zeromq:jeromq:0.6.0 (optional)
-      │   └── eu.neilalexander:jnacl:1.0.0
-      ├── org.apache.kafka:kafka-clients:3.9.1 (optional)
-      │   ├── com.github.luben:zstd-jni:1.5.7-4
-      │   ├── org.lz4:lz4-java:1.8.0
-      │   └── org.xerial.snappy:snappy-java:1.1.10.5
-      └── com.sun.mail:javax.mail:1.6.2 (optional)
-          └── javax.activation:activation:1.1
+      │   └── com.fasterxml.jackson.core:jackson-annotations:jar:2.19.1:compile
+      ├── com.fasterxml.jackson.dataformat:jackson-dataformat-xml:jar:2.19.1:compi
+      │   le (optional)
+      │   ├── org.codehaus.woodstox:stax2-api:jar:4.2.2:compile
+      │   └── com.fasterxml.woodstox:woodstox-core:jar:7.1.1:compile
+      ├── com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.19.1:comp
+      │   ile (optional)
+      │   └── org.yaml:snakeyaml:jar:2.4:compile
+      ├── org.jctools:jctools-core:jar:4.0.5:compile (optional)
+      ├── org.zeromq:jeromq:jar:0.6.0:compile (optional)
+      │   └── eu.neilalexander:jnacl:jar:1.0.0:compile
+      ├── org.apache.kafka:kafka-clients:jar:3.9.1:compile (optional)
+      │   ├── com.github.luben:zstd-jni:jar:1.5.7-4:runtime
+      │   ├── org.lz4:lz4-java:jar:1.8.0:runtime
+      │   └── org.xerial.snappy:snappy-java:jar:1.1.10.5:runtime
+      └── com.sun.mail:javax.mail:jar:1.6.2:runtime (optional)
+          └── javax.activation:activation:jar:1.1:runtime
 
 -- Tree output | color=rich | wrap=raw --
 
-  $ jgo --color=styled --wrap=raw --include-optional tree org.apache.logging.log4j:log4j-core:2.25.1
+  $ jgo --color=rich --wrap=raw --ignore-config --include-optional --full-coordinates tree org.apache.logging.log4j:log4j-core:2.25.1
   
-  └── org.apache.logging.log4j:log4j-core:2.25.1
-      ├── org.apache.logging.log4j:log4j-api:2.25.1
-      ├── org.apache.commons:commons-compress:1.27.1 (optional)
-      │   ├── commons-codec:commons-codec:1.18.0
-      │   ├── commons-io:commons-io:2.19.0
-      │   └── org.apache.commons:commons-lang3:3.17.0
-      ├── org.apache.commons:commons-csv:1.14.0 (optional)
-      ├── com.conversantmedia:disruptor:1.2.15 (optional)
-      │   └── org.slf4j:slf4j-api:1.7.13
-      ├── com.lmax:disruptor:3.4.4 (optional)
-      ├── com.fasterxml.jackson.core:jackson-core:2.19.1 (optional)
-      ├── com.fasterxml.jackson.core:jackson-databind:2.19.1 (optional)
-      │   └── com.fasterxml.jackson.core:jackson-annotations:2.19.1
-      ├── com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.19.1 (optional)
-      │   ├── org.codehaus.woodstox:stax2-api:4.2.2
-      │   └── com.fasterxml.woodstox:woodstox-core:7.1.1
-      ├── com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.19.1 (optional)
-      │   └── org.yaml:snakeyaml:2.4
-      ├── org.jctools:jctools-core:4.0.5 (optional)
-      ├── org.zeromq:jeromq:0.6.0 (optional)
-      │   └── eu.neilalexander:jnacl:1.0.0
-      ├── org.apache.kafka:kafka-clients:3.9.1 (optional)
-      │   ├── com.github.luben:zstd-jni:1.5.7-4
-      │   ├── org.lz4:lz4-java:1.8.0
-      │   └── org.xerial.snappy:snappy-java:1.1.10.5
-      └── com.sun.mail:javax.mail:1.6.2 (optional)
-          └── javax.activation:activation:1.1
+  └── \x1b[36morg.apache.logging.log4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlog4j-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.25.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      ├── \x1b[36morg.apache.logging.log4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlog4j-api\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.25.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      ├── \x1b[36morg.apache.commons\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-compress\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.27.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      │   ├── \x1b[36mcommons-codec\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-codec\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.18.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      │   ├── \x1b[36mcommons-io\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-io\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      │   └── \x1b[36morg.apache.commons\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-lang3\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m3.17.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      ├── \x1b[36morg.apache.commons\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-csv\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.14.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      ├── \x1b[36mcom.conversantmedia\x1b[0m\x1b[2m:\x1b[0m\x1b[1mdisruptor\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.2.15\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      │   └── \x1b[36morg.slf4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mslf4j-api\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.7.13\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      ├── \x1b[36mcom.lmax\x1b[0m\x1b[2m:\x1b[0m\x1b[1mdisruptor\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m3.4.4\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      ├── \x1b[36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      ├── \x1b[36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-databind\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      │   └── \x1b[36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-annotations\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      ├── \x1b[36mcom.fasterxml.jackson.dataformat\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-dataformat-xml\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      │   ├── \x1b[36morg.codehaus.woodstox\x1b[0m\x1b[2m:\x1b[0m\x1b[1mstax2-api\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m4.2.2\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      │   └── \x1b[36mcom.fasterxml.woodstox\x1b[0m\x1b[2m:\x1b[0m\x1b[1mwoodstox-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m7.1.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      ├── \x1b[36mcom.fasterxml.jackson.dataformat\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-dataformat-yaml\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      │   └── \x1b[36morg.yaml\x1b[0m\x1b[2m:\x1b[0m\x1b[1msnakeyaml\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.4\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      ├── \x1b[36morg.jctools\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjctools-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m4.0.5\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      ├── \x1b[36morg.zeromq\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjeromq\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m0.6.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      │   └── \x1b[36meu.neilalexander\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjnacl\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.0.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      ├── \x1b[36morg.apache.kafka\x1b[0m\x1b[2m:\x1b[0m\x1b[1mkafka-clients\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m3.9.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      │   ├── \x1b[36mcom.github.luben\x1b[0m\x1b[2m:\x1b[0m\x1b[1mzstd-jni\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.5.7-4\x1b[0m\x1b[2m:\x1b[0m\x1b[34mruntime\x1b[0m (esc)
+      │   ├── \x1b[36morg.lz4\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlz4-java\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.8.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mruntime\x1b[0m (esc)
+      │   └── \x1b[36morg.xerial.snappy\x1b[0m\x1b[2m:\x1b[0m\x1b[1msnappy-java\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.1.10.5\x1b[0m\x1b[2m:\x1b[0m\x1b[34mruntime\x1b[0m (esc)
+      └── \x1b[36mcom.sun.mail\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjavax.mail\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.6.2\x1b[0m\x1b[2m:\x1b[0m\x1b[34mruntime\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+          └── \x1b[36mjavax.activation\x1b[0m\x1b[2m:\x1b[0m\x1b[1mactivation\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mruntime\x1b[0m (esc)
 
 -- Tree output | color=rich | wrap=smart --
 
-  $ jgo --color=styled --wrap=smart --include-optional tree org.apache.logging.log4j:log4j-core:2.25.1
+  $ jgo --color=rich --wrap=smart --ignore-config --include-optional --full-coordinates tree org.apache.logging.log4j:log4j-core:2.25.1
   
-  └── org.apache.logging.log4j:log4j-core:2.25.1
-      ├── org.apache.logging.log4j:log4j-api:2.25.1
-      ├── org.apache.commons:commons-compress:1.27.1 (optional)
-      │   ├── commons-codec:commons-codec:1.18.0
-      │   ├── commons-io:commons-io:2.19.0
-      │   └── org.apache.commons:commons-lang3:3.17.0
-      ├── org.apache.commons:commons-csv:1.14.0 (optional)
-      ├── com.conversantmedia:disruptor:1.2.15 (optional)
-      │   └── org.slf4j:slf4j-api:1.7.13
-      ├── com.lmax:disruptor:3.4.4 (optional)
-      ├── com.fasterxml.jackson.core:jackson-core:2.19.1 (optional)
-      ├── com.fasterxml.jackson.core:jackson-databind:2.19.1 (optional)
-      │   └── com.fasterxml.jackson.core:jackson-annotations:2.19.1
-      ├── com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.19.1 
-      │   (optional)
-      │   ├── org.codehaus.woodstox:stax2-api:4.2.2
-      │   └── com.fasterxml.woodstox:woodstox-core:7.1.1
-      ├── com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.19.1 
-      │   (optional)
-      │   └── org.yaml:snakeyaml:2.4
-      ├── org.jctools:jctools-core:4.0.5 (optional)
-      ├── org.zeromq:jeromq:0.6.0 (optional)
-      │   └── eu.neilalexander:jnacl:1.0.0
-      ├── org.apache.kafka:kafka-clients:3.9.1 (optional)
-      │   ├── com.github.luben:zstd-jni:1.5.7-4
-      │   ├── org.lz4:lz4-java:1.8.0
-      │   └── org.xerial.snappy:snappy-java:1.1.10.5
-      └── com.sun.mail:javax.mail:1.6.2 (optional)
-          └── javax.activation:activation:1.1
+  └── \x1b[36morg.apache.logging.log4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlog4j-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.25.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      ├── \x1b[36morg.apache.logging.log4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlog4j-api\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.25.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      ├── \x1b[36morg.apache.commons\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-compress\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.27.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      │   ├── \x1b[36mcommons-codec\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-codec\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.18.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      │   ├── \x1b[36mcommons-io\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-io\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      │   └── \x1b[36morg.apache.commons\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-lang3\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m3.17.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      ├── \x1b[36morg.apache.commons\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-csv\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.14.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      ├── \x1b[36mcom.conversantmedia\x1b[0m\x1b[2m:\x1b[0m\x1b[1mdisruptor\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.2.15\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      │   └── \x1b[36morg.slf4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mslf4j-api\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.7.13\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      ├── \x1b[36mcom.lmax\x1b[0m\x1b[2m:\x1b[0m\x1b[1mdisruptor\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m3.4.4\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      ├── \x1b[36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      ├── \x1b[36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-databind\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m  (esc)
+      │   \x1b[2m(optional)\x1b[0m (esc)
+      │   └── \x1b[36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-annotations\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      ├── \x1b[36mcom.fasterxml.jackson.dataformat\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-dataformat-xml\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompi\x1b[0m (esc)
+      │   \x1b[34mle\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      │   ├── \x1b[36morg.codehaus.woodstox\x1b[0m\x1b[2m:\x1b[0m\x1b[1mstax2-api\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m4.2.2\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      │   └── \x1b[36mcom.fasterxml.woodstox\x1b[0m\x1b[2m:\x1b[0m\x1b[1mwoodstox-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m7.1.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      ├── \x1b[36mcom.fasterxml.jackson.dataformat\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-dataformat-yaml\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcomp\x1b[0m (esc)
+      │   \x1b[34mile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      │   └── \x1b[36morg.yaml\x1b[0m\x1b[2m:\x1b[0m\x1b[1msnakeyaml\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.4\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      ├── \x1b[36morg.jctools\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjctools-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m4.0.5\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      ├── \x1b[36morg.zeromq\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjeromq\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m0.6.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      │   └── \x1b[36meu.neilalexander\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjnacl\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.0.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+      ├── \x1b[36morg.apache.kafka\x1b[0m\x1b[2m:\x1b[0m\x1b[1mkafka-clients\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m3.9.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+      │   ├── \x1b[36mcom.github.luben\x1b[0m\x1b[2m:\x1b[0m\x1b[1mzstd-jni\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.5.7-4\x1b[0m\x1b[2m:\x1b[0m\x1b[34mruntime\x1b[0m (esc)
+      │   ├── \x1b[36morg.lz4\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlz4-java\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.8.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mruntime\x1b[0m (esc)
+      │   └── \x1b[36morg.xerial.snappy\x1b[0m\x1b[2m:\x1b[0m\x1b[1msnappy-java\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.1.10.5\x1b[0m\x1b[2m:\x1b[0m\x1b[34mruntime\x1b[0m (esc)
+      └── \x1b[36mcom.sun.mail\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjavax.mail\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.6.2\x1b[0m\x1b[2m:\x1b[0m\x1b[34mruntime\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+          └── \x1b[36mjavax.activation\x1b[0m\x1b[2m:\x1b[0m\x1b[1mactivation\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mruntime\x1b[0m (esc)
 
 -- List output | color=plain | wrap=raw --
 
 There should be no artificial line breaks.
 
-  $ jgo --wrap=raw --include-optional list org.apache.logging.log4j:log4j-core:2.25.1
-  org.apache.logging.log4j:log4j-core:2.25.1
+  $ jgo --color=plain --wrap=raw --ignore-config --include-optional --full-coordinates list org.apache.logging.log4j:log4j-core:2.25.1
+  org.apache.logging.log4j:log4j-core:jar:2.25.1
      com.conversantmedia:disruptor:jar:1.2.15:compile (optional)
      com.fasterxml.jackson.core:jackson-annotations:jar:2.19.1:compile
      com.fasterxml.jackson.core:jackson-core:jar:2.19.1:compile (optional)
@@ -437,8 +440,8 @@ There should be no artificial line breaks.
 
 Smart wrapping should use intelligent word-boundary wrapping.
 
-  $ jgo --color=plain --wrap=smart --include-optional list org.apache.logging.log4j:log4j-core:2.25.1
-  org.apache.logging.log4j:log4j-core:2.25.1
+  $ jgo --color=plain --wrap=smart --ignore-config --include-optional --full-coordinates list org.apache.logging.log4j:log4j-core:2.25.1
+  org.apache.logging.log4j:log4j-core:jar:2.25.1
      com.conversantmedia:disruptor:jar:1.2.15:compile (optional)
      com.fasterxml.jackson.core:jackson-annotations:jar:2.19.1:compile
      com.fasterxml.jackson.core:jackson-core:jar:2.19.1:compile (optional)
@@ -472,8 +475,8 @@ Smart wrapping should use intelligent word-boundary wrapping.
 
 There should be ANSI styles but no color, and no extra line breaks.
 
-  $ jgo --color=styled --wrap=raw --include-optional list org.apache.logging.log4j:log4j-core:2.25.1
-  org.apache.logging.log4j:log4j-core:2.25.1
+  $ jgo --color=styled --wrap=raw --ignore-config --include-optional --full-coordinates list org.apache.logging.log4j:log4j-core:2.25.1
+  org.apache.logging.log4j:log4j-core:jar:2.25.1
      com.conversantmedia:disruptor:jar:1.2.15:compile (optional)
      com.fasterxml.jackson.core:jackson-annotations:jar:2.19.1:compile
      com.fasterxml.jackson.core:jackson-core:jar:2.19.1:compile (optional)
@@ -505,8 +508,8 @@ There should be ANSI styles but no color, and no extra line breaks.
 
 There should be ANSI styling but no color, with word wrapping.
 
-  $ jgo --color=styled --wrap=smart --include-optional list org.apache.logging.log4j:log4j-core:2.25.1
-  org.apache.logging.log4j:log4j-core:2.25.1
+  $ jgo --color=styled --wrap=smart --ignore-config --include-optional --full-coordinates list org.apache.logging.log4j:log4j-core:2.25.1
+  org.apache.logging.log4j:log4j-core:jar:2.25.1
      com.conversantmedia:disruptor:jar:1.2.15:compile (optional)
      com.fasterxml.jackson.core:jackson-annotations:jar:2.19.1:compile
      com.fasterxml.jackson.core:jackson-core:jar:2.19.1:compile (optional)
@@ -540,69 +543,69 @@ There should be ANSI styling but no color, with word wrapping.
 
 There should be full ANSI color, but no extra line breaks.
 
-  $ jgo --color=rich --wrap=raw --include-optional list org.apache.logging.log4j:log4j-core:2.25.1
-  \x1b[1;36morg.apache.logging.log4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlog4j-core\x1b[0m\x1b[2m:\x1b[0m\x1b[32m2.25.1\x1b[0m (esc)
-     \x1b[1;36mcom.conversantmedia\x1b[0m\x1b[2m:\x1b[0m\x1b[1mdisruptor\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.2.15\x1b[0m\x1b[2m:\x1b[0mcompile (optional) (esc)
-     \x1b[1;36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-annotations\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m2.19.1\x1b[0m\x1b[2m:\x1b[0mcompile (esc)
-     \x1b[1;36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m2.19.1\x1b[0m\x1b[2m:\x1b[0mcompile (optional) (esc)
-     \x1b[1;36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-databind\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m2.19.1\x1b[0m\x1b[2m:\x1b[0mcompile (optional) (esc)
-     \x1b[1;36mcom.fasterxml.jackson.dataformat\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-dataformat-xml\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m2.19.1\x1b[0m\x1b[2m:\x1b[0mcompile (optional) (esc)
-     \x1b[1;36mcom.fasterxml.jackson.dataformat\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-dataformat-yaml\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m2.19.1\x1b[0m\x1b[2m:\x1b[0mcompile (optional) (esc)
-     \x1b[1;36mcom.fasterxml.woodstox\x1b[0m\x1b[2m:\x1b[0m\x1b[1mwoodstox-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m7.1.1\x1b[0m\x1b[2m:\x1b[0mcompile (esc)
-     \x1b[1;36mcom.github.luben\x1b[0m\x1b[2m:\x1b[0m\x1b[1mzstd-jni\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.5.7-4\x1b[0m\x1b[2m:\x1b[0mruntime (esc)
-     \x1b[1;36mcom.lmax\x1b[0m\x1b[2m:\x1b[0m\x1b[1mdisruptor\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m3.4.4\x1b[0m\x1b[2m:\x1b[0mcompile (optional) (esc)
-     \x1b[1;36mcom.sun.mail\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjavax.mail\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.6.2\x1b[0m\x1b[2m:\x1b[0mruntime (optional) (esc)
-     \x1b[1;36mcommons-codec\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-codec\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.18.0\x1b[0m\x1b[2m:\x1b[0mcompile (esc)
-     \x1b[1;36mcommons-io\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-io\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m2.19.0\x1b[0m\x1b[2m:\x1b[0mcompile (esc)
-     \x1b[1;36meu.neilalexander\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjnacl\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.0.0\x1b[0m\x1b[2m:\x1b[0mcompile (esc)
-     \x1b[1;36mjavax.activation\x1b[0m\x1b[2m:\x1b[0m\x1b[1mactivation\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.1\x1b[0m\x1b[2m:\x1b[0mruntime (esc)
-     \x1b[1;36morg.apache.commons\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-compress\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.27.1\x1b[0m\x1b[2m:\x1b[0mcompile (optional) (esc)
-     \x1b[1;36morg.apache.commons\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-csv\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.14.0\x1b[0m\x1b[2m:\x1b[0mcompile (optional) (esc)
-     \x1b[1;36morg.apache.commons\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-lang3\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m3.17.0\x1b[0m\x1b[2m:\x1b[0mcompile (esc)
-     \x1b[1;36morg.apache.kafka\x1b[0m\x1b[2m:\x1b[0m\x1b[1mkafka-clients\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m3.9.1\x1b[0m\x1b[2m:\x1b[0mcompile (optional) (esc)
-     \x1b[1;36morg.apache.logging.log4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlog4j-api\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m2.25.1\x1b[0m\x1b[2m:\x1b[0mcompile (esc)
-     \x1b[1;36morg.codehaus.woodstox\x1b[0m\x1b[2m:\x1b[0m\x1b[1mstax2-api\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m4.2.2\x1b[0m\x1b[2m:\x1b[0mcompile (esc)
-     \x1b[1;36morg.jctools\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjctools-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m4.0.5\x1b[0m\x1b[2m:\x1b[0mcompile (optional) (esc)
-     \x1b[1;36morg.lz4\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlz4-java\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.8.0\x1b[0m\x1b[2m:\x1b[0mruntime (esc)
-     \x1b[1;36morg.slf4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mslf4j-api\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.7.13\x1b[0m\x1b[2m:\x1b[0mcompile (esc)
-     \x1b[1;36morg.xerial.snappy\x1b[0m\x1b[2m:\x1b[0m\x1b[1msnappy-java\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.1.10.5\x1b[0m\x1b[2m:\x1b[0mruntime (esc)
-     \x1b[1;36morg.yaml\x1b[0m\x1b[2m:\x1b[0m\x1b[1msnakeyaml\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m2.4\x1b[0m\x1b[2m:\x1b[0mcompile (esc)
-     \x1b[1;36morg.zeromq\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjeromq\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m0.6.0\x1b[0m\x1b[2m:\x1b[0mcompile (optional) (esc)
+  $ jgo --color=rich --wrap=raw --ignore-config --include-optional --full-coordinates list org.apache.logging.log4j:log4j-core:2.25.1
+  \x1b[36morg.apache.logging.log4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlog4j-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.25.1\x1b[0m (esc)
+     \x1b[36mcom.conversantmedia\x1b[0m\x1b[2m:\x1b[0m\x1b[1mdisruptor\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.2.15\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-annotations\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+     \x1b[36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-databind\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36mcom.fasterxml.jackson.dataformat\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-dataformat-xml\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36mcom.fasterxml.jackson.dataformat\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-dataformat-yaml\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36mcom.fasterxml.woodstox\x1b[0m\x1b[2m:\x1b[0m\x1b[1mwoodstox-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m7.1.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+     \x1b[36mcom.github.luben\x1b[0m\x1b[2m:\x1b[0m\x1b[1mzstd-jni\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.5.7-4\x1b[0m\x1b[2m:\x1b[0m\x1b[34mruntime\x1b[0m (esc)
+     \x1b[36mcom.lmax\x1b[0m\x1b[2m:\x1b[0m\x1b[1mdisruptor\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m3.4.4\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36mcom.sun.mail\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjavax.mail\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.6.2\x1b[0m\x1b[2m:\x1b[0m\x1b[34mruntime\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36mcommons-codec\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-codec\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.18.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+     \x1b[36mcommons-io\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-io\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+     \x1b[36meu.neilalexander\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjnacl\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.0.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+     \x1b[36mjavax.activation\x1b[0m\x1b[2m:\x1b[0m\x1b[1mactivation\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mruntime\x1b[0m (esc)
+     \x1b[36morg.apache.commons\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-compress\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.27.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36morg.apache.commons\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-csv\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.14.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36morg.apache.commons\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-lang3\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m3.17.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+     \x1b[36morg.apache.kafka\x1b[0m\x1b[2m:\x1b[0m\x1b[1mkafka-clients\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m3.9.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36morg.apache.logging.log4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlog4j-api\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.25.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+     \x1b[36morg.codehaus.woodstox\x1b[0m\x1b[2m:\x1b[0m\x1b[1mstax2-api\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m4.2.2\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+     \x1b[36morg.jctools\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjctools-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m4.0.5\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36morg.lz4\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlz4-java\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.8.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mruntime\x1b[0m (esc)
+     \x1b[36morg.slf4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mslf4j-api\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.7.13\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+     \x1b[36morg.xerial.snappy\x1b[0m\x1b[2m:\x1b[0m\x1b[1msnappy-java\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.1.10.5\x1b[0m\x1b[2m:\x1b[0m\x1b[34mruntime\x1b[0m (esc)
+     \x1b[36morg.yaml\x1b[0m\x1b[2m:\x1b[0m\x1b[1msnakeyaml\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.4\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+     \x1b[36morg.zeromq\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjeromq\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m0.6.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
 
 -- List output | color=rich | wrap=smart --
 
 There should be full ANSI color, with word wrapping.
 
-  $ jgo --color=rich --wrap=smart --include-optional list org.apache.logging.log4j:log4j-core:2.25.1
-  \x1b[1;36morg.apache.logging.log4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlog4j-core\x1b[0m\x1b[2m:\x1b[0m\x1b[32m2.25.1\x1b[0m (esc)
-     \x1b[1;36mcom.conversantmedia\x1b[0m\x1b[2m:\x1b[0m\x1b[1mdisruptor\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.2.15\x1b[0m\x1b[2m:\x1b[0mcompile (optional) (esc)
-     \x1b[1;36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-annotations\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m2.19.1\x1b[0m\x1b[2m:\x1b[0mcompile (esc)
-     \x1b[1;36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m2.19.1\x1b[0m\x1b[2m:\x1b[0mcompile (optional) (esc)
-     \x1b[1;36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-databind\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m2.19.1\x1b[0m\x1b[2m:\x1b[0mcompile (optional) (esc)
-     \x1b[1;36mcom.fasterxml.jackson.dataformat\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-dataformat-xml\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m2.19.1\x1b[0m\x1b[2m:\x1b[0mcompile  (esc)
-  (optional)
-     \x1b[1;36mcom.fasterxml.jackson.dataformat\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-dataformat-yaml\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m2.19.1\x1b[0m\x1b[2m:\x1b[0mcompile  (esc)
-  (optional)
-     \x1b[1;36mcom.fasterxml.woodstox\x1b[0m\x1b[2m:\x1b[0m\x1b[1mwoodstox-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m7.1.1\x1b[0m\x1b[2m:\x1b[0mcompile (esc)
-     \x1b[1;36mcom.github.luben\x1b[0m\x1b[2m:\x1b[0m\x1b[1mzstd-jni\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.5.7-4\x1b[0m\x1b[2m:\x1b[0mruntime (esc)
-     \x1b[1;36mcom.lmax\x1b[0m\x1b[2m:\x1b[0m\x1b[1mdisruptor\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m3.4.4\x1b[0m\x1b[2m:\x1b[0mcompile (optional) (esc)
-     \x1b[1;36mcom.sun.mail\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjavax.mail\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.6.2\x1b[0m\x1b[2m:\x1b[0mruntime (optional) (esc)
-     \x1b[1;36mcommons-codec\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-codec\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.18.0\x1b[0m\x1b[2m:\x1b[0mcompile (esc)
-     \x1b[1;36mcommons-io\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-io\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m2.19.0\x1b[0m\x1b[2m:\x1b[0mcompile (esc)
-     \x1b[1;36meu.neilalexander\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjnacl\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.0.0\x1b[0m\x1b[2m:\x1b[0mcompile (esc)
-     \x1b[1;36mjavax.activation\x1b[0m\x1b[2m:\x1b[0m\x1b[1mactivation\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.1\x1b[0m\x1b[2m:\x1b[0mruntime (esc)
-     \x1b[1;36morg.apache.commons\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-compress\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.27.1\x1b[0m\x1b[2m:\x1b[0mcompile (optional) (esc)
-     \x1b[1;36morg.apache.commons\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-csv\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.14.0\x1b[0m\x1b[2m:\x1b[0mcompile (optional) (esc)
-     \x1b[1;36morg.apache.commons\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-lang3\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m3.17.0\x1b[0m\x1b[2m:\x1b[0mcompile (esc)
-     \x1b[1;36morg.apache.kafka\x1b[0m\x1b[2m:\x1b[0m\x1b[1mkafka-clients\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m3.9.1\x1b[0m\x1b[2m:\x1b[0mcompile (optional) (esc)
-     \x1b[1;36morg.apache.logging.log4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlog4j-api\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m2.25.1\x1b[0m\x1b[2m:\x1b[0mcompile (esc)
-     \x1b[1;36morg.codehaus.woodstox\x1b[0m\x1b[2m:\x1b[0m\x1b[1mstax2-api\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m4.2.2\x1b[0m\x1b[2m:\x1b[0mcompile (esc)
-     \x1b[1;36morg.jctools\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjctools-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m4.0.5\x1b[0m\x1b[2m:\x1b[0mcompile (optional) (esc)
-     \x1b[1;36morg.lz4\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlz4-java\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.8.0\x1b[0m\x1b[2m:\x1b[0mruntime (esc)
-     \x1b[1;36morg.slf4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mslf4j-api\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.7.13\x1b[0m\x1b[2m:\x1b[0mcompile (esc)
-     \x1b[1;36morg.xerial.snappy\x1b[0m\x1b[2m:\x1b[0m\x1b[1msnappy-java\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m1.1.10.5\x1b[0m\x1b[2m:\x1b[0mruntime (esc)
-     \x1b[1;36morg.yaml\x1b[0m\x1b[2m:\x1b[0m\x1b[1msnakeyaml\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m2.4\x1b[0m\x1b[2m:\x1b[0mcompile (esc)
-     \x1b[1;36morg.zeromq\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjeromq\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[32m0.6.0\x1b[0m\x1b[2m:\x1b[0mcompile (optional) (esc)
+  $ jgo --color=rich --wrap=smart --ignore-config --include-optional --full-coordinates list org.apache.logging.log4j:log4j-core:2.25.1
+  \x1b[36morg.apache.logging.log4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlog4j-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.25.1\x1b[0m (esc)
+     \x1b[36mcom.conversantmedia\x1b[0m\x1b[2m:\x1b[0m\x1b[1mdisruptor\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.2.15\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-annotations\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+     \x1b[36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-databind\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36mcom.fasterxml.jackson.dataformat\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-dataformat-xml\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m  (esc)
+  \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36mcom.fasterxml.jackson.dataformat\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-dataformat-yaml\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m  (esc)
+  \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36mcom.fasterxml.woodstox\x1b[0m\x1b[2m:\x1b[0m\x1b[1mwoodstox-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m7.1.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+     \x1b[36mcom.github.luben\x1b[0m\x1b[2m:\x1b[0m\x1b[1mzstd-jni\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.5.7-4\x1b[0m\x1b[2m:\x1b[0m\x1b[34mruntime\x1b[0m (esc)
+     \x1b[36mcom.lmax\x1b[0m\x1b[2m:\x1b[0m\x1b[1mdisruptor\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m3.4.4\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36mcom.sun.mail\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjavax.mail\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.6.2\x1b[0m\x1b[2m:\x1b[0m\x1b[34mruntime\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36mcommons-codec\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-codec\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.18.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+     \x1b[36mcommons-io\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-io\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+     \x1b[36meu.neilalexander\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjnacl\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.0.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+     \x1b[36mjavax.activation\x1b[0m\x1b[2m:\x1b[0m\x1b[1mactivation\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mruntime\x1b[0m (esc)
+     \x1b[36morg.apache.commons\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-compress\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.27.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36morg.apache.commons\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-csv\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.14.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36morg.apache.commons\x1b[0m\x1b[2m:\x1b[0m\x1b[1mcommons-lang3\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m3.17.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+     \x1b[36morg.apache.kafka\x1b[0m\x1b[2m:\x1b[0m\x1b[1mkafka-clients\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m3.9.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36morg.apache.logging.log4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlog4j-api\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.25.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+     \x1b[36morg.codehaus.woodstox\x1b[0m\x1b[2m:\x1b[0m\x1b[1mstax2-api\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m4.2.2\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+     \x1b[36morg.jctools\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjctools-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m4.0.5\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
+     \x1b[36morg.lz4\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlz4-java\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.8.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mruntime\x1b[0m (esc)
+     \x1b[36morg.slf4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mslf4j-api\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.7.13\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+     \x1b[36morg.xerial.snappy\x1b[0m\x1b[2m:\x1b[0m\x1b[1msnappy-java\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.1.10.5\x1b[0m\x1b[2m:\x1b[0m\x1b[34mruntime\x1b[0m (esc)
+     \x1b[36morg.yaml\x1b[0m\x1b[2m:\x1b[0m\x1b[1msnakeyaml\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.4\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
+     \x1b[36morg.zeromq\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjeromq\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m0.6.0\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
 
 -- XML output | color=plain | wrap=raw --
 
@@ -632,7 +635,6 @@ The long <project> tag should be word-wrapped along its attrs.
     <artifactId>serializer</artifactId>
     <version>2.7.3</version>
   </project>
-
 
 -- XML output | color=styled | wrap=raw --
 

@@ -30,6 +30,7 @@ class GlobalSettings:
     - [repositories]: Maven repositories (name = URL)
     - [shortcuts]: Coordinate shortcuts for the CLI
     - [jvm]: JVM configuration (gc, max_heap, min_heap, jvm_args, properties)
+    - [styles]: Style mappings for coordinate output colors (g, a, v, p, c, s, etc.)
     """
 
     def __init__(
@@ -40,6 +41,7 @@ class GlobalSettings:
         repositories: dict[str, str] | None = None,
         shortcuts: dict[str, str] | None = None,
         jvm_config: dict | None = None,
+        styles: dict[str, str] | None = None,
     ):
         """
         Initialize configuration.
@@ -51,6 +53,7 @@ class GlobalSettings:
             repositories: Maven repositories (name -> URL)
             shortcuts: Coordinate shortcuts
             jvm_config: JVM configuration (gc, max_heap, min_heap, jvm_args, properties)
+            styles: Style mappings for coordinate output (key -> Rich color/style)
         """
 
         self.cache_dir = cache_dir or default_jgo_cache()
@@ -59,6 +62,7 @@ class GlobalSettings:
         self.repositories = repositories or {}
         self.shortcuts = shortcuts or {}
         self.jvm_config = jvm_config or {}
+        self.styles = styles or {}
 
     @classmethod
     def load(cls, settings_file: Path | None = None) -> "GlobalSettings":
@@ -122,6 +126,7 @@ class GlobalSettings:
             repositories={},
             shortcuts={},
             jvm_config={},
+            styles={},
         )
 
     @classmethod
@@ -199,6 +204,12 @@ class GlobalSettings:
                 else:
                     jvm_config[key] = value
 
+        # Parse [styles] section
+        styles = dict(base_config.styles)
+        if parser.has_section("styles"):
+            for key, value in parser.items("styles"):
+                styles[key] = value
+
         _log.debug(
             f"Loaded settings: cache_dir={cache_dir}, links={links}, "
             f"repositories={list(repositories.keys())}"
@@ -211,6 +222,7 @@ class GlobalSettings:
             repositories=repositories,
             shortcuts=shortcuts,
             jvm_config=jvm_config,
+            styles=styles,
         )
 
     @classmethod
@@ -249,6 +261,7 @@ class GlobalSettings:
             repositories=settings.repositories,
             shortcuts=settings.shortcuts,
             jvm_config=settings.jvm_config,
+            styles=settings.styles,
         )
 
     def to_dict(self) -> dict:
@@ -265,6 +278,7 @@ class GlobalSettings:
             "repositories": self.repositories,
             "shortcuts": self.shortcuts,
             "jvm": self.jvm_config,  # Note: key is "jvm" not "jvm_config" for consistency with INI file
+            "styles": self.styles,
         }
 
     def expand_shortcuts(self, coordinate: str) -> str:
@@ -356,6 +370,12 @@ class GlobalSettings:
             parser.add_section("shortcuts")
             for name, replacement in self.shortcuts.items():
                 parser.set("shortcuts", name, replacement)
+
+        # Write [styles] section
+        if self.styles:
+            parser.add_section("styles")
+            for key, value in self.styles.items():
+                parser.set("styles", key, value)
 
         # Write to file
         with open(settings_file, "w") as f:

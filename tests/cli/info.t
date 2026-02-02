@@ -95,23 +95,23 @@ Test info deplist with endpoint.
 
   $ jgo info deplist com.google.guava:guava:33.0.0-jre
   com.google.guava:guava:33.0.0-jre
-     com.google.code.findbugs:jsr305:jar:3.0.2:compile
-     com.google.errorprone:error_prone_annotations:jar:2.23.0:compile
-     com.google.guava:failureaccess:jar:1.0.2:compile
-     com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
-     com.google.j2objc:j2objc-annotations:jar:2.8:compile
-     org.checkerframework:checker-qual:jar:3.41.0:compile
+     com.google.code.findbugs:jsr305:3.0.2
+     com.google.errorprone:error_prone_annotations:2.23.0
+     com.google.guava:failureaccess:1.0.2
+     com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava
+     com.google.j2objc:j2objc-annotations:2.8
+     org.checkerframework:checker-qual:3.41.0
 
 Test info deplist --direct flag.
 
   $ jgo info deplist --direct com.google.guava:guava:33.0.0-jre
   com.google.guava:guava:33.0.0-jre
-     com.google.code.findbugs:jsr305:jar:3.0.2:compile
-     com.google.errorprone:error_prone_annotations:jar:2.23.0:compile
-     com.google.guava:failureaccess:jar:1.0.2:compile
-     com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
-     com.google.j2objc:j2objc-annotations:jar:2.8:compile
-     org.checkerframework:checker-qual:jar:3.41.0:compile
+     com.google.code.findbugs:jsr305:3.0.2
+     com.google.errorprone:error_prone_annotations:2.23.0
+     com.google.guava:failureaccess:1.0.2
+     com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava
+     com.google.j2objc:j2objc-annotations:2.8
+     org.checkerframework:checker-qual:3.41.0
 
 Test info javainfo with no endpoint.
 
