@@ -30,10 +30,8 @@ from jgo.exec import JavaRunner
 
 # Full control over each step
 maven = MavenContext()
-component = maven.project('org.python', 'jython-standalone').at_version('RELEASE')
-
 builder = EnvironmentBuilder(context=maven)
-environment = builder.from_components([component])
+environment = builder.from_endpoint("org.python:jython-standalone:RELEASE")
 
 runner = JavaRunner()
 result = runner.run(environment)
@@ -379,7 +377,9 @@ def build_analysis_environment():
         link_strategy=LinkStrategy.HARD
     )
 
-    environment = builder.from_components(components)
+    environment = builder.from_endpoint(
+        "+".join(f"{c.groupId}:{c.artifactId}:{c.version}" for c in components)
+    )
 
     return environment
 

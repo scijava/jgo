@@ -97,27 +97,6 @@ def get_baseline_jar_tool() -> Path | None:
         return None
 
 
-def filter_managed_components(
-    components: list[Component], coordinates: list[Coordinate]
-) -> list[Component]:
-    """
-    Filter components to those that should be managed (i.e., not marked as raw).
-
-    Args:
-        components: List of Maven components
-        coordinates: List of parsed coordinates (parallel to components)
-
-    Returns:
-        List of components that should be managed (coordinates without raw flag,
-        which are not themselves at MANAGED version)
-    """
-    return [
-        comp
-        for comp, coord in zip(components, coordinates)
-        if not coord.raw and coord.version != "MANAGED"
-    ]
-
-
 def is_coordinate_reference(entrypoint_value: str) -> bool:
     """
     Check if entrypoint value is a Maven coordinate reference vs. a class name.
@@ -243,88 +222,55 @@ class EnvironmentBuilder:
             main_class: CLI override for main class (not persisted to lockfile)
         """
         # Parse endpoint
-        components, coordinates, parsed_main_class = self._parse_endpoint(endpoint)
+        parsed = Endpoint.parse(endpoint)
+        parsed_main_class = parsed.main_class
 
-        # Determine which components should be managed
-        boms = filter_managed_components(components, coordinates)
+        # Convert coordinates to Dependencies (preserves classifier, packaging, scope, raw)
+        dependencies = self._coordinates_to_dependencies(parsed.coordinates)
 
-        # Temporarily store managed components for use in from_components
-        self._current_boms = boms if boms else None
-
-        # Build environment without specifying a main class
-        # This allows auto-detection from the JAR manifest if not cached
-        environment = self.from_components(components, update=update, main_class=None)
-
-        # Auto-complete main class overrides (both CLI and endpoint)
-        primary = components[0]
-        autocompleted_cli_main = None
-        autocompleted_parsed_main = None
-
-        if main_class:
-            autocompleted_cli_main = autocomplete_main_class(
-                main_class,
-                primary.artifactId,
-                [environment.jars_dir, environment.modules_dir],
-            )
-
-        if parsed_main_class:
-            autocompleted_parsed_main = autocomplete_main_class(
-                parsed_main_class,
-                primary.artifactId,
-                [environment.jars_dir, environment.modules_dir],
-            )
-
-        # Apply runtime override with priority: CLI main class > endpoint main class > auto-detected
-        # This ensures explicitly specified main classes override cached auto-detected classes
-        environment._runtime_main_class = (
-            autocompleted_cli_main
-            or autocompleted_parsed_main
-            or environment.main_class
-        )
-
-        return environment
-
-    def from_components(
-        self,
-        components: list[Component],
-        update: bool = False,
-        main_class: str | None = None,
-        coordinates: list["Coordinate"] | None = None,
-    ) -> Environment:
-        """
-        Build an environment from a list of components (ad-hoc mode).
-
-        Args:
-            components: Maven components to include
-            update: Force update even if cached
-            main_class: Optional main class override
-            coordinates: Original coordinates (preserves classifier/packaging for cache key).
-                        If not provided, defaults are used (empty classifier, jar packaging).
-        """
-        # Generate cache key from coordinates (if provided) or components
-        if coordinates:
-            dependencies = self._coordinates_to_dependencies(coordinates)
-        else:
-            dependencies = self._components_to_dependencies(components)
-
+        # Generate cache key from Dependencies (full classifier/packaging/scope info)
         cache_key = self._cache_key(dependencies)
 
-        # Environment path (always hierarchical for ad-hoc mode)
-        primary = components[0]
+        # Environment path (hierarchical for ad-hoc mode)
+        primary_component = dependencies[0].artifact.component
         workspace_path = (
-            self.cache_dir / "envs" / primary.project.path_prefix / cache_key
+            self.cache_dir / "envs" / primary_component.project.path_prefix / cache_key
         )
 
-        # Check if environment exists and is valid
+        # Check cache
         environment = Environment(workspace_path)
         if self._is_environment_valid(environment, update):
+            # Apply main class overrides for cached environments
+            primary = dependencies[0].artifact.component
+            autocompleted_cli_main = None
+            autocompleted_parsed_main = None
+
+            if main_class:
+                autocompleted_cli_main = autocomplete_main_class(
+                    main_class,
+                    primary.artifactId,
+                    [environment.jars_dir, environment.modules_dir],
+                )
+
+            if parsed_main_class:
+                autocompleted_parsed_main = autocomplete_main_class(
+                    parsed_main_class,
+                    primary.artifactId,
+                    [environment.jars_dir, environment.modules_dir],
+                )
+
+            environment._runtime_main_class = (
+                autocompleted_cli_main
+                or autocompleted_parsed_main
+                or environment.main_class
+            )
             return environment
 
-        # Build environment and get locked dependencies
-        locked_deps = self._build_environment(environment, components, main_class)
+        # Build environment
+        locked_deps = self._build_environment(environment, dependencies, None)
 
         # Determine main class (auto-complete if needed)
-        # Check both jars/ and modules/ directories for the primary artifact
+        primary = dependencies[0].artifact.component
         final_main_class = None
         primary_jar = None
         for dir_path in [environment.jars_dir, environment.modules_dir]:
@@ -333,14 +279,7 @@ class EnvironmentBuilder:
                 primary_jar = candidate
                 break
 
-        if main_class:
-            # Search both jars/ and modules/ directories for auto-completion
-            final_main_class = autocomplete_main_class(
-                main_class,
-                primary.artifactId,
-                [environment.jars_dir, environment.modules_dir],
-            )
-        elif primary_jar:
+        if primary_jar:
             # Auto-detect from primary component JAR
             final_main_class = detect_main_class_from_jar(primary_jar)
 
@@ -363,6 +302,31 @@ class EnvironmentBuilder:
         )
         lockfile.save(environment.lock_path)
 
+        # Auto-complete main class overrides (both CLI and endpoint)
+        autocompleted_cli_main = None
+        autocompleted_parsed_main = None
+
+        if main_class:
+            autocompleted_cli_main = autocomplete_main_class(
+                main_class,
+                primary.artifactId,
+                [environment.jars_dir, environment.modules_dir],
+            )
+
+        if parsed_main_class:
+            autocompleted_parsed_main = autocomplete_main_class(
+                parsed_main_class,
+                primary.artifactId,
+                [environment.jars_dir, environment.modules_dir],
+            )
+
+        # Apply runtime override with priority: CLI main class > endpoint main class > auto-detected
+        environment._runtime_main_class = (
+            autocompleted_cli_main
+            or autocompleted_parsed_main
+            or environment.main_class
+        )
+
         return environment
 
     def from_spec(
@@ -384,19 +348,10 @@ class EnvironmentBuilder:
         Returns:
             Environment instance
         """
-        # Parse coordinates into components
-        # Keep coordinates for cache key generation (preserves classifier/packaging)
-        components = []
-        coordinates = []
-        for coord_str in spec.coordinates:
-            coord = Coordinate.parse(coord_str)
-            version = coord.version or "RELEASE"
-
-            component = self.context.project(
-                coord.groupId, coord.artifactId
-            ).at_version(version)
-            components.append(component)
-            coordinates.append(coord)
+        # Parse coordinates into dependencies
+        coordinates = [Coordinate.parse(coord_str) for coord_str in spec.coordinates]
+        dependencies = self._coordinates_to_dependencies(coordinates)
+        components = [dep.artifact.component for dep in dependencies]
 
         # Use spec's cache_dir if specified, otherwise use builder's default
         cache_dir = (
@@ -411,8 +366,6 @@ class EnvironmentBuilder:
             workspace_path = cache_dir
         else:
             # Hierarchical structure for ad-hoc mode
-            # Use coordinates for cache key to preserve classifier/packaging
-            dependencies = self._coordinates_to_dependencies(coordinates)
             cache_key = self._cache_key(dependencies)
             primary = components[0]
             workspace_path = (
@@ -425,7 +378,7 @@ class EnvironmentBuilder:
             return environment
 
         # Build environment and get locked dependencies
-        locked_deps = self._build_environment(environment, components, None)
+        locked_deps = self._build_environment(environment, dependencies, None)
 
         # Infer concrete entrypoints from spec
         # Search both jars/ and modules/ directories
@@ -484,16 +437,10 @@ class EnvironmentBuilder:
         """
         import tempfile
 
-        # Parse coordinates into components
-        components = []
-        for coord_str in spec.coordinates:
-            coord = Coordinate.parse(coord_str)
-            version = coord.version or "RELEASE"
-
-            component = self.context.project(
-                coord.groupId, coord.artifactId
-            ).at_version(version)
-            components.append(component)
+        # Parse coordinates into dependencies
+        coordinates = [Coordinate.parse(coord_str) for coord_str in spec.coordinates]
+        dependencies = self._coordinates_to_dependencies(coordinates)
+        components = [dep.artifact.component for dep in dependencies]
 
         # Create a temporary environment directory for dependency resolution
         # This downloads JARs to Maven cache but doesn't link them permanently
@@ -504,7 +451,7 @@ class EnvironmentBuilder:
             temp_env.modules_dir.mkdir(exist_ok=True)
 
             # Resolve dependencies (downloads to Maven cache, links to temp dir)
-            locked_deps = self._build_environment(temp_env, components, None)
+            locked_deps = self._build_environment(temp_env, dependencies, None)
 
             # Infer concrete entrypoints from spec
             concrete_entrypoints = self._infer_concrete_entrypoints(
@@ -608,38 +555,6 @@ class EnvironmentBuilder:
 
         return True
 
-    def _components_to_dependencies(
-        self, components: list[Component]
-    ) -> list["Dependency"]:
-        """
-        Convert Component objects to Dependency objects with default classifier/packaging.
-
-        This is a compatibility helper for code that still uses Components.
-        Uses empty classifier and 'jar' packaging by default.
-
-        Args:
-            components: List of Component objects
-
-        Returns:
-            List of Dependency objects with default artifact settings
-        """
-
-        dependencies = []
-        for component in components:
-            # Create default artifact (empty classifier, jar packaging)
-            artifact = component.artifact(classifier="", packaging="jar")
-
-            # Create dependency with defaults
-            dependency = Dependency(
-                artifact=artifact,
-                scope="compile",
-                optional=False,
-                exclusions=[],
-            )
-            dependencies.append(dependency)
-
-        return dependencies
-
     def _coordinates_to_dependencies(
         self, coordinates: list["Coordinate"]
     ) -> list["Dependency"]:
@@ -683,6 +598,7 @@ class EnvironmentBuilder:
                 scope=scope,
                 optional=optional,
                 exclusions=exclusions,
+                raw=coord.raw or False,
             )
             dependencies.append(dependency)
 
@@ -784,7 +700,7 @@ class EnvironmentBuilder:
     def _build_environment(
         self,
         environment: Environment,
-        components: list[Component],
+        dependencies: list[Dependency],
         main_class: str | None,
     ) -> list[LockedDependency]:
         """
@@ -796,7 +712,7 @@ class EnvironmentBuilder:
 
         Args:
             environment: Environment to build
-            components: Maven components to include
+            dependencies: Input dependencies to resolve
             main_class: Main class (unused, kept for signature compatibility)
 
         Returns:
@@ -817,23 +733,13 @@ class EnvironmentBuilder:
         jars_dir.mkdir(exist_ok=True)
         modules_dir.mkdir(exist_ok=True)
 
-        # Resolve all dependencies in one shot using wrapper POM
-        # Use managed components from endpoint parsing (stored in _current_boms)
-        # or fall back to default behavior: manage all components
-        boms = getattr(self, "_current_boms", None)
-        if boms is None:
-            # Default: manage all components
-            boms = components
-
-        # Resolve all components together (not separately!)
-        # This ensures Maven handles version conflicts across all components
+        # Resolve all dependencies together (not separately!)
+        # This ensures Maven handles version conflicts across all dependencies
         # Returns (resolved_components, resolved_deps) where:
-        # - resolved_components: Components with MANAGED versions resolved
-        # - resolved_deps: Transitive dependencies (excludes components)
-        resolved_components, resolved_deps = components[0].context.resolver.resolve(
-            components,
-            managed=bool(boms),
-            boms=boms,
+        # - resolved_components: Input deps with MANAGED versions resolved
+        # - resolved_deps: Transitive dependencies (excludes inputs)
+        resolved_components, resolved_deps = dependencies[0].context.resolver.resolve(
+            dependencies,
             optional_depth=self.optional_depth,
         )
 
@@ -1000,33 +906,3 @@ class EnvironmentBuilder:
         # Return locked dependencies for lock file generation
         return locked_deps
 
-    def _parse_endpoint(
-        self, endpoint: str
-    ) -> tuple[list[Component], list[Coordinate], str | None]:
-        """
-        Parse endpoint string into components and main class.
-
-        Now uses Endpoint.parse() from jgo.parse.endpoint for consistency.
-
-        Returns:
-            Tuple of (components_list, coordinates_list, main_class)
-            - components_list: List of Component objects for Maven resolution
-            - coordinates_list: List of Coordinate objects (containing raw flags)
-            - main_class: Main class to run
-        """
-
-        # Use the unified parsing logic from jgo.parse.endpoint
-        parsed = Endpoint.parse(endpoint)
-
-        # Convert coordinates to Maven Component objects
-        components = []
-        for coord in parsed.coordinates:
-            # Use version if specified, otherwise default to RELEASE
-            version = coord.version or "RELEASE"
-            component = self.context.project(
-                coord.groupId, coord.artifactId
-            ).at_version(version)
-            # TODO: Handle classifier and packaging by using Artifact instead?
-            components.append(component)
-
-        return components, parsed.coordinates, parsed.main_class

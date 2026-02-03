@@ -229,7 +229,7 @@ component = maven.project("org.python", "jython-standalone").at_version("2.7.3")
 
 # Layer 2: Environment materialization
 builder = EnvironmentBuilder(context=maven)
-env = builder.from_components([component])
+env = builder.from_endpoint("org.python:jython-standalone:2.7.3")
 
 # Layer 3: Execution
 runner = JavaRunner()

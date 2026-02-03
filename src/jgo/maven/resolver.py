@@ -20,11 +20,8 @@ from .pom import write_temp_pom
 if TYPE_CHECKING:
     from collections.abc import Callable
     from contextlib import AbstractContextManager
-    from typing import List, TypeVar
 
     from .core import Artifact, Component
-
-    T = TypeVar("T")
 
     # Type for progress callback:
     # Receives (filename, total_size) and returns a context manager
@@ -37,46 +34,45 @@ if TYPE_CHECKING:
 _log = logging.getLogger(__name__)
 
 
-def _listify(items: List[T] | T) -> List[T]:
-    """Convert single item to list for uniform handling."""
-    return items if isinstance(items, list) else [items]
-
-
-def _resolve_boms(
-    components: list[Component], managed: bool, boms: list[Component] | None
-) -> list[Component] | None:
+def _compute_boms(dependencies: list[Dependency]) -> list[Component] | None:
     """
-    Determine which components to use as BOMs.
+    Compute BOMs from dependencies: non-raw, non-MANAGED, deduplicated by G:A:V.
 
-    When managed=True and boms is not explicitly provided, uses components
-    with concrete versions as BOMs. MANAGED-versioned components are excluded
-    since they consume dependency management rather than provide it.
+    Dependencies marked as raw are excluded from BOM management.
+    MANAGED-versioned dependencies are excluded since they consume
+    dependency management rather than provide it.
     """
-    if boms is None and managed:
-        # Exclude MANAGED components - they can't provide dependency management
-        return [c for c in components if c.version != "MANAGED"]
-    return boms
+    seen: set[tuple[str, str, str]] = set()
+    boms: list[Component] = []
+    for dep in dependencies:
+        if not dep.raw and dep.artifact.component.version != "MANAGED":
+            key = (dep.groupId, dep.artifactId, dep.version)
+            if key not in seen:
+                seen.add(key)
+                boms.append(dep.artifact.component)
+    return boms or None
 
 
 def _filter_component_deps(
-    deps: list[Dependency], components: list[Component]
+    deps: list[Dependency], input_deps: list[Dependency]
 ) -> list[Dependency]:
-    """Remove components themselves from dependency list."""
-    component_coords = {
-        (comp.groupId, comp.artifactId, comp.resolved_version) for comp in components
+    """Remove input dependencies themselves from resolved dependency list."""
+    input_coords = {
+        (dep.groupId, dep.artifactId, dep.version) for dep in input_deps
+        if dep.artifact.component.version != "MANAGED"
     }
     return [
         dep
         for dep in deps
-        if (dep.groupId, dep.artifactId, dep.version) not in component_coords
+        if (dep.groupId, dep.artifactId, dep.version) not in input_coords
     ]
 
 
-def _create_root(components: list[Component]) -> DependencyNode:
+def _create_root(dependencies: list[Dependency]) -> DependencyNode:
     """Create a synthetic root node for multi-component resolution."""
     return DependencyNode(
         Dependency(
-            components[0]
+            dependencies[0]
             .context.project("org.apposed.jgo", "INTERNAL-WRAPPER")
             .at_version("0-SNAPSHOT")
             .artifact(packaging="pom")
@@ -107,90 +103,56 @@ class Resolver(ABC):
     @abstractmethod
     def resolve(
         self,
-        components: list[Component] | Component,
-        managed: bool = False,
-        boms: list[Component] | None = None,
+        dependencies: list[Dependency],
         transitive: bool = True,
     ) -> tuple[list[Dependency], list[Dependency]]:
         """
-        Resolve dependencies for the given Maven component.
+        Resolve dependencies for the given Maven dependencies.
+
+        BOMs are computed internally from dependencies marked as non-raw.
 
         Args:
-            components: The component(s) for which to determine the dependencies.
-            managed: If True, use dependency management (import components as BOMs).
-            boms: List of components to import as BOMs in dependencyManagement.
-                If None and managed=True, uses [component].
+            dependencies: The dependencies for which to resolve transitive deps.
             transitive: Whether to include transitive dependencies.
 
         Returns:
             Tuple of (resolved_components, resolved_deps) where:
-            - resolved_components: Components with MANAGED versions resolved
-            - resolved_deps: Transitive dependencies (excludes the components themselves)
+            - resolved_components: Input deps with MANAGED versions resolved
+            - resolved_deps: Transitive dependencies (excludes the inputs themselves)
         """
         ...
 
     def _build_dependency_list(
-        self, components: list[Component], deps: list[Dependency]
+        self, input_deps: list[Dependency], resolved_deps: list[Dependency]
     ) -> tuple[DependencyNode, list[DependencyNode]]:
         """
         Common logic for building dependency list structure.
 
         Args:
-            components: List of Maven components
-            deps: List of resolved dependencies
+            input_deps: List of input dependencies
+            resolved_deps: List of resolved transitive dependencies
 
         Returns:
             Tuple of (root_node, dependency_nodes)
         """
-        root = _create_root(components)
+        root = _create_root(input_deps)
 
-        # Add components as children of root
-        for comp in components:
-            comp_artifact = comp.artifact()
-            comp_dep = Dependency(comp_artifact)
-            root.children.append(DependencyNode(comp_dep))
+        # Add input dependencies as children of root
+        for dep in input_deps:
+            root.children.append(DependencyNode(dep))
 
         # Sort for consistent output
-        deps.sort(key=lambda d: (d.groupId, d.artifactId, d.version))
+        resolved_deps.sort(key=lambda d: (d.groupId, d.artifactId, d.version))
 
         # Convert to DependencyNode list
-        dep_nodes = [DependencyNode(dep) for dep in deps]
+        dep_nodes = [DependencyNode(dep) for dep in resolved_deps]
 
         return root, dep_nodes
-
-    def _prepare_dependency_resolution(
-        self,
-        components: list[Component] | Component,
-        managed: bool,
-        boms: list[Component] | None,
-    ) -> tuple[list[Component], list[Component] | None]:
-        """
-        Prepare components and BOMs for dependency resolution.
-
-        Args:
-            components: Component(s) to resolve
-            managed: Whether to use managed dependencies
-            boms: Optional list of components to use as BOMs
-
-        Returns:
-            Tuple of (components_list, boms_list)
-
-        Raises:
-            ValueError: If no components provided
-        """
-        components = _listify(components)
-
-        if not components:
-            raise ValueError("At least one component is required")
-
-        boms = _resolve_boms(components, managed, boms)
-
-        return components, boms
 
     @abstractmethod
     def get_dependency_list(
         self,
-        component: Component,
+        dependencies: list[Dependency],
         transitive: bool = True,
         optional_depth: int = 0,
     ) -> tuple[DependencyNode, list[DependencyNode]]:
@@ -201,20 +163,20 @@ class Resolver(ABC):
         the dependency printing logic to ensure consistent output across resolvers.
 
         Args:
-            component: The component for which to get dependencies.
+            dependencies: The dependencies for which to get the list.
             transitive: If False, return only direct dependencies.
             optional_depth: Maximum depth at which to include optional dependencies.
 
         Returns:
             Tuple of (root_node, dependencies_list) where root_node is the
-            component itself and dependencies_list is the sorted list of all
+            root and dependencies_list is the sorted list of all
             resolved transitive dependencies.
         """
         ...
 
     @abstractmethod
     def get_dependency_tree(
-        self, component: Component, optional_depth: int = 0
+        self, dependencies: list[Dependency], optional_depth: int = 0
     ) -> DependencyNode:
         """
         Get the full dependency tree as a data structure.
@@ -223,12 +185,12 @@ class Resolver(ABC):
         the dependency printing logic to ensure consistent output across resolvers.
 
         Args:
-            component: The component for which to get the dependency tree.
+            dependencies: The dependencies for which to get the tree.
             optional_depth: Maximum depth at which to include optional dependencies.
                 Defaults to 0, matching Maven's behavior.
 
         Returns:
-            DependencyNode representing the root component with children populated
+            DependencyNode representing the root with children populated
             recursively to form the complete dependency tree.
         """
         ...
@@ -322,37 +284,31 @@ class PythonResolver(Resolver):
 
     def resolve(
         self,
-        components: list[Component] | Component,
-        managed: bool = False,
-        boms: list[Component] | None = None,
+        dependencies: list[Dependency],
         transitive: bool = True,
         optional_depth: int = 0,
     ) -> tuple[list[Dependency], list[Dependency]]:
         """
-        Get all dependencies for the given components.
+        Get all dependencies for the given input dependencies.
 
         Args:
-            components: Single component or list of components
-            managed: If True and boms is None, use components as BOMs
-            boms: Optional list of components to import in dependencyManagement
+            dependencies: List of input dependencies
             transitive: Whether to include transitive dependencies
             optional_depth: Maximum depth at which to include optional dependencies
 
         Returns:
             Tuple of (resolved_components, resolved_deps) where:
-            - resolved_components: Components with MANAGED versions resolved
-            - resolved_deps: Transitive dependencies (excludes the components themselves)
+            - resolved_components: Input deps with MANAGED versions resolved
+            - resolved_deps: Transitive dependencies (excludes the inputs themselves)
         """
-        components = _listify(components)
+        if not dependencies:
+            raise ValueError("At least one dependency is required")
 
-        if not components:
-            raise ValueError("At least one component is required")
+        boms = _compute_boms(dependencies)
 
-        boms = _resolve_boms(components, managed, boms)
-
-        pom = create_pom(components, boms)
+        pom = create_pom(dependencies, boms)
         model = Model(
-            pom, components[0].context, profile_constraints=self.profile_constraints
+            pom, dependencies[0].context, profile_constraints=self.profile_constraints
         )
         # When transitive=False, set max_depth=1 to get one level of dependencies
         # from the synthetic wrapper (i.e., the direct dependencies of the components)
@@ -363,7 +319,8 @@ class PythonResolver(Resolver):
         # For MANAGED components, find their resolved versions in deps
         resolved_components = []
         component_coords = set()
-        for comp in components:
+        for input_dep in dependencies:
+            comp = input_dep.artifact.component
             if comp.version == "MANAGED":
                 # Find the resolved version in deps
                 for dep in deps:
@@ -375,7 +332,7 @@ class PythonResolver(Resolver):
                         component_coords.add((dep.groupId, dep.artifactId, dep.version))
                         break
             else:
-                resolved_components.append(Dependency(comp.artifact()))
+                resolved_components.append(input_dep)
                 component_coords.add(
                     (comp.groupId, comp.artifactId, comp.resolved_version)
                 )
@@ -394,9 +351,7 @@ class PythonResolver(Resolver):
 
     def get_dependency_list(
         self,
-        components: list[Component] | Component,
-        managed: bool = False,
-        boms: list[Component] | None = None,
+        dependencies: list[Dependency],
         transitive: bool = True,
         optional_depth: int = 0,
     ) -> tuple[DependencyNode, list[DependencyNode]]:
@@ -404,30 +359,27 @@ class PythonResolver(Resolver):
         Get the flat list of resolved dependencies as data structures.
 
         Args:
-            components: Single component or list of components
-            managed: If True and boms is None, use components as BOMs
-            boms: Optional list of components to import in dependencyManagement
+            dependencies: List of input dependencies
             transitive: If False, return only direct dependencies
             optional_depth: Maximum depth at which to include optional dependencies
 
         Returns:
             Tuple of (root_node, flat_list_of_dependencies)
         """
-        components = _listify(components)
+        if not dependencies:
+            raise ValueError("At least one dependency is required")
 
-        if not components:
-            raise ValueError("At least one component is required")
+        boms = _compute_boms(dependencies)
 
-        boms = _resolve_boms(components, managed, boms)
-
-        pom = create_pom(components, boms)
+        pom = create_pom(dependencies, boms)
         model = Model(
-            pom, components[0].context, profile_constraints=self.profile_constraints
+            pom, dependencies[0].context, profile_constraints=self.profile_constraints
         )
 
-        # Create resolved components list using model.deps for MANAGED versions
-        resolved_components = []
-        for comp in components:
+        # Create resolved input deps list using model.deps for MANAGED versions
+        resolved_input_deps = []
+        for input_dep in dependencies:
+            comp = input_dep.artifact.component
             if comp.version == "MANAGED":
                 # Find resolved version in model.deps
                 resolved_version = None
@@ -439,50 +391,51 @@ class PythonResolver(Resolver):
                         resolved_version = dep.version
                         break
                 if resolved_version:
-                    resolved_components.append(
-                        comp.project.at_version(resolved_version)
+                    # Create a new dependency with the resolved version
+                    resolved_comp = comp.project.at_version(resolved_version)
+                    resolved_dep = Dependency(
+                        resolved_comp.artifact(
+                            input_dep.classifier, input_dep.type
+                        ),
+                        scope=input_dep.scope,
+                        optional=input_dep.optional,
+                        exclusions=input_dep.exclusions,
+                        raw=input_dep.raw,
                     )
+                    resolved_input_deps.append(resolved_dep)
                 else:
-                    resolved_components.append(comp)  # fallback
+                    resolved_input_deps.append(input_dep)  # fallback
             else:
-                resolved_components.append(comp)
+                resolved_input_deps.append(input_dep)
 
         max_depth = 1 if not transitive else None
         deps, _ = model.dependencies(max_depth=max_depth, optional_depth=optional_depth)
-        deps = _filter_component_deps(deps, resolved_components)
+        deps = _filter_component_deps(deps, resolved_input_deps)
         deps = [dep for dep in deps if dep.scope not in ("test",)]
 
-        return self._build_dependency_list(resolved_components, deps)
+        return self._build_dependency_list(resolved_input_deps, deps)
 
     def get_dependency_tree(
         self,
-        components: list[Component] | Component,
-        managed: bool = False,
-        boms: list[Component] | None = None,
+        dependencies: list[Dependency],
         optional_depth: int = 0,
     ) -> DependencyNode:
         """
         Get the full dependency tree as a data structure.
 
-        This implementation uses the tree built during dependency resolution,
-        ensuring perfect consistency with the dependency mediation algorithm.
-
         Args:
-            components: Single component or list of components
-            managed: If True and boms is None, use components as BOMs
-            boms: Optional list of components to import in dependencyManagement
+            dependencies: List of input dependencies
             optional_depth: Maximum depth at which to include optional dependencies
 
         Returns:
             Root DependencyNode with full tree structure
         """
-        components = _listify(components)
-        boms = _resolve_boms(components, managed, boms)
+        boms = _compute_boms(dependencies)
 
         # Build model and get dependency tree
-        pom = create_pom(components, boms)
+        pom = create_pom(dependencies, boms)
         model = Model(
-            pom, components[0].context, profile_constraints=self.profile_constraints
+            pom, dependencies[0].context, profile_constraints=self.profile_constraints
         )
         _, root = model.dependencies(optional_depth=optional_depth)
 
@@ -504,14 +457,14 @@ class MvnResolver(Resolver):
             self.mvn_flags.append("-X")
 
     def _create_temp_pom(
-        self, components: list[Component], boms: list[Component] | None
+        self, dependencies: list[Dependency], boms: list[Component] | None
     ) -> Path:
         """Create temporary POM file for Maven commands."""
-        pom = create_pom(components, boms or [])
+        pom = create_pom(dependencies, boms or [])
         temp_pom = write_temp_pom(pom)
         _log.debug(
-            f"Created wrapper POM at {temp_pom} with {len(components)} "
-            f"component(s) and {len(boms or [])} BOM(s)"
+            f"Created wrapper POM at {temp_pom} with {len(dependencies)} "
+            f"dependency(ies) and {len(boms or [])} BOM(s)"
         )
         return temp_pom
 
@@ -631,19 +584,15 @@ class MvnResolver(Resolver):
 
     def resolve(
         self,
-        components: list[Component] | Component,
-        managed: bool = False,
-        boms: list[Component] | None = None,
+        dependencies: list[Dependency],
         transitive: bool = True,
         optional_depth: int = 0,
     ) -> tuple[list[Dependency], list[Dependency]]:
         """
-        Get all dependencies for the given components.
+        Get all dependencies for the given input dependencies.
 
         Args:
-            components: Single component or list of components to resolve dependencies for
-            managed: If True and boms is None, use components as BOMs
-            boms: Optional list of components to import in dependencyManagement
+            dependencies: List of input dependencies to resolve
             transitive: Whether to include transitive dependencies
             optional_depth: Maximum depth at which to include optional dependencies.
                 NOTE: MvnResolver does not support custom optional_depth - Maven always
@@ -651,8 +600,8 @@ class MvnResolver(Resolver):
 
         Returns:
             Tuple of (resolved_components, resolved_deps) where:
-            - resolved_components: Components with MANAGED versions resolved
-            - resolved_deps: Transitive dependencies (excludes the components themselves)
+            - resolved_components: Input deps with MANAGED versions resolved
+            - resolved_deps: Transitive dependencies (excludes the inputs themselves)
         """
         if optional_depth > 0:
             _log.warning(
@@ -661,23 +610,22 @@ class MvnResolver(Resolver):
                 "Use PythonResolver (--resolver=python) for custom optional_depth."
             )
 
-        components = _listify(components)
+        if not dependencies:
+            raise ValueError("At least one dependency is required")
 
         if not transitive:
             # Use get_dependency_tree and extract only direct children (depth 1)
-            root = self.get_dependency_tree(components, managed=managed, boms=boms)
-            dependencies = []
+            root = self.get_dependency_tree(dependencies)
+            dep_nodes = []
 
-            # Extract direct children of the root's children (which are the components)
+            # Extract direct children of the root's children (which are the inputs)
             for component_node in root.children:
-                # component_node represents one of the input components
-                # Its direct children are the direct dependencies we want
-                dependencies.extend(component_node.children)
+                dep_nodes.extend(component_node.children)
 
             # Convert DependencyNodes back to Dependency objects
-            resolved_deps = [node.dep for node in dependencies]
+            resolved_deps = [node.dep for node in dep_nodes]
 
-            # Build resolved components - for non-transitive, components are just themselves
+            # Build resolved components - for non-transitive, inputs are just themselves
             # (MANAGED versions would have been resolved during tree building)
             resolved_components = [node.dep for node in root.children]
 
@@ -685,22 +633,19 @@ class MvnResolver(Resolver):
 
         # For transitive=True, use dependency:list
 
-        if not components:
-            raise ValueError("At least one component is required")
-
-        # Get context and repo cache from first component
-        context = components[0].context
+        # Get context and repo cache from first dependency
+        context = dependencies[0].context
         assert context.repo_cache
 
-        boms = _resolve_boms(components, managed, boms) or []
+        boms = _compute_boms(dependencies)
 
         # Log what we're resolving
-        _log.info(f"Resolving dependencies for {len(components)} component(s)")
-        for comp in components:
-            _log.debug(f"  Component: {comp.groupId}:{comp.artifactId}:{comp.version}")
+        _log.info(f"Resolving dependencies for {len(dependencies)} dependency(ies)")
+        for dep in dependencies:
+            _log.debug(f"  Dependency: {dep.groupId}:{dep.artifactId}:{dep.artifact.component.version}")
 
         # Create temporary POM
-        temp_pom = self._create_temp_pom(components, boms)
+        temp_pom = self._create_temp_pom(dependencies, boms)
 
         output = self._mvn(
             "dependency:list",
@@ -713,7 +658,7 @@ class MvnResolver(Resolver):
         # Parse Maven's dependency:list output format:
         # Java 8:  [INFO]    groupId:artifactId:packaging:version:scope
         # Java 9+: [INFO]    groupId:artifactId:packaging:version:scope -- module module.name
-        dependencies = []
+        all_deps = []
 
         info_lines = self._filter_maven_output(output)
 
@@ -732,16 +677,17 @@ class MvnResolver(Resolver):
                 continue
 
             # Create dependency object from coordinate
-            dependencies.append(dep)
+            all_deps.append(dep)
 
         # Build resolved component dependencies
-        # For MANAGED components, find their resolved versions in dependencies
+        # For MANAGED components, find their resolved versions in all_deps
         resolved_components = []
         component_coords = set()
-        for comp in components:
+        for input_dep in dependencies:
+            comp = input_dep.artifact.component
             if comp.version == "MANAGED":
-                # Find the resolved version in dependencies
-                for dep in dependencies:
+                # Find the resolved version in all_deps
+                for dep in all_deps:
                     if (
                         dep.groupId == comp.groupId
                         and dep.artifactId == comp.artifactId
@@ -750,7 +696,7 @@ class MvnResolver(Resolver):
                         component_coords.add((dep.groupId, dep.artifactId, dep.version))
                         break
             else:
-                resolved_components.append(Dependency(comp.artifact()))
+                resolved_components.append(input_dep)
                 component_coords.add(
                     (comp.groupId, comp.artifactId, comp.resolved_version)
                 )
@@ -758,7 +704,7 @@ class MvnResolver(Resolver):
         # Filter out components from transitive deps list
         resolved_deps = [
             dep
-            for dep in dependencies
+            for dep in all_deps
             if (dep.groupId, dep.artifactId, dep.version) not in component_coords
         ]
 
@@ -769,9 +715,7 @@ class MvnResolver(Resolver):
 
     def get_dependency_list(
         self,
-        components: list[Component] | Component,
-        managed: bool = False,
-        boms: list[Component] | None = None,
+        dependencies: list[Dependency],
         transitive: bool = True,
         optional_depth: int = 0,
     ) -> tuple[DependencyNode, list[DependencyNode]]:
@@ -779,9 +723,7 @@ class MvnResolver(Resolver):
         Get the flat list of resolved dependencies as data structures.
 
         Args:
-            components: Single component or list of components
-            managed: If True and boms is None, use components as BOMs
-            boms: Optional list of components to import in dependencyManagement
+            dependencies: List of input dependencies
             transitive: If False, return only direct dependencies
             optional_depth: Maximum depth at which to include optional dependencies
                 NOTE: Not supported by MvnResolver - use PythonResolver instead
@@ -789,30 +731,23 @@ class MvnResolver(Resolver):
         Returns:
             Tuple of (root_node, flat_list_of_dependencies)
         """
-        components = _listify(components)
         resolved_components, resolved_deps = self.resolve(
-            components,
-            managed=managed,
-            boms=boms,
+            dependencies,
             transitive=transitive,
             optional_depth=optional_depth,
         )
-        return self._build_dependency_list(components, resolved_deps)
+        return self._build_dependency_list(dependencies, resolved_deps)
 
     def get_dependency_tree(
         self,
-        components: list[Component] | Component,
-        managed: bool = False,
-        boms: list[Component] | None = None,
+        dependencies: list[Dependency],
         optional_depth: int = 0,
     ) -> DependencyNode:
         """
         Get the full dependency tree as a data structure.
 
         Args:
-            components: Single component or list of components
-            managed: If True and boms is None, use components as BOMs
-            boms: Optional list of components to import in dependencyManagement
+            dependencies: List of input dependencies
             optional_depth: Maximum depth at which to include optional dependencies
                 NOTE: Not supported by MvnResolver - use PythonResolver instead
 
@@ -826,18 +761,16 @@ class MvnResolver(Resolver):
                 "Use PythonResolver (--resolver=python) for custom optional_depth."
             )
 
-        components = _listify(components)
+        if not dependencies:
+            raise ValueError("At least one dependency is required")
 
-        if not components:
-            raise ValueError("At least one component is required")
-
-        context = components[0].context
+        context = dependencies[0].context
         assert context.repo_cache
 
-        boms = _resolve_boms(components, managed, boms) or []
+        boms = _compute_boms(dependencies)
 
         # Create temporary POM
-        temp_pom = self._create_temp_pom(components, boms)
+        temp_pom = self._create_temp_pom(dependencies, boms)
 
         output = self._mvn(
             "dependency:tree",
@@ -920,7 +853,7 @@ class MvnResolver(Resolver):
 
                 stack.append((indent, node))
 
-        return root if root else DependencyNode(Dependency(components[0].artifact()))
+        return root if root else DependencyNode(dependencies[0])
 
     def _mvn(self, *args) -> str:
         return MvnResolver._run(self.mvn_command, *self.mvn_flags, *args)

@@ -152,6 +152,7 @@ class MavenContext:
         self,
         coordinate: Coordinate | str,
         exclusions: Iterable[Project] | None = None,
+        raw: bool = False,
     ) -> "Dependency":
         """
         Create a Dependency object from a Maven coordinate.
@@ -159,6 +160,7 @@ class MavenContext:
         Args:
             coordinate: The Maven coordinate to convert to a Dependency.
             exclusions: Optional list of Project exclusions.
+            raw: If True, this dependency is raw (not managed as a BOM).
 
         Returns:
             The Dependency object.
@@ -175,7 +177,7 @@ class MavenContext:
         project = self.project(groupId, artifactId)
         component = project.at_version(version) if version else project.at_version("")
         artifact = component.artifact(classifier, packaging)
-        return Dependency(artifact, scope, optional, exclusions or [])
+        return Dependency(artifact, scope, optional, exclusions or [], raw=raw)
 
     def pom_to_artifact(self, pom: POM) -> "Artifact":
         """
@@ -835,6 +837,7 @@ class Dependency:
         scope: str | None = None,
         optional: bool = False,
         exclusions: Iterable[Project] | None = None,
+        raw: bool = False,
     ):
         # NB: scope can be None here - it will be set by dependency management injection
         # or default to "compile" later in the model building process
@@ -844,6 +847,7 @@ class Dependency:
         self.exclusions: tuple[Project] = (
             tuple() if exclusions is None else tuple(exclusions)
         )
+        self.raw = raw
 
     def __str__(self):
         return coord2str(
@@ -915,12 +919,12 @@ class DependencyNode:
         return str(self.dep)
 
 
-def create_pom(components: list[Component], boms: list[Component] | None) -> POM:
+def create_pom(dependencies: list[Dependency], boms: list[Component] | None) -> POM:
     """
     Create a synthetic wrapper POM for multi-component resolution.
 
     Args:
-        components: List of components to add as dependencies
+        dependencies: List of dependencies to add
         boms: Optional list of components to import in dependencyManagement
 
     Returns:
@@ -928,32 +932,32 @@ def create_pom(components: list[Component], boms: list[Component] | None) -> POM
     """
 
     # Generate the POM XML content
-    pom_xml = generate_pom_xml(components, boms)
+    pom_xml = generate_pom_xml(dependencies, boms)
 
     # Create POM object from XML string
     return POM(pom_xml)
 
 
 def generate_pom_xml(
-    components: list[Component], boms: list[Component] | None = None
+    dependencies: list[Dependency], boms: list[Component] | None = None
 ) -> str:
     """
     Generate a wrapper POM XML string for multi-component resolution.
 
     This POM includes:
-    - All components as direct dependencies
+    - All dependencies as direct dependencies (with classifier/type/scope)
     - BOMs in dependencyManagement section (if provided)
-    - Repository configuration from the first component's context
+    - Repository configuration from the first dependency's context
 
     Args:
-        components: List of components to add as dependencies
+        dependencies: List of dependencies to add
         boms: Optional list of components to import in dependencyManagement
 
     Returns:
         Complete POM XML as a string
     """
-    if not components:
-        raise ValueError("At least one component is required")
+    if not dependencies:
+        raise ValueError("At least one dependency is required")
 
     if boms is None:
         boms = []
@@ -986,30 +990,31 @@ def generate_pom_xml(
 
     # Generate dependencies section
     dep_entries = []
-    for component in components:
+    for dep in dependencies:
         # For MANAGED versions, omit the <version> tag entirely.
         # The Model will resolve the version from imported BOMs' dependencyManagement.
-        if component.version == "MANAGED":
-            dep_entries.append(
-                f"""        <dependency>
-            <groupId>{component.groupId}</groupId>
-            <artifactId>{component.artifactId}</artifactId>
-        </dependency>"""
-            )
-        else:
-            dep_entries.append(
-                f"""        <dependency>
-            <groupId>{component.groupId}</groupId>
-            <artifactId>{component.artifactId}</artifactId>
-            <version>{component.resolved_version}</version>
-        </dependency>"""
-            )
+        lines = [
+            f"            <groupId>{dep.groupId}</groupId>",
+            f"            <artifactId>{dep.artifactId}</artifactId>",
+        ]
+        if dep.artifact.component.version != "MANAGED":
+            lines.append(f"            <version>{dep.version}</version>")
+        if dep.classifier:
+            lines.append(f"            <classifier>{dep.classifier}</classifier>")
+        if dep.type and dep.type != "jar":
+            lines.append(f"            <type>{dep.type}</type>")
+        if dep.scope and dep.scope not in (None, "compile"):
+            lines.append(f"            <scope>{dep.scope}</scope>")
+
+        dep_entries.append(
+            "        <dependency>\n" + "\n".join(lines) + "\n        </dependency>"
+        )
 
     deps_section = "\n".join(dep_entries)
 
     # Generate repositories section
     repos_entries = []
-    for repo_id, repo_url in components[0].context.remote_repos.items():
+    for repo_id, repo_url in dependencies[0].context.remote_repos.items():
         repos_entries.append(
             f"""        <repository>
             <id>{repo_id}</id>

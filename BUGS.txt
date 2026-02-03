@@ -13,8 +13,6 @@ Add py.typed file to package root for static type analyzers
 Use https://github.com/ross/requests-futures
 to do asynchronous parallel downloads of Maven artifacts?
 
-Endpoints consist of Components right now -- this is wrong, it needs to be Artifacts/Dependencies -- because you should be able to mix in GACPVs with non-default classifier and/or packaging! (Well, packaging is arguable...)
-
 Remove or repurpose obsolete files in docs/
 
 Decide about remaining `~/.jgorc` references throughout the codebase

@@ -394,7 +394,7 @@ Word-wrapped (optional) qualifiers should be aligned with tree node indentation.
 There should be no artificial line breaks.
 
   $ jgo --color=plain --wrap=raw --ignore-config --include-optional --full-coordinates list org.apache.logging.log4j:log4j-core:2.25.1
-  org.apache.logging.log4j:log4j-core:jar:2.25.1
+  org.apache.logging.log4j:log4j-core:jar:2.25.1:compile
      com.conversantmedia:disruptor:jar:1.2.15:compile (optional)
      com.fasterxml.jackson.core:jackson-annotations:jar:2.19.1:compile
      com.fasterxml.jackson.core:jackson-core:jar:2.19.1:compile (optional)
@@ -427,7 +427,7 @@ There should be no artificial line breaks.
 Smart wrapping should use intelligent word-boundary wrapping.
 
   $ jgo --color=plain --wrap=smart --ignore-config --include-optional --full-coordinates list org.apache.logging.log4j:log4j-core:2.25.1
-  org.apache.logging.log4j:log4j-core:jar:2.25.1
+  org.apache.logging.log4j:log4j-core:jar:2.25.1:compile
      com.conversantmedia:disruptor:jar:1.2.15:compile (optional)
      com.fasterxml.jackson.core:jackson-annotations:jar:2.19.1:compile
      com.fasterxml.jackson.core:jackson-core:jar:2.19.1:compile (optional)
@@ -462,7 +462,7 @@ Smart wrapping should use intelligent word-boundary wrapping.
 There should be ANSI styles but no color, and no extra line breaks.
 
   $ jgo --color=styled --wrap=raw --ignore-config --include-optional --full-coordinates list org.apache.logging.log4j:log4j-core:2.25.1
-  org.apache.logging.log4j\x1b[2m:\x1b[0m\x1b[1mlog4j-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m2.25.1 (esc)
+  org.apache.logging.log4j\x1b[2m:\x1b[0m\x1b[1mlog4j-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m2.25.1\x1b[2m:\x1b[0mcompile (esc)
      com.conversantmedia\x1b[2m:\x1b[0m\x1b[1mdisruptor\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m1.2.15\x1b[2m:\x1b[0mcompile \x1b[2m(optional)\x1b[0m (esc)
      com.fasterxml.jackson.core\x1b[2m:\x1b[0m\x1b[1mjackson-annotations\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m2.19.1\x1b[2m:\x1b[0mcompile (esc)
      com.fasterxml.jackson.core\x1b[2m:\x1b[0m\x1b[1mjackson-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m2.19.1\x1b[2m:\x1b[0mcompile \x1b[2m(optional)\x1b[0m (esc)
@@ -495,7 +495,7 @@ There should be ANSI styles but no color, and no extra line breaks.
 There should be ANSI styling but no color, with word wrapping.
 
   $ jgo --color=styled --wrap=smart --ignore-config --include-optional --full-coordinates list org.apache.logging.log4j:log4j-core:2.25.1
-  org.apache.logging.log4j\x1b[2m:\x1b[0m\x1b[1mlog4j-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m2.25.1 (esc)
+  org.apache.logging.log4j\x1b[2m:\x1b[0m\x1b[1mlog4j-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m2.25.1\x1b[2m:\x1b[0mcompile (esc)
      com.conversantmedia\x1b[2m:\x1b[0m\x1b[1mdisruptor\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m1.2.15\x1b[2m:\x1b[0mcompile \x1b[2m(optional)\x1b[0m (esc)
      com.fasterxml.jackson.core\x1b[2m:\x1b[0m\x1b[1mjackson-annotations\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m2.19.1\x1b[2m:\x1b[0mcompile (esc)
      com.fasterxml.jackson.core\x1b[2m:\x1b[0m\x1b[1mjackson-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m2.19.1\x1b[2m:\x1b[0mcompile \x1b[2m(optional)\x1b[0m (esc)
@@ -530,7 +530,7 @@ There should be ANSI styling but no color, with word wrapping.
 There should be full ANSI color, but no extra line breaks.
 
   $ jgo --color=rich --wrap=raw --ignore-config --include-optional --full-coordinates list org.apache.logging.log4j:log4j-core:2.25.1
-  \x1b[36morg.apache.logging.log4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlog4j-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.25.1\x1b[0m (esc)
+  \x1b[36morg.apache.logging.log4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlog4j-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.25.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
      \x1b[36mcom.conversantmedia\x1b[0m\x1b[2m:\x1b[0m\x1b[1mdisruptor\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.2.15\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
      \x1b[36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-annotations\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
      \x1b[36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
@@ -563,7 +563,7 @@ There should be full ANSI color, but no extra line breaks.
 There should be full ANSI color, with word wrapping.
 
   $ jgo --color=rich --wrap=smart --ignore-config --include-optional --full-coordinates list org.apache.logging.log4j:log4j-core:2.25.1
-  \x1b[36morg.apache.logging.log4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlog4j-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.25.1\x1b[0m (esc)
+  \x1b[36morg.apache.logging.log4j\x1b[0m\x1b[2m:\x1b[0m\x1b[1mlog4j-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.25.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
      \x1b[36mcom.conversantmedia\x1b[0m\x1b[2m:\x1b[0m\x1b[1mdisruptor\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m1.2.15\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)
      \x1b[36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-annotations\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m (esc)
      \x1b[36mcom.fasterxml.jackson.core\x1b[0m\x1b[2m:\x1b[0m\x1b[1mjackson-core\x1b[0m\x1b[2m:\x1b[0mjar\x1b[2m:\x1b[0m\x1b[92m2.19.1\x1b[0m\x1b[2m:\x1b[0m\x1b[34mcompile\x1b[0m \x1b[2m(optional)\x1b[0m (esc)

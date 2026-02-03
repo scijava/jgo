@@ -16,6 +16,7 @@ from jgo.env import EnvironmentBuilder
 from jgo.maven import MavenContext
 from jgo.maven.core import Component, Dependency
 from jgo.maven.resolver import MvnResolver, PythonResolver
+from jgo.parse.endpoint import Endpoint
 from jgo.util.maven import ensure_maven_available
 
 
@@ -152,17 +153,24 @@ def dependency_fingerprint(dep: Dependency) -> str:
     return ":".join(parts)
 
 
+def dependencies_from_endpoint(
+    context: MavenContext, endpoint: str
+) -> list[Dependency]:
+    builder = EnvironmentBuilder(context)
+    parsed = Endpoint.parse(endpoint)
+    return builder._coordinates_to_dependencies(parsed.coordinates)
+
+
 def resolve_dependency_set(
-    resolver, components: list[Component], *, managed: bool
+    resolver, dependencies: list[Dependency]
 ) -> set[str]:
-    _, resolved_deps = resolver.resolve(components, managed=managed)
+    _, resolved_deps = resolver.resolve(dependencies)
     return {dependency_fingerprint(dep) for dep in resolved_deps}
 
 
 def components_from_endpoint(context: MavenContext, endpoint: str) -> list[Component]:
-    builder = EnvironmentBuilder(context)
-    components, _, _ = builder._parse_endpoint(endpoint)
-    return components
+    deps = dependencies_from_endpoint(context, endpoint)
+    return [dep.artifact.component for dep in deps]
 
 
 def assert_expected_diff(
@@ -203,25 +211,31 @@ def mvn_resolver(maven_command):
 def test_resolution_modes(m2_repo, scenario, mvn_resolver):
     python_resolver = PythonResolver()
     context = MavenContext(repo_cache=m2_repo, resolver=python_resolver)
-    components = components_from_endpoint(context, scenario.endpoint)
 
-    truth = resolve_dependency_set(mvn_resolver, components, managed=True)
+    # Managed mode: dependencies with raw=False (default)
+    managed_deps = dependencies_from_endpoint(context, scenario.endpoint)
+
+    # Unmanaged mode: same dependencies but with raw=True
+    unmanaged_deps = [
+        Dependency(dep.artifact, dep.scope, dep.optional, dep.exclusions, raw=True)
+        for dep in managed_deps
+    ]
+
+    truth = resolve_dependency_set(mvn_resolver, managed_deps)
     assert truth == scenario.truth_set(), (
         f"Maven resolver managed output for {scenario.endpoint} "
         "diverged from expected truth"
     )
 
-    mvn_unmanaged = resolve_dependency_set(mvn_resolver, components, managed=False)
+    mvn_unmanaged = resolve_dependency_set(mvn_resolver, unmanaged_deps)
     assert_expected_diff(scenario.endpoint, truth, mvn_unmanaged, scenario.unmanaged)
 
-    python_managed = resolve_dependency_set(python_resolver, components, managed=True)
+    python_managed = resolve_dependency_set(python_resolver, managed_deps)
     assert python_managed == truth, (
         f"PythonResolver managed output differed from Maven for {scenario.endpoint}"
     )
 
-    python_unmanaged = resolve_dependency_set(
-        python_resolver, components, managed=False
-    )
+    python_unmanaged = resolve_dependency_set(python_resolver, unmanaged_deps)
     assert python_unmanaged == mvn_unmanaged, (
         "PythonResolver --no-managed output differed from Maven for "
         f"{scenario.endpoint}"
@@ -236,10 +250,10 @@ def test_no_test_scope_in_resolution(m2_repo):
     which should not appear in the resolved dependency list.
     """
     context = MavenContext(repo_cache=m2_repo)
-    component = context.project("org.scijava", "minimaven").at_version("2.2.2")
+    deps = dependencies_from_endpoint(context, "org.scijava:minimaven:2.2.2")
 
     resolver = PythonResolver()
-    _, resolved_deps = resolver.resolve([component], managed=True)
+    _, resolved_deps = resolver.resolve(deps)
 
     # Check that no test dependencies are present
     for dep in resolved_deps:
@@ -257,10 +271,10 @@ def test_component_not_in_dependency_list(m2_repo):
     but it should be filtered out of the final dependency list.
     """
     context = MavenContext(repo_cache=m2_repo)
-    component = context.project("org.scijava", "minimaven").at_version("2.2.2")
+    deps = dependencies_from_endpoint(context, "org.scijava:minimaven:2.2.2")
 
     resolver = PythonResolver()
-    _, resolved_deps = resolver.resolve([component], managed=True)
+    _, resolved_deps = resolver.resolve(deps)
 
     # The component itself should not be in the dependency list
     for dep in resolved_deps:
@@ -280,11 +294,12 @@ def test_multi_component_resolution(m2_repo):
     4. Version conflicts are resolved correctly
     """
     context = MavenContext(repo_cache=m2_repo)
-    comp1 = context.project("org.scijava", "minimaven").at_version("2.2.2")
-    comp2 = context.project("org.scijava", "parsington").at_version("3.1.0")
+    deps = dependencies_from_endpoint(
+        context, "org.scijava:minimaven:2.2.2+org.scijava:parsington:3.1.0"
+    )
 
     resolver = PythonResolver()
-    _, resolved_deps = resolver.resolve([comp1, comp2], managed=True)
+    _, resolved_deps = resolver.resolve(deps)
 
     # Neither component should appear in the dependency list
     dep_coords = {(d.groupId, d.artifactId) for d in resolved_deps}
@@ -314,15 +329,14 @@ def test_managed_version_resolution(m2_repo):
     """
     context = MavenContext(repo_cache=m2_repo)
 
-    # Create primary component with concrete version
-    primary = context.project("org.scijava", "scijava-common").at_version("2.66.0")
-
-    # Create secondary component with MANAGED version
-    secondary = context.project("org.scijava", "minimaven").at_version("MANAGED")
+    # Create dependencies: primary with concrete version, secondary with MANAGED
+    deps = dependencies_from_endpoint(
+        context, "org.scijava:scijava-common:2.66.0+org.scijava:minimaven:MANAGED"
+    )
 
     resolver = PythonResolver()
-    # Use get_dependency_list which returns root node with components as children
-    root, deps = resolver.get_dependency_list([primary, secondary], managed=True)
+    # Use get_dependency_list which returns root node with dependencies as children
+    root, dep_nodes = resolver.get_dependency_list(deps)
 
     # The root's children should include the resolved components
     # Find minimaven in root's children

@@ -60,7 +60,7 @@ Example - Full Control
 >>>
 >>> # Layer 2: Environment materialization
 >>> builder = EnvironmentBuilder(context=maven, link_strategy=LinkStrategy.HARD)
->>> environment = builder.from_components([component])
+>>> environment = builder.from_endpoint("org.python:jython-standalone:2.7.3")
 >>>
 >>> # Layer 3: Execution
 >>> runner = JavaRunner(jvm_config=JVMConfig(max_heap="2G"))

@@ -87,16 +87,18 @@ def test_cache_key_generation():
         cache_dir = Path(tmp_dir) / "cache"
         builder = EnvironmentBuilder(context=maven, cache_dir=cache_dir)
 
-        # Create some test components
+        # Create some test dependencies
+        from jgo.maven.core import Dependency
+
         project1 = maven.project("org.example", "artifact1")
         component1 = project1.at_version("1.0.0")
         project2 = maven.project("org.example", "artifact2")
         component2 = project2.at_version("2.0.0")
 
-        components = [component1, component2]
-
-        # Convert components to dependencies for cache key
-        dependencies = builder._components_to_dependencies(components)
+        dependencies = [
+            Dependency(component1.artifact()),
+            Dependency(component2.artifact()),
+        ]
         key = builder._cache_key(dependencies)
 
         # Should generate a hash

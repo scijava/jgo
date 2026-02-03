@@ -11,9 +11,9 @@ import rich_click as click
 
 from ...config import GlobalSettings
 from ...env import EnvironmentSpec
-from ...env.builder import filter_managed_components
 from ...env.jar import parse_manifest, read_raw_manifest
 from ...parse.coordinate import Coordinate
+from ...parse.endpoint import Endpoint
 from ...styles import COORD_HELP_FULL
 from ..args import build_parsed_args
 from ..console import console_print
@@ -431,28 +431,23 @@ def _print_deps(ctx, endpoint, list_mode: bool):
     context = create_maven_context(args, config.to_dict())
     builder = create_environment_builder(args, config.to_dict(), context)
 
-    # Parse coordinates into components
+    # Parse coordinates into dependencies
     if args.is_spec_mode():
         spec_file = args.get_spec_file()
         if not spec_file.exists():
             _log.error(f"{spec_file} not found")
             ctx.exit(1)
         spec = EnvironmentSpec.load(spec_file)
-        components = []
-        for coord_str in spec.coordinates:
-            coord = _parse_coord_or_die(ctx, coord_str)
-            version = coord.version or "RELEASE"
-            component = context.project(coord.groupId, coord.artifactId).at_version(
-                version
-            )
-            components.append(component)
-        boms = None  # No BOM management for spec mode
+        coordinates = [
+            Coordinate.parse(coord_str) for coord_str in spec.coordinates
+        ]
+        dependencies = builder._coordinates_to_dependencies(coordinates)
     else:
         if not endpoint:
             _log.error("No endpoint specified")
             ctx.exit(1)
-        components, coordinates, _ = builder._parse_endpoint(endpoint)
-        boms = filter_managed_components(components, coordinates)
+        parsed = Endpoint.parse(endpoint)
+        dependencies = builder._coordinates_to_dependencies(parsed.coordinates)
 
-    print_dependencies(components, context, boms=boms, list_mode=list_mode)
+    print_dependencies(dependencies, context, list_mode=list_mode)
     ctx.exit(0)

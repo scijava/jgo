@@ -307,14 +307,17 @@ class TestThicketPythonResolver:
         thicket_pom_obj = POM(thicket_pom)
         version = thicket_pom_obj.version
 
-        # Create component
+        # Create component and wrap in Dependency
+        from jgo.maven.core import Dependency
+
         component = thicket_context.project(
             "org.scijava.jgo.thicket", "thicket"
         ).at_version(version)
+        deps_input = [Dependency(component.artifact())]
 
         # Resolve with Python resolver - should not raise any errors
         python_resolver = PythonResolver()
-        _, python_deps = python_resolver.resolve([component], managed=True)
+        _, python_deps = python_resolver.resolve(deps_input)
 
         # We can't compare against a hardcoded truth since the thicket is randomly generated,
         # but we can verify basic properties:
@@ -344,14 +347,17 @@ class TestThicketPythonResolver:
         thicket_pom_obj = POM(thicket_pom)
         version = thicket_pom_obj.version
 
-        # Create component
+        # Create component and wrap in Dependency (raw=True for unmanaged)
+        from jgo.maven.core import Dependency
+
         component = thicket_context.project(
             "org.scijava.jgo.thicket", "thicket"
         ).at_version(version)
+        deps_input = [Dependency(component.artifact(), raw=True)]
 
         # Resolve with Python resolver
         python_resolver = PythonResolver()
-        _, python_deps = python_resolver.resolve([component], managed=False)
+        _, python_deps = python_resolver.resolve(deps_input)
 
         # Verify all dependencies are properly resolved
         for dep in python_deps:

@@ -24,7 +24,7 @@ from .rich.widgets import create_table
 if TYPE_CHECKING:
     from ..env import Environment
     from ..maven import MavenContext
-    from ..maven.core import Component
+    from ..maven.core import Dependency
     from .args import ParsedArgs
 
 
@@ -175,20 +175,18 @@ def print_main_classes(environment: Environment) -> None:
 
 
 def print_dependencies(
-    components: list[Component],
+    dependencies: list[Dependency],
     context: MavenContext,
-    boms: list[Component] | None = None,
     list_mode: bool = False,
     direct_only: bool = False,
     optional_depth: int = 0,
 ) -> None:
     """
-    Print dependencies for the given components.
+    Print dependencies for the given input dependencies.
 
     Args:
-        components: List of components to print dependencies for
+        dependencies: List of input dependencies to print
         context: Maven context containing the resolver
-        boms: List of components to use as managed BOMs (None = none managed)
         list_mode: If True, print flat list (like mvn dependency:list).
                   If False, print tree (like mvn dependency:tree).
         direct_only: If True and list_mode is True, show only direct dependencies
@@ -203,9 +201,7 @@ def print_dependencies(
 
         # Get the dependency list
         root, deps = context.resolver.get_dependency_list(
-            components,
-            managed=bool(boms),
-            boms=boms,
+            dependencies,
             transitive=not direct_only,
             optional_depth=optional_depth,
         )
@@ -220,9 +216,7 @@ def print_dependencies(
 
         # Get the dependency tree
         tree = context.resolver.get_dependency_tree(
-            components,
-            managed=bool(boms),
-            boms=boms,
+            dependencies,
             optional_depth=optional_depth,
         )
 
