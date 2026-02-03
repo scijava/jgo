@@ -78,6 +78,7 @@ def setup_consoles(
     elif color == "styled":
         # Bold/italic but no color (NO_COLOR compliant)
         console_kwargs["no_color"] = True
+        console_kwargs["force_terminal"] = True
     elif color == "rich":
         # Force full color + style even if not a TTY
         console_kwargs["force_terminal"] = True
