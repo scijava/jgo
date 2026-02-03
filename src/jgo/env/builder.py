@@ -905,4 +905,3 @@ class EnvironmentBuilder:
 
         # Return locked dependencies for lock file generation
         return locked_deps
-

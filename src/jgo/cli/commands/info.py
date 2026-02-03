@@ -438,9 +438,7 @@ def _print_deps(ctx, endpoint, list_mode: bool):
             _log.error(f"{spec_file} not found")
             ctx.exit(1)
         spec = EnvironmentSpec.load(spec_file)
-        coordinates = [
-            Coordinate.parse(coord_str) for coord_str in spec.coordinates
-        ]
+        coordinates = [Coordinate.parse(coord_str) for coord_str in spec.coordinates]
         dependencies = builder._coordinates_to_dependencies(coordinates)
     else:
         if not endpoint:

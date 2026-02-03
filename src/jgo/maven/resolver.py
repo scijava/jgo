@@ -58,7 +58,8 @@ def _filter_component_deps(
 ) -> list[Dependency]:
     """Remove input dependencies themselves from resolved dependency list."""
     input_coords = {
-        (dep.groupId, dep.artifactId, dep.version) for dep in input_deps
+        (dep.groupId, dep.artifactId, dep.version)
+        for dep in input_deps
         if dep.artifact.component.version != "MANAGED"
     }
     return [
@@ -394,9 +395,7 @@ class PythonResolver(Resolver):
                     # Create a new dependency with the resolved version
                     resolved_comp = comp.project.at_version(resolved_version)
                     resolved_dep = Dependency(
-                        resolved_comp.artifact(
-                            input_dep.classifier, input_dep.type
-                        ),
+                        resolved_comp.artifact(input_dep.classifier, input_dep.type),
                         scope=input_dep.scope,
                         optional=input_dep.optional,
                         exclusions=input_dep.exclusions,
@@ -642,7 +641,9 @@ class MvnResolver(Resolver):
         # Log what we're resolving
         _log.info(f"Resolving dependencies for {len(dependencies)} dependency(ies)")
         for dep in dependencies:
-            _log.debug(f"  Dependency: {dep.groupId}:{dep.artifactId}:{dep.artifact.component.version}")
+            _log.debug(
+                f"  Dependency: {dep.groupId}:{dep.artifactId}:{dep.artifact.component.version}"
+            )
 
         # Create temporary POM
         temp_pom = self._create_temp_pom(dependencies, boms)

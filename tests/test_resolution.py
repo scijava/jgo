@@ -161,9 +161,7 @@ def dependencies_from_endpoint(
     return builder._coordinates_to_dependencies(parsed.coordinates)
 
 
-def resolve_dependency_set(
-    resolver, dependencies: list[Dependency]
-) -> set[str]:
+def resolve_dependency_set(resolver, dependencies: list[Dependency]) -> set[str]:
     _, resolved_deps = resolver.resolve(dependencies)
     return {dependency_fingerprint(dep) for dep in resolved_deps}
 
