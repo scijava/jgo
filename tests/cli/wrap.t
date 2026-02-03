@@ -58,8 +58,6 @@ The table should be as wide as it needs to be to fully render the content.
   │ j2objc-annotations-2.8.jar         │            7 │           51 │          13 │
   │ jsr305-3.0.2.jar                   │            5 │           49 │          35 │
   └────────────────────────────────────┴──────────────┴──────────────┴─────────────┘
-  
-  Bytecode Version Details:
  
 
 -- Table output | color=plain | wrap=smart --
@@ -88,9 +86,6 @@ Ellipses should be used to keep table width within terminal width (80 chars).
   │ j2objc-annotations-2.8.jar       │            7 │           51 │          13 │
   │ jsr305-3.0.2.jar                 │            5 │           49 │          35 │
   └──────────────────────────────────┴──────────────┴──────────────┴─────────────┘
-  
-  Bytecode Version Details:
- 
 
 -- Table output | color=styled | wrap=raw --
 
@@ -115,8 +110,6 @@ Ellipses should be used to keep table width within terminal width (80 chars).
   │ j2objc-annotations-2.8.jar         │            7 │           51 │          13 │
   │ jsr305-3.0.2.jar                   │            5 │           49 │          35 │
   └────────────────────────────────────┴──────────────┴──────────────┴─────────────┘
-  
-  Bytecode Version Details:
 
 -- Table output | color=styled | wrap=smart --
 
@@ -142,8 +135,6 @@ Ellipses should be used to keep table width within terminal width (80 chars).
   │ j2objc-annotations-2.8.jar       │            7 │           51 │          13 │
   │ jsr305-3.0.2.jar                 │            5 │           49 │          35 │
   └──────────────────────────────────┴──────────────┴──────────────┴─────────────┘
-  
-  Bytecode Version Details:
 
 -- Table output | color=rich | wrap=raw --
 
@@ -168,8 +159,6 @@ Ellipses should be used to keep table width within terminal width (80 chars).
   │\x1b[1m \x1b[0m\x1b[1mj2objc-annotations-2.8.jar        \x1b[0m\x1b[1m \x1b[0m│\x1b[32m \x1b[0m\x1b[32m           7\x1b[0m\x1b[32m \x1b[0m│           51 │          13 │ (esc)
   │\x1b[1m \x1b[0m\x1b[1mjsr305-3.0.2.jar                  \x1b[0m\x1b[1m \x1b[0m│\x1b[32m \x1b[0m\x1b[32m           5\x1b[0m\x1b[32m \x1b[0m│           49 │          35 │ (esc)
   └────────────────────────────────────┴──────────────┴──────────────┴─────────────┘
-  
-  \x1b[1mBytecode Version Details:\x1b[0m (esc)
 
 -- Table output | color=rich | wrap=smart --
 
@@ -195,8 +184,6 @@ Ellipses should be used to keep table width within terminal width (80 chars).
   │\x1b[1m \x1b[0m\x1b[1mj2objc-annotations-2.8.jar      \x1b[0m\x1b[1m \x1b[0m│\x1b[32m \x1b[0m\x1b[32m           7\x1b[0m\x1b[32m \x1b[0m│           51 │          13 │ (esc)
   │\x1b[1m \x1b[0m\x1b[1mjsr305-3.0.2.jar                \x1b[0m\x1b[1m \x1b[0m│\x1b[32m \x1b[0m\x1b[32m           5\x1b[0m\x1b[32m \x1b[0m│           49 │          35 │ (esc)
   └──────────────────────────────────┴──────────────┴──────────────┴─────────────┘
-  
-  \x1b[1mBytecode Version Details:\x1b[0m (esc)
 
 -- Tree output | color=plain | wrap=raw --
 

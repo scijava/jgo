@@ -317,13 +317,19 @@ def print_java_info(environment: Environment) -> None:
     console_print(table)
 
     # Print detailed breakdown for JARs with mixed bytecode versions
-    console_print("\n[bold]Bytecode Version Details:[/]")
-    for jar_name, analysis in jar_analyses[:10]:  # Show first 10 for brevity
-        java_ver = analysis["java_version"]
-        version_counts = analysis["version_counts"]
+    interesting_analyses = [
+        item for item in jar_analyses if len(item[1]["version_counts"]) > 1
+    ]
+    max_analyses = 10
 
-        # Only show details if there are multiple bytecode versions
-        if len(version_counts) > 1:
+    if interesting_analyses:
+        console_print("\n[bold]Bytecode Version Details:[/]")
+        for jar_name, analysis in interesting_analyses[
+            :max_analyses
+        ]:  # Show first few for brevity
+            java_ver = analysis["java_version"]
+            version_counts = analysis["version_counts"]
+
             console_print(f"\n[cyan]{jar_name}[/]")
 
             # Show distribution
@@ -345,7 +351,7 @@ def print_java_info(environment: Environment) -> None:
                 for class_name, _ in high_ver_only:
                     console_print(f"    - {class_name}")
 
-    if len(jar_analyses) > 10:
-        console_print(
-            f"\n[dim]... and {len(jar_analyses) - 10} more JARs (showing first 10)[/]"
-        )
+        if len(interesting_analyses) > max_analyses:
+            console_print(
+                f"\n[dim]... and {len(interesting_analyses) - max_analyses} more JARs with mixed bytecode versions (showing first {max_analyses})[/]"
+            )

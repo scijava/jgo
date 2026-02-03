@@ -142,8 +142,6 @@ Test info javainfo with endpoint.
   │ j2objc-annotations-2.8.jar         │            7 │           51 │          13 │
   │ jsr305-3.0.2.jar                   │            5 │           49 │          35 │
   └────────────────────────────────────┴──────────────┴──────────────┴─────────────┘
-  
-  Bytecode Version Details:
 
 Test info manifest requires endpoint.
 
