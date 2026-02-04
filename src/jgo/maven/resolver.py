@@ -86,10 +86,10 @@ def _resolve_component_inputs(
     resolved_deps: list[Dependency],
 ) -> tuple[list[Dependency], set[tuple[str, str, str, str, str]]]:
     """
-    Resolve input dependencies and build component coordinate set.
+    Resolve input dependencies and build artifact key set.
 
     For MANAGED dependencies, finds their resolved versions in resolved_deps.
-    Returns resolved inputs and a set of component coordinates to filter out
+    Returns resolved inputs and a set of artifact keys to filter out
     from transitive dependencies.
 
     Args:
@@ -97,12 +97,12 @@ def _resolve_component_inputs(
         resolved_deps: All resolved dependencies (inputs + transitive)
 
     Returns:
-        Tuple of (resolved_inputs, artifact_tuples) where:
+        Tuple of (resolved_inputs, artifact_keys) where:
         - resolved_inputs: Input deps with MANAGED versions resolved
-        - artifact_tuples: Set of (G, A, V, C, P) tuples for deduplication
+        - artifact_keys: Set of artifact.key tuples for deduplication
     """
     resolved_inputs = []
-    artifact_tuples: set[tuple[str, str, str, str, str]] = set()
+    artifact_keys: set[tuple[str, str, str, str, str]] = set()
 
     for input_dep in dependencies:
         comp = input_dep.artifact.component
@@ -116,29 +116,13 @@ def _resolve_component_inputs(
                     and dep.type == input_dep.type
                 ):
                     resolved_inputs.append(dep)
-                    artifact_tuples.add(
-                        (
-                            dep.groupId,
-                            dep.artifactId,
-                            dep.version,
-                            dep.classifier,
-                            dep.type,
-                        )
-                    )
+                    artifact_keys.add(dep.artifact.key)
                     break
         else:
             resolved_inputs.append(input_dep)
-            artifact_tuples.add(
-                (
-                    comp.groupId,
-                    comp.artifactId,
-                    comp.resolved_version,
-                    input_dep.classifier,
-                    input_dep.type,
-                )
-            )
+            artifact_keys.add(input_dep.artifact.key)
 
-    return resolved_inputs, artifact_tuples
+    return resolved_inputs, artifact_keys
 
 
 class Resolver(ABC):
@@ -377,14 +361,11 @@ class PythonResolver(Resolver):
         deps, _ = model.dependencies(max_depth=max_depth, optional_depth=optional_depth)
 
         # Build resolved component dependencies
-        resolved_inputs, artifact_tuples = _resolve_component_inputs(dependencies, deps)
+        resolved_inputs, artifact_keys = _resolve_component_inputs(dependencies, deps)
 
         # Filter out components from transitive deps list
         resolved_transitive = [
-            dep
-            for dep in deps
-            if (dep.groupId, dep.artifactId, dep.version, dep.classifier, dep.type)
-            not in artifact_tuples
+            dep for dep in deps if dep.artifact.key not in artifact_keys
         ]
 
         # Filter out test scope dependencies (they're not needed for running the application)
@@ -725,16 +706,13 @@ class MvnResolver(Resolver):
             all_deps.append(dep)
 
         # Build resolved component dependencies
-        resolved_inputs, artifact_tuples = _resolve_component_inputs(
+        resolved_inputs, artifact_keys = _resolve_component_inputs(
             dependencies, all_deps
         )
 
         # Filter out components from transitive deps list
         resolved_transitive = [
-            dep
-            for dep in all_deps
-            if (dep.groupId, dep.artifactId, dep.version, dep.classifier, dep.type)
-            not in artifact_tuples
+            dep for dep in all_deps if dep.artifact.key not in artifact_keys
         ]
 
         # Filter to runtime scopes only (compensate for Maven's -Dscope quirk)

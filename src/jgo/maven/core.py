@@ -152,7 +152,6 @@ class MavenContext:
         self,
         coordinate: Coordinate | str,
         exclusions: Iterable[Project] | None = None,
-        raw: bool = False,
     ) -> "Dependency":
         """
         Create a Dependency object from a Maven coordinate.
@@ -160,7 +159,6 @@ class MavenContext:
         Args:
             coordinate: The Maven coordinate to convert to a Dependency.
             exclusions: Optional list of Project exclusions.
-            raw: If True, this dependency is raw (not managed as a BOM).
 
         Returns:
             The Dependency object.
@@ -177,7 +175,9 @@ class MavenContext:
         project = self.project(groupId, artifactId)
         component = project.at_version(version) if version else project.at_version("")
         artifact = component.artifact(classifier, packaging)
-        return Dependency(artifact, scope, optional, exclusions or [], raw=raw)
+        return Dependency(
+            artifact, scope, optional, exclusions or [], raw=coord.raw or False
+        )
 
     def pom_to_artifact(self, pom: POM) -> "Artifact":
         """
@@ -690,6 +690,25 @@ class Artifact:
     def version(self) -> str:
         """The artifact's version (resolved if RELEASE/LATEST)."""
         return self.component.resolved_version
+
+    @property
+    def key(self) -> tuple[str, str, str, str, str]:
+        """
+        Get the artifact's unique key for deduplication.
+
+        Uses resolved version to ensure artifacts that resolve to the same
+        concrete version are treated as duplicates (e.g., RELEASE → 2.0.0).
+
+        Returns:
+            Tuple of (groupId, artifactId, resolved_version, classifier, packaging)
+        """
+        return (
+            self.component.groupId,
+            self.component.artifactId,
+            self.component.resolved_version,
+            self.classifier,
+            self.packaging,
+        )
 
     @property
     def filename(self) -> str:

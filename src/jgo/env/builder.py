@@ -562,10 +562,10 @@ class EnvironmentBuilder:
         self, coordinates: list["Coordinate"]
     ) -> list["Dependency"]:
         """
-        Convert Coordinate objects to Dependency objects for cache key generation.
+        Convert Coordinate objects to Dependency objects.
 
-        This preserves classifier, packaging, and exclusion information from the
-        original coordinates.
+        Defaults missing versions to RELEASE and missing scopes to "compile"
+        (builder-specific behavior for top-level coordinates).
 
         Args:
             coordinates: List of parsed Coordinate objects with full coordinate info
@@ -573,36 +573,26 @@ class EnvironmentBuilder:
         Returns:
             List of Dependency objects
         """
-
         dependencies = []
         for coord in coordinates:
-            # Get version (default to RELEASE if not specified)
-            version = coord.version or "RELEASE"
+            # Default version to RELEASE and scope to "compile" if not specified
+            # (builder-specific behavior for top-level user coordinates)
+            if not coord.version or not coord.scope:
+                coord = Coordinate(
+                    groupId=coord.groupId,
+                    artifactId=coord.artifactId,
+                    version=coord.version or "RELEASE",
+                    classifier=coord.classifier,
+                    packaging=coord.packaging,
+                    scope=coord.scope or "compile",
+                    optional=coord.optional,
+                    raw=coord.raw,
+                    placement=coord.placement,
+                )
 
-            # Create Component (G:A:V)
-            component = self.context.project(
-                coord.groupId, coord.artifactId
-            ).at_version(version)
-
-            # Create Artifact with classifier and packaging (G:A:V:C:P)
-            classifier = coord.classifier or ""
-            packaging = coord.packaging or "jar"
-            artifact = component.artifact(classifier=classifier, packaging=packaging)
-
-            # Create Dependency with scope and exclusions
-            # TODO: Parse exclusions from coord when exclusion syntax is implemented
-            # For now, use empty exclusions list
-            scope = coord.scope or "compile"
-            optional = coord.optional or False
-            exclusions: list = []  # Will be populated when exclusion parsing is added
-
-            dependency = Dependency(
-                artifact=artifact,
-                scope=scope,
-                optional=optional,
-                exclusions=exclusions,
-                raw=coord.raw or False,
-            )
+            # Use MavenContext.create_dependency to avoid code duplication
+            # TODO: Pass exclusions when exclusion parsing is implemented
+            dependency = self.context.create_dependency(coord, exclusions=None)
             dependencies.append(dependency)
 
         return dependencies
@@ -879,23 +869,16 @@ class EnvironmentBuilder:
 
         # Process artifacts and their transitive dependencies
         # Track processed artifacts to avoid duplicates
-        # Key includes classifier and packaging to handle multiple artifacts
-        # with same G:A:V (e.g., natives for different platforms)
+        # Use artifact.key which includes classifier and packaging to handle
+        # multiple artifacts with same G:A:V (e.g., natives for different platforms)
         processed = set()
 
         # First, process the resolved artifacts (with MANAGED versions resolved)
         for dep in resolved_inputs:
             artifact = dep.artifact
-            key = (
-                artifact.groupId,
-                artifact.artifactId,
-                artifact.version,
-                artifact.classifier,
-                artifact.packaging,
-            )
-            if key in processed:
+            if artifact.key in processed:
                 continue  # Skip duplicates
-            processed.add(key)
+            processed.add(artifact.key)
 
             source_path = artifact.resolve()
             locked_deps.append(process_artifact(artifact, source_path))
@@ -906,16 +889,9 @@ class EnvironmentBuilder:
                 continue  # Skip test deps, etc.
 
             artifact = dep.artifact
-            key = (
-                artifact.groupId,
-                artifact.artifactId,
-                artifact.version,
-                artifact.classifier,
-                artifact.packaging,
-            )
-            if key in processed:
+            if artifact.key in processed:
                 continue  # Skip duplicates
-            processed.add(key)
+            processed.add(artifact.key)
 
             source_path = artifact.resolve()
             locked_deps.append(process_artifact(artifact, source_path))
