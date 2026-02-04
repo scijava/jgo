@@ -245,5 +245,96 @@ def test_cached_environment_uses_entrypoint():
             os.chdir(original_cwd)
 
 
+def test_sync_with_multiple_classifiers():
+    """
+    Test that syncing with multiple dependencies having same G:A:V but different classifiers works.
+
+    This is a regression test for a bug where artifacts with the same groupId, artifactId,
+    and version but different classifiers would collide during the sync/linking phase,
+    causing only one to be linked to the cache directory.
+
+    The bug was in two places:
+    1. The resolver's component_coords set used (G, A, V) tuples
+    2. The builder's processed set used (G, A, V) tuples
+
+    Both needed to include classifier and packaging: (G, A, V, C, P)
+
+    Uses LWJGL which publishes native JARs for multiple platforms with different classifiers.
+    """
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+
+        import os
+
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(tmp_path)
+
+            # Create a spec with two LWJGL native dependencies (different classifiers)
+            from jgo.env import EnvironmentSpec
+
+            spec = EnvironmentSpec(
+                name="test-multi-classifier",
+                description="Test multiple classifiers",
+                coordinates=[
+                    "org.lwjgl:lwjgl:3.3.1:natives-linux",
+                    "org.lwjgl:lwjgl:3.3.1:natives-windows",
+                ],
+                entrypoints={"main": "org.lwjgl:lwjgl:3.3.1:natives-linux"},
+                default_entrypoint="main",
+                cache_dir=".jgo",
+            )
+
+            spec_file = tmp_path / "jgo.toml"
+            spec.save(spec_file)
+
+            # Build environment
+            from jgo.env import EnvironmentBuilder
+            from jgo.maven import MavenContext, PythonResolver
+
+            context = MavenContext(
+                resolver=PythonResolver(),
+                repo_cache=tmp_path / ".m2" / "repository",
+            )
+
+            builder = EnvironmentBuilder(context, cache_dir=tmp_path / ".jgo")
+            env = builder.from_spec(spec, update=False)
+            assert env is not None
+
+            # Verify lockfile has both dependencies
+            from jgo.env.lockfile import LockFile
+
+            lock = LockFile.load(tmp_path / ".jgo" / "jgo.lock.toml")
+            locked_coords = {
+                (dep.groupId, dep.artifactId, dep.version, dep.classifier)
+                for dep in lock.dependencies
+            }
+            assert ("org.lwjgl", "lwjgl", "3.3.1", "natives-linux") in locked_coords, (
+                "natives-linux not in lockfile"
+            )
+            assert (
+                "org.lwjgl",
+                "lwjgl",
+                "3.3.1",
+                "natives-windows",
+            ) in locked_coords, "natives-windows not in lockfile"
+
+            # Verify both JARs are present in the cache directory
+            cache_dir = tmp_path / ".jgo"
+            jar_files = list(cache_dir.rglob("lwjgl-3.3.1-natives-*.jar"))
+            assert len(jar_files) == 2, (
+                f"Expected 2 JAR files, found {len(jar_files)}: {jar_files}. "
+                "This indicates a classifier collision bug."
+            )
+
+            # Verify specific filenames
+            jar_names = {jar.name for jar in jar_files}
+            assert "lwjgl-3.3.1-natives-linux.jar" in jar_names
+            assert "lwjgl-3.3.1-natives-windows.jar" in jar_names
+
+        finally:
+            os.chdir(original_cwd)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

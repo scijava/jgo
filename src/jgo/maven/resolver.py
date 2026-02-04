@@ -81,6 +81,66 @@ def _create_root(dependencies: list[Dependency]) -> DependencyNode:
     )
 
 
+def _resolve_component_inputs(
+    dependencies: list[Dependency],
+    resolved_deps: list[Dependency],
+) -> tuple[list[Dependency], set[tuple[str, str, str, str, str]]]:
+    """
+    Resolve input dependencies and build component coordinate set.
+
+    For MANAGED dependencies, finds their resolved versions in resolved_deps.
+    Returns resolved inputs and a set of component coordinates to filter out
+    from transitive dependencies.
+
+    Args:
+        dependencies: Original input dependencies
+        resolved_deps: All resolved dependencies (inputs + transitive)
+
+    Returns:
+        Tuple of (resolved_inputs, artifact_tuples) where:
+        - resolved_inputs: Input deps with MANAGED versions resolved
+        - artifact_tuples: Set of (G, A, V, C, P) tuples for deduplication
+    """
+    resolved_inputs = []
+    artifact_tuples: set[tuple[str, str, str, str, str]] = set()
+
+    for input_dep in dependencies:
+        comp = input_dep.artifact.component
+        if comp.version == "MANAGED":
+            # Find the resolved version in resolved_deps
+            for dep in resolved_deps:
+                if (
+                    dep.groupId == comp.groupId
+                    and dep.artifactId == comp.artifactId
+                    and dep.classifier == input_dep.classifier
+                    and dep.type == input_dep.type
+                ):
+                    resolved_inputs.append(dep)
+                    artifact_tuples.add(
+                        (
+                            dep.groupId,
+                            dep.artifactId,
+                            dep.version,
+                            dep.classifier,
+                            dep.type,
+                        )
+                    )
+                    break
+        else:
+            resolved_inputs.append(input_dep)
+            artifact_tuples.add(
+                (
+                    comp.groupId,
+                    comp.artifactId,
+                    comp.resolved_version,
+                    input_dep.classifier,
+                    input_dep.type,
+                )
+            )
+
+    return resolved_inputs, artifact_tuples
+
+
 class Resolver(ABC):
     """
     Logic for doing non-trivial Maven-related things, including:
@@ -117,21 +177,21 @@ class Resolver(ABC):
             transitive: Whether to include transitive dependencies.
 
         Returns:
-            Tuple of (resolved_components, resolved_deps) where:
-            - resolved_components: Input deps with MANAGED versions resolved
-            - resolved_deps: Transitive dependencies (excludes the inputs themselves)
+            Tuple of (resolved_inputs, resolved_transitive) where:
+            - resolved_inputs: Input deps with MANAGED versions resolved
+            - resolved_transitive: Transitive dependencies (excludes the inputs themselves)
         """
         ...
 
     def _build_dependency_list(
-        self, input_deps: list[Dependency], resolved_deps: list[Dependency]
+        self, input_deps: list[Dependency], resolved_transitive: list[Dependency]
     ) -> tuple[DependencyNode, list[DependencyNode]]:
         """
         Common logic for building dependency list structure.
 
         Args:
             input_deps: List of input dependencies
-            resolved_deps: List of resolved transitive dependencies
+            resolved_transitive: List of resolved transitive dependencies
 
         Returns:
             Tuple of (root_node, dependency_nodes)
@@ -143,10 +203,10 @@ class Resolver(ABC):
             root.children.append(DependencyNode(dep))
 
         # Sort for consistent output
-        resolved_deps.sort(key=lambda d: (d.groupId, d.artifactId, d.version))
+        resolved_transitive.sort(key=lambda d: (d.groupId, d.artifactId, d.version))
 
         # Convert to DependencyNode list
-        dep_nodes = [DependencyNode(dep) for dep in resolved_deps]
+        dep_nodes = [DependencyNode(dep) for dep in resolved_transitive]
 
         return root, dep_nodes
 
@@ -298,9 +358,9 @@ class PythonResolver(Resolver):
             optional_depth: Maximum depth at which to include optional dependencies
 
         Returns:
-            Tuple of (resolved_components, resolved_deps) where:
-            - resolved_components: Input deps with MANAGED versions resolved
-            - resolved_deps: Transitive dependencies (excludes the inputs themselves)
+            Tuple of (resolved_inputs, resolved_transitive) where:
+            - resolved_inputs: Input deps with MANAGED versions resolved
+            - resolved_transitive: Transitive dependencies (excludes the inputs themselves)
         """
         if not dependencies:
             raise ValueError("At least one dependency is required")
@@ -317,38 +377,22 @@ class PythonResolver(Resolver):
         deps, _ = model.dependencies(max_depth=max_depth, optional_depth=optional_depth)
 
         # Build resolved component dependencies
-        # For MANAGED components, find their resolved versions in deps
-        resolved_components = []
-        component_coords = set()
-        for input_dep in dependencies:
-            comp = input_dep.artifact.component
-            if comp.version == "MANAGED":
-                # Find the resolved version in deps
-                for dep in deps:
-                    if (
-                        dep.groupId == comp.groupId
-                        and dep.artifactId == comp.artifactId
-                    ):
-                        resolved_components.append(dep)
-                        component_coords.add((dep.groupId, dep.artifactId, dep.version))
-                        break
-            else:
-                resolved_components.append(input_dep)
-                component_coords.add(
-                    (comp.groupId, comp.artifactId, comp.resolved_version)
-                )
+        resolved_inputs, artifact_tuples = _resolve_component_inputs(dependencies, deps)
 
         # Filter out components from transitive deps list
-        resolved_deps = [
+        resolved_transitive = [
             dep
             for dep in deps
-            if (dep.groupId, dep.artifactId, dep.version) not in component_coords
+            if (dep.groupId, dep.artifactId, dep.version, dep.classifier, dep.type)
+            not in artifact_tuples
         ]
 
         # Filter out test scope dependencies (they're not needed for running the application)
-        resolved_deps = [dep for dep in resolved_deps if dep.scope not in ("test",)]
+        resolved_transitive = [
+            dep for dep in resolved_transitive if dep.scope not in ("test",)
+        ]
 
-        return resolved_components, resolved_deps
+        return resolved_inputs, resolved_transitive
 
     def get_dependency_list(
         self,
@@ -598,9 +642,9 @@ class MvnResolver(Resolver):
                 excludes optional transitive dependencies (equivalent to optional_depth=0).
 
         Returns:
-            Tuple of (resolved_components, resolved_deps) where:
-            - resolved_components: Input deps with MANAGED versions resolved
-            - resolved_deps: Transitive dependencies (excludes the inputs themselves)
+            Tuple of (resolved_inputs, resolved_transitive) where:
+            - resolved_inputs: Input deps with MANAGED versions resolved
+            - resolved_transitive: Transitive dependencies (excludes the inputs themselves)
         """
         if optional_depth > 0:
             _log.warning(
@@ -622,13 +666,13 @@ class MvnResolver(Resolver):
                 dep_nodes.extend(component_node.children)
 
             # Convert DependencyNodes back to Dependency objects
-            resolved_deps = [node.dep for node in dep_nodes]
+            resolved_transitive = [node.dep for node in dep_nodes]
 
             # Build resolved components - for non-transitive, inputs are just themselves
             # (MANAGED versions would have been resolved during tree building)
-            resolved_components = [node.dep for node in root.children]
+            resolved_inputs = [node.dep for node in root.children]
 
-            return resolved_components, resolved_deps
+            return resolved_inputs, resolved_transitive
 
         # For transitive=True, use dependency:list
 
@@ -681,38 +725,22 @@ class MvnResolver(Resolver):
             all_deps.append(dep)
 
         # Build resolved component dependencies
-        # For MANAGED components, find their resolved versions in all_deps
-        resolved_components = []
-        component_coords = set()
-        for input_dep in dependencies:
-            comp = input_dep.artifact.component
-            if comp.version == "MANAGED":
-                # Find the resolved version in all_deps
-                for dep in all_deps:
-                    if (
-                        dep.groupId == comp.groupId
-                        and dep.artifactId == comp.artifactId
-                    ):
-                        resolved_components.append(dep)
-                        component_coords.add((dep.groupId, dep.artifactId, dep.version))
-                        break
-            else:
-                resolved_components.append(input_dep)
-                component_coords.add(
-                    (comp.groupId, comp.artifactId, comp.resolved_version)
-                )
+        resolved_inputs, artifact_tuples = _resolve_component_inputs(
+            dependencies, all_deps
+        )
 
         # Filter out components from transitive deps list
-        resolved_deps = [
+        resolved_transitive = [
             dep
             for dep in all_deps
-            if (dep.groupId, dep.artifactId, dep.version) not in component_coords
+            if (dep.groupId, dep.artifactId, dep.version, dep.classifier, dep.type)
+            not in artifact_tuples
         ]
 
         # Filter to runtime scopes only (compensate for Maven's -Dscope quirk)
-        resolved_deps = self._filter_dep_scopes(resolved_deps, "runtime")
+        resolved_transitive = self._filter_dep_scopes(resolved_transitive, "runtime")
 
-        return resolved_components, resolved_deps
+        return resolved_inputs, resolved_transitive
 
     def get_dependency_list(
         self,
@@ -732,12 +760,12 @@ class MvnResolver(Resolver):
         Returns:
             Tuple of (root_node, flat_list_of_dependencies)
         """
-        resolved_components, resolved_deps = self.resolve(
+        resolved_inputs, resolved_transitive = self.resolve(
             dependencies,
             transitive=transitive,
             optional_depth=optional_depth,
         )
-        return self._build_dependency_list(dependencies, resolved_deps)
+        return self._build_dependency_list(dependencies, resolved_transitive)
 
     def get_dependency_tree(
         self,

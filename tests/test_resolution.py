@@ -347,3 +347,122 @@ def test_managed_version_resolution(m2_repo):
         "Expected minimaven version 2.2.1 from dependency management, "
         f"got {optional_nodes[0].dep.version}"
     )
+
+
+def test_classifier_collision_prevention(m2_repo, mvn_resolver):
+    """
+    Test that multiple dependencies with same G:A:V but different classifiers don't collide.
+
+    This is a regression test for a bug where dependencies with the same groupId,
+    artifactId, and version but different classifiers would collide in the
+    artifacts set, causing one to be excluded from resolution.
+
+    The bug was that the artifacts set used (G, A, V) tuples instead of
+    (G, A, V, C, P) tuples, so artifacts like:
+      - org.lwjgl:lwjgl:3.3.1:natives-linux
+      - org.lwjgl:lwjgl:3.3.1:natives-windows
+    would collide and only one would be included.
+
+    This test uses LWJGL which publishes native JARs for multiple platforms
+    with different classifiers.
+    """
+    context = MavenContext(repo_cache=m2_repo)
+
+    # Create dependencies with same G:A:V but different classifiers
+    # LWJGL publishes native libraries for different platforms
+    endpoint = (
+        "org.lwjgl:lwjgl:3.3.1:natives-linux+org.lwjgl:lwjgl:3.3.1:natives-windows"
+    )
+    deps = dependencies_from_endpoint(context, endpoint)
+
+    # Verify we have two dependencies with different classifiers
+    assert len(deps) == 2, f"Expected 2 dependencies, got {len(deps)}"
+    classifiers = {dep.classifier for dep in deps}
+    assert classifiers == {
+        "natives-linux",
+        "natives-windows",
+    }, f"Expected natives-linux and natives-windows, got {classifiers}"
+
+    # Test PythonResolver
+    python_resolver = PythonResolver()
+    resolved_inputs, _ = python_resolver.resolve(deps, transitive=False)
+
+    # Both dependencies should be present in resolved_inputs
+    assert len(resolved_inputs) == 2, (
+        f"PythonResolver: Expected 2 resolved inputs, got {len(resolved_inputs)}. "
+        "This indicates a classifier collision bug."
+    )
+    resolved_classifiers = {dep.classifier for dep in resolved_inputs}
+    assert resolved_classifiers == {"natives-linux", "natives-windows"}, (
+        f"PythonResolver: Expected both classifiers, got {resolved_classifiers}"
+    )
+
+    # Verify each has the correct version and coordinates
+    for dep in resolved_inputs:
+        assert dep.groupId == "org.lwjgl"
+        assert dep.artifactId == "lwjgl"
+        assert dep.version == "3.3.1"
+        assert dep.classifier in {"natives-linux", "natives-windows"}
+
+    # Test MvnResolver
+    mvn_resolved_inputs, _ = mvn_resolver.resolve(deps, transitive=False)
+
+    # Both dependencies should be present in resolved_inputs
+    assert len(mvn_resolved_inputs) == 2, (
+        f"MvnResolver: Expected 2 resolved inputs, got {len(mvn_resolved_inputs)}. "
+        "This indicates a classifier collision bug."
+    )
+    mvn_classifiers = {dep.classifier for dep in mvn_resolved_inputs}
+    assert mvn_classifiers == {"natives-linux", "natives-windows"}, (
+        f"MvnResolver: Expected both classifiers, got {mvn_classifiers}"
+    )
+
+    # Verify each has the correct version and coordinates
+    for dep in mvn_resolved_inputs:
+        assert dep.groupId == "org.lwjgl"
+        assert dep.artifactId == "lwjgl"
+        assert dep.version == "3.3.1"
+        assert dep.classifier in {"natives-linux", "natives-windows"}
+
+
+def test_packaging_type_collision_prevention(m2_repo):
+    """
+    Test that multiple dependencies with same G:A:V:C but different packaging don't collide.
+
+    This tests the edge case where two dependencies differ only in packaging type.
+    While less common than classifier differences, this is still a valid Maven scenario
+    that should be handled correctly.
+
+    This is part of the same fix as test_classifier_collision_prevention - ensuring
+    the artifacts set includes both classifier AND packaging in its tuples.
+    """
+    context = MavenContext(repo_cache=m2_repo)
+
+    # Create two dependencies manually with different packaging
+    # Using the same artifact but requesting both jar and pom
+    project = context.project("org.scijava", "minimaven")
+    component = project.at_version("2.2.2")
+
+    dep1 = Dependency(component.artifact(classifier="", packaging="jar"))
+    dep2 = Dependency(component.artifact(classifier="", packaging="pom"))
+
+    deps = [dep1, dep2]
+
+    # Verify we have two dependencies with different packaging
+    assert len(deps) == 2
+    types = {dep.type for dep in deps}
+    assert types == {"jar", "pom"}
+
+    # Test PythonResolver
+    resolver = PythonResolver()
+    resolved_inputs, _ = resolver.resolve(deps, transitive=False)
+
+    # Both dependencies should be present
+    assert len(resolved_inputs) == 2, (
+        f"Expected 2 resolved inputs, got {len(resolved_inputs)}. "
+        "This indicates a packaging type collision bug."
+    )
+    resolved_types = {dep.type for dep in resolved_inputs}
+    assert resolved_types == {"jar", "pom"}, (
+        f"Expected both packaging types, got {resolved_types}"
+    )

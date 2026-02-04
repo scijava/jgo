@@ -1,7 +1,7 @@
 """
 EnvironmentBuilder for jgo.
 
-Builds Environment instances from Maven components or endpoint strings.
+Builds Environment instances from Maven coordinates.
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ from .linking import LinkStrategy, link_file
 from .lockfile import LockedDependency, LockFile, compute_sha256, compute_spec_hash
 
 if TYPE_CHECKING:
-    from ..maven import Component, MavenContext
+    from ..maven import Artifact, MavenContext
     from .spec import EnvironmentSpec
 
 _log = logging.getLogger(__name__)
@@ -114,7 +114,7 @@ def is_coordinate_reference(entrypoint_value: str) -> bool:
 
 
 def infer_main_class_from_coordinates(
-    coord_str: str, components: list[Component], jars_dirs: Path | list[Path]
+    coord_str: str, artifacts: list[Artifact], jars_dirs: Path | list[Path]
 ) -> str | None:
     """
     Infer main class from a coordinate string.
@@ -123,7 +123,7 @@ def infer_main_class_from_coordinates(
 
     Args:
         coord_str: Coordinate string (e.g., "org.python:jython-slim" or "org.foo:foo+org.bar:bar")
-        components: List of Maven components (parallel to coord parts)
+        artifacts: List of Maven artifacts (parallel to coord parts)
         jars_dirs: Directory or list of directories containing JAR files
 
     Returns:
@@ -156,7 +156,7 @@ def infer_main_class_from_coordinates(
 
 class EnvironmentBuilder:
     """
-    Builds environment directories from Maven components.
+    Builds environment directories from Maven coordinates.
 
     Supports hybrid caching:
     - Project mode: Uses .jgo/ in current directory (when jgo.toml exists)
@@ -232,16 +232,19 @@ class EnvironmentBuilder:
         cache_key = self._cache_key(dependencies)
 
         # Environment path (hierarchical for ad-hoc mode)
-        primary_component = dependencies[0].artifact.component
+        primary_artifact = dependencies[0].artifact
         workspace_path = (
-            self.cache_dir / "envs" / primary_component.project.path_prefix / cache_key
+            self.cache_dir
+            / "envs"
+            / primary_artifact.component.project.path_prefix
+            / cache_key
         )
 
         # Check cache
         environment = Environment(workspace_path)
         if self._is_environment_valid(environment, update):
             # Apply main class overrides for cached environments
-            primary = dependencies[0].artifact.component
+            primary = dependencies[0].artifact
             autocompleted_cli_main = None
             autocompleted_parsed_main = None
 
@@ -270,17 +273,17 @@ class EnvironmentBuilder:
         locked_deps = self._build_environment(environment, dependencies, None)
 
         # Determine main class (auto-complete if needed)
-        primary = dependencies[0].artifact.component
+        primary = dependencies[0].artifact
         final_main_class = None
         primary_jar = None
         for dir_path in [environment.jars_dir, environment.modules_dir]:
-            candidate = dir_path / primary.artifact().filename
+            candidate = dir_path / primary.filename
             if candidate.exists():
                 primary_jar = candidate
                 break
 
         if primary_jar:
-            # Auto-detect from primary component JAR
+            # Auto-detect from primary artifact JAR
             final_main_class = detect_main_class_from_jar(primary_jar)
 
         # Create entrypoints dict if we have a main class
@@ -351,7 +354,7 @@ class EnvironmentBuilder:
         # Parse coordinates into dependencies
         coordinates = [Coordinate.parse(coord_str) for coord_str in spec.coordinates]
         dependencies = self._coordinates_to_dependencies(coordinates)
-        components = [dep.artifact.component for dep in dependencies]
+        artifacts = [dep.artifact for dep in dependencies]
 
         # Use spec's cache_dir if specified, otherwise use builder's default
         cache_dir = (
@@ -367,9 +370,9 @@ class EnvironmentBuilder:
         else:
             # Hierarchical structure for ad-hoc mode
             cache_key = self._cache_key(dependencies)
-            primary = components[0]
+            primary = artifacts[0]
             workspace_path = (
-                cache_dir / "envs" / primary.project.path_prefix / cache_key
+                cache_dir / "envs" / primary.component.project.path_prefix / cache_key
             )
 
         # Check if environment exists and is valid
@@ -383,7 +386,7 @@ class EnvironmentBuilder:
         # Infer concrete entrypoints from spec
         # Search both jars/ and modules/ directories
         concrete_entrypoints = self._infer_concrete_entrypoints(
-            spec, components, [environment.jars_dir, environment.modules_dir]
+            spec, artifacts, [environment.jars_dir, environment.modules_dir]
         )
 
         # Compute spec hash for staleness detection (from root jgo.toml if it exists)
@@ -440,7 +443,7 @@ class EnvironmentBuilder:
         # Parse coordinates into dependencies
         coordinates = [Coordinate.parse(coord_str) for coord_str in spec.coordinates]
         dependencies = self._coordinates_to_dependencies(coordinates)
-        components = [dep.artifact.component for dep in dependencies]
+        artifacts = [dep.artifact for dep in dependencies]
 
         # Create a temporary environment directory for dependency resolution
         # This downloads JARs to Maven cache but doesn't link them permanently
@@ -455,7 +458,7 @@ class EnvironmentBuilder:
 
             # Infer concrete entrypoints from spec
             concrete_entrypoints = self._infer_concrete_entrypoints(
-                spec, components, [temp_env.jars_dir, temp_env.modules_dir]
+                spec, artifacts, [temp_env.jars_dir, temp_env.modules_dir]
             )
 
             # Get min Java version from temp environment
@@ -659,7 +662,7 @@ class EnvironmentBuilder:
         return hashlib.sha256(combined.encode()).hexdigest()[:16]
 
     def _infer_concrete_entrypoints(
-        self, spec: EnvironmentSpec, components: list[Component], jars_dirs: list[Path]
+        self, spec: EnvironmentSpec, artifacts: list[Artifact], jars_dirs: list[Path]
     ) -> dict[str, str]:
         """
         Infer concrete main classes from spec entrypoints.
@@ -670,7 +673,7 @@ class EnvironmentBuilder:
 
         Args:
             spec: Environment specification
-            components: List of Maven components
+            artifacts: List of Maven artifacts
             jars_dirs: List of directories containing JAR files
 
         Returns:
@@ -682,14 +685,14 @@ class EnvironmentBuilder:
             if is_coordinate_reference(value):
                 # Coordinate reference - infer from JARs
                 main_class = infer_main_class_from_coordinates(
-                    value, components, jars_dirs
+                    value, artifacts, jars_dirs
                 )
                 if main_class:
                     concrete_entrypoints[name] = main_class
                 # If inference fails, omit entrypoint (no Main-Class found)
             else:
                 # Class name - auto-complete if needed
-                primary = components[0]
+                primary = artifacts[0]
                 main_class = autocomplete_main_class(
                     value, primary.artifactId, jars_dirs
                 )
@@ -735,10 +738,10 @@ class EnvironmentBuilder:
 
         # Resolve all dependencies together (not separately!)
         # This ensures Maven handles version conflicts across all dependencies
-        # Returns (resolved_components, resolved_deps) where:
-        # - resolved_components: Input deps with MANAGED versions resolved
-        # - resolved_deps: Transitive dependencies (excludes inputs)
-        resolved_components, resolved_deps = dependencies[0].context.resolver.resolve(
+        # Returns (resolved_inputs, resolved_transitive) where:
+        # - resolved_inputs: Input deps with MANAGED versions resolved
+        # - resolved_transitive: Transitive dependencies (excludes inputs)
+        resolved_inputs, resolved_transitive = dependencies[0].context.resolver.resolve(
             dependencies,
             optional_depth=self.optional_depth,
         )
@@ -749,11 +752,11 @@ class EnvironmentBuilder:
         # Collect all artifact paths to determine min Java version
         # We need to know the target Java version before classifying JARs
         all_artifact_paths = []
-        # Process resolved components first
-        for dep in resolved_components:
+        # Process resolved artifacts first
+        for dep in resolved_inputs:
             all_artifact_paths.append(dep.artifact.resolve())
         # Then transitive dependencies
-        for dep in resolved_deps:
+        for dep in resolved_transitive:
             if dep.scope in ("compile", "runtime"):
                 all_artifact_paths.append(dep.artifact.resolve())
 
@@ -874,14 +877,22 @@ class EnvironmentBuilder:
                 jar_type=jar_type,
             )
 
-        # Process components and their transitive dependencies
+        # Process artifacts and their transitive dependencies
         # Track processed artifacts to avoid duplicates
+        # Key includes classifier and packaging to handle multiple artifacts
+        # with same G:A:V (e.g., natives for different platforms)
         processed = set()
 
-        # First, process the resolved components (with MANAGED versions resolved)
-        for dep in resolved_components:
+        # First, process the resolved artifacts (with MANAGED versions resolved)
+        for dep in resolved_inputs:
             artifact = dep.artifact
-            key = (artifact.groupId, artifact.artifactId, artifact.version)
+            key = (
+                artifact.groupId,
+                artifact.artifactId,
+                artifact.version,
+                artifact.classifier,
+                artifact.packaging,
+            )
             if key in processed:
                 continue  # Skip duplicates
             processed.add(key)
@@ -890,12 +901,18 @@ class EnvironmentBuilder:
             locked_deps.append(process_artifact(artifact, source_path))
 
         # Then, process transitive dependencies
-        for dep in resolved_deps:
+        for dep in resolved_transitive:
             if dep.scope not in ("compile", "runtime"):
                 continue  # Skip test deps, etc.
 
             artifact = dep.artifact
-            key = (artifact.groupId, artifact.artifactId, artifact.version)
+            key = (
+                artifact.groupId,
+                artifact.artifactId,
+                artifact.version,
+                artifact.classifier,
+                artifact.packaging,
+            )
             if key in processed:
                 continue  # Skip duplicates
             processed.add(key)
