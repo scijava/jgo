@@ -218,11 +218,8 @@ def _parse_endpoint_dict(endpoint: str) -> dict:
                     part = ":".join(tokens[:-1])
 
         # Parse coordinate (handles the ! suffix internally)
-        try:
-            parsed_coord = _parse_coordinate_dict(part)
-            coordinates.append(parsed_coord)
-        except ValueError:
-            continue
+        parsed_coord = _parse_coordinate_dict(part)
+        coordinates.append(parsed_coord)
 
     return {
         "coordinates": coordinates,

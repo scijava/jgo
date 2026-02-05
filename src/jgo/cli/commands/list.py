@@ -65,13 +65,21 @@ def execute(args: ParsedArgs, config: dict) -> int:
             _log.error(f"{spec_file} not found")
             return 1
         spec = EnvironmentSpec.load(spec_file)
-        coordinates = [Coordinate.parse(coord_str) for coord_str in spec.coordinates]
+        try:
+            coordinates = [Coordinate.parse(coord_str) for coord_str in spec.coordinates]
+        except ValueError as e:
+            _log.error(f"Invalid coordinate format: {e}")
+            return 1
         dependencies = builder._coordinates_to_dependencies(coordinates)
     else:
         if not args.endpoint:
             _log.error("No endpoint specified")
             return 1
-        parsed = Endpoint.parse(args.endpoint)
+        try:
+            parsed = Endpoint.parse(args.endpoint)
+        except ValueError as e:
+            _log.error(f"Invalid endpoint format: {e}")
+            return 1
         dependencies = builder._coordinates_to_dependencies(parsed.coordinates)
 
     print_dependencies(

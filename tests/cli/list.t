@@ -62,3 +62,11 @@ Test list with MANAGED secondary coordinate.
   org.scijava:scijava-common:2.99.2
   org.scijava:minimaven:2.2.2
      org.scijava:parsington:3.1.0
+
+Test list with invalid coordinate syntax (too many colons).
+
+  $ jgo list org.apache.logging.log4j:log4j-core:2.25.1::::
+  ERROR    Invalid endpoint format: Too many parts in strict mode coordinate:     
+           org.apache.logging.log4j:log4j-core:2.25.1::::. Expected at most       
+           G:A:V:C:P:S (6 positions total).                                       
+  [1]
