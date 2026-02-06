@@ -15,7 +15,7 @@ from ...parse.coordinate import coord2str
 from .widgets import NoWrapTree
 
 if TYPE_CHECKING:
-    from ...maven.core import DependencyNode
+    from ...maven import DependencyNode
     from ...parse.coordinate import Coordinate
 
 

@@ -88,7 +88,7 @@ def test_cache_key_generation():
         builder = EnvironmentBuilder(context=maven, cache_dir=cache_dir)
 
         # Create some test dependencies
-        from jgo.maven.core import Dependency
+        from jgo.maven import Dependency
 
         project1 = maven.project("org.example", "artifact1")
         component1 = project1.at_version("1.0.0")

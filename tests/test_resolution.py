@@ -13,9 +13,7 @@ from dataclasses import dataclass
 import pytest
 
 from jgo.env import EnvironmentBuilder
-from jgo.maven import MavenContext
-from jgo.maven.core import Component, Dependency
-from jgo.maven.resolver import MvnResolver, PythonResolver
+from jgo.maven import Component, Dependency, MavenContext, MvnResolver, PythonResolver
 from jgo.parse.endpoint import Endpoint
 from jgo.util.maven import ensure_maven_available
 

@@ -308,7 +308,7 @@ class TestThicketPythonResolver:
         version = thicket_pom_obj.version
 
         # Create component and wrap in Dependency
-        from jgo.maven.core import Dependency
+        from jgo.maven import Dependency
 
         component = thicket_context.project(
             "org.scijava.jgo.thicket", "thicket"
@@ -348,7 +348,7 @@ class TestThicketPythonResolver:
         version = thicket_pom_obj.version
 
         # Create component and wrap in Dependency (raw=True for unmanaged)
-        from jgo.maven.core import Dependency
+        from jgo.maven import Dependency
 
         component = thicket_context.project(
             "org.scijava.jgo.thicket", "thicket"

@@ -24,8 +24,7 @@ from .rich.widgets import create_table
 
 if TYPE_CHECKING:
     from ..env import Environment
-    from ..maven import MavenContext
-    from ..maven.core import Dependency
+    from ..maven import Dependency, MavenContext
     from .args import ParsedArgs
 
 

@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 
 from ..constants import default_jgo_cache
 from ..exec.java_source import JavaLocator, JavaSource
-from ..maven.core import Dependency
+from ..maven import Dependency
 from ..parse.coordinate import Coordinate
 from ..parse.endpoint import Endpoint
 from .bytecode import detect_jar_java_version
