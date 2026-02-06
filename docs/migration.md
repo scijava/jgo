@@ -60,7 +60,7 @@ These short flags are **permanent aliases** and will not be removed:
 | `-U`, `--force-update` | `-u`, `--update` | Both now check remote repos |
 | `-a JAR`, `--additional-jars JAR` | `--add-classpath PATH` | New name is more general (handles directories too) |
 | `--additional-endpoints EP` | Use `+` syntax | See examples below |
-| `--link-type TYPE` | `--link TYPE` | Just renamed |
+| `--link-type TYPE` | `--links TYPE` | Renamed to match config field name |
 | `--log-level LEVEL` | `-v`, `-vv`, `-vvv` | Use verbose flags instead |
 
 ### New Features

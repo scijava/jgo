@@ -124,7 +124,13 @@ def create_environment_builder(
         "copy": LinkStrategy.COPY,
         "auto": LinkStrategy.AUTO,
     }
-    link_strategy = link_strategy_map[args.link]
+
+    # Get link strategy from args, falling back to config if not specified
+    links_value = args.links
+    if links_value is None:
+        # Check config for links setting
+        links_value = config.get("links", "auto")
+    link_strategy = link_strategy_map[links_value]
 
     # Get cache directory
     cache_dir = args.cache_dir

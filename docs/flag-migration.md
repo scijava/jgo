@@ -23,7 +23,7 @@ This document categorizes existing jgo flags for the command-based CLI redesign.
 | `-a, --additional-jars` | **Keep** → Rename | Already renamed to `--add-classpath` in jgo2 |
 | `--additional-endpoints` | **Keep** | Deprecated but keep for backwards compat |
 | `--ignore-jgorc` | **Keep** | Global flag - applies to configuration loading - deprecate in favor of `--ignore-config` |
-| `--link-type` | **Keep** → Rename | Already renamed to `--link` in jgo2 |
+| `--link-type` | **Keep** → Rename | Already renamed to `--links` in jgo2 |
 | `--log-level` | **Retire** | Replaced by `-v/-vv/-vvv` in jgo2 |
 
 ---
@@ -43,7 +43,7 @@ This document categorizes existing jgo flags for the command-based CLI redesign.
 | Flag | Category | Notes |
 |------|----------|-------|
 | `--resolver {auto,python,mvn}` | **Keep** | Global flag - affects all dependency resolution |
-| `--link {hard,soft,copy,auto}` | **Keep** | Global flag - affects environment building |
+| `--links {hard,soft,copy,auto}` | **Keep** | Global flag - affects environment building |
 | `--no-managed` | **Keep** | Global flag - inverse of `-m`, affects resolution |
 | `--main-class CLASS` | **Move** | ✅ Moved to `jgo run` only |
 | `--add-classpath PATH` | **Move** | ✅ Moved to `jgo run` only |
@@ -121,7 +121,7 @@ Global Options:
   --no-managed           Disable dependency management
   -r, --repository       Add Maven repository
   --ignore-jgorc         Ignore ~/.jgorc config
-  --link {hard,soft,copy,auto}  Link strategy
+  --links {hard,soft,copy,auto}  Link strategy
   --resolver {auto,python,mvn}  Resolver to use
   --offline              Work offline
   --no-cache             Skip cache entirely
@@ -136,7 +136,7 @@ Global Options:
   # Deprecated but kept for backwards compat
   --additional-endpoints Add endpoints (use + syntax instead)
   -a, --additional-jars  Add JARs (use --add-classpath instead)
-  --link-type            Old name for --link
+  --link-type            Old name for --links
 ```
 
 ### Commands with Specific Options

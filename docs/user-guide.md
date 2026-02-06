@@ -86,7 +86,7 @@ jgo [OPTIONS] <endpoint> [-- JVM_ARGS] [-- APP_ARGS]
 
 **Environment Configuration:**
 - `--cache-dir PATH` - Override cache directory (default: `~/.cache/jgo`)
-- `--link {hard,soft,copy,auto}` - How to link JARs (default: auto)
+- `--links {hard,soft,copy,auto}` - How to link JARs (default: from config or auto)
 - `--resolver {auto,python,mvn}` - Dependency resolver (default: auto)
   - `pure` - Pure Python, no Maven required
   - `maven` - Shell out to `mvn` command

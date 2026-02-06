@@ -30,9 +30,10 @@ Test main help output.
   │                                                    on unresolved             │
   │                                                    dependencies. [env var:   │
   │                                                    JGO_LENIENT]              │
-  │ --link                  [hard|soft|copy|auto]      How to link JARs: hard,   │
+  │ --links                 [hard|soft|copy|auto]      How to link JARs: hard,   │
   │                                                    soft, copy, or auto       │
-  │                                                    (default)                 │
+  │                                                    (default: from config or  │
+  │                                                    auto)                     │
   │ --property          -D  KEY=VALUE                  Set property for profile  │
   │                                                    activation.               │
   │ --os-version            VERSION                    Set OS version for        │
@@ -524,9 +525,10 @@ Test no-argument help (should show main help).
   │                                                    on unresolved             │
   │                                                    dependencies. [env var:   │
   │                                                    JGO_LENIENT]              │
-  │ --link                  [hard|soft|copy|auto]      How to link JARs: hard,   │
+  │ --links                 [hard|soft|copy|auto]      How to link JARs: hard,   │
   │                                                    soft, copy, or auto       │
-  │                                                    (default)                 │
+  │                                                    (default: from config or  │
+  │                                                    auto)                     │
   │ --property          -D  KEY=VALUE                  Set property for profile  │
   │                                                    activation.               │
   │ --os-version            VERSION                    Set OS version for        │
@@ -681,9 +683,10 @@ Test --help flag on main command.
   │                                                    on unresolved             │
   │                                                    dependencies. [env var:   │
   │                                                    JGO_LENIENT]              │
-  │ --link                  [hard|soft|copy|auto]      How to link JARs: hard,   │
+  │ --links                 [hard|soft|copy|auto]      How to link JARs: hard,   │
   │                                                    soft, copy, or auto       │
-  │                                                    (default)                 │
+  │                                                    (default: from config or  │
+  │                                                    auto)                     │
   │ --property          -D  KEY=VALUE                  Set property for profile  │
   │                                                    activation.               │
   │ --os-version            VERSION                    Set OS version for        │

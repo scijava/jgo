@@ -31,7 +31,7 @@ class ParsedArgs:
         include_optional: bool = False,
         optional_depth: int | None = None,
         # Environment construction
-        link: str = "auto",
+        links: str | None = None,
         # Paths
         cache_dir: Path | None = None,
         repo_cache: Path | None = None,
@@ -89,7 +89,7 @@ class ParsedArgs:
         self.include_optional = include_optional
         self.optional_depth = optional_depth
         # Environment construction
-        self.link = link
+        self.links = links
         # Paths
         self.cache_dir = cache_dir
         self.repo_cache = repo_cache
@@ -404,7 +404,7 @@ def build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, command
         include_optional=opts.get("include_optional", False),
         optional_depth=opts.get("optional_depth"),
         # Environment construction
-        link=opts.get("link", "auto"),
+        links=opts.get("links"),
         # Paths
         cache_dir=opts.get("cache_dir"),
         repo_cache=opts.get("repo_cache"),

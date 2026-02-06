@@ -287,10 +287,10 @@ def global_options(f):
 
     # Advanced options
     f = click.option(
-        "--link",
+        "--links",
         type=click.Choice(["hard", "soft", "copy", "auto"]),
-        default="auto",
-        help="How to link JARs: hard, soft, copy, or auto (default)",
+        default=None,
+        help="How to link JARs: hard, soft, copy, or auto (default: from config or auto)",
     )(f)
     f = click.option(
         "--lenient",

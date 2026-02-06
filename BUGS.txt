@@ -1,13 +1,3 @@
-```
-$ jgo --link=copy --links=copy sync
-╭─ Error ──────────────────────────────────╮
-│ No such command '--links=copy'.          │
-╰──────────────────────────────────────────╯
-```
-
-`links = copy` in jgo.toml `[settings]` is not respected
-`link = copy` in jgo.toml is silently ignored but should warn
-
 Add py.typed file to package root for static type analyzers
 
 Use https://github.com/ross/requests-futures
