@@ -11,6 +11,7 @@ from ...config import GlobalSettings
 from ...env import EnvironmentSpec
 from ...parse.coordinate import Coordinate
 from ...parse.endpoint import Endpoint
+from ...styles import AT_MAINCLASS, PLUS_OPERATOR
 from ..args import build_parsed_args
 from ..context import create_environment_builder, create_maven_context
 from ..output import print_dependencies
@@ -26,8 +27,8 @@ _log = logging.getLogger(__name__)
     "endpoint",
     required=False,
     cls=click.RichArgument,
-    help="Maven coordinates (single or combined with [yellow]+[/]) "
-    "optionally followed by [yellow]@MainClass[/]",
+    help=f"Maven coordinates (single or combined with {PLUS_OPERATOR}) "
+    f"optionally followed by {AT_MAINCLASS}",
 )
 @click.option(
     "--direct", is_flag=True, help="Show only direct dependencies (non-transitive)"
@@ -66,7 +67,9 @@ def execute(args: ParsedArgs, config: dict) -> int:
             return 1
         spec = EnvironmentSpec.load(spec_file)
         try:
-            coordinates = [Coordinate.parse(coord_str) for coord_str in spec.coordinates]
+            coordinates = [
+                Coordinate.parse(coord_str) for coord_str in spec.coordinates
+            ]
         except ValueError as e:
             _log.error(f"Invalid coordinate format: {e}")
             return 1

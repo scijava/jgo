@@ -10,7 +10,7 @@ import rich_click as click
 from ...config import GlobalSettings
 from ...env.spec import EnvironmentSpec
 from ...parse.coordinate import Coordinate
-from ...styles import styled
+from ...styles import JGO_TOML, styled, syntax
 from ..args import build_parsed_args
 from ..output import handle_dry_run
 from . import sync as sync_cmd
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 _log = logging.getLogger(__name__)
 
 
-@click.command(help="Remove dependencies from [cyan]jgo.toml[/].")
+@click.command(help=f"Remove dependencies from {JGO_TOML}.")
 @click.argument(
     "coordinates",
     nargs=-1,
@@ -33,7 +33,7 @@ _log = logging.getLogger(__name__)
 @click.option(
     "--no-sync",
     is_flag=True,
-    help="Don't automatically [yellow]sync[/] after removing dependencies",
+    help=f"Don't automatically {syntax('sync')} after removing dependencies",
 )
 @click.pass_context
 def remove(ctx, coordinates, no_sync):

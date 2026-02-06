@@ -11,6 +11,7 @@ import tomli_w
 
 from ...config import GlobalSettings
 from ...env import EnvironmentSpec
+from ...styles import AT_MAINCLASS, JGO_TOML, PLUS_OPERATOR
 from ..args import build_parsed_args
 from ..output import handle_dry_run
 
@@ -20,13 +21,13 @@ if TYPE_CHECKING:
 _log = logging.getLogger(__name__)
 
 
-@click.command(help="Create a new [cyan]jgo.toml[/] environment file.")
+@click.command(help=f"Create a new {JGO_TOML} environment file.")
 @click.argument(
     "endpoint",
     required=False,
     cls=click.RichArgument,
-    help="Maven coordinates (single or combined with [yellow]+[/]) "
-    "optionally followed by [yellow]@MainClass[/]",
+    help=f"Maven coordinates (single or combined with {PLUS_OPERATOR}) "
+    f"optionally followed by {AT_MAINCLASS}",
 )
 @click.pass_context
 def init(ctx, endpoint):

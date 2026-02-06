@@ -14,7 +14,7 @@ from ...env import EnvironmentSpec
 from ...env.jar import parse_manifest, read_raw_manifest
 from ...parse.coordinate import Coordinate
 from ...parse.endpoint import Endpoint
-from ...styles import COORD_HELP_FULL
+from ...styles import AT_MAINCLASS, COORD_HELP_FULL, JGO_TOML, PLUS_OPERATOR
 from ..args import build_parsed_args
 from ..console import console_print
 from ..context import create_environment_builder, create_maven_context
@@ -35,8 +35,8 @@ _log = logging.getLogger(__name__)
     "endpoint",
     required=False,
     cls=click.RichArgument,
-    help="Maven coordinates (single or combined with [yellow]+[/]) "
-    "optionally followed by [yellow]@MainClass[/]",
+    help=f"Maven coordinates (single or combined with {PLUS_OPERATOR}) "
+    f"optionally followed by {AT_MAINCLASS}",
 )
 @click.pass_context
 def classpath(ctx, endpoint):
@@ -72,8 +72,8 @@ def classpath(ctx, endpoint):
     "endpoint",
     required=False,
     cls=click.RichArgument,
-    help="Maven coordinates (single or combined with [yellow]+[/]) "
-    "optionally followed by [yellow]@MainClass[/]",
+    help=f"Maven coordinates (single or combined with {PLUS_OPERATOR}) "
+    f"optionally followed by {AT_MAINCLASS}",
 )
 @click.pass_context
 def envdir(ctx, endpoint):
@@ -109,8 +109,8 @@ def envdir(ctx, endpoint):
     "endpoint",
     required=False,
     cls=click.RichArgument,
-    help="Maven coordinates (single or combined with [yellow]+[/]) "
-    "optionally followed by [yellow]@MainClass[/]",
+    help=f"Maven coordinates (single or combined with {PLUS_OPERATOR}) "
+    f"optionally followed by {AT_MAINCLASS}",
 )
 @click.pass_context
 def jars(ctx, endpoint):
@@ -253,7 +253,7 @@ def javainfo(ctx, endpoint):
     ctx.exit(0)
 
 
-@click.command(help="Show entrypoints from [cyan]jgo.toml[/].")
+@click.command(help=f"Show entrypoints from {JGO_TOML}.")
 @click.pass_context
 def entrypoints(ctx):
     """Show available entrypoints defined in jgo.toml."""
@@ -439,7 +439,9 @@ def _print_deps(ctx, endpoint, list_mode: bool):
             ctx.exit(1)
         spec = EnvironmentSpec.load(spec_file)
         try:
-            coordinates = [Coordinate.parse(coord_str) for coord_str in spec.coordinates]
+            coordinates = [
+                Coordinate.parse(coord_str) for coord_str in spec.coordinates
+            ]
         except ValueError as e:
             _log.error(f"Invalid coordinate format: {e}")
             ctx.exit(1)

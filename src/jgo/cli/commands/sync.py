@@ -11,6 +11,7 @@ import rich_click as click
 from ...config import GlobalSettings
 from ...env.lockfile import LockFile
 from ...env.spec import EnvironmentSpec
+from ...styles import action, syntax
 from ...util import is_info_enabled
 from ...util.logging import log_exception_if_verbose
 from ..args import build_parsed_args
@@ -23,11 +24,13 @@ if TYPE_CHECKING:
 _log = logging.getLogger(__name__)
 
 
-@click.command(help="[green]Resolve[/] dependencies and [green]build[/] environment.")
+@click.command(
+    help=f"{action('Resolve')} dependencies and {action('build')} environment."
+)
 @click.option(
     "--force",
     is_flag=True,
-    help="Force rebuild even if [yellow]cached[/]",
+    help=f"Force rebuild even if {syntax('cached')}",
 )
 @click.pass_context
 def sync(ctx, force):

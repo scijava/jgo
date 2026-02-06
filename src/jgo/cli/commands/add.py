@@ -9,7 +9,7 @@ import rich_click as click
 
 from ...config import GlobalSettings
 from ...env.spec import EnvironmentSpec
-from ...styles import COORD_HELP_FULL
+from ...styles import COORD_HELP_FULL, JGO_TOML, syntax
 from ..args import build_parsed_args
 from ..output import handle_dry_run
 from . import sync as sync_cmd
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 _log = logging.getLogger(__name__)
 
 
-@click.command(help="Add dependencies to [cyan]jgo.toml[/].")
+@click.command(help=f"Add dependencies to {JGO_TOML}.")
 @click.argument(
     "coordinates",
     nargs=-1,
@@ -31,7 +31,7 @@ _log = logging.getLogger(__name__)
 @click.option(
     "--no-sync",
     is_flag=True,
-    help="Don't automatically [yellow]sync[/] after adding dependencies",
+    help=f"Don't automatically {syntax('sync')} after adding dependencies",
 )
 @click.pass_context
 def add(ctx, coordinates, no_sync):

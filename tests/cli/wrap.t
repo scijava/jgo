@@ -139,9 +139,9 @@ Ellipses should be used to keep table width within terminal width (80 chars).
 
   $ jgo --color=rich --wrap=raw info javainfo com.google.guava:guava:33.0.0-jre
   
-  \x1b[1mEnvironment:\x1b[0m \x1b[35m*/.cache/jgo/envs/com/google/guava/guava/\x1b[0m\x1b[95md1c57891c188d58a\x1b[0m (esc) (glob)
-  \x1b[1mModule-path JARs:\x1b[0m \x1b[1;36m7\x1b[0m (esc)
-  \x1b[1mTotal JARs:\x1b[0m \x1b[1;36m7\x1b[0m (esc)
+  \x1b[1;36mEnvironment:\x1b[0m \x1b[35m*/.cache/jgo/envs/com/google/guava/guava/\x1b[0m\x1b[95md1c57891c188d58a\x1b[0m (esc) (glob)
+  \x1b[1;36mModule-path JARs:\x1b[0m \x1b[1;36m7\x1b[0m (esc)
+  \x1b[1;36mTotal JARs:\x1b[0m \x1b[1;36m7\x1b[0m (esc)
   
   \x1b[36m╭─\x1b[0m\x1b[36m────────────────────────\x1b[0m\x1b[36m \x1b[0m\x1b[1;36mJava Version Requirements\x1b[0m\x1b[36m \x1b[0m\x1b[36m─────────────────────────\x1b[0m\x1b[36m─╮\x1b[0m (esc)
   \x1b[36m│\x1b[0m \x1b[1;36mMinimum Java version:\x1b[0m 8                                                      \x1b[36m│\x1b[0m (esc)
@@ -163,10 +163,10 @@ Ellipses should be used to keep table width within terminal width (80 chars).
 
   $ jgo --color=rich --wrap=smart info javainfo com.google.guava:guava:33.0.0-jre
   
-  \x1b[1mEnvironment:\x1b[0m  (esc)
+  \x1b[1;36mEnvironment:\x1b[0m  (esc)
   \x1b[35m*/.cache/jgo/envs/com/google/guava/guava/\x1b[0m\x1b[95md1c57891c188d58a\x1b[0m (esc) (glob)
-  \x1b[1mModule-path JARs:\x1b[0m \x1b[1;36m7\x1b[0m (esc)
-  \x1b[1mTotal JARs:\x1b[0m \x1b[1;36m7\x1b[0m (esc)
+  \x1b[1;36mModule-path JARs:\x1b[0m \x1b[1;36m7\x1b[0m (esc)
+  \x1b[1;36mTotal JARs:\x1b[0m \x1b[1;36m7\x1b[0m (esc)
   
   \x1b[36m╭─\x1b[0m\x1b[36m────────────────────────\x1b[0m\x1b[36m \x1b[0m\x1b[1;36mJava Version Requirements\x1b[0m\x1b[36m \x1b[0m\x1b[36m─────────────────────────\x1b[0m\x1b[36m─╮\x1b[0m (esc)
   \x1b[36m│\x1b[0m \x1b[1;36mMinimum Java version:\x1b[0m 8                                                      \x1b[36m│\x1b[0m (esc)

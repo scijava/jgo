@@ -14,7 +14,14 @@ import rich_click as click
 
 from ...config import GlobalSettings
 from ...parse.coordinate import Coordinate
-from ...styles import COORD_HELP_FULL, COORD_HELP_SHORT
+from ...styles import (
+    COORD_HELP_FULL,
+    COORD_HELP_SHORT,
+    MAVEN_REPOSITORIES,
+    secondary,
+    syntax,
+    tip,
+)
 from ...util.logging import log_exception_if_verbose
 from ..args import build_parsed_args
 from ..console import console_print
@@ -28,23 +35,25 @@ _log = logging.getLogger(__name__)
 
 
 @click.command(
-    help="Search for artifacts in [magenta]Maven repositories[/]. "
-    f"Supports plain text, coordinates ({COORD_HELP_SHORT}), or SOLR syntax ([cyan]g: a:[/]).",
-    epilog="[dim]TIP: Try [yellow]g:groupId a:artifactId[/] for SOLR syntax, "
-    f"{COORD_HELP_FULL} for coordinates, or plain text. "
-    "Use [yellow]*[/] for wildcards and [yellow]~[/] for fuzzy search.[/]",
+    help=f"Search for artifacts in {MAVEN_REPOSITORIES}. "
+    f"Supports plain text, coordinates ({COORD_HELP_SHORT}), or SOLR syntax ({syntax('g: a:')}).",
+    epilog=tip(
+        f"Try {syntax('g:groupId a:artifactId')} for SOLR syntax, "
+        f"{COORD_HELP_FULL} for coordinates, or plain text. "
+        f"Use {syntax('*')} for wildcards and {syntax('~')} for fuzzy search."
+    ),
 )
 @click.option(
     "--limit",
     type=int,
     default=20,
     metavar="N",
-    help="Limit number of results [dim](default: 20)[/]",
+    help=f"Limit number of results {secondary('(default: 20)')}",
 )
 @click.option(
     "--repository",
     metavar="NAME",
-    help="Search specific repository [dim](default: central)[/]",
+    help=f"Search specific repository {secondary('(default: central)')}",
 )
 @click.option(
     "--detailed",

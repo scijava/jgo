@@ -10,6 +10,16 @@ import rich_click as click
 
 from ...config import GlobalSettings
 from ...env import EnvironmentSpec
+from ...styles import (
+    AT_MAINCLASS,
+    DOUBLE_DASH,
+    JGO_TOML,
+    MAVEN_COORDINATES,
+    PLUS_OPERATOR,
+    TIP_DRY_RUN,
+    action,
+    secondary,
+)
 from ...util import is_debug_enabled
 from ..args import build_parsed_args, parse_remaining
 from ..context import (
@@ -25,40 +35,40 @@ _log = logging.getLogger(__name__)
 
 
 @click.command(
-    help="Run a Java application from [magenta]Maven coordinates[/] or [cyan]jgo.toml[/].",
-    epilog="[dim]TIP: Use [yellow]jgo --dry-run run[/] to see the command without executing it.[/]",
+    help=f"Run a Java application from {MAVEN_COORDINATES} or {JGO_TOML}.",
+    epilog=TIP_DRY_RUN,
     context_settings=dict(ignore_unknown_options=True, allow_interspersed_args=False),
 )
 @click.option(
     "--main-class",
     metavar="CLASS",
-    help="Main class to run (supports [green]auto-completion[/] for simple names)",
+    help=f"Main class to run (supports {action('auto-completion')} for simple names)",
 )
 @click.option(
     "--entrypoint",
     metavar="NAME",
-    help="Run specific entrypoint from [cyan]jgo.toml[/]",
+    help=f"Run specific entrypoint from {JGO_TOML}",
 )
 @click.option(
     "--add-classpath",
     multiple=True,
     metavar="PATH",
-    help="Append to classpath ([dim]JARs, directories, etc.[/])",
+    help=f"Append to classpath ({secondary('JARs, directories, etc.')})",
 )
 @click.argument(
     "endpoint",
     required=False,
     cls=click.RichArgument,
-    help="Maven coordinates (single or combined with [yellow]+[/]) "
-    "optionally followed by [yellow]@MainClass[/]",
+    help=f"Maven coordinates (single or combined with {PLUS_OPERATOR}) "
+    f"optionally followed by {AT_MAINCLASS}",
 )
 @click.argument(
     "remaining",
     nargs=-1,
     type=click.UNPROCESSED,
     cls=click.RichArgument,
-    help="JVM arguments and program arguments, separated by [yellow]--[/]. "
-    "Example: [dim]-- -Xmx2G -- script.py[/]",
+    help=f"JVM arguments and program arguments, separated by {DOUBLE_DASH}. "
+    f"Example: {secondary('-- -Xmx2G -- script.py')}",
 )
 @click.pass_context
 def run(ctx, main_class, entrypoint, add_classpath, endpoint, remaining):

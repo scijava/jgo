@@ -11,6 +11,7 @@ import rich_click as click
 from ..config.settings import GlobalSettings
 from ..constants import VERSION
 from ..parse.coordinate import set_full_coordinates
+from ..styles import JGO_TOML, STYLES, syntax, tip
 from ..util import setup_logging
 from .args import (
     PLATFORM_ALIASES,
@@ -102,21 +103,21 @@ def global_options(f):
         "--wrap",
         type=click.Choice(["auto", "smart", "raw"]),
         default="auto",
-        help="Control line wrapping: "
-        "[cyan]auto[/] (default: smart for TTY, raw for pipes/files), "
-        "[cyan]smart[/] (Rich's intelligent wrapping at word boundaries), "
-        "[cyan]raw[/] (natural terminal wrapping, no constraints).",
+        help=f"Control line wrapping: "
+        f"{syntax('auto')} (default: smart for TTY, raw for pipes/files), "
+        f"{syntax('smart')} (Rich's intelligent wrapping at word boundaries), "
+        f"{syntax('raw')} (natural terminal wrapping, no constraints).",
     )(f)
     f = click.option(
         "--color",
         type=click.Choice(["auto", "rich", "styled", "plain", "always", "never"]),
         default="auto",
-        help="Control output formatting: "
-        "[cyan]auto[/] (default: detect TTY), "
-        "[cyan]rich[/] (force color+style), "
-        "[cyan]styled[/] (bold/italic only, no color), "
-        "[cyan]plain[/] (no ANSI codes). "
-        "Aliases: [cyan]always[/]=rich, [cyan]never[/]=plain.",
+        help=f"Control output formatting: "
+        f"{syntax('auto')} (default: detect TTY), "
+        f"{syntax('rich')} (force color+style), "
+        f"{syntax('styled')} (bold/italic only, no color), "
+        f"{syntax('plain')} (no ANSI codes). "
+        f"Aliases: {syntax('always')}=rich, {syntax('never')}=plain.",
         envvar="COLOR",
         show_envvar=True,
     )(f)
@@ -125,7 +126,7 @@ def global_options(f):
         "--file",
         type=click.Path(path_type=Path),
         metavar="FILE",
-        help="Use specific environment file (default: [cyan]jgo.toml[/]).",
+        help=f"Use specific environment file (default: {JGO_TOML}).",
     )(f)
     f = click.option(
         "--dry-run",
@@ -251,9 +252,9 @@ def global_options(f):
         "--platform",
         type=click.Choice(all_platforms),
         metavar="PLATFORM",
-        help="Target platform for profile activation. "
-        "Sets os-name, os-family, and os-arch together. "
-        "Use '[yellow]jgo --platform x[/]' to see list of options.",
+        help=f"Target platform for profile activation. "
+        f"Sets os-name, os-family, and os-arch together. "
+        f"Use '{syntax('jgo --platform x')}' to see list of options.",
     )(f)
     f = click.option(
         "--os-name",
@@ -344,9 +345,9 @@ def global_options(f):
     cls=JgoGroup,
     invoke_without_command=True,
     context_settings=dict(ignore_unknown_options=True, allow_interspersed_args=False),
-    help="""[bold]Environment manager and launcher for Java programs.[/]
+    help=f"""[bold]Environment manager and launcher for Java programs.[/]
 
-Launch Java applications directly from [bold magenta]Maven coordinates[/],
+Launch Java applications directly from [bold {STYLES["domain"]}]Maven coordinates[/],
 build reproducible environments, manage Java versions,
 and resolve dependencies -- [bold]without manual installation[/].""",
 )
@@ -405,7 +406,9 @@ cli.add_command(update)
 
 @cli.group(
     help="Show information about environment or artifact.",
-    epilog="[dim]TIP: To see the launch command, use: [yellow]jgo --dry-run run <endpoint>[/]",
+    epilog=tip(
+        f"To see the launch command, use: {syntax('jgo --dry-run run <endpoint>')}"
+    ),
     invoke_without_command=True,
 )
 @click.pass_context

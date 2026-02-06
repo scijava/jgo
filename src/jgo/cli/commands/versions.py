@@ -9,6 +9,7 @@ import rich_click as click
 
 from ...config import GlobalSettings
 from ...parse.coordinate import Coordinate
+from ...styles import secondary
 from ..args import build_parsed_args
 from ..console import console_print
 from ..context import create_maven_context
@@ -85,7 +86,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
                 marker = " (release)"
             elif latest_version and version == latest_version:
                 marker = " (latest)"
-            console_print(f"  {version}[dim]{marker}[/]")
+            console_print(f"  {version}{secondary(marker)}")
 
     except Exception as e:
         _log.error(f"Error fetching versions: {e}")

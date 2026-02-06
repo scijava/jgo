@@ -12,6 +12,7 @@ from rich.markup import escape
 from ...config import GlobalSettings
 from ...config.manager import get_settings_path
 from ...config.settings import parse_config_key
+from ...styles import JGO_CONF_GLOBAL, JGO_TOML, error, filepath
 from ...util.toml import load_toml_file
 from ..args import build_parsed_args
 from ..console import console_print
@@ -188,7 +189,7 @@ def _get_config(config_file: Path, config_type: str, key: str, args: ParsedArgs)
 
     if not config_file.exists():
         console_print(
-            f"[red]Error:[/] No {config_type} configuration file found at {config_file}",
+            error(f"No {config_type} configuration file found at {config_file}"),
             stderr=True,
         )
         return 1
@@ -322,7 +323,7 @@ def _set_toml(
     data = load_toml_file(config_file)
     if data is None:
         console_print(
-            f"[red]Error:[/] No local configuration file found at {config_file}",
+            error(f"No local configuration file found at {config_file}"),
             stderr=True,
         )
         console_print(
@@ -360,7 +361,7 @@ def _unset_config(
 
     if not config_file.exists():
         console_print(
-            f"[red]Error:[/] No {config_type} configuration file found at {config_file}",
+            error(f"No {config_type} configuration file found at {config_file}"),
             stderr=True,
         )
         return 1
@@ -380,7 +381,7 @@ def _unset_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) ->
 
     if not config_file.exists():
         console_print(
-            f"[red]Error:[/] No configuration file found at {config_file}",
+            error(f"No configuration file found at {config_file}"),
             stderr=True,
         )
         return 1
@@ -494,13 +495,13 @@ def _parse_value(value: str) -> str | int | float | bool:
     "--global",
     "global_config",
     is_flag=True,
-    help="Use global configuration ([cyan]~/.config/jgo.conf[/]).",
+    help=f"Use global configuration ({JGO_CONF_GLOBAL}).",
 )
 @click.option(
     "--local",
     "local_config",
     is_flag=True,
-    help="Use local configuration ([cyan]jgo.toml[/]).",
+    help=f"Use local configuration ({JGO_TOML}).",
 )
 @click.pass_context
 def list_cmd(ctx, global_config, local_config):
@@ -527,19 +528,19 @@ def list_cmd(ctx, global_config, local_config):
 @click.argument(
     "key",
     cls=click.RichArgument,
-    help="Configuration key in dot notation (e.g., [cyan]repositories.scijava[/])",
+    help=f"Configuration key in dot notation (e.g., {filepath('repositories.scijava')})",
 )
 @click.option(
     "--global",
     "global_config",
     is_flag=True,
-    help="Use global configuration ([cyan]~/.config/jgo.conf[/])",
+    help=f"Use global configuration ({JGO_CONF_GLOBAL})",
 )
 @click.option(
     "--local",
     "local_config",
     is_flag=True,
-    help="Use local configuration ([cyan]jgo.toml[/])",
+    help=f"Use local configuration ({JGO_TOML})",
 )
 @click.pass_context
 def get_cmd(ctx, key, global_config, local_config):
@@ -566,20 +567,20 @@ def get_cmd(ctx, key, global_config, local_config):
 @click.argument(
     "key",
     cls=click.RichArgument,
-    help="Configuration key in dot notation (e.g., [cyan]repositories.scijava[/])",
+    help=f"Configuration key in dot notation (e.g., {filepath('repositories.scijava')})",
 )
 @click.argument("value", cls=click.RichArgument, help="Configuration value to set")
 @click.option(
     "--global",
     "global_config",
     is_flag=True,
-    help="Use global configuration ([cyan]~/.config/jgo.conf[/])",
+    help=f"Use global configuration ({JGO_CONF_GLOBAL})",
 )
 @click.option(
     "--local",
     "local_config",
     is_flag=True,
-    help="Use local configuration ([cyan]jgo.toml[/cyan])",
+    help=f"Use local configuration ({JGO_TOML})",
 )
 @click.pass_context
 def set_cmd(ctx, key, value, global_config, local_config):
@@ -606,19 +607,19 @@ def set_cmd(ctx, key, value, global_config, local_config):
 @click.argument(
     "key",
     cls=click.RichArgument,
-    help="Configuration key in dot notation (e.g., [cyan]repositories.scijava[/])",
+    help=f"Configuration key in dot notation (e.g., {filepath('repositories.scijava')})",
 )
 @click.option(
     "--global",
     "global_config",
     is_flag=True,
-    help="Use global configuration ([cyan]~/.config/jgo.conf[/]).",
+    help=f"Use global configuration ({JGO_CONF_GLOBAL}).",
 )
 @click.option(
     "--local",
     "local_config",
     is_flag=True,
-    help="Use local configuration ([cyan]jgo.toml[/]).",
+    help=f"Use local configuration ({JGO_TOML}).",
 )
 @click.pass_context
 def unset_cmd(ctx, key, global_config, local_config):

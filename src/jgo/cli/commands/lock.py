@@ -10,6 +10,7 @@ import rich_click as click
 from ...config import GlobalSettings
 from ...env.lockfile import LockFile, compute_spec_hash
 from ...env.spec import EnvironmentSpec
+from ...styles import JGO_LOCK_TOML
 from ...util.logging import log_exception_if_verbose
 from ..args import build_parsed_args
 from ..context import create_environment_builder, create_maven_context
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
 _log = logging.getLogger(__name__)
 
 
-@click.command(help="Update [cyan]jgo.lock.toml[/] without building environment.")
+@click.command(help=f"Update {JGO_LOCK_TOML} without building environment.")
 @click.option(
     "--check",
     is_flag=True,
