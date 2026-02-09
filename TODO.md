@@ -91,8 +91,6 @@ These can be deferred to 2.1.0 or later:
 Ideas for future releases (not tracked in this file, move to GitHub issues):
 
 - (HIGH) Parallel downloads for faster cache population
-- (HIGH) Progress bars for downloads
-- (HIGH) Dependency graph visualization (add --graphviz or similar output mode to tree/list/info)
 - (HIGH) Shell completion (bash/zsh)
 - (MEDIUM) Version ranges with semantic versioning
   - E.g. report on dependency divergence in desired scenarios (e.g. two different major versions)
