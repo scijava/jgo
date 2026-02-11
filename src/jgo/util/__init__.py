@@ -7,7 +7,14 @@ from .compat import (
     main_from_endpoint,
     maven_scijava_repository,
 )
-from .java import JavaLocator, JavaSource
+from .java import (
+    JavaLocator,
+    JavaSource,
+    JavaVersion,
+    parse_java_version,
+    parse_jdk_activation_range,
+    version_matches_jdk_range,
+)
 from .logging import (
     get_log,
     get_log_level,
@@ -18,20 +25,24 @@ from .logging import (
 from .maven import ensure_maven_available, fetch_maven
 
 __all__ = [
-    # Logging utilities
+    # compat
+    "add_jvm_args_as_necessary",
+    "main_from_endpoint",
+    "maven_scijava_repository",
+    # java
+    "JavaLocator",
+    "JavaSource",
+    "JavaVersion",
+    "parse_java_version",
+    "parse_jdk_activation_range",
+    "version_matches_jdk_range",
+    # logging
     "get_log",
     "get_log_level",
     "is_debug_enabled",
     "is_info_enabled",
     "setup_logging",
-    # Java detection and location
-    "JavaLocator",
-    "JavaSource",
-    # Maven utilities
+    # maven
     "ensure_maven_available",
     "fetch_maven",
-    # Compatibility/legacy utilities
-    "add_jvm_args_as_necessary",
-    "main_from_endpoint",
-    "maven_scijava_repository",
 ]

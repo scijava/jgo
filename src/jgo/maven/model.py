@@ -11,13 +11,13 @@ from dataclasses import dataclass, field
 from re import findall
 from typing import Iterable
 
-from .core import Dependency, DependencyNode, MavenContext, Project
-from .pom import POM
-from .version import (
+from ..util import (
     parse_java_version,
     parse_jdk_activation_range,
     version_matches_jdk_range,
 )
+from .core import Dependency, DependencyNode, MavenContext, Project
+from .pom import POM
 
 _log = logging.getLogger(__name__)
 
