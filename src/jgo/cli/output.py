@@ -11,12 +11,12 @@ from typing import TYPE_CHECKING
 
 from rich.panel import Panel
 
-from ..env.bytecode import (
+from ..env import (
     analyze_jar_bytecode,
     bytecode_to_java_version,
+    find_main_classes,
     round_to_lts,
 )
-from ..env.jar import find_main_classes
 from ..styles import critical, filepath, header, secondary, tip, warning
 from .console import console_print, get_wrap_mode
 from .rich.formatters import format_dependency_list, format_dependency_tree

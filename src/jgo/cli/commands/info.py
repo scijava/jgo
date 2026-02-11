@@ -10,8 +10,7 @@ from pathlib import Path
 import rich_click as click
 
 from ...config import GlobalSettings
-from ...env import EnvironmentSpec
-from ...env.jar import parse_manifest, read_raw_manifest
+from ...env import EnvironmentSpec, parse_manifest, read_raw_manifest
 from ...parse import Coordinate, Endpoint
 from ...styles import AT_MAINCLASS, COORD_HELP_FULL, JGO_TOML, PLUS_OPERATOR
 from ..args import build_parsed_args

@@ -8,8 +8,7 @@ from typing import TYPE_CHECKING
 import rich_click as click
 
 from ...config import GlobalSettings
-from ...env.lockfile import LockFile, compute_spec_hash
-from ...env.spec import EnvironmentSpec
+from ...env import EnvironmentSpec, LockFile, compute_spec_hash
 from ...styles import JGO_LOCK_TOML
 from ...util.logging import log_exception_if_verbose
 from ..args import build_parsed_args

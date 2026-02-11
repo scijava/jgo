@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import rich_click as click
 
 from ...config import GlobalSettings
-from ...env.spec import EnvironmentSpec
+from ...env import EnvironmentSpec
 from ...styles import COORD_HELP_FULL, JGO_TOML, syntax
 from ..args import build_parsed_args
 from ..output import handle_dry_run

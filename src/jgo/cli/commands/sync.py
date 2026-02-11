@@ -9,8 +9,7 @@ from typing import TYPE_CHECKING
 import rich_click as click
 
 from ...config import GlobalSettings
-from ...env.lockfile import LockFile
-from ...env.spec import EnvironmentSpec
+from ...env import EnvironmentSpec, LockFile
 from ...styles import action, syntax
 from ...util import is_info_enabled
 from ...util.logging import log_exception_if_verbose
