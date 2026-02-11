@@ -15,8 +15,6 @@ from pathlib import Path
 
 import cjdk
 
-from jgo.maven.version import parse_java_version
-
 _log = logging.getLogger(__name__)
 
 
@@ -216,7 +214,9 @@ class JavaLocator:
 
             version_str = match.group(1)
 
-            # Use shared Java version parser
+            # Use shared Java version parser (lazy import to avoid circular dependency)
+            from jgo.maven.version import parse_java_version
+
             java_version = parse_java_version(version_str)
             return java_version.major
 
