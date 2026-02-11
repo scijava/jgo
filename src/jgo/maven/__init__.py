@@ -9,8 +9,6 @@ This module provides pure-Python Maven functionality including:
 """
 
 from .core import (
-    DEFAULT_CLASSIFIER,
-    DEFAULT_PACKAGING,
     Artifact,
     Component,
     Dependency,
@@ -19,30 +17,30 @@ from .core import (
     Project,
 )
 from .metadata import Metadata, Metadatas, MetadataXML
-from .model import Model
+from .model import Model, ProfileConstraints
 from .pom import POM, XML
 from .resolver import MvnResolver, PythonResolver, Resolver
 
 __all__ = [
-    # Core classes
-    "MavenContext",
-    "Project",
-    "Component",
+    # core
     "Artifact",
+    "Component",
     "Dependency",
     "DependencyNode",
-    "XML",
-    # Resolvers
-    "Resolver",
-    "PythonResolver",
-    "MvnResolver",
-    # POM and metadata
-    "POM",
+    "MavenContext",
+    "Project",
+    # metadata
     "Metadata",
-    "MetadataXML",
     "Metadatas",
+    "MetadataXML",
+    # model
     "Model",
-    # Constants
-    "DEFAULT_CLASSIFIER",
-    "DEFAULT_PACKAGING",
+    "ProfileConstraints",
+    # pom
+    "POM",
+    "XML",
+    # resolver
+    "MvnResolver",
+    "PythonResolver",
+    "Resolver",
 ]
