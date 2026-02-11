@@ -11,12 +11,12 @@ from typing import TYPE_CHECKING
 
 from rich.tree import Tree
 
-from ...parse.coordinate import coord2str
+from ...parse import coord2str
 from .widgets import NoWrapTree
 
 if TYPE_CHECKING:
     from ...maven import DependencyNode
-    from ...parse.coordinate import Coordinate
+    from ...parse import Coordinate
 
 
 def _format_dependency(dep) -> str:

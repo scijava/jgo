@@ -9,7 +9,7 @@ import rich_click as click
 
 from ...config import GlobalSettings
 from ...env.spec import EnvironmentSpec
-from ...parse.coordinate import Coordinate
+from ...parse import Coordinate
 from ...styles import JGO_TOML, styled, syntax
 from ..args import build_parsed_args
 from ..output import handle_dry_run

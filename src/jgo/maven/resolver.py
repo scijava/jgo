@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 import requests
 
-from ..parse.coordinate import Coordinate
+from ..parse import Coordinate
 from .core import Dependency, DependencyNode, create_pom
 from .model import Model, ProfileConstraints
 from .pom import write_temp_pom

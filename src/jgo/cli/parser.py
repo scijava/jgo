@@ -10,7 +10,7 @@ import rich_click as click
 
 from ..config.settings import GlobalSettings
 from ..constants import VERSION
-from ..parse.coordinate import set_full_coordinates
+from ..parse import set_full_coordinates
 from ..styles import JGO_TOML, STYLES, syntax, tip
 from ..util import setup_logging
 from .args import (

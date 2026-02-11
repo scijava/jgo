@@ -32,7 +32,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Iterable
 
 from ..constants import MAVEN_CENTRAL_URL, default_maven_repo
-from ..parse.coordinate import Coordinate, coord2str
+from ..parse import Coordinate, coord2str
 from ..util.io import binary, text
 from .metadata import Metadatas, MetadataXML, SnapshotMetadataXML
 from .pom import POM, parse_dependency_element_to_coordinate

@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 import rich_click as click
 
 from ...config import GlobalSettings
-from ...parse.coordinate import Coordinate
+from ...parse import Coordinate
 from ...styles import (
     COORD_HELP_FULL,
     COORD_HELP_SHORT,

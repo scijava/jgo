@@ -14,8 +14,7 @@ from typing import TYPE_CHECKING
 from ..constants import default_jgo_cache
 from ..exec.java_source import JavaLocator, JavaSource
 from ..maven import Dependency
-from ..parse.coordinate import Coordinate
-from ..parse.endpoint import Endpoint
+from ..parse import Coordinate, Endpoint
 from .bytecode import detect_jar_java_version
 from .cache import is_cache_valid, read_metadata_cache, write_metadata_cache
 from .environment import Environment

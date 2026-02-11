@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import rich_click as click
 
 from ...config import GlobalSettings
-from ...parse.coordinate import Coordinate
+from ...parse import Coordinate
 from ...styles import secondary
 from ..args import build_parsed_args
 from ..console import console_print

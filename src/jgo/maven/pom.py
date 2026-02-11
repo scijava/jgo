@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree
 
-from ..parse.coordinate import Coordinate
+from ..parse import Coordinate
 
 
 def _text(el: ElementTree.Element, path: str | None = None) -> str | None:
