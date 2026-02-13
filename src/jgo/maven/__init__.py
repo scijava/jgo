@@ -20,6 +20,15 @@ from .metadata import Metadata, Metadatas, MetadataXML
 from .model import Model, ProfileConstraints
 from .pom import POM, XML
 from .resolver import MvnResolver, PythonResolver, Resolver
+from .version import (
+    MavenVersion,
+    VersionRange,
+    compare_semver,
+    compare_versions,
+    is_semver_1x,
+    parse_version_range,
+    version_in_range,
+)
 
 __all__ = [
     # core
@@ -43,4 +52,12 @@ __all__ = [
     "MvnResolver",
     "PythonResolver",
     "Resolver",
+    # version
+    "MavenVersion",
+    "VersionRange",
+    "compare_semver",
+    "compare_versions",
+    "is_semver_1x",
+    "parse_version_range",
+    "version_in_range",
 ]
