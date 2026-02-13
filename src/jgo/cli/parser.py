@@ -8,7 +8,7 @@ from pathlib import Path
 
 import rich_click as click
 
-from ..config.settings import GlobalSettings
+from ..config import GlobalSettings
 from ..constants import VERSION
 from ..parse import set_full_coordinates
 from ..styles import JGO_TOML, STYLES, syntax, tip

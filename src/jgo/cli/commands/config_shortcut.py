@@ -9,8 +9,7 @@ from typing import TYPE_CHECKING
 
 import rich_click as click
 
-from ...config import GlobalSettings
-from ...config.manager import get_settings_path
+from ...config import GlobalSettings, get_settings_path
 from ...util import is_info_enabled
 from ..args import build_parsed_args
 from ..console import console_print

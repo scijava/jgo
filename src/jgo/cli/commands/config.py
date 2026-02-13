@@ -9,9 +9,7 @@ from typing import TYPE_CHECKING
 import rich_click as click
 from rich.markup import escape
 
-from ...config import GlobalSettings
-from ...config.manager import get_settings_path
-from ...config.settings import parse_config_key
+from ...config import GlobalSettings, get_settings_path, parse_config_key
 from ...styles import JGO_CONF_GLOBAL, JGO_TOML, error, filepath
 from ...util.toml import load_toml_file
 from ..args import build_parsed_args
