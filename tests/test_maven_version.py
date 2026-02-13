@@ -4,17 +4,14 @@ import pytest
 
 from jgo.maven.version import (
     MavenVersion,
-    # Section 2: Maven version comparison
     Token,
-    # Section 3: Version ranges
     VersionRange,
+    _tokenize,
+    _trim_nulls,
     compare_semver,
     compare_versions,
-    # Section 1: SemVer
     is_semver_1x,
     parse_version_range,
-    tokenize,
-    trim_nulls,
     version_in_range,
 )
 
@@ -76,17 +73,17 @@ class TestCompareSemver:
 
 
 class TestTokenize:
-    """Test tokenize function."""
+    """Test _tokenize function."""
 
     def test_simple_version(self):
-        tokens = tokenize("1.0.0")
+        tokens = _tokenize("1.0.0")
         assert len(tokens) == 3
         assert tokens[0] == Token(1, "")
         assert tokens[1] == Token(0, ".")
         assert tokens[2] == Token(0, ".")
 
     def test_version_with_qualifier(self):
-        tokens = tokenize("1.0-alpha")
+        tokens = _tokenize("1.0-alpha")
         assert len(tokens) == 3
         assert tokens[0] == Token(1, "")
         assert tokens[1] == Token(0, ".")
@@ -94,7 +91,7 @@ class TestTokenize:
 
     def test_digit_letter_transition(self):
         # bar1baz should split into bar-1-baz
-        tokens = tokenize("bar1baz")
+        tokens = _tokenize("bar1baz")
         assert len(tokens) == 3
         assert tokens[0] == Token("bar", "")
         assert tokens[1] == Token(1, "-")
@@ -102,7 +99,7 @@ class TestTokenize:
 
     def test_complex_version(self):
         # From Maven spec: 1-1.foo-bar1baz-.1
-        tokens = tokenize("1-1.foo-bar1baz-.1")
+        tokens = _tokenize("1-1.foo-bar1baz-.1")
         # Should split into: 1 - 1 . foo - bar - 1 - baz - 0 . 1
         assert tokens[0] == Token(1, "")
         assert tokens[1] == Token(1, "-")
@@ -113,52 +110,52 @@ class TestTokenize:
         assert Token("baz", "-") in tokens
 
     def test_underscore_separator(self):
-        tokens = tokenize("1_0_0")
+        tokens = _tokenize("1_0_0")
         assert tokens[0] == Token(1, "")
         assert tokens[1] == Token(0, "_")
         assert tokens[2] == Token(0, "_")
 
     def test_empty_string(self):
-        assert tokenize("") == []
+        assert _tokenize("") == []
 
 
 class TestTrimNulls:
-    """Test trim_nulls function."""
+    """Test _trim_nulls function."""
 
     def test_trailing_zeros(self):
-        tokens = tokenize("1.0.0")
-        trimmed = trim_nulls(tokens)
+        tokens = _tokenize("1.0.0")
+        trimmed = _trim_nulls(tokens)
         assert len(trimmed) == 1
         assert trimmed[0].value == 1
 
     def test_trailing_ga(self):
-        tokens = tokenize("1.ga")
-        trimmed = trim_nulls(tokens)
+        tokens = _tokenize("1.ga")
+        trimmed = _trim_nulls(tokens)
         assert len(trimmed) == 1
         assert trimmed[0].value == 1
 
     def test_trailing_final(self):
-        tokens = tokenize("1.final")
-        trimmed = trim_nulls(tokens)
+        tokens = _tokenize("1.final")
+        trimmed = _trim_nulls(tokens)
         assert len(trimmed) == 1
         assert trimmed[0].value == 1
 
     def test_mixed_trailing_nulls(self):
         # 1.0.0-foo.0.0 should trim to 1-foo
-        tokens = tokenize("1.0.0-foo.0.0")
-        trimmed = trim_nulls(tokens)
+        tokens = _tokenize("1.0.0-foo.0.0")
+        trimmed = _trim_nulls(tokens)
         # Should be: 1, 0, 0, foo, 0, 0 -> trimmed at hyphen boundaries
         values = [t.value for t in trimmed]
         assert 1 in values
         assert "foo" in values
 
     def test_no_trailing_nulls(self):
-        tokens = tokenize("1.2.3")
-        trimmed = trim_nulls(tokens)
+        tokens = _tokenize("1.2.3")
+        trimmed = _trim_nulls(tokens)
         assert len(trimmed) == 3
 
     def test_empty_list(self):
-        assert trim_nulls([]) == []
+        assert _trim_nulls([]) == []
 
 
 class TestMavenVersion:

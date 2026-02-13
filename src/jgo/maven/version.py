@@ -9,8 +9,6 @@ This module provides three levels of version handling:
 
 2. Maven Version Comparison (non-SemVer)
    - MavenVersion class - Parsed version with comparison operators
-   - tokenize() - Split version into tokens per Maven spec
-   - trim_nulls() - Remove trailing null values
    - compare_versions() - Compare two version strings
 
 3. Maven Version Ranges
@@ -142,7 +140,7 @@ QUALIFIER_ORDER: dict[str, int] = {
 _NULL_VALUES: set[str | int] = {0, "", "final", "ga", "release"}
 
 
-def tokenize(version: str) -> list[Token]:
+def _tokenize(version: str) -> list[Token]:
     """
     Split version string into tokens per Maven spec.
 
@@ -210,7 +208,7 @@ def _parse_token_value(s: str) -> int | str:
     return s.lower()
 
 
-def trim_nulls(tokens: list[Token]) -> list[Token]:
+def _trim_nulls(tokens: list[Token]) -> list[Token]:
     """
     Remove trailing null values from token list.
 
@@ -351,7 +349,7 @@ class MavenVersion:
             version_string: Maven version string
         """
         self._original = version_string
-        self._tokens = trim_nulls(tokenize(version_string))
+        self._tokens = _trim_nulls(_tokenize(version_string))
 
     @property
     def tokens(self) -> list[Token]:
