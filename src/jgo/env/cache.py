@@ -16,7 +16,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .jar import ModuleInfo
+from .jar import JarType, ModuleInfo
 
 # Cache format version - increment when schema changes
 CACHE_FORMAT_VERSION = 2
@@ -29,7 +29,7 @@ class ArtifactMetadata:
     version: int  # Cache format version
     sha256: str  # SHA256 hash of the JAR file
     analyzed_at: str  # ISO 8601 timestamp
-    jar_type: int | None  # 1-4 JPMS classification, or None
+    jar_type: JarType | None  # JPMS classification, or None if not analyzed
     min_java_version: int | None  # Minimum Java version, or None
     module_info: dict[str, object]  # ModuleInfo as dict
 
@@ -92,11 +92,12 @@ def read_metadata_cache(
         if data.get("version") != CACHE_FORMAT_VERSION:
             return None
 
+        raw_jar_type = data.get("jar_type")
         return ArtifactMetadata(
             version=data["version"],
             sha256=data["sha256"],
             analyzed_at=data["analyzed_at"],
-            jar_type=data.get("jar_type"),
+            jar_type=JarType(raw_jar_type) if raw_jar_type is not None else None,
             min_java_version=data.get("min_java_version"),
             module_info=data["module_info"],
         )
@@ -112,7 +113,7 @@ def write_metadata_cache(
     filename: str,
     cache_dir: Path,
     sha256: str,
-    jar_type: int | None,
+    jar_type: JarType | None,
     min_java_version: int | None,
     module_info: ModuleInfo,
 ) -> None:
@@ -126,7 +127,7 @@ def write_metadata_cache(
         filename: JAR filename
         cache_dir: Base cache directory
         sha256: SHA256 hash of the JAR
-        jar_type: JPMS classification (1-4) or None
+        jar_type: JPMS classification or None
         min_java_version: Minimum Java version or None
         module_info: Module information
     """

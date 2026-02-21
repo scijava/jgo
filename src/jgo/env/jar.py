@@ -10,7 +10,17 @@ import subprocess
 import warnings
 import zipfile
 from dataclasses import dataclass
+from enum import IntEnum
 from pathlib import Path
+
+
+class JarType(IntEnum):
+    """JPMS classification of a JAR file."""
+
+    EXPLICIT = 1  # has module-info.class
+    AUTOMATIC = 2  # has Automatic-Module-Name in manifest
+    DERIVABLE = 3  # name derivable from filename, no descriptor
+    PLAIN = 4  # non-modularizable (unnamed package, reserved keyword, etc.)
 
 
 @dataclass
@@ -548,7 +558,7 @@ def autocomplete_main_class(
     return main_class
 
 
-def classify_jar(jar_path: Path, jar_executable: Path) -> int:
+def classify_jar(jar_path: Path, jar_executable: Path) -> JarType:
     """
     Classify a JAR file's module compatibility using `jar --describe-module`.
 
@@ -563,23 +573,23 @@ def classify_jar(jar_path: Path, jar_executable: Path) -> int:
         jar_executable: Path to the `jar` executable (from JDK 9+)
 
     Returns:
-        JAR type classification:
-        1: Explicit module (has module-info.class)
-        2: Automatic module with name (has Automatic-Module-Name in manifest)
-        3: Derivable automatic module (filename produces valid module name)
-        4: Non-modularizable (invalid module name or other JPMS issues)
+        JarType classification:
+        EXPLICIT:  has module-info.class
+        AUTOMATIC: has Automatic-Module-Name in manifest
+        DERIVABLE: filename produces valid module name
+        PLAIN:     non-modularizable (invalid module name or other JPMS issues)
 
     Examples:
         >>> classify_jar(Path("asm-9.7.jar"), Path("/usr/lib/jvm/java-11/bin/jar"))
-        1  # Has module-info.class
+        JarType.EXPLICIT  # Has module-info.class
         >>> classify_jar(Path("args4j-2.33.jar"), Path("/usr/lib/jvm/java-11/bin/jar"))
-        2  # Has Automatic-Module-Name
+        JarType.AUTOMATIC  # Has Automatic-Module-Name
         >>> classify_jar(Path("commons-io-2.11.0.jar"), Path("/usr/lib/jvm/java-11/bin/jar"))
-        3  # Can derive "commons.io" from filename
+        JarType.DERIVABLE  # Can derive "commons.io" from filename
         >>> classify_jar(Path("compiler-interface-1.3.5.jar"), Path("/usr/lib/jvm/java-11/bin/jar"))
-        4  # "compiler.interface" is invalid (interface is keyword)
+        JarType.PLAIN  # "compiler.interface" is invalid (interface is keyword)
         >>> classify_jar(Path("snakeyaml-2.0.jar"), Path("/usr/lib/jvm/java-11/bin/jar"))
-        1  # Multi-release JAR with module-info in META-INF/versions/9/
+        JarType.EXPLICIT  # Multi-release JAR with module-info in META-INF/versions/9/
     """
     try:
         result = subprocess.run(
@@ -591,7 +601,7 @@ def classify_jar(jar_path: Path, jar_executable: Path) -> int:
         )
     except (subprocess.TimeoutExpired, FileNotFoundError):
         # jar tool not available or timed out - assume non-modularizable
-        return 4
+        return JarType.PLAIN
 
     output = result.stdout.strip()
     stderr = result.stderr.strip()
@@ -633,7 +643,7 @@ def classify_jar(jar_path: Path, jar_executable: Path) -> int:
                 output = result.stdout.strip()
                 stderr = result.stderr.strip()
             except (subprocess.TimeoutExpired, FileNotFoundError):
-                return 4
+                return JarType.PLAIN
 
     # Check for errors in stderr indicating JPMS issues
     if result.returncode != 0 or stderr:
@@ -643,26 +653,26 @@ def classify_jar(jar_path: Path, jar_executable: Path) -> int:
             "invalid module name" in stderr_lower
             or "not a java identifier" in stderr_lower
         ):
-            return 4
+            return JarType.PLAIN
         if "provider class" in stderr_lower and "not in jar" in stderr_lower:
             # InvalidModuleDescriptorException (e.g., xalan case)
-            return 4
+            return JarType.PLAIN
         # Other errors - assume non-modularizable
         if result.returncode != 0:
-            return 4
+            return JarType.PLAIN
 
-    # Type 1: Explicit module (has module-info.class)
+    # EXPLICIT: has module-info.class
     # Example: "org.objectweb.asm@9.7 jar:file:///path/to/asm-9.7.jar!/module-info.class"
     # Multi-release: "org.yaml.snakeyaml@2.0 jar:file:///.../snakeyaml-2.0.jar/!META-INF/versions/9/module-info.class"
     if "!/module-info.class" in output or (
         "!/META-INF/versions/" in output and "/module-info.class" in output
     ):
-        return 1
+        return JarType.EXPLICIT
     # Alternative format without path separator
     if "jar:file:" in output and "@" in output and " automatic" not in output:
-        return 1
+        return JarType.EXPLICIT
 
-    # Type 3: Derivable automatic module (check BEFORE type 2!)
+    # DERIVABLE: check BEFORE AUTOMATIC to avoid false matches
     # Example: "No module descriptor found. Derived automatic module.\n\nmines.jtk@20151125 automatic"
     if "No module descriptor found" in output:
         if "Derived automatic module" in output:
@@ -670,23 +680,23 @@ def classify_jar(jar_path: Path, jar_executable: Path) -> int:
             # modules: Java raises InvalidModuleDescriptorException at runtime.
             # jar --describe-module does not check for this condition.
             if has_toplevel_classes(jar_path):
-                return 4
-            return 3
+                return JarType.PLAIN
+            return JarType.DERIVABLE
         else:
             # Derivation failed - non-modularizable
-            return 4
+            return JarType.PLAIN
 
-    # Type 2: Automatic module with Automatic-Module-Name
+    # AUTOMATIC: has Automatic-Module-Name in manifest
     # Example: "args4j@2.33 automatic"
-    # This check comes AFTER type 3 to avoid false matches
+    # This check comes AFTER DERIVABLE to avoid false matches
     if " automatic" in output and "@" in output:
         # Same unnamed-package check applies to Automatic-Module-Name JARs
         if has_toplevel_classes(jar_path):
-            return 4
-        return 2
+            return JarType.PLAIN
+        return JarType.AUTOMATIC
 
     # Unknown output format - conservatively assume non-modularizable
-    return 4
+    return JarType.PLAIN
 
 
 def has_main_method(class_bytes: bytes) -> bool:

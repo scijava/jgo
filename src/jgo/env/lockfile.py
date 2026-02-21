@@ -13,6 +13,7 @@ from pathlib import Path
 
 from ..maven import Dependency
 from ..util.serialization import FieldValidatorMixin, TOMLSerializableMixin
+from .jar import JarType
 
 
 class LockedDependency(TOMLSerializableMixin, FieldValidatorMixin):
@@ -31,7 +32,7 @@ class LockedDependency(TOMLSerializableMixin, FieldValidatorMixin):
         is_modular: bool = False,
         module_name: str | None = None,
         placement: str | None = None,
-        jar_type: int | None = None,
+        jar_type: JarType | None = None,
     ):
         self.groupId = groupId
         self.artifactId = artifactId
@@ -42,7 +43,7 @@ class LockedDependency(TOMLSerializableMixin, FieldValidatorMixin):
         self.is_modular = is_modular
         self.module_name = module_name
         self.placement = placement  # "class-path", "module-path", or None (auto)
-        self.jar_type = jar_type  # 1=explicit module, 2=automatic with name, 3=derivable, 4=non-modularizable, None=not analyzed
+        self.jar_type = jar_type  # JarType or None if not analyzed
 
     @classmethod
     def from_dependency(cls, dep: Dependency) -> "LockedDependency":
@@ -106,7 +107,9 @@ class LockedDependency(TOMLSerializableMixin, FieldValidatorMixin):
             is_modular=data.get("is_modular", False),
             module_name=data.get("module_name"),
             placement=data.get("placement"),
-            jar_type=data.get("jar_type"),
+            jar_type=JarType(data["jar_type"])
+            if data.get("jar_type") is not None
+            else None,
         )
 
     def __repr__(self) -> str:

@@ -19,6 +19,7 @@ from .bytecode import detect_jar_java_version
 from .cache import is_cache_valid, read_metadata_cache, write_metadata_cache
 from .environment import Environment
 from .jar import (
+    JarType,
     ModuleInfo,
     autocomplete_main_class,
     classify_jar,
@@ -814,15 +815,20 @@ class EnvironmentBuilder:
                     # Baseline jar tool available - use precise classification
                     if module_info.is_modular:
                         # Fast path: JAR has module-info.class or Automatic-Module-Name
-                        # Type 1: Has module-info.class (not automatic)
-                        # Type 2: Has Automatic-Module-Name (is automatic)
-                        jar_type = 2 if module_info.is_automatic else 1
-                        # Automatic modules (type 2) cannot have classes in the unnamed
-                        # package - Java raises InvalidModuleDescriptorException at runtime.
-                        if jar_type == 2 and has_toplevel_classes(source_path):
-                            jar_type = 4
+                        jar_type = (
+                            JarType.AUTOMATIC
+                            if module_info.is_automatic
+                            else JarType.EXPLICIT
+                        )
+                        # AUTOMATIC JARs with classes in the unnamed package cannot be
+                        # used on the module path - Java raises
+                        # InvalidModuleDescriptorException at runtime.
+                        if jar_type == JarType.AUTOMATIC and has_toplevel_classes(
+                            source_path
+                        ):
+                            jar_type = JarType.PLAIN
                     else:
-                        # Slow path: Need subprocess to distinguish type 3 vs 4
+                        # Slow path: Need subprocess to distinguish DERIVABLE vs PLAIN
                         _log.debug(
                             f"Analyzing JAR for modularizability: {artifact.filename}"
                         )
@@ -847,8 +853,7 @@ class EnvironmentBuilder:
 
             # Determine target directory based on jar_type
             if jar_type is not None:
-                # Types 1/2/3 are modularizable, type 4 is not
-                target_dir = modules_dir if jar_type in (1, 2, 3) else jars_dir
+                target_dir = modules_dir if jar_type != JarType.PLAIN else jars_dir
             else:
                 # No classification - use module_info
                 target_dir = modules_dir if module_info.is_modular else jars_dir
