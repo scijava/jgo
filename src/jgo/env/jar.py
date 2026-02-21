@@ -101,6 +101,32 @@ def get_automatic_module_name(jar_path: Path) -> str | None:
     return manifest.get("Automatic-Module-Name") if manifest else None
 
 
+def has_toplevel_classes(jar_path: Path) -> bool:
+    """
+    Check if a JAR has .class files in the top-level directory (unnamed package).
+
+    JARs with classes in the unnamed package cannot be used as automatic modules
+    on the Java module path (Java 9+). This would cause:
+        java.lang.module.InvalidModuleDescriptorException:
+            Foo.class found in top-level directory (unnamed package not allowed in module)
+
+    Args:
+        jar_path: Path to JAR file
+
+    Returns:
+        True if any .class files exist in the top-level directory
+    """
+    try:
+        with zipfile.ZipFile(jar_path) as jar:
+            for name in jar.namelist():
+                # Top-level .class: no "/" in name (or only a trailing slash for dirs)
+                if name.endswith(".class") and "/" not in name:
+                    return True
+    except (zipfile.BadZipFile, FileNotFoundError):
+        pass
+    return False
+
+
 def _find_module_info_path(
     jar_path: Path, java_version: int | None = None
 ) -> str | None:
@@ -640,6 +666,11 @@ def classify_jar(jar_path: Path, jar_executable: Path) -> int:
     # Example: "No module descriptor found. Derived automatic module.\n\nmines.jtk@20151125 automatic"
     if "No module descriptor found" in output:
         if "Derived automatic module" in output:
+            # JARs with classes in the unnamed package cannot be used as automatic
+            # modules: Java raises InvalidModuleDescriptorException at runtime.
+            # jar --describe-module does not check for this condition.
+            if has_toplevel_classes(jar_path):
+                return 4
             return 3
         else:
             # Derivation failed - non-modularizable
@@ -649,6 +680,9 @@ def classify_jar(jar_path: Path, jar_executable: Path) -> int:
     # Example: "args4j@2.33 automatic"
     # This check comes AFTER type 3 to avoid false matches
     if " automatic" in output and "@" in output:
+        # Same unnamed-package check applies to Automatic-Module-Name JARs
+        if has_toplevel_classes(jar_path):
+            return 4
         return 2
 
     # Unknown output format - conservatively assume non-modularizable

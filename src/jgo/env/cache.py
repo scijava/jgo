@@ -19,7 +19,7 @@ from pathlib import Path
 from .jar import ModuleInfo
 
 # Cache format version - increment when schema changes
-CACHE_FORMAT_VERSION = 1
+CACHE_FORMAT_VERSION = 2
 
 
 @dataclass

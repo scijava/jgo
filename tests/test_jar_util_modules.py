@@ -11,6 +11,7 @@ from jgo.env.jar import (
     get_automatic_module_name,
     get_module_info_paths,
     has_module_info,
+    has_toplevel_classes,
     parse_module_name_from_descriptor,
 )
 
@@ -376,3 +377,62 @@ def test_module_info_equality():
 
     assert info1 == info2
     assert info1 != info3
+
+
+# =============================================================================
+# Tests for has_toplevel_classes
+# =============================================================================
+
+
+def make_jar_bytes(entries: dict[str, bytes]) -> bytes:
+    """Create an in-memory JAR (zip) with the given filename→content entries."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode="w") as zf:
+        for name, data in entries.items():
+            zf.writestr(name, data)
+    return buf.getvalue()
+
+
+def test_has_toplevel_classes_empty_jar(tmp_path):
+    """A JAR with no .class files has no top-level classes."""
+    jar = tmp_path / "empty.jar"
+    jar.write_bytes(
+        make_jar_bytes({"META-INF/MANIFEST.MF": b"Manifest-Version: 1.0\n"})
+    )
+    assert not has_toplevel_classes(jar)
+
+
+def test_has_toplevel_classes_packaged_only(tmp_path):
+    """A JAR whose .class files are all in sub-packages has no top-level classes."""
+    jar = tmp_path / "packaged.jar"
+    jar.write_bytes(
+        make_jar_bytes(
+            {
+                "com/example/Foo.class": b"\xca\xfe\xba\xbe",
+                "com/example/bar/Bar.class": b"\xca\xfe\xba\xbe",
+            }
+        )
+    )
+    assert not has_toplevel_classes(jar)
+
+
+def test_has_toplevel_classes_with_toplevel(tmp_path):
+    """A JAR with a .class at the root (unnamed package) is detected."""
+    jar = tmp_path / "toplevel.jar"
+    jar.write_bytes(
+        make_jar_bytes(
+            {
+                "Transform_Rigid.class": b"\xca\xfe\xba\xbe",
+                "com/example/Foo.class": b"\xca\xfe\xba\xbe",
+            }
+        )
+    )
+    assert has_toplevel_classes(jar)
+
+
+def test_has_toplevel_classes_bad_zip(tmp_path):
+    """A corrupt/non-existent file returns False without raising."""
+    assert not has_toplevel_classes(tmp_path / "nonexistent.jar")
+    bad = tmp_path / "bad.jar"
+    bad.write_bytes(b"not a zip file")
+    assert not has_toplevel_classes(bad)

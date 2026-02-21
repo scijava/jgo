@@ -24,6 +24,7 @@ from .jar import (
     classify_jar,
     detect_main_class_from_jar,
     detect_module_info,
+    has_toplevel_classes,
 )
 from .linking import LinkStrategy, link_file
 from .lockfile import LockedDependency, LockFile, compute_sha256, compute_spec_hash
@@ -816,6 +817,10 @@ class EnvironmentBuilder:
                         # Type 1: Has module-info.class (not automatic)
                         # Type 2: Has Automatic-Module-Name (is automatic)
                         jar_type = 2 if module_info.is_automatic else 1
+                        # Automatic modules (type 2) cannot have classes in the unnamed
+                        # package - Java raises InvalidModuleDescriptorException at runtime.
+                        if jar_type == 2 and has_toplevel_classes(source_path):
+                            jar_type = 4
                     else:
                         # Slow path: Need subprocess to distinguish type 3 vs 4
                         _log.debug(
