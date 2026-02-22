@@ -57,37 +57,39 @@ def execute(args: ParsedArgs, config: dict) -> int:
         Exit code (0 for success, non-zero for failure)
     """
 
-    endpoint = args.endpoint
-    if not endpoint:
-        _log.error("init requires an endpoint")
-        return 1
-
     # Use current directory name as environment name (like pixi and uv do)
     current_dir = Path.cwd()
     env_name = current_dir.name
 
-    # Expand shortcuts (supports + composition)
-    shortcuts = config.get("shortcuts", {})
-    jgoconfig = GlobalSettings(shortcuts=shortcuts)
-    expanded_endpoint = jgoconfig.expand_shortcuts(endpoint)
+    endpoint = args.endpoint
+    if endpoint:
+        # Expand shortcuts (supports + composition)
+        shortcuts = config.get("shortcuts", {})
+        jgoconfig = GlobalSettings(shortcuts=shortcuts)
+        expanded_endpoint = jgoconfig.expand_shortcuts(endpoint)
 
-    if expanded_endpoint != endpoint:
-        _log.info(f"Expanded shortcuts: {endpoint} → {expanded_endpoint}")
+        if expanded_endpoint != endpoint:
+            _log.info(f"Expanded shortcuts: {endpoint} → {expanded_endpoint}")
 
-    # Parse endpoint to extract coordinates and entrypoints
-    # Support composition with '+': track original shortcut names for entrypoint naming
-    coordinates, entrypoints, default_entrypoint = _parse_endpoint_with_shortcuts(
-        endpoint, expanded_endpoint, shortcuts
-    )
+        # Parse endpoint to extract coordinates and entrypoints
+        # Support composition with '+': track original shortcut names for entrypoint naming
+        coordinates, entrypoints, default_entrypoint = _parse_endpoint_with_shortcuts(
+            endpoint, expanded_endpoint, shortcuts
+        )
 
-    spec = EnvironmentSpec(
-        name=env_name,
-        description=f"Generated from {endpoint}",
-        coordinates=coordinates,
-        entrypoints=entrypoints,
-        default_entrypoint=default_entrypoint,
-        cache_dir=".jgo",
-    )
+        spec = EnvironmentSpec(
+            name=env_name,
+            description=f"Generated from {endpoint}",
+            coordinates=coordinates,
+            entrypoints=entrypoints,
+            default_entrypoint=default_entrypoint,
+            cache_dir=".jgo",
+        )
+    else:
+        spec = EnvironmentSpec(
+            name=env_name,
+            cache_dir=".jgo",
+        )
 
     output_file = args.file or Path("jgo.toml")
 

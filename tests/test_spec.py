@@ -96,22 +96,29 @@ def test_environment_spec_minimal():
 
 
 def test_environment_spec_validation_missing_coordinates():
-    """Test that EnvironmentSpec validates missing coordinates."""
+    """Test that EnvironmentSpec allows missing/empty coordinates (for bare envs)."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         spec_path = Path(tmp_dir) / "jgo.toml"
 
-        # Write invalid TOML (missing coordinates)
+        # Write TOML with no coordinates field — should load fine as an empty env
         spec_path.write_text("""
 [environment]
 name = "test"
 
 [dependencies]
-# Missing coordinates field
+# No coordinates field
 """)
 
-        # Should raise ValueError
-        with pytest.raises(ValueError, match="Missing required"):
-            EnvironmentSpec.load(spec_path)
+        spec = EnvironmentSpec.load(spec_path)
+        assert spec.coordinates == []
+
+        # Also allow completely missing [dependencies] section
+        spec_path.write_text("""
+[environment]
+name = "test"
+""")
+        spec = EnvironmentSpec.load(spec_path)
+        assert spec.coordinates == []
 
 
 def test_environment_spec_validation_invalid_coordinate():

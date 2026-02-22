@@ -1,11 +1,5 @@
 Tests jgo init command.
 
-Test init requires an endpoint argument.
-
-  $ jgo init
-  ERROR    init requires an endpoint                                              
-  [1]
-
 Test init --help shows usage.
 
   $ jgo init --help
@@ -21,6 +15,29 @@ Test init --help shows usage.
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --help  Show this message and exit.                                          │
   ╰──────────────────────────────────────────────────────────────────────────────╯
+
+
+
+
+Test bare init (no endpoint) creates an empty environment.
+
+  $ jgo --dry-run init
+  [DRY-RUN] Would create jgo.toml:
+  
+  name = "init.t"
+  
+  
+  coordinates = []
+  
+  
+  cache_dir = ".jgo"
+  
+
+
+
+
+
+
 
 Test init with --dry-run.
 
@@ -42,6 +59,14 @@ Test init with --dry-run.
   
   cache_dir = ".jgo"
   
+
+
+
+
+
+
+
+
 
 Test init checks for existing jgo.toml.
 

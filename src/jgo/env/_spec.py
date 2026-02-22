@@ -137,20 +137,11 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
         # [repositories] section (optional)
         repositories = data.get("repositories", {})
 
-        # [dependencies] section (required)
-        deps_section = data.get("dependencies")
-        if not deps_section:
-            raise ValueError(
-                "Missing required [dependencies] section. "
-                "Add at least one coordinate: coordinates = ['group:artifact:version']"
-            )
-
-        coordinates = deps_section.get("coordinates")
-        if not coordinates:
-            raise ValueError(
-                "Missing required 'coordinates' in [dependencies] section. "
-                "Add at least one: coordinates = ['group:artifact:version']"
-            )
+        # [dependencies] section (optional for empty environments)
+        deps_section = data.get("dependencies", {})
+        coordinates = deps_section.get("coordinates", [])
+        if coordinates is None:
+            coordinates = []
 
         if not isinstance(coordinates, list):
             raise ValueError("'coordinates' must be a list of strings")
