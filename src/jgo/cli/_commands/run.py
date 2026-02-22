@@ -227,8 +227,8 @@ def _run_spec(args: ParsedArgs, config: dict) -> int:
     _log.info(f"Running {spec.name}...")
 
     runner = create_java_runner(args, config, spec=spec)
-    # Use environment's main class if set, otherwise fall back to args.main_class
-    main_class_to_use = environment.main_class or args.main_class
+    # Use environment's main class for the selected entrypoint, fallback to args.main_class
+    main_class_to_use = environment.get_main_class(args.entrypoint) or args.main_class
     result = runner.run(
         environment=environment,
         main_class=main_class_to_use,
