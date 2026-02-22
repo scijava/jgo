@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from ..maven import Dependency
-from ..util import FieldValidatorMixin, TOMLSerializableMixin
+from ..util.serialization import FieldValidatorMixin, TOMLSerializableMixin
 from ._jar import JarType
 
 

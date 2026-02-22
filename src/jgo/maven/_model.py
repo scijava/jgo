@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from re import findall
 from typing import Iterable
 
-from ..util import (
+from ..util.java import (
     parse_java_version,
     parse_jdk_activation_range,
     version_matches_jdk_range,

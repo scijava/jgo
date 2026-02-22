@@ -11,7 +11,7 @@ from typing import Any, Callable, ClassVar
 
 import tomli_w
 
-from ._toml import tomllib
+from .toml import tomllib
 
 
 class TOMLSerializableMixin:

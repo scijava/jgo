@@ -11,7 +11,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from ..util import JavaLocator, JavaSource
+from ..util.java import JavaLocator, JavaSource
 from ._config import JVMConfig
 
 _log = logging.getLogger(__name__)

@@ -20,7 +20,7 @@ from ...styles import (
     action,
     secondary,
 )
-from ...util import is_debug_enabled
+from ...util.logging import is_debug_enabled
 from .._args import build_parsed_args, parse_remaining
 from .._context import (
     create_environment_builder,

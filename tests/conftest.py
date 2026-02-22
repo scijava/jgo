@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from tests.fixtures.thicket import DEFAULT_SEED, generate_thicket
 
-from jgo.util._maven import ensure_maven_available
+from jgo.util.mvn import ensure_maven_available
 
 
 @pytest.fixture(scope="session")

@@ -15,7 +15,7 @@ import pytest
 from jgo.env import EnvironmentBuilder
 from jgo.maven import Component, Dependency, MavenContext, MvnResolver, PythonResolver
 from jgo.parse._endpoint import Endpoint
-from jgo.util._maven import ensure_maven_available
+from jgo.util.mvn import ensure_maven_available
 
 
 @dataclass(frozen=True)

@@ -12,7 +12,7 @@ from ..config import GlobalSettings
 from ..constants import VERSION
 from ..parse import set_full_coordinates
 from ..styles import JGO_TOML, STYLES, syntax, tip
-from ..util import setup_logging
+from ..util.logging import setup_logging
 from ._args import (
     PLATFORM_ALIASES,
     PLATFORMS,

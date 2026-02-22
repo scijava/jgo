@@ -16,7 +16,8 @@ from ..env import EnvironmentBuilder, EnvironmentSpec, LinkStrategy
 from ..exec import JavaRunner, JavaSource, JVMConfig
 from ..exec import is_gc_flag, normalize_gc_flag
 from ..maven import MavenContext, MvnResolver, ProfileConstraints, PythonResolver
-from ..util import ensure_maven_available, is_debug_enabled, is_info_enabled
+from ..util.logging import is_debug_enabled, is_info_enabled
+from ..util.mvn import ensure_maven_available
 from .rich._progress import download_progress_callback
 
 if TYPE_CHECKING:

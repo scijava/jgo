@@ -22,7 +22,7 @@ from ...styles import (
     syntax,
     tip,
 )
-from ...util._logging import log_exception_if_verbose
+from ...util.logging import log_exception_if_verbose
 from .._args import build_parsed_args
 from .._console import console_print
 from .._output import print_dry_run

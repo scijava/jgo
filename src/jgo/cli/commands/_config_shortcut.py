@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import rich_click as click
 
 from ...config import GlobalSettings, get_settings_path
-from ...util import is_info_enabled
+from ...util.logging import is_info_enabled
 from .._args import build_parsed_args
 from .._console import console_print
 from .._output import print_dry_run

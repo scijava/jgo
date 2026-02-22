@@ -19,7 +19,7 @@ from jgo.jgo import (
     jgo_parser,
     run,
 )
-from jgo.util import main_from_endpoint
+from jgo.util.compat import main_from_endpoint
 
 
 def _call_args(mock: MagicMock) -> tuple[tuple, dict]:

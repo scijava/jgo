@@ -10,7 +10,7 @@ import rich_click as click
 from ...config import GlobalSettings
 from ...env import EnvironmentSpec, LockFile, compute_spec_hash
 from ...styles import JGO_LOCK_TOML
-from ...util._logging import log_exception_if_verbose
+from ...util.logging import log_exception_if_verbose
 from .._args import build_parsed_args
 from .._context import create_environment_builder, create_maven_context
 

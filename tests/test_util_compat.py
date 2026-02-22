@@ -2,7 +2,7 @@
 
 import pytest
 
-from jgo.util._compat import add_jvm_args_as_necessary
+from jgo.util.compat import add_jvm_args_as_necessary
 
 
 def test_add_jvm_args_deprecated_warning():

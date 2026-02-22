@@ -2,55 +2,15 @@
 Utility modules for jgo.
 """
 
-from ._compat import (
-    add_jvm_args_as_necessary,
-    main_from_endpoint,
-    maven_scijava_repository,
-)
-from ._io import binary, text
-from ._java import (
-    JavaLocator,
-    JavaSource,
-    JavaVersion,
-    parse_java_version,
-    parse_jdk_activation_range,
-    version_matches_jdk_range,
-)
-from ._logging import (
-    get_log,
-    get_log_level,
-    is_debug_enabled,
-    is_info_enabled,
-    setup_logging,
-)
-from ._maven import ensure_maven_available, fetch_maven
-from ._serialization import FieldValidatorMixin, TOMLSerializableMixin
+from . import compat, io, java, logging, mvn, platform, serialization, toml
 
 __all__ = [
-    # compat
-    "add_jvm_args_as_necessary",
-    "main_from_endpoint",
-    "maven_scijava_repository",
-    # io
-    "binary",
-    "text",
-    # java
-    "JavaLocator",
-    "JavaSource",
-    "JavaVersion",
-    "parse_java_version",
-    "parse_jdk_activation_range",
-    "version_matches_jdk_range",
-    # logging
-    "get_log",
-    "get_log_level",
-    "is_debug_enabled",
-    "is_info_enabled",
-    "setup_logging",
-    # maven
-    "ensure_maven_available",
-    "fetch_maven",
-    # serialization
-    "FieldValidatorMixin",
-    "TOMLSerializableMixin",
+    "compat",
+    "io",
+    "java",
+    "logging",
+    "mvn",
+    "platform",
+    "serialization",
+    "toml",
 ]

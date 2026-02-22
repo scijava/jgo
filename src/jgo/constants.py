@@ -7,7 +7,7 @@ Centralizes hardcoded paths and URLs to avoid duplication across the codebase.
 import os
 from pathlib import Path
 
-from .util._platform import get_user_home
+from .util.platform import get_user_home
 
 
 def _get_version() -> str:
@@ -20,7 +20,7 @@ def _get_version() -> str:
     except Exception:
         # Fallback: read from pyproject.toml
         try:
-            from .util._toml import tomllib
+            from .util.toml import tomllib
 
             pyproject = Path(__file__).parent.parent.parent / "pyproject.toml"
             if pyproject.exists():

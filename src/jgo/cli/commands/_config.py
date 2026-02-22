@@ -11,7 +11,7 @@ from rich.markup import escape
 
 from ...config import GlobalSettings, get_settings_path, parse_config_key
 from ...styles import JGO_CONF_GLOBAL, JGO_TOML, error, filepath
-from ...util._toml import load_toml_file
+from ...util.toml import load_toml_file
 from .._args import build_parsed_args
 from .._console import console_print
 from .._output import handle_dry_run

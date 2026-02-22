@@ -2,7 +2,7 @@
 
 import pytest
 
-from jgo.util import (
+from jgo.util.java import (
     JavaVersion,
     parse_java_version,
     parse_jdk_activation_range,

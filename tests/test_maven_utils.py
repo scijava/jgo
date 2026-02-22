@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from jgo.util._maven import ensure_maven_available, fetch_maven
+from jgo.util.mvn import ensure_maven_available, fetch_maven
 
 
 class TestEnsureMavenAvailable:
