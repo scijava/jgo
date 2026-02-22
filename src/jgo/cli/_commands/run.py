@@ -215,9 +215,13 @@ def _run_spec(args: ParsedArgs, config: dict) -> int:
     # Build environment
     _log.info(f"Building environment from {spec_file}...")
 
-    environment = builder.from_spec(
-        spec, update=args.update, entrypoint=args.entrypoint
-    )
+    try:
+        environment = builder.from_spec(
+            spec, update=args.update, entrypoint=args.entrypoint
+        )
+    except ValueError as e:
+        _log.error(f"{e} Use 'jgo add <coordinate>' to add dependencies.")
+        return 1
 
     # Create runner and execute
     _log.info(f"Running {spec.name}...")

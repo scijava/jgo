@@ -352,6 +352,9 @@ class EnvironmentBuilder:
         Returns:
             Environment instance
         """
+        if not spec.coordinates:
+            raise ValueError("No coordinates specified in environment spec.")
+
         # Parse coordinates into dependencies
         coordinates = [Coordinate.parse(coord_str) for coord_str in spec.coordinates]
         dependencies = self._coordinates_to_dependencies(coordinates)

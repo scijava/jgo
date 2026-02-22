@@ -54,7 +54,7 @@ def classpath(ctx, endpoint):
             _log.error(f"{spec_file} not found")
             ctx.exit(1)
         spec = EnvironmentSpec.load(spec_file)
-        environment = builder.from_spec(spec, update=args.update)
+        environment = _from_spec_or_die(ctx, builder, spec, args.update)
     else:
         if not endpoint:
             _log.error("No endpoint specified")
@@ -91,7 +91,7 @@ def envdir(ctx, endpoint):
             _log.error(f"{spec_file} not found")
             ctx.exit(1)
         spec = EnvironmentSpec.load(spec_file)
-        environment = builder.from_spec(spec, update=args.update)
+        environment = _from_spec_or_die(ctx, builder, spec, args.update)
     else:
         if not endpoint:
             _log.error("No endpoint specified")
@@ -128,7 +128,7 @@ def jars(ctx, endpoint):
             _log.error(f"{spec_file} not found")
             ctx.exit(1)
         spec = EnvironmentSpec.load(spec_file)
-        environment = builder.from_spec(spec, update=args.update)
+        environment = _from_spec_or_die(ctx, builder, spec, args.update)
     else:
         if not endpoint:
             _log.error("No endpoint specified")
@@ -159,7 +159,7 @@ def modulepath(ctx, endpoint):
             _log.error(f"{spec_file} not found")
             ctx.exit(1)
         spec = EnvironmentSpec.load(spec_file)
-        environment = builder.from_spec(spec, update=args.update)
+        environment = _from_spec_or_die(ctx, builder, spec, args.update)
     else:
         if not endpoint:
             _log.error("No endpoint specified")
@@ -190,7 +190,7 @@ def mains(ctx, endpoint):
             _log.error(f"{spec_file} not found")
             ctx.exit(1)
         spec = EnvironmentSpec.load(spec_file)
-        environment = builder.from_spec(spec, update=args.update)
+        environment = _from_spec_or_die(ctx, builder, spec, args.update)
     else:
         if not endpoint:
             _log.error("No endpoint specified")
@@ -240,7 +240,7 @@ def javainfo(ctx, endpoint):
             _log.error(f"{spec_file} not found")
             ctx.exit(1)
         spec = EnvironmentSpec.load(spec_file)
-        environment = builder.from_spec(spec, update=args.update)
+        environment = _from_spec_or_die(ctx, builder, spec, args.update)
     else:
         if not endpoint:
             _log.error("No endpoint specified")
@@ -407,6 +407,16 @@ def pom(ctx, coordinate):
     except Exception as e:
         _log.error(f"{e}")
         ctx.exit(1)
+
+
+def _from_spec_or_die(ctx, builder, spec, update: bool):
+    """Call builder.from_spec(), printing a clean error and exiting on ValueError."""
+    try:
+        return builder.from_spec(spec, update=update)
+    except ValueError as e:
+        _log.error(f"{e} Use 'jgo add <coordinate>' to add dependencies.")
+        ctx.exit(1)
+        raise  # unreachable; satisfies type checkers
 
 
 def _parse_coord_or_die(ctx, coord_str: str) -> Coordinate:
