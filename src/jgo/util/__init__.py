@@ -2,12 +2,12 @@
 Utility modules for jgo.
 """
 
-from .compat import (
+from ._compat import (
     add_jvm_args_as_necessary,
     main_from_endpoint,
     maven_scijava_repository,
 )
-from .java import (
+from ._java import (
     JavaLocator,
     JavaSource,
     JavaVersion,
@@ -15,14 +15,14 @@ from .java import (
     parse_jdk_activation_range,
     version_matches_jdk_range,
 )
-from .logging import (
+from ._logging import (
     get_log,
     get_log_level,
     is_debug_enabled,
     is_info_enabled,
     setup_logging,
 )
-from .maven import ensure_maven_available, fetch_maven
+from ._maven import ensure_maven_available, fetch_maven
 
 __all__ = [
     # compat

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from jgo.cli.output import print_dry_run
+from jgo.cli._output import print_dry_run
 
 
 class TestMessageFunctions:

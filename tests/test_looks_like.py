@@ -1,6 +1,6 @@
 """Tests for looks_like_* helper functions in coordinate parsing."""
 
-from jgo.parse.coordinate import (
+from jgo.parse._coordinate import (
     looks_like_classifier,
     looks_like_main_class,
     looks_like_version,

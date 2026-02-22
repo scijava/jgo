@@ -12,7 +12,7 @@ Ported from db-xml-maven/tests/test_maven.py
 from re import match
 
 from jgo.maven import MavenContext, MvnResolver
-from jgo.maven.model import Model
+from jgo.maven._model import Model
 
 
 class TestPropertyInterpolation:

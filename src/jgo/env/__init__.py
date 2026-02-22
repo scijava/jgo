@@ -5,13 +5,13 @@ This module provides the environment materialization functionality,
 including Environment class, EnvironmentBuilder, and spec file handling.
 """
 
-from .builder import EnvironmentBuilder
-from .bytecode import analyze_jar_bytecode, bytecode_to_java_version, round_to_lts
-from .environment import Environment
-from .jar import find_main_classes, parse_manifest, read_raw_manifest
-from .linking import LinkStrategy
-from .lockfile import LockedDependency, LockFile, compute_spec_hash
-from .spec import EnvironmentSpec
+from ._builder import EnvironmentBuilder
+from ._bytecode import analyze_jar_bytecode, bytecode_to_java_version, round_to_lts
+from ._environment import Environment
+from ._jar import find_main_classes, parse_manifest, read_raw_manifest
+from ._linking import LinkStrategy
+from ._lockfile import LockedDependency, LockFile, compute_spec_hash
+from ._spec import EnvironmentSpec
 
 __all__ = [
     # builder

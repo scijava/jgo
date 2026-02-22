@@ -2,7 +2,7 @@
 Tests for Coordinate placement field (module path control).
 """
 
-from jgo.parse.coordinate import Coordinate, coord2str
+from jgo.parse._coordinate import Coordinate, coord2str
 
 # =============================================================================
 # Placement parsing tests

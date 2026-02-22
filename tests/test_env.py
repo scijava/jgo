@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 
 from jgo.env import Environment, EnvironmentBuilder, LinkStrategy
-from jgo.env.lockfile import LockFile
+from jgo.env._lockfile import LockFile
 from jgo.maven import MavenContext
 
 
@@ -124,7 +124,7 @@ def test_link_file():
 
         # Test hard link
         try:
-            from jgo.env.linking import LinkStrategy, link_file
+            from jgo.env._linking import LinkStrategy, link_file
 
             link_file(source_file, target_file, LinkStrategy.HARD)
             assert target_file.exists()
@@ -262,8 +262,8 @@ def test_lockfile_staleness_detection():
     """Test that lockfile staleness is detected when spec changes."""
     import os
 
-    from jgo.env.lockfile import compute_spec_hash
-    from jgo.env.spec import EnvironmentSpec
+    from jgo.env._lockfile import compute_spec_hash
+    from jgo.env._spec import EnvironmentSpec
 
     original_cwd = os.getcwd()
     with tempfile.TemporaryDirectory() as tmp_dir:

@@ -122,7 +122,7 @@ from .jgo import (
 )
 from .jgo import _jgo_main as main
 from .maven import Component, MavenContext
-from .parse.coordinate import Coordinate
+from .parse._coordinate import Coordinate
 from .util import (
     add_jvm_args_as_necessary,
     main_from_endpoint,

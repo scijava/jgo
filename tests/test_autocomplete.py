@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from jgo.env.jar import autocomplete_main_class
+from jgo.env._jar import autocomplete_main_class
 
 
 def create_jar_with_class(jar_path: Path, class_name: str):

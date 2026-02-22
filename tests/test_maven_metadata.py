@@ -4,7 +4,7 @@ Tests for jgo.maven.metadata utility functions.
 
 from datetime import datetime
 
-from jgo.maven.metadata import ts2dt
+from jgo.maven._metadata import ts2dt
 
 
 def test_ts2dt_with_dot():

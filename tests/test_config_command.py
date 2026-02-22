@@ -16,8 +16,8 @@ else:
 
 import tomli_w
 
-from jgo.cli.args import ParsedArgs
-from jgo.cli.commands import config as config_cmd
+from jgo.cli._args import ParsedArgs
+from jgo.cli.commands import _config as config_cmd
 
 
 def test_config_list_jgorc():
@@ -50,7 +50,7 @@ def test_config_list_jgorc():
         )
 
         # Temporarily patch the config file location
-        with patch("jgo.cli.commands.config.Path.home") as mock_home:
+        with patch("jgo.cli.commands._config.Path.home") as mock_home:
             mock_home.return_value = Path(tmpdir)
             exit_code = config_cmd._list_jgorc(config_file, args)
 

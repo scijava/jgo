@@ -1,8 +1,8 @@
 """Test that cache key includes classifier and packaging."""
 
-from jgo.env.builder import EnvironmentBuilder
+from jgo.env._builder import EnvironmentBuilder
 from jgo.maven import MavenContext
-from jgo.parse.coordinate import Coordinate
+from jgo.parse._coordinate import Coordinate
 
 
 def test_cache_key_includes_classifier():

@@ -6,8 +6,8 @@ configuration, Java locator (thanks to cjdk), and the JavaRunner.
 """
 
 from ..util import JavaLocator, JavaSource
-from .config import JVMConfig
-from .runner import JavaRunner
+from ._config import JVMConfig
+from ._runner import JavaRunner
 
 __all__ = [
     "JVMConfig",

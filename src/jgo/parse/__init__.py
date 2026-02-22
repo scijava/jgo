@@ -15,8 +15,8 @@ For "smart" data structures capable of Maven resolution and interpolation,
 see the jgo.maven subpackage.
 """
 
-from .coordinate import Coordinate, coord2str, set_full_coordinates
-from .endpoint import Endpoint
+from ._coordinate import Coordinate, coord2str, set_full_coordinates
+from ._endpoint import Endpoint
 
 __all__ = [
     # coordinate

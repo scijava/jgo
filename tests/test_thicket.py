@@ -16,8 +16,8 @@ import shutil
 import pytest
 
 from jgo.maven import MavenContext
-from jgo.maven.model import Model
-from jgo.maven.pom import POM
+from jgo.maven._model import Model
+from jgo.maven._pom import POM
 
 
 @pytest.fixture
@@ -301,7 +301,7 @@ class TestThicketPythonResolver:
         The thicket is randomly generated but with a fixed seed, so it provides
         a reproducible stress test for the resolver.
         """
-        from jgo.maven.resolver import PythonResolver
+        from jgo.maven._resolver import PythonResolver
 
         # Read the thicket version from the POM
         thicket_pom_obj = POM(thicket_pom)
@@ -341,7 +341,7 @@ class TestThicketPythonResolver:
         - Resolve dependencies without managed versions
         - Handle property interpolation correctly
         """
-        from jgo.maven.resolver import PythonResolver
+        from jgo.maven._resolver import PythonResolver
 
         # Read the thicket version from the POM
         thicket_pom_obj = POM(thicket_pom)

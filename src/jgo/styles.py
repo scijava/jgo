@@ -98,7 +98,7 @@ def _load_style_settings() -> dict[str, str]:
     styles: dict[str, str] = {}
 
     try:
-        from .config.manager import get_settings_path
+        from .config._manager import get_settings_path
 
         config_file = get_settings_path()
         if config_file.exists():

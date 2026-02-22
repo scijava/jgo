@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
 
-from jgo.maven.model import Model, ProfileConstraints
+from jgo.maven._model import Model, ProfileConstraints
 
 
 class MockPOM:

@@ -13,7 +13,7 @@ import tempfile
 from pathlib import Path
 
 from jgo.env import Environment
-from jgo.env.lockfile import LockFile
+from jgo.env._lockfile import LockFile
 
 
 class TestMainClassPriority:

@@ -2,7 +2,7 @@
 
 import pytest
 
-from jgo.maven.version import (
+from jgo.maven._version import (
     MavenVersion,
     Token,
     VersionRange,

@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from jgo.env import Environment
-from jgo.env.lockfile import LockFile
+from jgo.env._lockfile import LockFile
 from jgo.exec import JavaLocator, JavaRunner, JavaSource, JVMConfig
 
 

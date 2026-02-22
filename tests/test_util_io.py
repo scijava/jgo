@@ -2,7 +2,7 @@
 Tests for jgo.maven.util utility functions.
 """
 
-from jgo.util.io import binary, text
+from jgo.util._io import binary, text
 
 
 def test_text(tmp_path):

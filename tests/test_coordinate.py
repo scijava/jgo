@@ -2,7 +2,7 @@
 Tests for Coordinate parsing and stringification.
 """
 
-from jgo.parse.coordinate import Coordinate, coord2str
+from jgo.parse._coordinate import Coordinate, coord2str
 
 # =============================================================================
 # Coordinate.parse() tests

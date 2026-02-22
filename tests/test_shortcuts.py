@@ -121,8 +121,8 @@ class TestInitWithShortcuts:
             try:
                 os.chdir(tmp_path)
 
-                from jgo.cli.args import ParsedArgs
-                from jgo.cli.commands import init as init_cmd
+                from jgo.cli._args import ParsedArgs
+                from jgo.cli.commands import _init as init_cmd
 
                 # Create config with shortcut
                 config = {
@@ -169,8 +169,8 @@ class TestInitWithShortcuts:
             try:
                 os.chdir(tmp_path)
 
-                from jgo.cli.args import ParsedArgs
-                from jgo.cli.commands import init as init_cmd
+                from jgo.cli._args import ParsedArgs
+                from jgo.cli.commands import _init as init_cmd
 
                 # Create config with shortcuts
                 config = {
@@ -224,8 +224,8 @@ class TestInitWithShortcuts:
             try:
                 os.chdir(tmp_path)
 
-                from jgo.cli.args import ParsedArgs
-                from jgo.cli.commands import init as init_cmd
+                from jgo.cli._args import ParsedArgs
+                from jgo.cli.commands import _init as init_cmd
 
                 # Create config with one shortcut
                 config = {
@@ -275,8 +275,8 @@ class TestInitWithShortcuts:
             try:
                 os.chdir(tmp_path)
 
-                from jgo.cli.args import ParsedArgs
-                from jgo.cli.commands import init as init_cmd
+                from jgo.cli._args import ParsedArgs
+                from jgo.cli.commands import _init as init_cmd
 
                 # Create config with shortcut (no @MainClass)
                 config = {"shortcuts": {"imagej": "net.imagej:imagej:2.17.0"}}
@@ -319,8 +319,8 @@ class TestInitWithShortcuts:
             try:
                 os.chdir(tmp_path)
 
-                from jgo.cli.args import ParsedArgs
-                from jgo.cli.commands import init as init_cmd
+                from jgo.cli._args import ParsedArgs
+                from jgo.cli.commands import _init as init_cmd
 
                 # No shortcuts
                 config = {"shortcuts": {}}
@@ -367,7 +367,7 @@ class TestRunWithShortcuts:
             try:
                 os.chdir(tmp_path)
 
-                from jgo.cli.args import ParsedArgs
+                from jgo.cli._args import ParsedArgs
 
                 # Run with shortcut (print classpath mode to avoid needing Java)
                 run_args = ParsedArgs(
@@ -409,8 +409,8 @@ class TestRunWithShortcuts:
             try:
                 os.chdir(tmp_path)
 
-                from jgo.cli.args import ParsedArgs
-                from jgo.cli.commands import init as init_cmd
+                from jgo.cli._args import ParsedArgs
+                from jgo.cli.commands import _init as init_cmd
 
                 # Create config with shortcut
                 config = {

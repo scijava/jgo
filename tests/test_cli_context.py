@@ -1,14 +1,14 @@
 from unittest.mock import MagicMock
 
-from jgo.cli.args import (
+from jgo.cli._args import (
     PLATFORM_ALIASES,
     PLATFORMS,
     build_parsed_args,
     detect_os_properties,
     expand_platform,
 )
-from jgo.cli.context import create_maven_context
-from jgo.maven.resolver import PythonResolver
+from jgo.cli._context import create_maven_context
+from jgo.maven._resolver import PythonResolver
 
 
 def test_create_maven_context_python_resolver_constraints():

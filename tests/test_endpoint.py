@@ -5,7 +5,7 @@ Tests for Endpoint parsing and stringification.
 
 import warnings
 
-from jgo.parse.endpoint import Endpoint
+from jgo.parse._endpoint import Endpoint
 
 # =============================================================================
 # Endpoint.parse() - Basic parsing tests

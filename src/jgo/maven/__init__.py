@@ -8,7 +8,7 @@ This module provides pure-Python Maven functionality including:
 - Artifact downloading from Maven repositories
 """
 
-from .core import (
+from ._core import (
     Artifact,
     Component,
     Dependency,
@@ -16,11 +16,11 @@ from .core import (
     MavenContext,
     Project,
 )
-from .metadata import Metadata, Metadatas, MetadataXML
-from .model import Model, ProfileConstraints
-from .pom import POM, XML
-from .resolver import MvnResolver, PythonResolver, Resolver
-from .version import (
+from ._metadata import Metadata, Metadatas, MetadataXML
+from ._model import Model, ProfileConstraints
+from ._pom import POM, XML
+from ._resolver import MvnResolver, PythonResolver, Resolver
+from ._version import (
     MavenVersion,
     VersionRange,
     compare_semver,

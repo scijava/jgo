@@ -7,7 +7,7 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-from jgo.env.bytecode import (
+from jgo.env._bytecode import (
     BYTECODE_TO_JAVA,
     bytecode_to_java_version,
     detect_environment_java_version,

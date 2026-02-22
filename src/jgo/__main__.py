@@ -5,8 +5,8 @@ This module implements the command-line interface for jgo.
 """
 
 # Import ANSI color support FIRST before anything else.
-from .cli import colors  # noqa: F401
-from .cli.parser import cli
+from .cli import _colors  # noqa: F401
+from .cli._parser import cli
 
 
 def main():
