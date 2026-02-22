@@ -12,7 +12,7 @@ from ...env import EnvironmentSpec
 from ...styles import COORD_HELP_FULL, JGO_TOML, syntax
 from .._args import build_parsed_args
 from .._output import handle_dry_run
-from . import _sync as sync_cmd
+from . import sync as sync_cmd
 
 if TYPE_CHECKING:
     from .._args import ParsedArgs

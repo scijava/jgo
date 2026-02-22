@@ -14,7 +14,7 @@ else:
 
 
 from jgo.cli._args import ParsedArgs
-from jgo.cli.commands import _search as search_cmd
+from jgo.cli._commands import search as search_cmd
 
 
 def test_search_maven_central_success():
@@ -77,7 +77,7 @@ def test_search_execute_success():
     """Test search command execution."""
     args = ParsedArgs(verbose=0, dry_run=False)
 
-    with patch("jgo.cli.commands._search._search_maven_central") as mock_search:
+    with patch("jgo.cli._commands.search._search_maven_central") as mock_search:
         mock_search.return_value = [
             {
                 "group_id": "junit",
@@ -88,7 +88,7 @@ def test_search_execute_success():
             }
         ]
 
-        with patch("jgo.cli.commands._search._display_results"):
+        with patch("jgo.cli._commands.search._display_results"):
             exit_code = search_cmd.execute(args, {}, query="junit", limit=10)
 
     assert exit_code == 0

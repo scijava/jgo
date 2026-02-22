@@ -11,8 +11,7 @@ import rich_click as click
 from ...config import GlobalSettings
 from ...env import EnvironmentSpec, LockFile
 from ...styles import action, syntax
-from ...util.logging import is_info_enabled
-from ...util.logging import log_exception_if_verbose
+from ...util.logging import is_info_enabled, log_exception_if_verbose
 from .._args import build_parsed_args
 from .._context import create_environment_builder, create_maven_context
 from .._output import handle_dry_run

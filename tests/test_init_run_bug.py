@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 from jgo.cli._args import ParsedArgs
-from jgo.cli.commands import _run as run_cmd
+from jgo.cli._commands import run as run_cmd
 
 
 def test_run_with_main_class_after_init():
@@ -44,7 +44,7 @@ def test_run_with_main_class_after_init():
                 file=tmp_path / "jgo.toml",
             )
 
-            from jgo.cli.commands import _init as init_cmd
+            from jgo.cli._commands import init as init_cmd
 
             result = init_cmd.execute(init_args, {})
             assert result == 0
@@ -76,7 +76,7 @@ def test_run_with_main_class_after_init():
 
             # Patch create_java_runner to return our mock
             with patch(
-                "jgo.cli.commands._run.create_java_runner", return_value=mock_runner
+                "jgo.cli._commands.run.create_java_runner", return_value=mock_runner
             ):
                 run_args = ParsedArgs(
                     endpoint=None,  # No endpoint - should use jgo.toml

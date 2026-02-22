@@ -641,6 +641,6 @@ def unset_cmd(ctx, key, global_config, local_config):
 
 
 # Import and register shortcut subcommand
-from ._config_shortcut import shortcut  # noqa: E402
+from .config_shortcut import shortcut  # noqa: E402
 
 config.add_command(shortcut)

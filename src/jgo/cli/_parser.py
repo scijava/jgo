@@ -17,9 +17,9 @@ from ._args import (
     PLATFORM_ALIASES,
     PLATFORMS,
 )
-from .commands._add import add
-from .commands._config import config
-from .commands._info import (
+from ._commands.add import add
+from ._commands.config import config
+from ._commands.info import (
     classpath,
     deplist,
     deptree,
@@ -32,16 +32,16 @@ from .commands._info import (
     modulepath,
     pom,
 )
-from .commands._init import init
-from .commands._list import list_cmd
-from .commands._lock import lock
-from .commands._remove import remove
-from .commands._run import run
-from .commands._search import search
-from .commands._sync import sync
-from .commands._tree import tree
-from .commands._update import update
-from .commands._versions import versions
+from ._commands.init import init
+from ._commands.list import list_cmd
+from ._commands.lock import lock
+from ._commands.remove import remove
+from ._commands.run import run
+from ._commands.search import search
+from ._commands.sync import sync
+from ._commands.tree import tree
+from ._commands.update import update
+from ._commands.versions import versions
 from ._console import setup_consoles
 from .rich._logging import setup_rich_logging
 
