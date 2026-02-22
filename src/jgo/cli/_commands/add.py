@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import rich_click as click
@@ -12,6 +13,7 @@ from ...env import EnvironmentSpec
 from ...styles import COORD_HELP_FULL, JGO_TOML, syntax
 from .._args import build_parsed_args
 from .._output import handle_dry_run
+from . import parse_requirements_file
 from . import sync as sync_cmd
 
 if TYPE_CHECKING:
@@ -24,9 +26,16 @@ _log = logging.getLogger(__name__)
 @click.argument(
     "coordinates",
     nargs=-1,
-    required=True,
+    required=False,
     cls=click.RichArgument,
     help=f"One or more Maven coordinates in format {COORD_HELP_FULL}",
+)
+@click.option(
+    "-r",
+    "--requirements",
+    "requirements_file",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Read coordinates from a requirements file (one per line, # for comments)",
 )
 @click.option(
     "--no-sync",
@@ -34,7 +43,7 @@ _log = logging.getLogger(__name__)
     help=f"Don't automatically {syntax('sync')} after adding dependencies",
 )
 @click.pass_context
-def add(ctx, coordinates, no_sync):
+def add(ctx, coordinates, requirements_file, no_sync):
     """
     Add one or more dependencies to jgo.toml.
 
@@ -50,6 +59,7 @@ def add(ctx, coordinates, no_sync):
     config = GlobalSettings.load_from_opts(opts)
     args = build_parsed_args(opts, command="add")
     args.coordinates = list(coordinates)
+    args.requirements_file = requirements_file
     args.no_sync = no_sync
 
     exit_code = execute(args, config.to_dict())
@@ -77,11 +87,14 @@ def execute(args: ParsedArgs, config: dict) -> int:
         _log.debug(f"Failed to load spec file: {e}")
         return 1
 
-    # Get coordinates to add
-    coordinates = getattr(args, "coordinates", [])
+    # Get coordinates to add (from args and/or requirements file)
+    coordinates = list(getattr(args, "coordinates", []))
+    requirements_file = getattr(args, "requirements_file", None)
+    if requirements_file:
+        coordinates.extend(parse_requirements_file(requirements_file))
     if not coordinates:
         _log.error("No coordinates specified")
-        _log.error("Usage: jgo add <coordinate> [<coordinate> ...]")
+        _log.error("Usage: jgo add [-r requirements.txt] [<coordinate> ...]")
         return 1
 
     # Add coordinates

@@ -197,17 +197,19 @@ Test help for specific commands.
 
   $ jgo help add
                                                                                   
-   Usage: jgo add [OPTIONS] COORDINATES...                                        
+   Usage: jgo add [OPTIONS] [COORDINATES]...                                      
                                                                                   
    Add dependencies to jgo.toml.                                                  
                                                                                   
   ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
-  │ *  COORDINATES  TEXT  One or more Maven coordinates in format                │
-  │                       groupId:artifactId:[version:[classifier] [required]    │
+  │ COORDINATES  TEXT  One or more Maven coordinates in format                   │
+  │                    groupId:artifactId:[version:[classifier]                  │
   ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
-  │ --no-sync  Don't automatically sync after adding dependencies                │
-  │ --help     Show this message and exit.                                       │
+  │ --requirements  -r  FILE  Read coordinates from a requirements file (one per │
+  │                           line, # for comments)                              │
+  │ --no-sync                 Don't automatically sync after adding dependencies │
+  │ --help                    Show this message and exit.                        │
   ╰──────────────────────────────────────────────────────────────────────────────╯
 
   $ jgo help remove
@@ -236,7 +238,9 @@ Test help for specific commands.
   │                 followed by @MainClass                                       │
   ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
-  │ --help  Show this message and exit.                                          │
+  │ --requirements  -r  FILE  Add coordinates from a requirements file (one per  │
+  │                           line, # for comments)                              │
+  │ --help                    Show this message and exit.                        │
   ╰──────────────────────────────────────────────────────────────────────────────╯
 
   $ jgo help list

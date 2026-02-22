@@ -14,6 +14,7 @@ from ...env import EnvironmentSpec
 from ...styles import AT_MAINCLASS, JGO_TOML, PLUS_OPERATOR
 from .._args import build_parsed_args
 from .._output import handle_dry_run
+from . import parse_requirements_file
 
 if TYPE_CHECKING:
     from .._args import ParsedArgs
@@ -29,13 +30,21 @@ _log = logging.getLogger(__name__)
     help=f"Maven coordinates (single or combined with {PLUS_OPERATOR}) "
     f"optionally followed by {AT_MAINCLASS}",
 )
+@click.option(
+    "-r",
+    "--requirements",
+    "requirements_file",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Add coordinates from a requirements file (one per line, # for comments)",
+)
 @click.pass_context
-def init(ctx, endpoint):
+def init(ctx, endpoint, requirements_file):
     """Create a new jgo.toml file."""
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
     args = build_parsed_args(opts, endpoint=endpoint, command="init")
+    args.requirements_file = requirements_file
 
     exit_code = execute(args, config.to_dict())
     ctx.exit(exit_code)
@@ -91,6 +100,13 @@ def execute(args: ParsedArgs, config: dict) -> int:
             cache_dir=".jgo",
         )
 
+    # Append any coordinates from a requirements file
+    requirements_file = getattr(args, "requirements_file", None)
+    if requirements_file:
+        for coord in parse_requirements_file(requirements_file):
+            if coord not in spec.coordinates:
+                spec.coordinates.append(coord)
+
     output_file = args.file or Path("jgo.toml")
 
     # Handle dry-run mode
@@ -104,9 +120,9 @@ def execute(args: ParsedArgs, config: dict) -> int:
     spec.save(output_file)
 
     _log.info(f"Generated {output_file}")
-    if entrypoints:
+    if spec.entrypoints:
         _log.info(
-            f"Created {len(entrypoints)} entrypoint(s): {', '.join(entrypoints.keys())}"
+            f"Created {len(spec.entrypoints)} entrypoint(s): {', '.join(spec.entrypoints.keys())}"
         )
 
     return 0
