@@ -1,6 +1,7 @@
 [![build status](https://github.com/apposed/jgo/actions/workflows/build.yml/badge.svg)](https://github.com/apposed/jgo/actions/workflows/build.yml)
+[![Documentation](https://readthedocs.org/projects/jgo/badge/?version=latest)](https://jgo.apposed.org/)
 
-# jgo: painless Java component execution
+# jgo: painless Java environments and execution
 
 ![](https://raw.githubusercontent.com/apposed/jgo/main/jgo.png)
 
@@ -16,15 +17,15 @@ jgo org.python:jython-standalone
 jgo org.python:jython-standalone:2.7.3
 ```
 
-### What's New in 2.0
+### Features
 
-- **🎯 Zero-configuration execution**: Automatic Java download and version management thanks to `cjdk` integration
-- **📦 Reproducible environments**: `jgo.toml` project files with lock files (like `package.json` + `package-lock.json`)
-- **🏗️ Three-layer architecture**: Independently useful layers for Maven resolution, environment building, and execution
-- **🐍 Pure Python resolver**: No Maven installation required for basic operations
-- **🔧 Powerful Python API**: Fine-grained control over dependency resolution and execution
-
-See [docs/migration.md](docs/migration.md) for migration from jgo 1.x.
+- **Zero-configuration execution**: Automatic Java download and version management thanks to `cjdk` integration
+- **Pure Python dependency resolver**: No Maven installation required to resolve dependency graphs
+- **Reproducible environments**: `jgo.toml` project files with lock files (like `package.json` + `package-lock.json`)
+- **Three-layer architecture**: Independently useful layers for Maven resolution, environment building, and execution
+- **Powerful Python API**: Fine-grained control over dependency resolution and execution
+- **Intelligent module handling**: Full support of the Java module system (JPMS), including
+  intelligent classification of dependencies on module-path or class-path as appropriate
 
 ## Quick Start
 
@@ -81,11 +82,15 @@ Create reproducible environments:
 [environment]
 name = "my-java-app"
 
+[repositories]
+scijava.public = "https://maven.scijava.org/content/groups/public"
+
 [dependencies]
 coordinates = ["net.imagej:imagej:2.15.0"]
 
 [entrypoints]
-default = "net.imagej.Main"
+default = "main"
+main = "net.imagej.Main"
 
 [settings]
 cache_dir = ".jgo"  # Local environment like .venv
@@ -93,18 +98,12 @@ cache_dir = ".jgo"  # Local environment like .venv
 
 ```bash
 # Run from current directory
-jgo
+jgo sync
 
 # Creates .jgo/ with jars/ and jgo.lock.toml
-# Add to git: jgo.toml, jgo.lock.toml
-# Ignore: .jgo/
 ```
 
 ## Installation
-
-The `jgo` project began life as a shell script, but was later translated into
-Python, so that tools such as [scyjava](https://github.com/scijava/scyjava)
-could leverage its environment-building capabilities.
 
 <details><summary><strong>Installing jgo with uv</strong></summary>
 
@@ -150,64 +149,7 @@ Not sure which to use? [Read this](https://jacobtomlinson.dev/posts/2025/python-
 
 </details>
 
-## CLI Reference
-
-```
-Usage: jgo [OPTIONS] <endpoint> [-- JVM_ARGS] [-- APP_ARGS]
-
-Common Options:
-  -v, --verbose           Verbose output (-vv for debug, -vvv for trace)
-  -u, --update            Update cached environment
-  --offline               Work offline (don't download)
-  --cache-dir PATH        Override cache directory
-  --java-version VERSION  Force specific Java version
-  -f FILE                 Use jgo.toml file
-
-Commands:
-  run               Run a Java application (default)
-  config            Manage jgo configuration
-  search            Search for artifacts in Maven repositories
-  version           Display jgo version
-
-  init              Create new jgo.toml environment file
-  add               Add dependencies to jgo.toml
-  remove            Remove dependencies from jgo.toml
-  update            Update dependencies to latest versions
-  lock              Create or update jgo.lock.toml file
-  sync              Resolve dependencies and build environment
-
-  info deptree      Show dependency tree
-  info deplist      Show flat dependency list
-  info classpath    Show classpath
-  info modulepath   Show module-path
-  info jars         Show JAR paths (classpath + module-path)
-  info javainfo     Show Java version requirements
-  info entrypoints  Show entrypoints from jgo.toml
-  info versions     List available artifact versions
-  info mains        Show classes with main methods
-  info manifest     Show JAR manifest
-  info pom          Show POM content
-
-Endpoint Format:
-  groupId:artifactId[:version][:classifier][@mainClass]
-
-  Multiple artifacts: org.python:jython-standalone+org.slf4j:slf4j-simple
-  Specify main class: org.scijava:scijava-common@ScriptREPL
-  Auto-completion: Use simple class name (e.g., @ScriptREPL) to infer package
-
-Explicit Positioning (Advanced):
-  Use empty strings (consecutive colons) to avoid heuristic parsing:
-  - g:a:1.0:      → version=1.0, classifier=None (explicit)
-  - g:a::sources  → version=None, classifier=sources (explicit)
-  - g:a:v::jar    → version=v, packaging=jar, skip classifier
-
-  Format: groupId:artifactId:version:classifier:packaging:scope
-  Empty positions default to None. Useful when heuristics fail.
-
-Full documentation: jgo --help
-```
-
-### Examples
+## Examples
 
 | Program                      | Command                                                                             |
 |-----------------------------:|:------------------------------------------------------------------------------------|
@@ -220,8 +162,8 @@ Note the usage of the `+` syntax as needed to append elements to the classpath.
 If you add
 `scijava.public = https://maven.scijava.org/content/groups/public`
 to the
-`[repositories]` section of your [settings file](#configuration)
-(see [Repositories](#repositories) below),
+`[repositories]` section of your settings file
+(see the [configuration docs](https://jgo.apposed.org/en/latest/configuration.html)),
 you can also try:
 
 | Program                      | Command                                                                             |
@@ -235,149 +177,45 @@ you can also try:
 ### FAQ
 
 * __Is it fast?__
-  Endpoints are synthesized in a local cache under `~/.jgo`.
+  Endpoints are synthesized in a local cache under `~/.cache/jgo`.
   So invoking the same endpoint a second time is really quick.
 * __What does "no installation" mean?__
   Classpath elements are [hard-linked](https://en.wikipedia.org/wiki/Hard_link)
-  into `~/.jgo` from `~/.m2/repository` rather than copied, so the `~/.jgo`
+  into `~/.cache/jgo` from `~/.m2/repository` rather than copied, so the cache
   folder has a tiny footprint even if you execute lots of different endpoints.
 * __What if an endpoint has a new version?__
-  Pass the `-U` flag to `jgo` to rebuild the endpoint.
-  Note that unlike `mvn`, though, `jgo` does not check for updates otherwise.
-
-### Configuration
-
-You can configure the behavior of `jgo` using a settings file. The settings file is searched in the following locations (in order of precedence):
-
-1. `~/.config/jgo.conf` (XDG Base Directory standard - recommended)
-2. `~/.jgorc` (legacy location for backward compatibility)
-
-#### Repositories
-
-You can define additional remote Maven repositories,
-from which artifacts will be retrieved. E.g.:
-
-```ini
-[repositories]
-scijava.public = https://maven.scijava.org/content/groups/public
-```
-
-If you need more control over where artifacts come from—for example, if you
-want to use your own remote Maven repository as a mirror of Maven Central—you
-can do it using Maven's usual `~/.m2/settings.xml`; see [Using Mirrors for
-Repositories](https://maven.apache.org/guides/mini/guide-mirror-settings.html).
-
-You can also use the `-r` flag to pass additional repositories to individual
-invocations of jgo.
-
-#### Shortcuts
-
-You can define shortcuts for launching commonly used programs:
-
-```ini
-[shortcuts]
-repl = imagej:org.scijava.script.ScriptREPL
-imagej = net.imagej:imagej
-fiji = sc.fiji:fiji:LATEST
-scifio = io.scif:scifio-cli
-```
-
-Shortcuts replace the matched prefix at the beginning of an endpoint string.
-The definition order does not matter; shortcuts are matched iteratively until no
-more replacements occur (allowing shortcuts to reference other shortcuts).
-Shortcuts can be composed using `+` to combine multiple shortcuts.
-
-Syntactic requirements:
-- Shortcut names must match at the start of the coordinate (or one of the `+`-separated parts)
-- Anything after the matched shortcut name is preserved (e.g., `imagej:2.0.0` expands the `imagej` prefix and keeps `:2.0.0`)
-- Shortcuts can reference other shortcuts, which are recursively expanded
-- Composition with `+` treats each part independently (e.g., `repl+groovy` expands both)
-
-Examples:
-```shell
-jgo repl                    # Expand single shortcut
-jgo repl+groovy             # Compose multiple shortcuts
-jgo imagej:2.0.0            # Expand shortcut prefix, preserve suffix
-```
-
-Note that with the `repl` shortcut above, the main class
-(`org.scijava.script.ScriptREPL`) comes from a _different_ artifact than
-the toplevel artifact (`net.imagej:imagej`). This is intentional, so that
-all of [ImageJ](https://imagej.net/), including all of the various SciJava
-`scripting-<foo>` plugins, is included in the classpath of the REPL.
-
-#### Settings
-
-There are a few configurable settings:
-
-```ini
-[settings]
-m2Repo = /path/to/.m2Repo (default ~/.m2/repository)
-cacheDir = /path/to/.jgo (default ~/.jgo)
-links = soft (options: hard, soft, none; default hard)
-```
-The `jgo` cache dir can also be set via the `JGO_CACHE_DIR` environment
-variable. The precedence of reading the cache dir, from highest to lowest:
-  - `JGO_CACHE_DIR` environment variable
-  - `cacheDir` in `settings` section in [settings file](#configuration)
-  - default to `~/.cache/jgo`
-
-### Dependency management
-
-#### How jgo handles dependency versions (important!)
-
-Maven has a feature whereby a project can override the versions of transitive
-(a.k.a. inherited) dependencies, via a `<dependencyManagement>` configuration.
-The problem is: a library may believe it depends on components at particular
-versions as defined by its `<dependencyManagement>`, but downstream projects
-which depend on that library will resolve to **different versions**. This means
-the library's actual dependencies differ from what it was built against!
-See [this SO thread](https://stackoverflow.com/q/45041888/1207769) and
-[this gist](https://gist.github.com/ctrueden/d058330c8a3687317806ce8cc18332c3)
-for full details.
-
-**By default, jgo works around this Maven limitation** by adding all endpoints to
-the synthesized POM's `<dependencyManagement>` section using
-[import scope](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Importing_Dependencies).
-This ensures that the versions of transitive dependencies match those that each
-endpoint was actually built with, giving you the behavior you'd expect. In cases
-where multiple endpoints are concatenated via the `+` operator with conflicting
-dependency management, the earlier endpoints will win because they are declared
-earlier in the POM.
-
-If you need to disable this behavior (rare), you can use `--no-managed` to get
-raw Maven transitive dependency resolution without the dependencyManagement
-workaround. The `-m`/`--managed` flags are still supported for compatibility,
-but managed mode is now the default.
-
-See also [issue #9](https://github.com/apposed/jgo/issues/9) in the jgo issue
-tracker for more discussion of this issue.
+  Pass the `-u` flag to `jgo` to rebuild the endpoint.
+  Note that unlike `mvn`, `jgo` does not check for updates otherwise.
 
 ## Documentation
 
-- **[User Guide](docs/user-guide.md)** - Comprehensive guide covering installation, CLI reference, Python API, and common recipes
-- **[Migration Guide](docs/migration.md)** - Upgrading from jgo 1.x to 2.0
-- **[Architecture](docs/architecture.md)** - Understanding the three-layer design
-- **[API Reference](docs/)** - Use `help(jgo)` in Python for detailed API documentation
-- **[TODO](TODO.md)** - Current development status and roadmap
+Full documentation is available at **[jgo.apposed.org](https://jgo.apposed.org/)**:
+
+- **[Getting Started](https://jgo.apposed.org/en/latest/getting-started.html)** — Installation and quick start
+- **[CLI Reference](https://jgo.apposed.org/en/latest/cli.html)** — All commands and options
+- **[Project Mode](https://jgo.apposed.org/en/latest/project-mode.html)** — Working with `jgo.toml`
+- **[Python API](https://jgo.apposed.org/en/latest/python-api.html)** — Using jgo from Python code
+- **[Configuration](https://jgo.apposed.org/en/latest/configuration.html)** — Repositories, shortcuts, and settings
+- **[Migration Guide](https://jgo.apposed.org/en/latest/migration.html)** — Upgrading from jgo 1.x
+- **[Architecture](https://jgo.apposed.org/en/latest/architecture.html)** — The three-layer design
+
+Use `help(jgo)` in Python for detailed API documentation.
 
 ## Development
 
 ### Code style
 
-`jgo` uses [`black`](https://github.com/psf/black) for its code style.
-
-After `pip install tox`, you can lint the code with:
+`jgo` uses [`ruff`](https://github.com/astral-sh/ruff) for linting and formatting:
 
 ```shell
-tox -e lint
+make lint
 ```
 
 ### Testing
 
 ```shell
 # Run all tests
-bin/test.sh
+make test
 
 # Run specific test file
 bin/test.sh tests/test_maven_basic.py

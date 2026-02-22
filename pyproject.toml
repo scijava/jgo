@@ -65,7 +65,7 @@ jgo = "jgo.__main__:main"
 
 [project.urls]
 homepage = "https://github.com/apposed/jgo"
-documentation = "https://github.com/apposed/jgo/blob/main/README.md"
+documentation = "https://jgo.apposed.org/"
 source = "https://github.com/apposed/jgo"
 download = "https://pypi.org/project/jgo/"
 tracker = "https://github.com/apposed/jgo/issues"
