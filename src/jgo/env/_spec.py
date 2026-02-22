@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..util._serialization import FieldValidatorMixin, TOMLSerializableMixin
+from ..util import FieldValidatorMixin, TOMLSerializableMixin
 
 
 class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):

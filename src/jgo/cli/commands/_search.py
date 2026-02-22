@@ -26,7 +26,7 @@ from ...util._logging import log_exception_if_verbose
 from .._args import build_parsed_args
 from .._console import console_print
 from .._output import print_dry_run
-from ..rich._formatters import format_coordinate
+from ..rich import format_coordinate
 
 if TYPE_CHECKING:
     from .._args import ParsedArgs

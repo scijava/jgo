@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 from ..constants import MAVEN_CENTRAL_URL, default_maven_repo
 from ..env import EnvironmentBuilder, EnvironmentSpec, LinkStrategy
 from ..exec import JavaRunner, JavaSource, JVMConfig
-from ..exec._gc_defaults import is_gc_flag, normalize_gc_flag
+from ..exec import is_gc_flag, normalize_gc_flag
 from ..maven import MavenContext, MvnResolver, ProfileConstraints, PythonResolver
 from ..util import ensure_maven_available, is_debug_enabled, is_info_enabled
 from .rich._progress import download_progress_callback

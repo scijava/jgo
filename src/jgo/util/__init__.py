@@ -7,6 +7,7 @@ from ._compat import (
     main_from_endpoint,
     maven_scijava_repository,
 )
+from ._io import binary, text
 from ._java import (
     JavaLocator,
     JavaSource,
@@ -23,12 +24,16 @@ from ._logging import (
     setup_logging,
 )
 from ._maven import ensure_maven_available, fetch_maven
+from ._serialization import FieldValidatorMixin, TOMLSerializableMixin
 
 __all__ = [
     # compat
     "add_jvm_args_as_necessary",
     "main_from_endpoint",
     "maven_scijava_repository",
+    # io
+    "binary",
+    "text",
     # java
     "JavaLocator",
     "JavaSource",
@@ -45,4 +50,7 @@ __all__ = [
     # maven
     "ensure_maven_available",
     "fetch_maven",
+    # serialization
+    "FieldValidatorMixin",
+    "TOMLSerializableMixin",
 ]

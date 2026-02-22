@@ -33,7 +33,7 @@ from typing import TYPE_CHECKING, Iterable
 
 from ..constants import MAVEN_CENTRAL_URL, default_maven_repo
 from ..parse import Coordinate, coord2str
-from ..util._io import binary, text
+from ..util import binary, text
 from ._metadata import Metadatas, MetadataXML, SnapshotMetadataXML
 from ._pom import POM, parse_dependency_element_to_coordinate
 from ._version import compare_versions
