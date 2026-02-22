@@ -59,7 +59,6 @@ changelog
 :caption: Development
 :hidden:
 
-design/index
 future
 GitHub <https://github.com/apposed/jgo>
 Issue Tracker <https://github.com/apposed/jgo/issues>

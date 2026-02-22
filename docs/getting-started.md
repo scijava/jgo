@@ -144,6 +144,26 @@ Use `+` to combine multiple artifacts on the classpath:
 jgo org.scijava:scijava-common+org.scijava:scripting-jython@ScriptREPL
 ```
 
+### Coordinate modifiers
+
+Coordinates support optional suffixes for advanced control:
+
+| Suffix | Meaning |
+|:-------|:--------|
+| `(c)` | Force this artifact onto the classpath |
+| `(m)` | Force this artifact onto the module-path |
+| `!` | Disable dependency management (BOM import) for this coordinate |
+
+```bash
+# Force a JAR onto the module-path
+jgo org.lwjgl:lwjgl:3.3.1(m)
+
+# Disable managed dependency resolution for one coordinate
+jgo org.scijava:scijava-common!
+```
+
+These are rarely needed -- jgo's defaults handle most cases correctly. See {doc}`dependency-management` for details on the `!` flag.
+
 :::{tip}
 Use `jgo --dry-run run <endpoint>` to see what command would be executed without actually running it.
 :::

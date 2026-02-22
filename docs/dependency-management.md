@@ -10,17 +10,40 @@ See [this Stack Overflow thread](https://stackoverflow.com/q/45041888/1207769) a
 
 When multiple endpoints are concatenated via `+` with conflicting dependency management, earlier endpoints win because they are declared first in the POM.
 
-### Disabling managed mode
+### Disabling managed mode per coordinate
 
-If you need raw Maven transitive dependency resolution without the dependencyManagement workaround (rare), use `--no-managed`:
+If a specific coordinate should *not* have its BOM imported into `<dependencyManagement>`, append `!` to the coordinate:
 
 ```bash
-jgo --no-managed org.scijava:scijava-common
+# Resolve scijava-common without importing its dependency management
+jgo org.scijava:scijava-common!
+
+# Mix managed and raw in the same endpoint
+jgo org.scijava:scijava-common+org.scijava:scripting-jython!
 ```
 
-The `-m`/`--managed` flags still work for backward compatibility, but managed mode is now the default.
+:::{tip}
+The `!` suffix is rarely needed. It is useful when you want raw Maven transitive resolution for a particular artifact -- for example, to debug version conflicts or to intentionally allow Maven's default "nearest wins" strategy for that coordinate.
+:::
 
 See also [issue #9](https://github.com/apposed/jgo/issues/9) for more discussion.
+
+## Version resolution
+
+### How `RELEASE` and `LATEST` work
+
+When you omit a version (or explicitly write `RELEASE`), jgo resolves it to the newest release across all configured repositories by comparing version numbers directly. This differs from Maven, which picks the release from whichever repository was *most recently updated* -- a heuristic that can return an older version when artifacts are split across multiple repositories.
+
+For example, if `net.imagej:ij` version `1.54p` is on Maven Central and version `1.48q` is on maven.scijava.org, Maven might resolve `RELEASE` to `1.48q` (because maven.scijava.org was updated more recently), while jgo correctly resolves to `1.54p` (the highest version number).
+
+`LATEST` works the same way but includes SNAPSHOT versions. It returns the highest version by Maven version ordering across all repositories, rather than the most recently deployed build.
+
+### Checking resolved versions
+
+```bash
+# Show all versions with markers indicating which is RELEASE and LATEST
+jgo info versions org.python:jython-standalone
+```
 
 ## Resolver options
 

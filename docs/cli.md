@@ -291,6 +291,51 @@ jgo version
 jgo --version   # Also works as a global flag
 ```
 
+## Endpoint format
+
+Endpoints are the coordinate strings that identify what to run or inspect:
+
+```
+groupId:artifactId[:version][:classifier][@mainClass]
+```
+
+Use `+` to combine multiple artifacts: `g:a+g2:a2@MainClass`.
+
+### Coordinate modifiers
+
+Append parenthesized modifiers to control placement and resolution:
+
+| Modifier | Meaning |
+|:---------|:--------|
+| `(c)` or `(cp)` | Force onto classpath |
+| `(m)` or `(mp)` | Force onto module-path |
+| `!` | Disable dependency management (BOM import) for this coordinate |
+
+Modifiers can be combined: `g:a:v(m)!`
+
+```bash
+# Force a JAR onto the module-path
+jgo org.lwjgl:lwjgl:3.3.1(m)
+
+# Disable managed resolution for one coordinate
+jgo org.scijava:scijava-common!
+```
+
+### Explicit positioning
+
+When jgo's heuristic parsing (which guesses whether a field is a version, classifier, or packaging) gets it wrong, use consecutive colons to set fields by position:
+
+```
+groupId:artifactId:version:classifier:packaging:scope
+```
+
+Empty positions default to `None`:
+
+```bash
+g:a:1.0:       # version=1.0, classifier=None (explicit)
+g:a::sources   # version=None, classifier=sources (explicit)
+```
+
 ## Examples
 
 ### Basic usage
