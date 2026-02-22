@@ -91,7 +91,7 @@ class LockedDependency(TOMLSerializableMixin, FieldValidatorMixin):
         if self.placement:
             data["placement"] = self.placement
         if self.jar_type is not None:
-            data["jar_type"] = self.jar_type
+            data["jar_type"] = int(self.jar_type)
         return data
 
     @classmethod
