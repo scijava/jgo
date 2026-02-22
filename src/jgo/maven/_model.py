@@ -682,7 +682,11 @@ class Model:
                         return True
                 except ValueError as e:
                     _log.warning(
-                        f"Invalid JDK version specification '{condition.text}': {e}"
+                        f"Invalid JDK version specification '{condition.text}'"
+                        f" in {self.gav}: {e}"
+                    )
+                    _log.debug(
+                        f"POM source: {getattr(self.pom, 'source', '<unknown>')}"
                     )
                     continue
 
