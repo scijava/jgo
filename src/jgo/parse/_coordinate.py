@@ -2,7 +2,7 @@
 Parsing and representation of Maven coordinates.
 
 A Maven coordinate identifies an artifact in a Maven repository,
-or a dependency declaration in a Maven component dependency graph.
+or a dependency declaration in a Maven POM dependencies list.
 
 This module handles parsing various Maven coordinate formats using heuristics:
 - G:A (minimal - groupId and artifactId only)

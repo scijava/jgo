@@ -214,8 +214,11 @@ class EnvironmentBuilder:
         """
         Build an environment from an endpoint string.
 
-        Endpoint format: G:A[:V][:C][:mainClass][!][+G:A:V...]
-        - Components with ! suffix are raw/unmanaged
+        Endpoint format: coord[+coord...][@MainClass]
+        where coord = G:A[:V][:classifier][:packaging][!]
+        - Coordinates are joined with '+'; each contributes to the classpath
+        - '!' suffix on a coordinate disables BOM dependency management for it
+        - '@MainClass' at the end specifies the Java class to run
 
         Args:
             endpoint: Endpoint string

@@ -76,10 +76,14 @@ def run(ctx, main_class, entrypoint, add_classpath, endpoint, remaining):
     Run a Java application from Maven coordinates or jgo.toml.
 
     ENDPOINT FORMAT:
-      groupId:artifactId[:version][:classifier][@mainClass]
+      coord[+coord...][@MainClass]
+      where coord = groupId:artifactId[:version][:classifier][:packaging][!]
 
-    Multiple coordinates can be combined with '+':
+    Multiple coordinates are joined with '+':
       org.scijava:scijava-common+org.scijava:parsington
+
+    The '!' suffix disables BOM dependency management for that coordinate:
+      net.imagej:imagej:2.17.0!
 
     Main class can be specified in two ways:
       1. Using @ syntax: org.scijava:scijava-common@ScriptREPL
