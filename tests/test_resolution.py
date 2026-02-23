@@ -13,7 +13,7 @@ from dataclasses import dataclass
 import pytest
 
 from jgo.env import EnvironmentBuilder
-from jgo.maven import Component, Dependency, MavenContext, MvnResolver, PythonResolver
+from jgo.maven import Dependency, MavenContext, MvnResolver, PythonResolver
 from jgo.parse._endpoint import Endpoint
 from jgo.util.mvn import ensure_maven_available
 
@@ -162,11 +162,6 @@ def dependencies_from_endpoint(
 def resolve_dependency_set(resolver, dependencies: list[Dependency]) -> set[str]:
     _, resolved_deps = resolver.resolve(dependencies)
     return {dependency_fingerprint(dep) for dep in resolved_deps}
-
-
-def components_from_endpoint(context: MavenContext, endpoint: str) -> list[Component]:
-    deps = dependencies_from_endpoint(context, endpoint)
-    return [dep.artifact.component for dep in deps]
 
 
 def assert_expected_diff(
