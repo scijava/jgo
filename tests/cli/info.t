@@ -40,7 +40,7 @@ Test info classpath with endpoint.
 
   $ jgo info classpath com.google.guava:guava:33.0.0-jre
   No JARs on classpath
-  TIP: Use 'jgo info module-path' to see module-path JARs
+  TIP: Use 'jgo info modulepath' to see module-path JARs
 
 Test info modulepath with endpoint.
 

@@ -75,7 +75,7 @@ def print_classpath(environment: Environment) -> None:
     if not class_path_jars:
         console_print(critical("No JARs on classpath"), stderr=True)
         console_print(
-            tip("Use 'jgo info module-path' to see module-path JARs"),
+            tip("Use 'jgo info modulepath' to see module-path JARs"),
             stderr=True,
         )
         return
