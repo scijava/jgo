@@ -98,8 +98,8 @@ jgo run  # Rebuilds environment from lock file and runs
 # Plain text search
 jgo search apache commons
 
-# Search with SOLR syntax
-jgo search g:org.scijava a:scripting-*
+# Search with field syntax:
+jgo search g:org.scijava a:scripting-java
 
 # Coordinate search with detailed output
 jgo search --detailed org.python:jython-standalone

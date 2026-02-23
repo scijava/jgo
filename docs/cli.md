@@ -259,7 +259,7 @@ jgo search [OPTIONS] QUERY...
 | `--repository NAME` | Search a specific repository (default: `central`). |
 | `--detailed` | Show detailed metadata for each result. |
 
-Supports plain text, coordinates (`g:a:v`), and SOLR syntax (`g:groupId a:artifactId`):
+Supports plain text, coordinates (`g:a:v`), and field syntax (`g:groupId a:artifactId`):
 
 ```bash
 jgo search apache commons

@@ -36,9 +36,9 @@ _log = logging.getLogger(__name__)
 
 @click.command(
     help=f"Search for artifacts in {MAVEN_REPOSITORIES}. "
-    f"Supports plain text, coordinates ({COORD_HELP_SHORT}), or SOLR syntax ({syntax('g: a:')}).",
+    f"Supports plain text, coordinates ({COORD_HELP_SHORT}), or field syntax ({syntax('g: a:')}).",
     epilog=tip(
-        f"Try {syntax('g:groupId a:artifactId')} for SOLR syntax, "
+        f"Try {syntax('g:groupId a:artifactId')} for field syntax, "
         f"{COORD_HELP_FULL} for coordinates, or plain text. "
         f"Use {syntax('*')} for wildcards and {syntax('~')} for fuzzy search."
     ),
@@ -65,7 +65,7 @@ _log = logging.getLogger(__name__)
     nargs=-1,
     required=True,
     cls=click.RichArgument,
-    help=f"Search terms. Supports plain text, coordinates ({COORD_HELP_SHORT}), or SOLR syntax (g: a:)",
+    help=f"Search terms. Supports plain text, coordinates ({COORD_HELP_SHORT}), or field syntax (g: a:)",
 )
 @click.pass_context
 def search(ctx, limit, repository, detailed, query):
@@ -78,23 +78,23 @@ def search(ctx, limit, repository, detailed, query):
        - jgo search apache commons
        - jgo search junit
 
-    2. **Maven Coordinates** - Automatically converted to SOLR query:
+    2. **Maven Coordinates** - Automatically converted to field query:
        - jgo search org.apache.commons:commons-lang3
        - jgo search junit:junit:4.13.2
 
-    3. **SOLR Field Syntax** - Direct field queries with advanced features:
+    3. **Field Syntax** - Direct field queries with advanced features:
        - jgo search g:org.apache.commons a:commons-lang3
        - jgo search a:jackson-databind v:2.15*
        - jgo search a:jacksn~ (fuzzy search)
 
-    SOLR Field Names:
+    Field names:
       - g:groupId - Search by group ID
       - a:artifactId - Search by artifact ID
       - v:version - Search by version
       - p:packaging - Search by packaging type (jar, pom, etc.)
       - c:classifier - Search by classifier
 
-    Advanced SOLR Features (work with field syntax only):
+    Advanced features (work with field syntax only):
       - Wildcards: Use * for multiple characters, ? for single character
         Example: jgo search a:jackson-*
       - Fuzzy Search: Use ~ for typo tolerance (edit distance 0-2)
@@ -189,10 +189,10 @@ def execute(
 
 def _convert_query_to_solr(query: str) -> str:
     """
-    Convert a query to SOLR syntax if needed.
+    Convert a query to field syntax if needed.
 
     Handles three cases:
-    1. Already SOLR syntax (has field prefixes like g:, a:, v:) → pass through
+    1. Already field syntax (has field prefixes like g:, a:, v:) → pass through
     2. Maven coordinate format (G:A or G:A:V) → convert to SOLR AND query
     3. Plain text → pass through for default SOLR full-text search
 
@@ -202,13 +202,13 @@ def _convert_query_to_solr(query: str) -> str:
     Returns:
         SOLR-formatted query string
     """
-    # Check if already SOLR syntax (field prefixes)
+    # Check if already field syntax (field prefixes)
     # Common SOLR fields: g, a, v, p, c, l, ec, fc
     if re.search(r"\b(g|a|v|p|c|l|ec|fc):", query):
-        _log.debug(f"Query already in SOLR syntax: {query}")
+        _log.debug(f"Query already in field syntax: {query}")
         return query
 
-    # Try parsing as Maven coordinate (contains : but not SOLR syntax)
+    # Try parsing as Maven coordinate (contains : but not field syntax)
     if ":" in query:
         try:
             coord = Coordinate.parse(query)
@@ -243,7 +243,7 @@ def _search_maven_central(query: str, limit: int) -> list[dict]:
     Returns:
         List of artifact dictionaries
     """
-    # Convert query to SOLR syntax if needed
+    # Convert query to field syntax if needed
     solr_query = _convert_query_to_solr(query)
 
     # Build query URL

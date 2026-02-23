@@ -151,7 +151,7 @@ Test main help output.
   │ remove   Remove dependencies from jgo.toml.                                  │
   │ run      Run a Java application from Maven coordinates or jgo.toml.          │
   │ search   Search for artifacts in Maven repositories. Supports plain text,    │
-  │          coordinates (g:a:v), or SOLR syntax (g: a:).                        │
+  │          coordinates (g:a:v), or field syntax (g: a:).                       │
   │ sync     Resolve dependencies and build environment.                         │
   │ tree     Show dependency tree.                                               │
   │ update   Update dependencies to latest versions.                             │
@@ -310,11 +310,11 @@ Test help for specific commands.
    Usage: jgo search [OPTIONS] QUERY...                                           
                                                                                   
    Search for artifacts in Maven repositories. Supports plain text, coordinates   
-   (g:a:v), or SOLR syntax (g: a:).                                               
+   (g:a:v), or field syntax (g: a:).                                              
                                                                                   
   ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
   │ *  QUERY  TEXT  Search terms. Supports plain text, coordinates (g:a:v), or   │
-  │                 SOLR syntax (g: a:) [required]                               │
+  │                 field syntax (g: a:) [required]                              │
   ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --limit       N     Limit number of results (default: 20)                    │
@@ -323,7 +323,7 @@ Test help for specific commands.
   │ --help              Show this message and exit.                              │
   ╰──────────────────────────────────────────────────────────────────────────────╯
                                                                                   
-   TIP: Try g:groupId a:artifactId for SOLR syntax,                               
+   TIP: Try g:groupId a:artifactId for field syntax,                              
    groupId:artifactId:[version:[classifier] for coordinates, or plain text. Use * 
    for wildcards and ~ for fuzzy search.                                          
                                                                                   
@@ -650,7 +650,7 @@ Test no-argument help (should show main help).
   │ remove   Remove dependencies from jgo.toml.                                  │
   │ run      Run a Java application from Maven coordinates or jgo.toml.          │
   │ search   Search for artifacts in Maven repositories. Supports plain text,    │
-  │          coordinates (g:a:v), or SOLR syntax (g: a:).                        │
+  │          coordinates (g:a:v), or field syntax (g: a:).                       │
   │ sync     Resolve dependencies and build environment.                         │
   │ tree     Show dependency tree.                                               │
   │ update   Update dependencies to latest versions.                             │
@@ -808,7 +808,7 @@ Test --help flag on main command.
   │ remove   Remove dependencies from jgo.toml.                                  │
   │ run      Run a Java application from Maven coordinates or jgo.toml.          │
   │ search   Search for artifacts in Maven repositories. Supports plain text,    │
-  │          coordinates (g:a:v), or SOLR syntax (g: a:).                        │
+  │          coordinates (g:a:v), or field syntax (g: a:).                       │
   │ sync     Resolve dependencies and build environment.                         │
   │ tree     Show dependency tree.                                               │
   │ update   Update dependencies to latest versions.                             │

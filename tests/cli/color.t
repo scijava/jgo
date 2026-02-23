@@ -179,7 +179,7 @@ Test --color with different commands.
   │ remove   Remove dependencies from jgo.toml.                                  │
   │ run      Run a Java application from Maven coordinates or jgo.toml.          │
   │ search   Search for artifacts in Maven repositories. Supports plain text,    │
-  │          coordinates (g:a:v), or SOLR syntax (g: a:).                        │
+  │          coordinates (g:a:v), or field syntax (g: a:).                       │
   │ sync     Resolve dependencies and build environment.                         │
   │ tree     Show dependency tree.                                               │
   │ update   Update dependencies to latest versions.                             │
