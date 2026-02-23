@@ -1,4 +1,8 @@
 #!/bin/sh
+
+dir=$(dirname "$0")
+cd "$dir/.."
+
 uv run \
   --with sphinx \
   --with sphinx-rtd-theme \
