@@ -1,8 +1,8 @@
 # Configuration file for the Sphinx documentation builder.
 
 project = "jgo"
-copyright = "Apposed"
-author = "SciJava developers"
+copyright = "disclaimed – see UNLICENSE"
+author = "Curtis Rueden"
 
 extensions = [
     "myst_parser",
