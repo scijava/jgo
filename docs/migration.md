@@ -6,9 +6,8 @@ This guide covers upgrading from jgo 1.x to 2.0. jgo 2.0 maintains backward comp
 
 jgo 2.0 preserves backward compatibility through:
 
-1. **Deprecated Python API** -- All old functions still work but emit deprecation warnings.
+1. **Deprecated Python API** -- All old functions and classes still work but emit deprecation warnings.
 2. **Deprecated CLI flags** -- Old flags are aliased to new ones with warnings.
-3. **Exported classes/exceptions** -- Old classes like `Endpoint` remain importable.
 
 Deprecated APIs will be removed in jgo 3.0.
 
