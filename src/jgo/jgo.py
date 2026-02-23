@@ -341,9 +341,12 @@ def m2_repo() -> Path:
 
 
 def m2_path():
-    _log.warning(
-        "The m2_path() function is deprecated and will be removed in the future. "
-        "Please use either m2_repo() or m2_home() to obtain Maven directory paths."
+    warnings.warn(
+        "m2_path() is part of the deprecated jgo 1.x API "
+        "and will be removed in jgo 3.0. "
+        "Use Path.home() / '.m2' or os.getenv('M2_HOME') instead.",
+        DeprecationWarning,
+        stacklevel=2,
     )
     # NB: This logic is wrong, but left as is for backward compatibility.
     # Please use m2_home() for ~/.m2 or m2_repo() for ~/.m2/repository.
