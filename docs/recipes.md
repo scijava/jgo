@@ -19,10 +19,10 @@ jgo org.codehaus.groovy:groovy-groovysh+commons-cli:commons-cli:1.3.1@shell.Main
 
 ```bash
 # Increase heap size
-jgo org.example:myapp -- -Xmx8G
+jgo org.example:myapp -Xmx8G --
 
 # Combine JVM args and app args
-jgo org.example:myapp -- -Xmx8G -ea -- --app-flag value
+jgo org.example:myapp -Xmx8G -ea -- --app-flag value
 
 # Use global heap flags
 jgo --max-heap 8G --gc Z org.example:myapp
@@ -35,7 +35,7 @@ jgo --max-heap 8G --gc Z org.example:myapp
 jgo info classpath org.python:jython-standalone
 
 # Module path
-jgo info modulepath net.imagej:imagej
+jgo info modulepath org.scijava:scijava-ops-image
 
 # All JARs
 jgo info jars org.scijava:scijava-common
@@ -46,8 +46,8 @@ jgo info jars org.scijava:scijava-common
 Use `+` to build a classpath from multiple Maven artifacts:
 
 ```bash
-# ImageJ with Python scripting
-jgo net.imagej:imagej+org.scijava:scripting-jython
+# SciJava Script Editor with Jython scripting
+jgo org.scijava:scijava-editor+org.scijava:scripting-jython
 
 # Specify a main class from any artifact
 jgo org.scijava:scijava-common+org.scijava:scripting-jython@ScriptREPL
@@ -67,7 +67,7 @@ jgo -u org.example:mylib:1.0-SNAPSHOT
 jgo --offline --cache-dir /build/cache org.example:myapp
 
 # Print classpath for build scripts
-CP=$(jgo info classpath org.example:mylib)
+CP=$(jgo info classpath org.example:mylib | tr '\n' ':')
 javac -cp "$CP" MyClass.java
 ```
 
@@ -80,13 +80,16 @@ jgo init net.imagej:imagej:2.15.0
 # Add dependencies
 jgo add org.scijava:scripting-jython
 
-# Commit spec and lock file
+# Commit and push spec and lock file
 git add jgo.toml jgo.lock.toml
 echo ".jgo/" >> .gitignore
+git commit -m 'Add jgo environment'
+git push
 
 # Collaborator clones and runs
 git clone ...
-jgo  # Rebuilds environment from lock file and runs
+cd project-dir
+jgo run  # Rebuilds environment from lock file and runs
 ```
 
 ## Searching for artifacts
@@ -104,14 +107,14 @@ jgo search --detailed org.python:jython-standalone
 
 ## Using jgo as a library
 
-### Running ImageJ macros from Python
+### Running ImageJ macro in a subprocess from Python
 
 ```python
 import jgo
 
 jgo.run(
-    "net.imagej:imagej:RELEASE",
-    app_args=["--headless", "--run", "macro.ijm"],
+    "net.imagej:imagej:2.17.0",
+    app_args=["--headless", "-macro", "macro.ijm"],
     repositories={"scijava": "https://maven.scijava.org/content/groups/public"},
 )
 ```
