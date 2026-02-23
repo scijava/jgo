@@ -50,7 +50,7 @@ def test_config_list_jgorc():
         )
 
         # Temporarily patch the config file location
-        with patch("jgo.cli._commands.config.Path.home") as mock_home:
+        with patch("pathlib.Path.home") as mock_home:
             mock_home.return_value = Path(tmpdir)
             exit_code = config_cmd._list_jgorc(config_file, args)
 
