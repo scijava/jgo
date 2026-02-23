@@ -40,11 +40,8 @@ Project (groupId:artifactId)
 
 ### Resolvers
 
-| Resolver | Requires | Use case |
-|:---------|:---------|:---------|
-| `PythonResolver` | Nothing | Default. Parses POMs, resolves transitive dependencies, handles BOMs and exclusions. |
-| `MvnResolver` | `mvn` on PATH | Fallback for edge cases. Handles all Maven features including plugins. |
-| Auto (default) | Nothing | Tries `PythonResolver` first, falls back to `MvnResolver`. |
+* `PythonResolver` - Default resolver. Parses POMs, resolves transitive dependencies, handles BOMs and exclusions.
+* `MvnResolver` - Invokes `mvn`. Fallback for edge cases. Handles all Maven features including plugins.
 
 ### Standalone use
 
@@ -90,7 +87,7 @@ for dep in deps:
 
 **Ad-hoc mode** (default): Environments cached in `~/.cache/jgo/<hash>/` for one-off executions.
 
-**Project mode** (with `jgo.toml`): Environment built in `.jgo/` in the project directory, with a lock file for reproducibility.
+**Project mode** (with `jgo.toml`): Environment built in the `cache_dir` specified in `jgo.toml`, defaulting to `.jgo/` in the project directory, with a lock file for reproducibility.
 
 ### Bytecode detection
 
@@ -115,7 +112,7 @@ classpath = ":".join(str(p) for p in env.classpath)
 
 | Strategy | Description |
 |:---------|:------------|
-| `AUTO` (default) | Detects the environment's minimum Java version and downloads the right version via [cjdk](https://github.com/cachedjdk/cjdk). |
+| `AUTO` (default) | Detects needed minimum Java version and downloads the right version via [cjdk](https://github.com/cachedjdk/cjdk). |
 | `SYSTEM` | Uses Java from `PATH` or `JAVA_HOME`. Requires pre-installed Java. |
 
 ### Standalone use
