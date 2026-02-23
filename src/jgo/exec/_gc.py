@@ -1,5 +1,5 @@
 """
-Smart GC defaults and normalization for jgo.
+Garbage-collector-related functionality for jgo, including smart GC defaults and normalization.
 
 Provides version-aware garbage collector selection and shorthand normalization.
 """

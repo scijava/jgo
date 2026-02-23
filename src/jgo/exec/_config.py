@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import psutil
 
-from ._gc_defaults import get_default_gc_options
+from ._gc import get_default_gc_options
 
 
 class JVMConfig:
