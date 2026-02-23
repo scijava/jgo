@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ..constants import default_jgo_cache
-from ..maven import Dependency
 from ..parse import Coordinate, Endpoint
 from ..util.java import JavaLocator, JavaSource
 from ._bytecode import detect_jar_java_version
@@ -31,7 +30,7 @@ from ._linking import LinkStrategy, link_file
 from ._lockfile import LockedDependency, LockFile, compute_sha256, compute_spec_hash
 
 if TYPE_CHECKING:
-    from ..maven import Artifact, MavenContext
+    from ..maven import Artifact, Dependency, MavenContext
     from ._spec import EnvironmentSpec
 
 _log = logging.getLogger(__name__)
@@ -566,8 +565,8 @@ class EnvironmentBuilder:
         return True
 
     def _coordinates_to_dependencies(
-        self, coordinates: list["Coordinate"]
-    ) -> list["Dependency"]:
+        self, coordinates: list[Coordinate]
+    ) -> list[Dependency]:
         """
         Convert Coordinate objects to Dependency objects.
 
@@ -604,7 +603,7 @@ class EnvironmentBuilder:
 
         return dependencies
 
-    def _cache_key(self, dependencies: list["Dependency"]) -> str:
+    def _cache_key(self, dependencies: list[Dependency]) -> str:
         """
         Generate a stable hash for a set of dependencies.
 

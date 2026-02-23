@@ -8,7 +8,10 @@ Python 3.11+ has built-in tomllib, older versions need tomli.
 from __future__ import annotations
 
 import sys
-from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 if sys.version_info >= (3, 11):
     import tomllib

@@ -6,10 +6,9 @@ from __future__ import annotations
 
 import logging
 import os
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from re import findall
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
 
 from ..util.java import (
     parse_java_version,
@@ -17,7 +16,11 @@ from ..util.java import (
     version_matches_jdk_range,
 )
 from ._core import Dependency, DependencyNode, MavenContext, Project
-from ._pom import POM
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from ._pom import POM
 
 _log = logging.getLogger(__name__)
 

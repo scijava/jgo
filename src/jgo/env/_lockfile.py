@@ -10,11 +10,13 @@ from __future__ import annotations
 import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from ..maven import Dependency
 from ..util.serialization import FieldValidatorMixin, TOMLSerializableMixin
 from ._jar import JarType
+
+if TYPE_CHECKING:
+    from ..maven import Dependency
 
 
 class LockedDependency(TOMLSerializableMixin, FieldValidatorMixin):

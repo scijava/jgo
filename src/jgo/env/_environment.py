@@ -8,12 +8,15 @@ execution.
 from __future__ import annotations
 
 import zipfile
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ._bytecode import detect_environment_java_version
 from ._jar import detect_module_info
 from ._lockfile import LockFile
 from ._spec import EnvironmentSpec
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class Environment:

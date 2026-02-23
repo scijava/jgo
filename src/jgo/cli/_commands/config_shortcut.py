@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import configparser
 import logging
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import rich_click as click
@@ -16,6 +15,8 @@ from .._console import console_print
 from .._output import print_dry_run
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from click import Context
 
     from .._args import ParsedArgs

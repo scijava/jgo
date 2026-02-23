@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from pathlib import Path
 from subprocess import run
 from typing import TYPE_CHECKING
 
@@ -20,6 +19,7 @@ from ._pom import write_temp_pom
 if TYPE_CHECKING:
     from collections.abc import Callable
     from contextlib import AbstractContextManager
+    from pathlib import Path
 
     from ._core import Artifact, Component
 

@@ -7,14 +7,13 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from datetime import datetime
 from itertools import combinations
-from pathlib import Path
 from re import match
 from typing import TYPE_CHECKING, Iterable
 
 from ._pom import XML
 
 if TYPE_CHECKING:
-    pass
+    from pathlib import Path
 
 
 class Metadata(ABC):

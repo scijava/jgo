@@ -102,9 +102,7 @@ See Also
 
 from __future__ import annotations
 
-import subprocess
 from dataclasses import replace
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from .config import GlobalSettings
@@ -132,6 +130,9 @@ from .util.compat import (
 )
 
 if TYPE_CHECKING:
+    import subprocess
+    from pathlib import Path
+
     from .env import Environment
     from .maven import Artifact
 

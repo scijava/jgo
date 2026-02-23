@@ -9,7 +9,7 @@ from __future__ import annotations
 import struct
 import zipfile
 from collections import Counter
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 # Map class file major version to Java version
 # Source: https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-4.html
@@ -39,6 +39,9 @@ BYTECODE_TO_JAVA = {
     67: 23,  # Java 23
     68: 24,  # Java 24
 }
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # LTS versions to round up to
 LTS_VERSIONS = [8, 11, 17, 21]

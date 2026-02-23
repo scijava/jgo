@@ -7,7 +7,11 @@ Each subcommand is implemented in its own module with:
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
 
 __all__ = ["parse_requirements_file"]
 

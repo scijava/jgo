@@ -7,7 +7,7 @@ Centralizes settings file path resolution and display name logic.
 from __future__ import annotations
 
 import logging
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ..constants import (
     SETTINGS_FILE_DISPLAY_NAME,
@@ -18,6 +18,9 @@ from ..constants import (
 )
 
 _log = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def get_settings_path() -> Path:
