@@ -144,13 +144,13 @@ class JavaRunner:
 
         # Check Java version to determine if module-path is supported
         actual_java_version = locator._get_java_version(java_path)
-        supports_modules = actual_java_version >= 9
+        supports_modules = actual_java_version.major >= 9
 
         # Build command
         cmd = [str(java_path)]
 
-        # Add JVM arguments (pass java_version for smart GC defaults)
-        jvm_args = self.jvm_config.to_jvm_args(java_version=actual_java_version)
+        # Add JVM arguments (pass java major version for smart GC defaults)
+        jvm_args = self.jvm_config.to_jvm_args(java_version=actual_java_version.major)
         cmd.extend(jvm_args)
 
         # Add additional JVM arguments

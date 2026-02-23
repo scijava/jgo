@@ -11,6 +11,7 @@ import pytest
 from jgo.env import Environment
 from jgo.env._lockfile import LockFile
 from jgo.exec import JavaLocator, JavaRunner, JavaSource, JVMConfig
+from jgo.util.java import JavaVersion
 
 
 class TestJVMConfig:
@@ -98,6 +99,11 @@ class TestJavaLocator:
     def test_find_system_java(self):
         """Test finding system Java."""
         locator = JavaLocator(java_source=JavaSource.SYSTEM)
+
+        # Skip if no system Java available
+        if locator._find_java_in_path() is None:
+            pytest.skip("No system Java found")
+
         java_path = locator.locate()
 
         assert java_path.exists()
@@ -111,12 +117,16 @@ class TestJavaLocator:
 
         if java_path:
             version = locator._get_java_version(java_path)
-            assert isinstance(version, int)
-            assert version >= 8  # Should be at least Java 8
+            assert isinstance(version, JavaVersion)
+            assert version.major >= 8  # Should be at least Java 8
 
     def test_system_java_version_check(self):
         """Test system Java version requirement checking."""
         locator = JavaLocator(java_source=JavaSource.SYSTEM)
+
+        # Skip if no system Java available
+        if locator._find_java_in_path() is None:
+            pytest.skip("No system Java found")
 
         # Should succeed with reasonable version requirement
         java_path = locator.locate(min_version=8)
@@ -133,7 +143,122 @@ class TestJavaLocator:
 
         assert java_path.exists()
         version = locator._get_java_version(java_path)
-        assert version == 11
+        assert version.major == 11
+
+    def test_auto_java_with_min_version(self):
+        """Test AUTO mode with min_version parameter."""
+        # No java_version set, but pass min_version to locate()
+        locator = JavaLocator(java_source=JavaSource.AUTO)
+        java_path = locator.locate(min_version=11)
+
+        assert java_path.exists()
+        version = locator._get_java_version(java_path)
+        assert version.major >= 11
+
+    def test_auto_java_with_string_constraint(self):
+        """Test AUTO mode with string version constraints."""
+        # Test simple string version
+        locator = JavaLocator(java_source=JavaSource.AUTO, java_version="11")
+        java_path = locator.locate()
+        assert java_path.exists()
+        version = locator._get_java_version(java_path)
+        assert version.major == 11
+
+        # Test "+" constraint syntax (cjdk supports "11+" for "11 or higher")
+        locator = JavaLocator(java_source=JavaSource.AUTO, java_version="11+")
+        java_path = locator.locate()
+        assert java_path.exists()
+        version = locator._get_java_version(java_path)
+        assert version.major >= 11
+
+    def test_string_version_constraints(self):
+        """Test that JavaLocator accepts string version constraints."""
+        # All these should construct without error
+        JavaLocator(java_version="11")
+        JavaLocator(java_version="11+")
+        JavaLocator(java_version="17+")
+        JavaLocator(java_version="17.0.10")
+        JavaLocator(java_version="17.0.10+")
+        JavaLocator(java_version=17)  # int still works
+
+    def test_extract_min_version_simple(self):
+        """Test extracting minimum version from simple constraints."""
+        locator = JavaLocator()
+
+        assert locator._extract_min_version("11") == JavaVersion(11, 0, 0)
+        assert locator._extract_min_version("17") == JavaVersion(17, 0, 0)
+        assert locator._extract_min_version("21") == JavaVersion(21, 0, 0)
+
+    def test_extract_min_version_with_bounds(self):
+        """Test extracting minimum version from bounded constraints."""
+        locator = JavaLocator()
+
+        assert locator._extract_min_version("11+") == JavaVersion(11, 0, 0)
+        assert locator._extract_min_version("17+") == JavaVersion(17, 0, 0)
+        assert locator._extract_min_version("21+") == JavaVersion(21, 0, 0)
+
+    def test_extract_min_version_dotted(self):
+        """Test extracting minimum version from dotted constraints."""
+        locator = JavaLocator()
+
+        assert locator._extract_min_version("11.0.2") == JavaVersion(11, 0, 2)
+        assert locator._extract_min_version("17.0.10") == JavaVersion(17, 0, 10)
+        assert locator._extract_min_version("21.0.1") == JavaVersion(21, 0, 1)
+
+    def test_extract_min_version_combined(self):
+        """Test extracting minimum version from combined dotted + bounded constraints."""
+        locator = JavaLocator()
+
+        assert locator._extract_min_version("11.0.2+") == JavaVersion(11, 0, 2)
+        assert locator._extract_min_version("17.0.10+") == JavaVersion(17, 0, 10)
+        assert locator._extract_min_version("21.0.1+") == JavaVersion(21, 0, 1)
+
+    def test_extract_min_version_old_format(self):
+        """Test extracting minimum version from old Java version format."""
+        locator = JavaLocator()
+
+        assert locator._extract_min_version("1.8") == JavaVersion(8, 0, 0)
+        assert locator._extract_min_version("1.8+") == JavaVersion(8, 0, 0)
+        assert locator._extract_min_version("1.8.0_292") == JavaVersion(8, 0, 292)
+
+    def test_system_java_with_string_version(self):
+        """Test system Java locator with string version constraints."""
+        locator = JavaLocator(java_source=JavaSource.SYSTEM)
+
+        # Skip if no system Java available
+        if locator._find_java_in_path() is None:
+            pytest.skip("No system Java found")
+
+        # Should succeed with string version that system Java satisfies
+        locator = JavaLocator(java_source=JavaSource.SYSTEM, java_version="8")
+        java_path = locator.locate()
+        assert java_path.exists()
+
+        # Test with constraint syntax ("+")
+        locator = JavaLocator(java_source=JavaSource.SYSTEM, java_version="8+")
+        java_path = locator.locate()
+        assert java_path.exists()
+
+    def test_system_java_semantic_version_check(self):
+        """Test that system Java checks full semantic versions, not just major."""
+        locator = JavaLocator(java_source=JavaSource.SYSTEM)
+
+        # Get actual system Java version
+        java_path = locator._find_java_in_path()
+        if java_path is None:
+            pytest.skip("Java not found")
+
+        actual_version = locator._get_java_version(java_path)
+
+        # Should accept requirement lower than actual
+        lower_version = JavaVersion(actual_version.major, 0, 0)
+        java_path = locator._locate_system_java(lower_version)
+        assert java_path.exists()
+
+        # Should reject requirement higher than actual (in patch version)
+        higher_patch = JavaVersion(actual_version.major, actual_version.minor, 999)
+        with pytest.raises(RuntimeError, match="required"):
+            locator._locate_system_java(higher_patch)
 
 
 class TestJavaRunner:

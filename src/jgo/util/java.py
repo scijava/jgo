@@ -54,7 +54,7 @@ class JavaLocator:
     def __init__(
         self,
         java_source: JavaSource = JavaSource.AUTO,
-        java_version: int | None = None,
+        java_version: str | int | None = None,
         java_vendor: str | None = None,
         verbose: bool = False,
     ):
@@ -63,7 +63,8 @@ class JavaLocator:
 
         Args:
             java_source: Strategy for locating Java
-            java_version: Desired Java version (e.g., 17)
+            java_version: Desired Java version (e.g., 17, "17", "11+")
+                         Supports int major versions and str cjdk constraints (e.g., "11+")
             java_vendor: Desired Java vendor (e.g., "adoptium", "zulu")
             verbose: Enable verbose output
         """
@@ -92,18 +93,26 @@ class JavaLocator:
 
         # Select strategy
         if self.java_source == JavaSource.SYSTEM:
-            return self._locate_system_java(required_version)
+            # For system Java, parse string constraints to a comparable JavaVersion
+            system_version: JavaVersion | int | None
+            if isinstance(required_version, str):
+                system_version = self._extract_min_version(required_version)
+            else:
+                system_version = required_version
+            return self._locate_system_java(system_version)
         elif self.java_source == JavaSource.AUTO:
             return self._locate_auto_java(required_version)
         else:
             raise ValueError(f"Unknown JavaSource: {self.java_source}")
 
-    def _locate_system_java(self, required_version: int | None = None) -> Path:
+    def _locate_system_java(
+        self, required_version: JavaVersion | int | None = None
+    ) -> Path:
         """
         Locate system Java executable.
 
         Args:
-            required_version: Minimum required Java version
+            required_version: Minimum required Java version (JavaVersion or int major version)
 
         Returns:
             Path to java executable
@@ -121,6 +130,9 @@ class JavaLocator:
         # Check version if required
         if required_version is not None:
             actual_version = self._get_java_version(java_path)
+            # Normalize int to JavaVersion for comparison
+            if isinstance(required_version, int):
+                required_version = JavaVersion(required_version)
             if actual_version < required_version:
                 raise RuntimeError(
                     f"Java {required_version} or higher required, but system Java is version {actual_version}. "
@@ -131,12 +143,13 @@ class JavaLocator:
 
         return java_path
 
-    def _locate_auto_java(self, required_version: int | None = None) -> Path:
+    def _locate_auto_java(self, required_version: str | int | None = None) -> Path:
         """
         Locate Java using automatic download/caching.
 
         Args:
-            required_version: Desired Java version
+            required_version: Desired Java version (str or int).
+                             Supports cjdk version strings like "11", "17", "11+", "17+", etc.
 
         Returns:
             Path to java executable
@@ -146,13 +159,20 @@ class JavaLocator:
         """
 
         # Default to latest LTS if no version specified
-        version = required_version or 21
+        # Convert to string for cjdk (it accepts str | None)
+        if required_version is None:
+            version_str = "21"
+        elif isinstance(required_version, int):
+            version_str = str(required_version)
+        else:
+            version_str = required_version
 
-        self._maybe_log(f"Locating Java {version}...")
+        self._maybe_log(f"Locating Java {version_str}...")
 
         try:
             # Use cjdk to locate a suitable Java, downloading it on demand.
-            java_home = cjdk.java_home(version=str(version), vendor=self.java_vendor)
+            # cjdk accepts version strings like "11", "17", "11+", "17+", etc.
+            java_home = cjdk.java_home(version=version_str, vendor=self.java_vendor)
             # On Windows, the executable is java.exe; on Unix it's java
             java_exe = "java.exe" if sys.platform == "win32" else "java"
             java_path = Path(java_home) / "bin" / java_exe
@@ -168,6 +188,37 @@ class JavaLocator:
 
         except Exception as e:
             raise RuntimeError(f"Failed to obtain Java automatically: {e}")
+
+    def _extract_min_version(self, version_constraint: str) -> JavaVersion | None:
+        """
+        Extract minimum version from a version constraint string.
+
+        Handles cjdk-style constraints by stripping the suffix operator
+        and parsing the remaining version string:
+        - "11"      -> JavaVersion(11, 0, 0)
+        - "11+"     -> JavaVersion(11, 0, 0)
+        - "11.0.2"  -> JavaVersion(11, 0, 2)
+        - "11.0.2+" -> JavaVersion(11, 0, 2)
+
+        Note: This is used only for SYSTEM Java checking. For AUTO mode,
+        the version string is passed directly to cjdk.
+
+        Args:
+            version_constraint: Version constraint string
+
+        Returns:
+            JavaVersion with full semantic version, or None if parsing fails
+        """
+        if not version_constraint:
+            return None
+        try:
+            return parse_java_version(version_constraint.rstrip("+"))
+        except (ValueError, AttributeError):
+            _log.warning(
+                f"Could not parse version constraint '{version_constraint}', "
+                "system Java version check may not work correctly"
+            )
+            return None
 
     def _maybe_log(self, message) -> None:
         if self.verbose:
@@ -197,7 +248,7 @@ class JavaLocator:
 
         return None
 
-    def _get_java_version(self, java_path: Path) -> int:
+    def _get_java_version(self, java_path: Path) -> JavaVersion:
         """
         Get Java version from executable.
 
@@ -232,7 +283,7 @@ class JavaLocator:
             version_str = match.group(1)
 
             java_version = parse_java_version(version_str)
-            return java_version.major
+            return java_version
 
         except subprocess.TimeoutExpired:
             raise RuntimeError(f"Timeout while checking Java version at {java_path}")
@@ -268,6 +319,20 @@ class JavaVersion(NamedTuple):
 
     def __str__(self) -> str:
         return f"{self.major}.{self.minor}.{self.patch}"
+
+    def __eq__(self, other) -> bool:
+        return (
+            self.major == other.major
+            and self.minor == other.minor
+            and self.patch == other.patch
+        )
+
+    def __lt__(self, other) -> bool:
+        if isinstance(other, int):
+            other = JavaVersion(other)
+        self_tuple = (self.major, self.minor, self.patch)
+        other_tuple = (other.major, other.minor, other.patch)
+        return self_tuple < other_tuple
 
 
 def parse_java_version(version: str) -> JavaVersion:
