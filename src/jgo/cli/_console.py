@@ -183,8 +183,8 @@ def console_print(
         sep=sep,
         end=end,
         style=style,
-        justify=justify,
-        overflow=overflow,
+        justify=justify,  # type: ignore[arg-type]
+        overflow=overflow,  # type: ignore[arg-type]
         markup=markup,
         emoji=emoji,
         highlight=highlight,

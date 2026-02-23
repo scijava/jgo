@@ -9,7 +9,7 @@ class MockPOM:
     version = "v"
     name = "n"
     description = "d"
-    properties = {}
+    properties: dict = {}
 
     def elements(self, xpath):
         return []

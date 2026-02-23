@@ -89,7 +89,9 @@ class MetadataXML(XML, Metadata):
 
     @property
     def versions(self) -> list[str]:
-        return self.values("versioning/versions/version") or []
+        return [
+            v for v in self.values("versioning/versions/version") if v is not None
+        ] or []
 
     @property
     def lastVersion(self) -> str | None:
@@ -246,4 +248,4 @@ def ts2dt(ts: str) -> datetime:
     m = match(r"(\d{4})(\d\d)(\d\d)\.?(\d\d)(\d\d)(\d\d)", ts)
     if not m:
         raise ValueError(f"Invalid timestamp: {ts}")
-    return datetime(*map(int, m.groups()))  # noqa
+    return datetime(*map(int, m.groups()))  # type: ignore[arg-type]

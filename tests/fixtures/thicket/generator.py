@@ -72,7 +72,7 @@ class ThicketGenerator:
             seed: Random seed for reproducible generation
         """
         self.output_dir = Path(output_dir)
-        self.versions = set()
+        self.versions: set[int] = set()
         random.seed(seed)
 
     def random_version(self) -> str:

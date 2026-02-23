@@ -474,5 +474,6 @@ def parse_config_key(key: str, default_section: str = "settings") -> tuple[str, 
         ('repositories', 'central')
     """
     if "." in key:
-        return tuple(key.split(".", 1))
+        section, name = key.split(".", 1)
+        return section, name
     return default_section, key

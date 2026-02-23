@@ -26,8 +26,8 @@ class Environment:
 
     def __init__(self, path: Path):
         self.path = path
-        self._lockfile = None
-        self._runtime_main_class = None  # Runtime override, not persisted
+        self._lockfile: LockFile | None = None
+        self._runtime_main_class: str | None = None  # Runtime override, not persisted
 
     @property
     def spec_path(self) -> Path:

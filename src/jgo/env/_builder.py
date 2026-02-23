@@ -249,8 +249,8 @@ class EnvironmentBuilder:
         if self._is_environment_valid(environment, update):
             # Apply main class overrides for cached environments
             primary = dependencies[0].artifact
-            autocompleted_cli_main = None
-            autocompleted_parsed_main = None
+            autocompleted_cli_main: str | None = None
+            autocompleted_parsed_main: str | None = None
 
             if main_class:
                 autocompleted_cli_main = autocomplete_main_class(

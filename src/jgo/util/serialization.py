@@ -7,11 +7,13 @@ Provides reusable serialization/deserialization capabilities for TOML files.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Callable, ClassVar
+from typing import Any, Callable, ClassVar, TypeVar
 
 import tomli_w
 
 from .toml import tomllib
+
+_T = TypeVar("_T", bound="TOMLSerializableMixin")
 
 
 class TOMLSerializableMixin:
@@ -32,7 +34,7 @@ class TOMLSerializableMixin:
     VALIDATION_ERROR_MESSAGE: ClassVar[str] = "Invalid {class_name} in {path}: {error}"
 
     @classmethod
-    def load(cls, path: Path | str) -> "TOMLSerializableMixin":
+    def load(cls: type[_T], path: Path | str) -> _T:
         """Load instance from a TOML file."""
         path = Path(path)
         if not path.exists():
@@ -50,7 +52,7 @@ class TOMLSerializableMixin:
         # Validate and deserialize
         try:
             if hasattr(cls, "_validate_loaded_data"):
-                cls._validate_loaded_data(data, path)
+                cls._validate_loaded_data(data, path)  # type: ignore[attr-defined]
 
             return cls._from_dict(data, path)
         except Exception as e:
@@ -79,7 +81,7 @@ class TOMLSerializableMixin:
         )
 
     @classmethod
-    def _from_dict(cls, data: dict, path: Path | None = None):
+    def _from_dict(cls: type[_T], data: dict, path: Path | None = None) -> _T:
         """Create instance from parsed TOML dict."""
         raise NotImplementedError(f"{cls.__name__} must implement _from_dict()")
 

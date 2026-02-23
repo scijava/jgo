@@ -8,6 +8,7 @@ reproducible Java environments.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from ..util.serialization import FieldValidatorMixin, TOMLSerializableMixin
 
@@ -272,7 +273,7 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
             data["environment"] = env_section
 
         # [java] section
-        java_section = {}
+        java_section: dict[str, Any] = {}
         if self.java_version != "auto":
             java_section["version"] = self.java_version
         if self.java_vendor:
@@ -299,7 +300,7 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
             data["repositories"] = self.repositories
 
         # [dependencies] section (required)
-        deps_section = {"coordinates": self.coordinates}
+        deps_section: dict[str, Any] = {"coordinates": self.coordinates}
         if self.exclusions:
             deps_section["exclusions"] = self.exclusions
         data["dependencies"] = deps_section

@@ -150,6 +150,7 @@ class Resolver(ABC):
         self,
         dependencies: list[Dependency],
         transitive: bool = True,
+        optional_depth: int = 0,
     ) -> tuple[list[Dependency], list[Dependency]]:
         """
         Resolve dependencies for the given Maven dependencies.
@@ -159,6 +160,7 @@ class Resolver(ABC):
         Args:
             dependencies: The dependencies for which to resolve transitive deps.
             transitive: Whether to include transitive dependencies.
+            optional_depth: Maximum depth at which to include optional dependencies.
 
         Returns:
             Tuple of (resolved_inputs, resolved_transitive) where:
@@ -295,6 +297,7 @@ class PythonResolver(Resolver):
                 # And for each, if it *is* available and successfully gotten,
                 # check the actual hash of the downloaded file contents against the expected one.
                 cached_file = artifact.cached_path
+                assert cached_file is not None
                 assert not cached_file.exists()
                 cached_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -697,13 +700,15 @@ class MvnResolver(Resolver):
                 continue
 
             # Parse G:A:P[:C]:V:S format using Coordinate
-            dep = self._parse_maven_coordinate(content, context, require_scope=True)
-            if not dep:
+            parsed_dep = self._parse_maven_coordinate(
+                content, context, require_scope=True
+            )
+            if not parsed_dep:
                 # Not a valid coordinate format
                 continue
 
             # Create dependency object from coordinate
-            all_deps.append(dep)
+            all_deps.append(parsed_dep)
 
         # Build resolved component dependencies
         resolved_inputs, artifact_keys = _resolve_component_inputs(

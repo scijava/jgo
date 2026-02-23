@@ -79,7 +79,7 @@ def fetch_maven(url: str = "", sha: str = "") -> Path:
         kwargs = {sha_lengths[sha_len]: sha}
 
     _log.info("Fetching Maven from remote server...")
-    maven_dir = cjdk.cache_package("Maven", url, **kwargs)
+    maven_dir = cjdk.cache_package("Maven", url, **kwargs)  # type: ignore[arg-type]
     _log.debug(f"maven_dir -> {maven_dir}")
 
     # Find the mvn executable in the cached directory

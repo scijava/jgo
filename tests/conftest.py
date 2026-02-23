@@ -5,9 +5,9 @@ import subprocess
 from pathlib import Path
 
 import pytest
-from tests.fixtures.thicket import DEFAULT_SEED, generate_thicket
 
 from jgo.util.mvn import ensure_maven_available
+from tests.fixtures.thicket import DEFAULT_SEED, generate_thicket
 
 
 @pytest.fixture(scope="session")

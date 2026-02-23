@@ -100,6 +100,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
         if update and is_info_enabled():
             # Determine lock file path based on project mode
             if builder.is_project_mode():
+                assert args.cache_dir is not None
                 lock_path = args.cache_dir / "jgo.lock.toml"
             else:
                 # For ad-hoc mode, we'd need to compute the cache key

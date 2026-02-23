@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 from ..maven import Dependency
 from ..util.serialization import FieldValidatorMixin, TOMLSerializableMixin
@@ -73,7 +74,7 @@ class LockedDependency(TOMLSerializableMixin, FieldValidatorMixin):
 
     def to_dict(self) -> dict:
         """Convert to dict for TOML serialization."""
-        data = {
+        data: dict[str, Any] = {
             "groupId": self.groupId,
             "artifactId": self.artifactId,
             "version": self.version,
@@ -241,7 +242,7 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
 
     def _to_dict(self) -> dict:
         """Convert LockFile to dict for TOML serialization."""
-        data = {}
+        data: dict[str, Any] = {}
 
         # [metadata] section
         metadata = {
@@ -253,7 +254,7 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
         data["metadata"] = metadata
 
         # [environment] section
-        env_section = {}
+        env_section: dict[str, Any] = {}
         if self.environment_name:
             env_section["name"] = self.environment_name
         if self.min_java_version is not None:

@@ -21,4 +21,8 @@ code=$?; test $code -eq 0 || exitCode=$code
 uv run ruff format
 code=$?; test $code -eq 0 || exitCode=$code
 
+# Now run mypy to check for typing errors.
+echo "Performing static type analysis..."
+uv run mypy src tests
+
 exit $exitCode

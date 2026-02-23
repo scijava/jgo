@@ -275,6 +275,11 @@ class Model:
 
         # Build dependency tree during traversal
         # Create root node from this model's POM
+        assert (
+            self.pom.groupId is not None
+            and self.pom.artifactId is not None
+            and self.pom.version is not None
+        )
         root_artifact = (
             self.context.project(self.pom.groupId, self.pom.artifactId)
             .at_version(self.pom.version)
@@ -304,7 +309,7 @@ class Model:
 
         while queue and (max_depth is None or current_depth <= max_depth):
             # Process all items at current depth
-            next_queue: list[tuple[Model, Dependency | None, str | None]] = []
+            next_queue: list[tuple[Model, Dependency | None, str | None, tuple]] = []
 
             for model, parent_dep, parent_scope, accumulated_exclusions in queue:
                 for gact, dep in model.deps.items():
@@ -516,11 +521,15 @@ class Model:
         # can interpolate dependency coordinates using properties like ${project.groupId}
         self._merge_props(
             {
-                "project.groupId": pom.groupId,
-                "project.artifactId": pom.artifactId,
-                "project.version": pom.version,
-                "project.name": pom.name,
-                "project.description": pom.description,
+                k: v
+                for k, v in {
+                    "project.groupId": pom.groupId,
+                    "project.artifactId": pom.artifactId,
+                    "project.version": pom.version,
+                    "project.name": pom.name,
+                    "project.description": pom.description,
+                }.items()
+                if v is not None
             }
         )
         self._merge_props(pom.properties)
@@ -556,7 +565,9 @@ class Model:
             self._merge_deps(profile_dep_mgmt, managed=True)
 
             profile_props_els = profile.findall("properties/*")
-            profile_props = {el.tag: el.text for el in profile_props_els}
+            profile_props = {
+                el.tag: el.text for el in profile_props_els if el.text is not None
+            }
             self._merge_props(profile_props)
 
     def _interpolate_deps(self, deps: dict[GACT, Dependency]) -> dict[GACT, Dependency]:

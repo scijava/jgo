@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 
 # -- Constants --
 
-DEFAULT_LOCAL_REPOS = []
+DEFAULT_LOCAL_REPOS: list[Path] = []
 DEFAULT_REMOTE_REPOS = {"central": MAVEN_CENTRAL_URL}
 DEFAULT_CLASSIFIER = ""
 DEFAULT_PACKAGING = "jar"
@@ -189,6 +189,11 @@ class MavenContext:
         Returns:
             The Artifact object.
         """
+        assert (
+            pom.groupId is not None
+            and pom.artifactId is not None
+            and pom.version is not None
+        )
         project = self.project(pom.groupId, pom.artifactId)
         return project.at_version(pom.version).artifact(packaging="pom")
 
@@ -328,7 +333,7 @@ class Project:
         self._metadata = None
 
     @property
-    def release(self) -> str:
+    def release(self) -> str | None:
         """
         The newest release version of this project across all repositories.
 
@@ -372,7 +377,7 @@ class Project:
         return max(release_versions, key=cmp_to_key(compare_versions))
 
     @property
-    def latest(self) -> str:
+    def latest(self) -> str | None:
         """
         The highest version of this project across all repositories.
 
@@ -463,7 +468,7 @@ class Component:
     def __init__(self, project: Project, version: str):
         self.project = project
         self.version = version
-        self._resolved_version = None
+        self._resolved_version: str | None = None
         self._snapshot_metadata: SnapshotMetadataXML | None = None
 
     def __eq__(self, other):
@@ -829,7 +834,10 @@ class Artifact:
                     return p
 
         # Artifact was not found locally; need to download it.
-        return self.context.resolver.download(self)
+        result = self.context.resolver.download(self)
+        if result is None:
+            raise RuntimeError(f"Could not resolve artifact: {self}")
+        return result
 
     def md5(self) -> str:
         """Compute the MD5 hash of the artifact."""
@@ -863,7 +871,7 @@ class Dependency:
         self.artifact = artifact
         self.scope = scope
         self.optional = optional
-        self.exclusions: tuple[Project] = (
+        self.exclusions: tuple[Project, ...] = (
             tuple() if exclusions is None else tuple(exclusions)
         )
         self.raw = raw

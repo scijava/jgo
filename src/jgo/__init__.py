@@ -325,7 +325,7 @@ def resolve(
         if not coord.scope:
             updates["scope"] = "compile"
         if updates:
-            coord = replace(coord, **updates)
+            coord = replace(coord, **updates)  # type: ignore[arg-type]
         dependencies.append(context.create_dependency(coord))
 
     # Resolve full transitive dependency graph (fetches POMs, no JAR downloads).

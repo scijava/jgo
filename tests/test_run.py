@@ -34,8 +34,8 @@ def _call_args(mock: MagicMock) -> tuple[tuple, dict]:
         and the second element is the keyword args passed in the call.
     """
     if sys.version_info.minor >= 8:
-        return (mock.call_args.args, mock.call_args.kwargs)
-    return (mock.call_args[0], mock.call_args[1])
+        return (mock.call_args.args, mock.call_args.kwargs)  # type: ignore[return-value]
+    return (mock.call_args[0], mock.call_args[1])  # type: ignore[return-value]
 
 
 class TestExceptions(unittest.TestCase):
@@ -179,7 +179,7 @@ class TestMainCaughtExceptions(unittest.TestCase):
 
 class TestRun(unittest.TestCase):
     @patch("jgo.jgo._run")
-    def test_basic(self, run_mock):
+    def test_basic(self, run_mock) -> None:
         parser = jgo_parser()
         argv = ["com.pinterest:ktlint:0.51.0-FINAL", "-F", "/c/path/to/file.kt"]
 
@@ -205,7 +205,7 @@ class TestRun(unittest.TestCase):
         self.assertIsNone(stderr)
 
     @patch("jgo.jgo._run")
-    def test_jvm_args(self, run_mock):
+    def test_jvm_args(self, run_mock) -> None:
         parser = jgo_parser()
         argv = [
             "-Xms1G",
@@ -240,7 +240,7 @@ class TestRun(unittest.TestCase):
         self.assertIsNone(stderr)
 
     @patch("jgo.jgo._run")
-    def test_double_hyphen(self, run_mock):
+    def test_double_hyphen(self, run_mock) -> None:
         parser = jgo_parser()
         argv = [
             "--add-opens",
@@ -273,7 +273,7 @@ class TestRun(unittest.TestCase):
         self.assertIsNone(stderr)
 
     @patch("jgo.jgo._run")
-    def test_additional_endpoints(self, run_mock):
+    def test_additional_endpoints(self, run_mock) -> None:
         parser = jgo_parser()
         argv = [
             "-q",
@@ -312,7 +312,7 @@ class TestRun(unittest.TestCase):
         self.assertIn("org.clojure:clojure:1.12.4", coordinates)
 
     @patch("jgo.jgo._run")
-    def test_additional_endpoints_with_jvm_args(self, run_mock):
+    def test_additional_endpoints_with_jvm_args(self, run_mock) -> None:
         parser = jgo_parser()
         argv = [
             "-q",
@@ -354,7 +354,7 @@ class TestRun(unittest.TestCase):
 
     @patch("jgo.jgo.default_config")
     @patch("jgo.jgo._run")
-    def test_shortcut(self, run_mock, config_mock):
+    def test_shortcut(self, run_mock, config_mock) -> None:
         parser = jgo_parser()
         argv = ["--ignore-jgorc", "ktlint"]
 
@@ -387,7 +387,7 @@ class TestRun(unittest.TestCase):
         self.assertIsNone(stderr)
 
     @patch("jgo.jgo._run")
-    def test_classifier(self, run_mock):
+    def test_classifier(self, run_mock) -> None:
         parser = jgo_parser()
         argv = [
             (
@@ -418,7 +418,7 @@ class TestRun(unittest.TestCase):
         self.assertIsNone(stderr)
 
     @patch("jgo.jgo._run")
-    def test_program_arg_path_windows_drive(self, run_mock):
+    def test_program_arg_path_windows_drive(self, run_mock) -> None:
         parser = jgo_parser()
         argv = [
             "-r",
@@ -448,7 +448,7 @@ class TestRun(unittest.TestCase):
         self.assertIsNone(stderr)
 
     @patch("jgo.jgo._run")
-    def test_program_arg_path_windows_sep(self, run_mock):
+    def test_program_arg_path_windows_sep(self, run_mock) -> None:
         parser = jgo_parser()
         argv = [
             "-r",
@@ -478,7 +478,7 @@ class TestRun(unittest.TestCase):
         self.assertIsNone(stderr)
 
     @patch("jgo.jgo.launch_java")
-    def test_explicit_main_class(self, launch_java_mock):
+    def test_explicit_main_class(self, launch_java_mock) -> None:
         parser = jgo_parser()
         argv = ["org.jruby:jruby-complete:10.0.2.0:@jruby.Main"]
 
@@ -501,7 +501,7 @@ class TestRun(unittest.TestCase):
         self.assertFalse(check)
 
     @patch("jgo.jgo.launch_java")
-    def test_infer_main_class(self, launch_java_mock):
+    def test_infer_main_class(self, launch_java_mock) -> None:
         parser = jgo_parser()
         argv = ["com.pinterest.ktlint:ktlint-cli:1.8.0"]
 
@@ -526,7 +526,7 @@ class TestRun(unittest.TestCase):
 
 class TestUtil(unittest.TestCase):
     @patch("jgo.jgo._run")
-    def test_main_from_endpoint(self, run_mock):
+    def test_main_from_endpoint(self, run_mock) -> None:
         main_from_endpoint(
             "org.janelia.saalfeldlab:paintera",
             argv=[],
@@ -561,7 +561,7 @@ class TestUtil(unittest.TestCase):
         self.assertIn("org.slf4j:slf4j-simple", coordinates)
 
     @patch("jgo.jgo._run")
-    def test_main_from_endpoint_with_jvm_args(self, run_mock):
+    def test_main_from_endpoint_with_jvm_args(self, run_mock) -> None:
         main_from_endpoint(
             "org.janelia.saalfeldlab:paintera",
             argv=["-Xmx1024m", "--"],
