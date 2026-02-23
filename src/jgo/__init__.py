@@ -104,11 +104,12 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from .config import GlobalSettings
 from .constants import MAVEN_CENTRAL_URL
 from .constants import VERSION as __version__
-from .env import Environment, EnvironmentBuilder, LinkStrategy
+from .env import EnvironmentBuilder, LinkStrategy
 from .exec import JavaRunner, JavaSource, JVMConfig
 from .jgo import (
     Endpoint,
@@ -121,13 +122,17 @@ from .jgo import (
     resolve_dependencies,
 )
 from .jgo import _jgo_main as main
-from .maven import Component, MavenContext
+from .maven import MavenContext
 from .parse._coordinate import Coordinate
 from .util.compat import (
     add_jvm_args_as_necessary,
     main_from_endpoint,
     maven_scijava_repository,
 )
+
+if TYPE_CHECKING:
+    from .env import Environment
+    from .maven import Component
 
 
 def run(
