@@ -106,7 +106,7 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
             )
 
     @classmethod
-    def _from_dict(cls, data: dict, path: Path | None = None) -> "EnvironmentSpec":
+    def _from_dict(cls, data: dict, path: Path | None = None) -> EnvironmentSpec:
         """Create EnvironmentSpec from parsed TOML dict."""
         # [environment] section (optional)
         env_section = data.get("environment", {})
@@ -228,7 +228,7 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
         )
 
     @classmethod
-    def load_or_error(cls, path: Path) -> "EnvironmentSpec":
+    def load_or_error(cls, path: Path) -> EnvironmentSpec:
         """
         Load environment spec file with user-friendly error handling.
 

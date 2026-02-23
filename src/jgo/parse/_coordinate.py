@@ -91,7 +91,7 @@ class Coordinate:
         )
 
     @classmethod
-    def parse(cls, coordinate: "Coordinate" | str) -> "Coordinate":
+    def parse(cls, coordinate: Coordinate | str) -> Coordinate:
         """
         Parse a Maven coordinate string into a Coordinate object.
 

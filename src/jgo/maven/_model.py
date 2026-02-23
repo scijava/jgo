@@ -52,7 +52,7 @@ class Model:
         self,
         pom: POM,
         context: MavenContext | None = None,
-        root_dep_mgmt: dict[GACT, "Dependency"] | None = None,
+        root_dep_mgmt: dict[GACT, Dependency] | None = None,
         profile_constraints: ProfileConstraints | None = None,
     ):
         """

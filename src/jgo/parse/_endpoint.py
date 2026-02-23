@@ -95,7 +95,7 @@ class Endpoint:
         return result
 
     @classmethod
-    def parse(cls, endpoint: "Endpoint" | str) -> "Endpoint":
+    def parse(cls, endpoint: Endpoint | str) -> Endpoint:
         """
         Parse a complete endpoint expression.
 

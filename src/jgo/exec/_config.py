@@ -123,7 +123,7 @@ class JVMConfig:
             max_heap_mb = max(total_memory // (1024**2) // 2, 1)
             return f"{max_heap_mb}M"
 
-    def with_system_property(self, key: str, value: str) -> "JVMConfig":
+    def with_system_property(self, key: str, value: str) -> JVMConfig:
         """
         Return a new JVMConfig with an additional system property.
 
@@ -147,7 +147,7 @@ class JVMConfig:
             default_gc=self.default_gc,
         )
 
-    def with_extra_arg(self, arg: str) -> "JVMConfig":
+    def with_extra_arg(self, arg: str) -> JVMConfig:
         """
         Return a new JVMConfig with an additional JVM argument.
 

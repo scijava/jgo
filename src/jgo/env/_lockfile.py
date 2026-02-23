@@ -49,7 +49,7 @@ class LockedDependency(TOMLSerializableMixin, FieldValidatorMixin):
         self.jar_type = jar_type  # JarType or None if not analyzed
 
     @classmethod
-    def from_dependency(cls, dep: Dependency) -> "LockedDependency":
+    def from_dependency(cls, dep: Dependency) -> LockedDependency:
         """
         Create a LockedDependency from a resolved Dependency.
 
@@ -98,7 +98,7 @@ class LockedDependency(TOMLSerializableMixin, FieldValidatorMixin):
         return data
 
     @classmethod
-    def from_dict(cls, data: dict) -> "LockedDependency":
+    def from_dict(cls, data: dict) -> LockedDependency:
         """Create from parsed TOML dict."""
         return cls(
             groupId=data["groupId"],
@@ -175,7 +175,7 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
         default_entrypoint: str | None = None,
         spec_hash: str | None = None,
         link_strategy: str | None = None,
-    ) -> "LockFile":
+    ) -> LockFile:
         """
         Create a lock file from resolved dependencies.
 
@@ -196,7 +196,7 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
         )
 
     @classmethod
-    def _from_dict(cls, data: dict, path: Path | None = None) -> "LockFile":
+    def _from_dict(cls, data: dict, path: Path | None = None) -> LockFile:
         # Parse metadata
         metadata = data.get("metadata", {})
         jgo_version = metadata.get("jgo_version", "unknown")

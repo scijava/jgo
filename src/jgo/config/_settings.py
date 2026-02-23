@@ -65,7 +65,7 @@ class GlobalSettings:
         self.styles = styles or {}
 
     @classmethod
-    def load(cls, settings_file: Path | None = None) -> "GlobalSettings":
+    def load(cls, settings_file: Path | None = None) -> GlobalSettings:
         """
         Load global settings from file and environment variables.
 
@@ -96,7 +96,7 @@ class GlobalSettings:
         return settings
 
     @classmethod
-    def load_from_opts(cls, opts: dict) -> "GlobalSettings":
+    def load_from_opts(cls, opts: dict) -> GlobalSettings:
         """
         Load global settings based on command options.
 
@@ -111,7 +111,7 @@ class GlobalSettings:
         return cls.load()
 
     @classmethod
-    def _default_config(cls) -> "GlobalSettings":
+    def _default_config(cls) -> GlobalSettings:
         """
         Create default settings.
 
@@ -131,8 +131,8 @@ class GlobalSettings:
 
     @classmethod
     def _load_from_file(
-        cls, settings_file: Path, base_config: "GlobalSettings"
-    ) -> "GlobalSettings":
+        cls, settings_file: Path, base_config: GlobalSettings
+    ) -> GlobalSettings:
         """
         Load global settings from INI file.
 
@@ -226,9 +226,7 @@ class GlobalSettings:
         )
 
     @classmethod
-    def _apply_environment_variables(
-        cls, settings: "GlobalSettings"
-    ) -> "GlobalSettings":
+    def _apply_environment_variables(cls, settings: GlobalSettings) -> GlobalSettings:
         """
         Apply environment variable overrides.
 

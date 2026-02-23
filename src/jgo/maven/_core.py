@@ -107,7 +107,7 @@ class MavenContext:
             resolver = PythonResolver()
         self.resolver: Resolver = resolver
 
-    def project(self, groupId: str, artifactId: str) -> "Project":
+    def project(self, groupId: str, artifactId: str) -> Project:
         """
         Get a project (G:A) with the given groupId and artifactId.
 
@@ -120,7 +120,7 @@ class MavenContext:
         """
         return Project(self, groupId, artifactId)
 
-    def parse_dependency_element(self, el) -> "Dependency":
+    def parse_dependency_element(self, el) -> Dependency:
         """
         Parse a <dependency> XML element into a Dependency object.
 
@@ -152,7 +152,7 @@ class MavenContext:
         self,
         coordinate: Coordinate | str,
         exclusions: Iterable[Project] | None = None,
-    ) -> "Dependency":
+    ) -> Dependency:
         """
         Create a Dependency object from a Maven coordinate.
 
@@ -179,7 +179,7 @@ class MavenContext:
             artifact, scope, optional, exclusions or [], raw=coord.raw or False
         )
 
-    def pom_to_artifact(self, pom: POM) -> "Artifact":
+    def pom_to_artifact(self, pom: POM) -> Artifact:
         """
         Create an Artifact object representing the given POM.
 
@@ -197,7 +197,7 @@ class MavenContext:
         project = self.project(pom.groupId, pom.artifactId)
         return project.at_version(pom.version).artifact(packaging="pom")
 
-    def pom_parent(self, pom: POM) -> "POM | None":
+    def pom_parent(self, pom: POM) -> POM | None:
         """
         Resolve and return the parent POM, or None if no parent is declared.
 
@@ -234,7 +234,7 @@ class MavenContext:
         pom_artifact = self.project(g, a).at_version(v).artifact(packaging="pom")
         return POM(pom_artifact.resolve())
 
-    def pom_dependencies(self, pom: POM, managed: bool = False) -> list["Dependency"]:
+    def pom_dependencies(self, pom: POM, managed: bool = False) -> list[Dependency]:
         """
         Extract dependencies from POM as Dependency objects.
 
@@ -283,7 +283,7 @@ class Project:
         """
         return Path(*self.groupId.split("."), self.artifactId)
 
-    def at_version(self, version: str) -> "Component":
+    def at_version(self, version: str) -> Component:
         """
         Fix this project (G:A) at a particular version (G:A:V).
 
@@ -427,7 +427,7 @@ class Project:
 
     def versions(
         self, releases: bool = True, snapshots: bool = False, locked: bool = False
-    ) -> list["Component"]:
+    ) -> list[Component]:
         """
         Get a list of all known versions of this project.
 
@@ -619,7 +619,7 @@ class Component:
 
     def artifact(
         self, classifier: str = DEFAULT_CLASSIFIER, packaging: str = DEFAULT_PACKAGING
-    ) -> "Artifact":
+    ) -> Artifact:
         """
         Get an artifact (G:A:P:C:V) associated with this component.
 
@@ -940,7 +940,7 @@ class DependencyNode:
     """
 
     dep: Dependency
-    children: list["DependencyNode"] = field(default_factory=list)
+    children: list[DependencyNode] = field(default_factory=list)
 
     def __str__(self):
         return str(self.dep)
