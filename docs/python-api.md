@@ -82,7 +82,7 @@ for comp in components:
 | `endpoint` | `str` | Maven endpoint |
 | `repositories` | `dict[str, str]` | Additional Maven repositories |
 
-**Returns:** `list[Component]`
+**Returns:** `list[Artifact]`
 
 ## Layered API
 

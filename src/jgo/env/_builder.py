@@ -638,6 +638,10 @@ class EnvironmentBuilder:
                 f"{dep.artifact.packaging}"
             )
 
+            # Include raw flag: raw deps skip BOM management, producing different trees
+            if dep.raw:
+                coord_str += ":raw"
+
             # Include exclusions for this dependency
             if dep.exclusions:
                 excl_strs = sorted(

@@ -1,11 +1,3 @@
-$ jgo info classpath org.scijava:scijava-common:2.99.3:sources
-Downloading scijava-common-2.99.3-sources.jar ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.1/1.1 MB 12.2 MB/s 0:00:00
-/home/curtis/.cache/jgo/envs/org/scijava/scijava-common/5edb33ee0ed1c9f8/jars/scijava-common-2.99.3-sources.jar
-$ uv run python -c 'import jgo; print(jgo.resolve("org.scijava:scijava-common:2.99.3:sources")[0].classifier)'
-Traceback (most recent call last):
-  File "<string>", line 1, in <module>
-AttributeError: 'Component' object has no attribute 'classifier'
-
 Add py.typed file to package root for static type analyzers
 
 Use https://github.com/ross/requests-futures

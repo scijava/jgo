@@ -26,8 +26,8 @@ run(endpoint, app_args=None, jvm_args=None, **kwargs)
 build(endpoint, update=False, cache_dir=None, **kwargs) -> Environment
     Build an environment from an endpoint without running it.
 
-resolve(endpoint, repositories=None) -> list[Component]
-    Resolve dependencies for a Maven endpoint to Component objects.
+resolve(endpoint, repositories=None) -> list[Artifact]
+    Resolve all artifacts (including transitive) for a Maven endpoint.
 
 Layered API (Advanced)
 ----------------------
@@ -103,6 +103,7 @@ See Also
 from __future__ import annotations
 
 import subprocess
+from dataclasses import replace
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -123,7 +124,7 @@ from .jgo import (
 )
 from .jgo import _jgo_main as main
 from .maven import MavenContext
-from .parse._coordinate import Coordinate
+from .parse import Endpoint as _Endpoint
 from .util.compat import (
     add_jvm_args_as_necessary,
     main_from_endpoint,
@@ -132,7 +133,7 @@ from .util.compat import (
 
 if TYPE_CHECKING:
     from .env import Environment
-    from .maven import Component
+    from .maven import Artifact
 
 
 def run(
@@ -276,22 +277,28 @@ def build(
 def resolve(
     endpoint: str,
     repositories: dict[str, str] | None = None,
-) -> list[Component]:
+) -> list[Artifact]:
     """
-    Resolve dependencies for a Maven endpoint.
+    Resolve all artifacts for a Maven endpoint, including transitive dependencies.
+
+    Fetches POMs to walk the dependency graph but does not download JAR files.
+    Returns compile- and runtime-scoped artifacts only (test dependencies excluded).
 
     Args:
         endpoint: Maven endpoint (e.g., "org.python:jython-standalone:2.7.3")
         repositories: Additional Maven repositories (name -> URL)
 
     Returns:
-        List of resolved Component objects
+        List of resolved Artifact objects (endpoint artifacts first, then transitive)
 
     Example:
         >>> import jgo
-        >>> components = jgo.resolve("org.python:jython-standalone:2.7.3")
-        >>> for comp in components:
-        ...     print(f"{comp.groupId}:{comp.artifactId}:{comp.version}")
+        >>> artifacts = jgo.resolve("org.python:jython-standalone:2.7.3")
+        >>> for a in artifacts:
+        ...     print(f"{a.groupId}:{a.artifactId}:{a.version}")
+        >>> # Classifier is preserved:
+        >>> jgo.resolve("org.scijava:scijava-common:2.99.3:sources")[0].classifier
+        'sources'
     """
     # Load configuration
     config = GlobalSettings.load()
@@ -306,18 +313,28 @@ def resolve(
         remote_repos=remote_repos,
     )
 
-    # Parse endpoint to get components
-    parts = endpoint.split("+")
-    components = []
+    # Parse endpoint using the same parser as EnvironmentBuilder, then convert
+    # to Dependency objects with the same defaults for top-level user coordinates.
+    parsed = _Endpoint.parse(endpoint)
+    dependencies = []
 
-    for part in parts:
-        coord = Coordinate.parse(part)
-        version = coord.version or "RELEASE"
+    for coord in parsed.coordinates:
+        updates = {}
+        if not coord.version:
+            updates["version"] = "RELEASE"
+        if not coord.scope:
+            updates["scope"] = "compile"
+        if updates:
+            coord = replace(coord, **updates)
+        dependencies.append(context.create_dependency(coord))
 
-        component = context.project(coord.groupId, coord.artifactId).at_version(version)
-        components.append(component)
+    # Resolve full transitive dependency graph (fetches POMs, no JAR downloads).
+    resolved_inputs, resolved_transitive = context.resolver.resolve(dependencies)
 
-    return components
+    all_deps = list(resolved_inputs) + [
+        dep for dep in resolved_transitive if dep.scope in ("compile", "runtime")
+    ]
+    return [dep.artifact for dep in all_deps]
 
 
 __all__ = (
