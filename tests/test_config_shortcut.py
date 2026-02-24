@@ -9,8 +9,6 @@ import configparser
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from jgo.cli._args import ParsedArgs
 from jgo.cli._commands import config_shortcut as config_shortcut
 
@@ -231,7 +229,3 @@ class TestConfigShortcut:
             parser = configparser.ConfigParser()
             parser.read(config_file)
             assert not parser.has_section("shortcuts")
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])

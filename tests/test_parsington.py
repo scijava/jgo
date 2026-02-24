@@ -147,7 +147,3 @@ class ParsingtonTest(unittest.TestCase):
             )
         finally:
             shutil.rmtree(tmp_dir)
-
-
-if __name__ == "__main__":
-    unittest.main()

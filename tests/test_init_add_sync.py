@@ -11,12 +11,16 @@ Reproduces the bug:
     Error: Failed to build environment: Could not resolve RELEASE version for org.scijava:scijava-common@ScriptREPL
 """
 
+import os
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from jgo.cli._args import ParsedArgs
+from jgo.cli._commands import add as add_cmd
+from jgo.cli._commands import init as init_cmd
+from jgo.env import EnvironmentBuilder, EnvironmentSpec
+from jgo.env._lockfile import LockFile
+from jgo.maven import MavenContext, PythonResolver
 
 
 def test_init_with_main_class_then_add():
@@ -31,7 +35,6 @@ def test_init_with_main_class_then_add():
         tmp_path = Path(tmp_dir)
 
         # Change to temp directory to simulate project mode
-        import os
 
         original_cwd = os.getcwd()
         try:
@@ -47,8 +50,6 @@ def test_init_with_main_class_then_add():
                 file=tmp_path / "jgo.toml",
             )
 
-            from jgo.cli._commands import init as init_cmd
-
             result = init_cmd.execute(init_args, {})
             assert result == 0
 
@@ -56,8 +57,6 @@ def test_init_with_main_class_then_add():
             assert (tmp_path / "jgo.toml").exists()
 
             # Verify the coordinate and entrypoint are correct
-            from jgo.env import EnvironmentSpec
-
             spec = EnvironmentSpec.load(tmp_path / "jgo.toml")
 
             # The coordinate should NOT include @ScriptREPL
@@ -80,8 +79,6 @@ def test_init_with_main_class_then_add():
             )
             add_args.coordinates = ["org.scijava:scripting-groovy"]
             add_args.no_sync = True  # Don't sync for this test (would need Maven)
-
-            from jgo.cli._commands import add as add_cmd
 
             result = add_cmd.execute(add_args, {})
             assert result == 0
@@ -109,8 +106,6 @@ def test_init_without_main_class():
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
 
-        import os
-
         original_cwd = os.getcwd()
         try:
             os.chdir(tmp_path)
@@ -125,14 +120,10 @@ def test_init_without_main_class():
                 file=tmp_path / "jgo.toml",
             )
 
-            from jgo.cli._commands import init as init_cmd
-
             result = init_cmd.execute(init_args, {})
             assert result == 0
 
             # Verify the spec
-            from jgo.env import EnvironmentSpec
-
             spec = EnvironmentSpec.load(tmp_path / "jgo.toml")
 
             # Should have coordinate
@@ -153,8 +144,6 @@ def test_init_with_old_format_main_class():
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
 
-        import os
-
         original_cwd = os.getcwd()
         try:
             os.chdir(tmp_path)
@@ -169,14 +158,10 @@ def test_init_with_old_format_main_class():
                 file=tmp_path / "jgo.toml",
             )
 
-            from jgo.cli._commands import init as init_cmd
-
             result = init_cmd.execute(init_args, {})
             assert result == 0
 
             # Verify the spec
-            from jgo.env import EnvironmentSpec
-
             spec = EnvironmentSpec.load(tmp_path / "jgo.toml")
 
             # Coordinate should not have :@ScriptREPL
@@ -199,15 +184,11 @@ def test_cached_environment_uses_entrypoint():
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
 
-        import os
-
         original_cwd = os.getcwd()
         try:
             os.chdir(tmp_path)
 
             # Create a spec with an entrypoint
-            from jgo.env import EnvironmentSpec
-
             spec = EnvironmentSpec(
                 name="test-env",
                 description="Test environment",
@@ -221,9 +202,6 @@ def test_cached_environment_uses_entrypoint():
             spec.save(spec_file)
 
             # Build environment the first time
-            from jgo.env import EnvironmentBuilder
-            from jgo.maven import MavenContext, PythonResolver
-
             context = MavenContext(
                 resolver=PythonResolver(),
                 repo_cache=tmp_path / ".m2" / "repository",
@@ -264,15 +242,11 @@ def test_sync_with_multiple_classifiers():
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
 
-        import os
-
         original_cwd = os.getcwd()
         try:
             os.chdir(tmp_path)
 
             # Create a spec with two LWJGL native dependencies (different classifiers)
-            from jgo.env import EnvironmentSpec
-
             spec = EnvironmentSpec(
                 name="test-multi-classifier",
                 description="Test multiple classifiers",
@@ -289,9 +263,6 @@ def test_sync_with_multiple_classifiers():
             spec.save(spec_file)
 
             # Build environment
-            from jgo.env import EnvironmentBuilder
-            from jgo.maven import MavenContext, PythonResolver
-
             context = MavenContext(
                 resolver=PythonResolver(),
                 repo_cache=tmp_path / ".m2" / "repository",
@@ -302,8 +273,6 @@ def test_sync_with_multiple_classifiers():
             assert env is not None
 
             # Verify lockfile has both dependencies
-            from jgo.env._lockfile import LockFile
-
             lock = LockFile.load(tmp_path / ".jgo" / "jgo.lock.toml")
             locked_coords = {
                 (dep.groupId, dep.artifactId, dep.version, dep.classifier)
@@ -334,7 +303,3 @@ def test_sync_with_multiple_classifiers():
 
         finally:
             os.chdir(original_cwd)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])

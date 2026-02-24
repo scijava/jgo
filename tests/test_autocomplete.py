@@ -137,7 +137,3 @@ def test_autocomplete_fully_qualified_uses_as_is():
             "org.scijava.script.ScriptREPL", "imagej", jars_dir
         )
         assert result == "org.scijava.script.ScriptREPL"
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])

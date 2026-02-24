@@ -8,11 +8,17 @@ the main class should be passed through to the runner properly.
 
 import tempfile
 from pathlib import Path
+from subprocess import CompletedProcess
+from unittest.mock import Mock, patch
 
 import pytest
 
 from jgo.cli._args import ParsedArgs
+from jgo.cli._commands import init as init_cmd
 from jgo.cli._commands import run as run_cmd
+from jgo.env import EnvironmentBuilder, EnvironmentSpec
+from jgo.exec import JavaRunner
+from jgo.maven import MavenContext, PythonResolver
 
 
 def test_run_with_main_class_after_init():
@@ -44,8 +50,6 @@ def test_run_with_main_class_after_init():
                 file=tmp_path / "jgo.toml",
             )
 
-            from jgo.cli._commands import init as init_cmd
-
             result = init_cmd.execute(init_args, {})
             assert result == 0
 
@@ -54,9 +58,6 @@ def test_run_with_main_class_after_init():
 
             # Step 2: Build the environment first (to avoid needing Java runtime)
             # This simulates what happens when you run jgo without --print-classpath
-            from jgo.env import EnvironmentBuilder, EnvironmentSpec
-            from jgo.maven import MavenContext, PythonResolver
-
             spec = EnvironmentSpec.load(tmp_path / "jgo.toml")
             context = MavenContext(
                 resolver=PythonResolver(),
@@ -68,10 +69,6 @@ def test_run_with_main_class_after_init():
 
             # Step 3: Now test that runner.run() gets the main_class
             # Mock the runner to check if main_class is passed correctly
-            from unittest.mock import Mock, patch
-
-            from jgo.exec import JavaRunner
-
             mock_runner = Mock(spec=JavaRunner)
 
             # Patch create_java_runner to return our mock
@@ -96,8 +93,6 @@ def test_run_with_main_class_after_init():
                 )
 
                 # Mock the run method to return success
-                from subprocess import CompletedProcess
-
                 mock_runner.run.return_value = CompletedProcess([], 0)
 
                 result = run_cmd._run_spec(run_args, {})
@@ -156,7 +151,3 @@ def test_run_endpoint_with_main_class():
             if "No main class specified" in str(e):
                 pytest.fail(f"Endpoint mode broken: {e}")
             raise
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])

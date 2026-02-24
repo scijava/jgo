@@ -423,7 +423,3 @@ default = "org.example.Main"
 """)
         with pytest.raises(ValueError, match='Entrypoint name "default" is reserved'):
             LockFile.load(lock_path)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])

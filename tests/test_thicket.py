@@ -15,9 +15,11 @@ import shutil
 
 import pytest
 
-from jgo.maven import MavenContext
+from jgo.maven import Dependency, MavenContext
 from jgo.maven._model import Model
 from jgo.maven._pom import POM
+from jgo.maven._resolver import PythonResolver
+from tests.fixtures.thicket import generate_thicket, generator
 
 
 @pytest.fixture
@@ -265,7 +267,6 @@ class TestThicketDocumentation:
 
     def test_thicket_script_has_docstring(self):
         """Verify generator.py has documentation."""
-        from tests.fixtures.thicket import generator
 
         # Check for module docstring
         assert generator.__doc__ is not None, (
@@ -274,7 +275,6 @@ class TestThicketDocumentation:
 
     def test_generate_function_exists(self):
         """Verify the generate_thicket function exists and is callable."""
-        from tests.fixtures.thicket import generate_thicket
 
         assert callable(generate_thicket), "generate_thicket should be callable"
 
@@ -301,15 +301,12 @@ class TestThicketPythonResolver:
         The thicket is randomly generated but with a fixed seed, so it provides
         a reproducible stress test for the resolver.
         """
-        from jgo.maven._resolver import PythonResolver
 
         # Read the thicket version from the POM
         thicket_pom_obj = POM(thicket_pom)
         version = thicket_pom_obj.version
 
         # Create component and wrap in Dependency
-        from jgo.maven import Dependency
-
         component = thicket_context.project(
             "org.scijava.jgo.thicket", "thicket"
         ).at_version(version)
@@ -341,15 +338,12 @@ class TestThicketPythonResolver:
         - Resolve dependencies without managed versions
         - Handle property interpolation correctly
         """
-        from jgo.maven._resolver import PythonResolver
 
         # Read the thicket version from the POM
         thicket_pom_obj = POM(thicket_pom)
         version = thicket_pom_obj.version
 
         # Create component and wrap in Dependency (raw=True for unmanaged)
-        from jgo.maven import Dependency
-
         component = thicket_context.project(
             "org.scijava.jgo.thicket", "thicket"
         ).at_version(version)

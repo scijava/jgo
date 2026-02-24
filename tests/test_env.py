@@ -6,9 +6,9 @@ Unit tests for the Environment layer.
 import tempfile
 from pathlib import Path
 
-from jgo.env import Environment, EnvironmentBuilder, LinkStrategy
-from jgo.env._lockfile import LockFile
-from jgo.maven import MavenContext
+from jgo.env import Environment, EnvironmentBuilder, LinkStrategy, LockFile
+from jgo.env._linking import link_file
+from jgo.maven import Dependency, MavenContext
 
 
 def test_environment_creation():
@@ -88,8 +88,6 @@ def test_cache_key_generation():
         builder = EnvironmentBuilder(context=maven, cache_dir=cache_dir)
 
         # Create some test dependencies
-        from jgo.maven import Dependency
-
         project1 = maven.project("org.example", "artifact1")
         component1 = project1.at_version("1.0.0")
         project2 = maven.project("org.example", "artifact2")
@@ -124,8 +122,6 @@ def test_link_file():
 
         # Test hard link
         try:
-            from jgo.env._linking import LinkStrategy, link_file
-
             link_file(source_file, target_file, LinkStrategy.HARD)
             assert target_file.exists()
             assert target_file.is_file()
@@ -328,17 +324,3 @@ def test_lockfile_staleness_detection():
         finally:
             # Ensure we change back to original directory before temp cleanup
             os.chdir(original_cwd)
-
-
-if __name__ == "__main__":
-    test_environment_creation()
-    test_environment_classpath()
-    test_environment_main_class()
-    test_environment_builder_creation()
-    test_cache_key_generation()
-    test_link_strategy_enum()
-    test_link_file()
-    test_environment_min_java_version()
-    test_environment_min_java_version_scans_modules()
-    test_lockfile_staleness_detection()
-    print("All tests passed!")

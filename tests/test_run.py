@@ -600,7 +600,3 @@ class TestUtilMainCaughtExceptions(unittest.TestCase):
             "", argv=[], primary_endpoint_version="", secondary_endpoints=()
         )
         self.assertEqual(rv, 254, "Expected return code 254.")
-
-
-if __name__ == "__main__":
-    unittest.main()

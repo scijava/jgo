@@ -9,8 +9,8 @@ with jgo init to create multi-entrypoint environments.
 import tempfile
 from pathlib import Path
 
-import pytest
-
+from jgo.cli._args import ParsedArgs
+from jgo.cli._commands import init as init_cmd
 from jgo.config import GlobalSettings
 from jgo.env import EnvironmentSpec
 
@@ -121,9 +121,6 @@ class TestInitWithShortcuts:
             try:
                 os.chdir(tmp_path)
 
-                from jgo.cli._args import ParsedArgs
-                from jgo.cli._commands import init as init_cmd
-
                 # Create config with shortcut
                 config = {
                     "shortcuts": {
@@ -168,9 +165,6 @@ class TestInitWithShortcuts:
             original_cwd = os.getcwd()
             try:
                 os.chdir(tmp_path)
-
-                from jgo.cli._args import ParsedArgs
-                from jgo.cli._commands import init as init_cmd
 
                 # Create config with shortcuts
                 config = {
@@ -224,9 +218,6 @@ class TestInitWithShortcuts:
             try:
                 os.chdir(tmp_path)
 
-                from jgo.cli._args import ParsedArgs
-                from jgo.cli._commands import init as init_cmd
-
                 # Create config with one shortcut
                 config = {
                     "shortcuts": {
@@ -275,9 +266,6 @@ class TestInitWithShortcuts:
             try:
                 os.chdir(tmp_path)
 
-                from jgo.cli._args import ParsedArgs
-                from jgo.cli._commands import init as init_cmd
-
                 # Create config with shortcut (no @MainClass)
                 config = {"shortcuts": {"imagej": "net.imagej:imagej:2.17.0"}}
 
@@ -318,9 +306,6 @@ class TestInitWithShortcuts:
             original_cwd = os.getcwd()
             try:
                 os.chdir(tmp_path)
-
-                from jgo.cli._args import ParsedArgs
-                from jgo.cli._commands import init as init_cmd
 
                 # No shortcuts
                 config = {"shortcuts": {}}
@@ -367,8 +352,6 @@ class TestRunWithShortcuts:
             try:
                 os.chdir(tmp_path)
 
-                from jgo.cli._args import ParsedArgs
-
                 # Run with shortcut (print classpath mode to avoid needing Java)
                 run_args = ParsedArgs(
                     endpoint="repl",
@@ -409,9 +392,6 @@ class TestRunWithShortcuts:
             try:
                 os.chdir(tmp_path)
 
-                from jgo.cli._args import ParsedArgs
-                from jgo.cli._commands import init as init_cmd
-
                 # Create config with shortcut
                 config = {
                     "shortcuts": {
@@ -431,8 +411,6 @@ class TestRunWithShortcuts:
                 init_cmd.execute(init_args, config)
 
                 # Verify jgo.toml has entrypoint "repl"
-                from jgo.env import EnvironmentSpec
-
                 spec = EnvironmentSpec.load(tmp_path / "jgo.toml")
                 assert "repl" in spec.entrypoints
 
@@ -443,7 +421,3 @@ class TestRunWithShortcuts:
 
             finally:
                 os.chdir(original_cwd)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])

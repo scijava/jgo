@@ -250,17 +250,3 @@ def test_no_rounding_option():
 
         # Without rounding
         assert detect_jar_java_version(jar_path, round_to_lts_version=False) == 9
-
-
-if __name__ == "__main__":
-    test_read_class_version()
-    test_bytecode_to_java_version()
-    test_round_to_lts()
-    test_detect_jar_java_version()
-    test_detect_jar_skips_metadata_classes()
-    test_detect_jar_skips_multi_release_jar_versions()
-    test_detect_environment_java_version()
-    test_bytecode_mapping_completeness()
-    test_detect_jar_handles_corrupt_classes()
-    test_no_rounding_option()
-    print("All bytecode tests passed!")

@@ -5,6 +5,8 @@ Test entrypoint inference from coordinate references.
 import tempfile
 from pathlib import Path
 
+from jgo.env._lockfile import LockFile
+
 
 def test_coordinate_reference_inference():
     """
@@ -43,8 +45,6 @@ def test_coordinate_reference_inference():
         assert lockfile_path.exists()
 
         # Load lockfile and check entrypoints
-        from jgo.env._lockfile import LockFile
-
         lockfile = LockFile.load(lockfile_path)
 
         # Should have concrete main class inferred from JAR
@@ -90,8 +90,6 @@ def test_explicit_class_name_in_entrypoint():
         env = builder.from_spec(spec, update=False)
 
         # Load lockfile
-        from jgo.env._lockfile import LockFile
-
         lockfile = LockFile.load(env.path / "jgo.lock.toml")
 
         # Should have auto-completed the class name
@@ -133,8 +131,6 @@ def test_lockfile_has_spec_hash():
         env = builder.from_spec(spec, update=False)
 
         # Load lockfile
-        from jgo.env._lockfile import LockFile
-
         lockfile = LockFile.load(env.path / "jgo.lock.toml")
 
         # Should have spec hash
