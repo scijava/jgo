@@ -5,13 +5,13 @@ Maven artifact resolvers.
 from __future__ import annotations
 
 import logging
-from abc import ABC, abstractmethod
 from subprocess import run
 from typing import TYPE_CHECKING
 
 import requests
 
 from ..parse import Coordinate
+from . import Resolver
 from ._core import Dependency, DependencyNode, create_pom
 from ._model import Model, ProfileConstraints
 from ._pom import write_temp_pom
@@ -32,6 +32,34 @@ if TYPE_CHECKING:
 
 
 _log = logging.getLogger(__name__)
+
+
+def _build_dependency_list(
+    input_deps: list[Dependency], resolved_transitive: list[Dependency]
+) -> tuple[DependencyNode, list[DependencyNode]]:
+    """
+    Common logic for building dependency list structure.
+
+    Args:
+        input_deps: List of input dependencies
+        resolved_transitive: List of resolved transitive dependencies
+
+    Returns:
+        Tuple of (root_node, dependency_nodes)
+    """
+    root = _create_root(input_deps)
+
+    # Add input dependencies as children of root
+    for dep in input_deps:
+        root.children.append(DependencyNode(dep))
+
+    # Sort for consistent output
+    resolved_transitive.sort(key=lambda d: (d.groupId, d.artifactId, d.version))
+
+    # Convert to DependencyNode list
+    dep_nodes = [DependencyNode(dep) for dep in resolved_transitive]
+
+    return root, dep_nodes
 
 
 def _compute_boms(dependencies: list[Dependency]) -> list[Component] | None:
@@ -123,124 +151,6 @@ def _resolve_component_inputs(
             artifact_keys.add(input_dep.artifact.key)
 
     return resolved_inputs, artifact_keys
-
-
-class Resolver(ABC):
-    """
-    Logic for doing non-trivial Maven-related things, including:
-    * downloading and caching an artifact from a remote repository; and
-    * determining the dependencies of a particular Maven component.
-    """
-
-    @abstractmethod
-    def download(self, artifact: Artifact) -> Path | None:
-        """
-        Download an artifact file from a remote repository.
-
-        Args:
-            artifact: The artifact for which a local path should be resolved.
-
-        Returns:
-            Local path to the saved artifact, or None if the artifact cannot be resolved.
-        """
-        ...
-
-    @abstractmethod
-    def resolve(
-        self,
-        dependencies: list[Dependency],
-        transitive: bool = True,
-        optional_depth: int = 0,
-    ) -> tuple[list[Dependency], list[Dependency]]:
-        """
-        Resolve dependencies for the given Maven dependencies.
-
-        BOMs are computed internally from dependencies marked as non-raw.
-
-        Args:
-            dependencies: The dependencies for which to resolve transitive deps.
-            transitive: Whether to include transitive dependencies.
-            optional_depth: Maximum depth at which to include optional dependencies.
-
-        Returns:
-            Tuple of (resolved_inputs, resolved_transitive) where:
-            - resolved_inputs: Input deps with MANAGED versions resolved
-            - resolved_transitive: Transitive dependencies (excludes the inputs themselves)
-        """
-        ...
-
-    def _build_dependency_list(
-        self, input_deps: list[Dependency], resolved_transitive: list[Dependency]
-    ) -> tuple[DependencyNode, list[DependencyNode]]:
-        """
-        Common logic for building dependency list structure.
-
-        Args:
-            input_deps: List of input dependencies
-            resolved_transitive: List of resolved transitive dependencies
-
-        Returns:
-            Tuple of (root_node, dependency_nodes)
-        """
-        root = _create_root(input_deps)
-
-        # Add input dependencies as children of root
-        for dep in input_deps:
-            root.children.append(DependencyNode(dep))
-
-        # Sort for consistent output
-        resolved_transitive.sort(key=lambda d: (d.groupId, d.artifactId, d.version))
-
-        # Convert to DependencyNode list
-        dep_nodes = [DependencyNode(dep) for dep in resolved_transitive]
-
-        return root, dep_nodes
-
-    @abstractmethod
-    def get_dependency_list(
-        self,
-        dependencies: list[Dependency],
-        transitive: bool = True,
-        optional_depth: int = 0,
-    ) -> tuple[DependencyNode, list[DependencyNode]]:
-        """
-        Get the flat list of resolved dependencies as data structures.
-
-        This returns the dependency data in a common format that can be used by
-        the dependency printing logic to ensure consistent output across resolvers.
-
-        Args:
-            dependencies: The dependencies for which to get the list.
-            transitive: If False, return only direct dependencies.
-            optional_depth: Maximum depth at which to include optional dependencies.
-
-        Returns:
-            Tuple of (root_node, dependencies_list) where root_node is the
-            root and dependencies_list is the sorted list of all
-            resolved transitive dependencies.
-        """
-        ...
-
-    @abstractmethod
-    def get_dependency_tree(
-        self, dependencies: list[Dependency], optional_depth: int = 0
-    ) -> DependencyNode:
-        """
-        Get the full dependency tree as a data structure.
-
-        This returns the dependency data in a common format that can be used by
-        the dependency printing logic to ensure consistent output across resolvers.
-
-        Args:
-            dependencies: The dependencies for which to get the tree.
-            optional_depth: Maximum depth at which to include optional dependencies.
-                Defaults to 0, matching Maven's behavior.
-
-        Returns:
-            DependencyNode representing the root with children populated
-            recursively to form the complete dependency tree.
-        """
-        ...
 
 
 class PythonResolver(Resolver):
@@ -440,7 +350,7 @@ class PythonResolver(Resolver):
         deps = _filter_component_deps(deps, resolved_input_deps)
         deps = [dep for dep in deps if dep.scope not in ("test",)]
 
-        return self._build_dependency_list(resolved_input_deps, deps)
+        return _build_dependency_list(resolved_input_deps, deps)
 
     def get_dependency_tree(
         self,
@@ -748,7 +658,7 @@ class MvnResolver(Resolver):
             transitive=transitive,
             optional_depth=optional_depth,
         )
-        return self._build_dependency_list(dependencies, resolved_transitive)
+        return _build_dependency_list(dependencies, resolved_transitive)
 
     def get_dependency_tree(
         self,

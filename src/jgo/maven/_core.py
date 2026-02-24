@@ -24,6 +24,7 @@ For simple/low-level data structures without Maven logic, see the jgo.parse subp
 from __future__ import annotations
 
 import logging
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from functools import cmp_to_key
 from hashlib import md5, sha1
@@ -40,7 +41,6 @@ from ._version import compare_versions
 
 if TYPE_CHECKING:
     from ._metadata import Metadata
-    from ._resolver import Resolver
 
 # -- Constants --
 
@@ -61,15 +61,18 @@ class MavenContext:
 
     def __init__(
         self,
+        resolver: Resolver | None = None,
         repo_cache: Path | None = None,
         local_repos: list[Path] | None = None,
         remote_repos: dict[str, str] | None = None,
-        resolver: Resolver | None = None,
     ):
         """
         Create a Maven context.
 
         Args:
+            resolver:
+                Mechanism to use for resolving local paths to artifacts.
+                By default, the PythonResolver will be used.
             repo_cache:
                 Optional path to Maven local repository cache directory, i.e. destination
                 of `mvn install`. Maven typically uses ~/.m2/repository by default.
@@ -87,9 +90,6 @@ class MavenContext:
                 Optional dict of remote name:URL pairs, with each URL corresponding
                 to a remote Maven repository accessible via HTTP/HTTPS.
                 If no remote repository paths are given, only Maven Central will be used.
-            resolver:
-                Optional mechanism to use for resolving local paths to artifacts.
-                By default, the PythonResolver will be used.
         """
         self.repo_cache: Path = repo_cache or Path(
             environ.get("M2_REPO", default_maven_repo())
@@ -1076,3 +1076,94 @@ def generate_pom_xml(
     </dependencies>
 {repositories_block}</project>
 """
+
+
+class Resolver(ABC):
+    """
+    Logic for doing non-trivial Maven-related things, including:
+    * downloading and caching an artifact from a remote repository; and
+    * determining the dependencies of a particular Maven component.
+    """
+
+    @abstractmethod
+    def download(self, artifact: Artifact) -> Path | None:
+        """
+        Download an artifact file from a remote repository.
+
+        Args:
+            artifact: The artifact for which a local path should be resolved.
+
+        Returns:
+            Local path to the saved artifact, or None if the artifact cannot be resolved.
+        """
+        ...
+
+    @abstractmethod
+    def resolve(
+        self,
+        dependencies: list[Dependency],
+        transitive: bool = True,
+        optional_depth: int = 0,
+    ) -> tuple[list[Dependency], list[Dependency]]:
+        """
+        Resolve dependencies for the given Maven dependencies.
+
+        BOMs are computed internally from dependencies marked as non-raw.
+
+        Args:
+            dependencies: The dependencies for which to resolve transitive deps.
+            transitive: Whether to include transitive dependencies.
+            optional_depth: Maximum depth at which to include optional dependencies.
+
+        Returns:
+            Tuple of (resolved_inputs, resolved_transitive) where:
+            - resolved_inputs: Input deps with MANAGED versions resolved
+            - resolved_transitive: Transitive dependencies (excludes the inputs themselves)
+        """
+        ...
+
+    @abstractmethod
+    def get_dependency_list(
+        self,
+        dependencies: list[Dependency],
+        transitive: bool = True,
+        optional_depth: int = 0,
+    ) -> tuple[DependencyNode, list[DependencyNode]]:
+        """
+        Get the flat list of resolved dependencies as data structures.
+
+        This returns the dependency data in a common format that can be used by
+        the dependency printing logic to ensure consistent output across resolvers.
+
+        Args:
+            dependencies: The dependencies for which to get the list.
+            transitive: If False, return only direct dependencies.
+            optional_depth: Maximum depth at which to include optional dependencies.
+
+        Returns:
+            Tuple of (root_node, dependencies_list) where root_node is the
+            root and dependencies_list is the sorted list of all
+            resolved transitive dependencies.
+        """
+        ...
+
+    @abstractmethod
+    def get_dependency_tree(
+        self, dependencies: list[Dependency], optional_depth: int = 0
+    ) -> DependencyNode:
+        """
+        Get the full dependency tree as a data structure.
+
+        This returns the dependency data in a common format that can be used by
+        the dependency printing logic to ensure consistent output across resolvers.
+
+        Args:
+            dependencies: The dependencies for which to get the tree.
+            optional_depth: Maximum depth at which to include optional dependencies.
+                Defaults to 0, matching Maven's behavior.
+
+        Returns:
+            DependencyNode representing the root with children populated
+            recursively to form the complete dependency tree.
+        """
+        ...

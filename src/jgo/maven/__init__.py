@@ -15,11 +15,12 @@ from ._core import (
     DependencyNode,
     MavenContext,
     Project,
+    Resolver,
 )
 from ._metadata import Metadata, Metadatas, MetadataXML
 from ._model import Model, ProfileConstraints
 from ._pom import POM, XML
-from ._resolver import MvnResolver, PythonResolver, Resolver
+from ._resolver import MvnResolver, PythonResolver
 from ._version import (
     MavenVersion,
     VersionRange,

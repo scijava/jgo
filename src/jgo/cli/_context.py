@@ -14,13 +14,18 @@ from typing import TYPE_CHECKING
 from ..constants import MAVEN_CENTRAL_URL, default_maven_repo
 from ..env import EnvironmentBuilder, EnvironmentSpec, LinkStrategy
 from ..exec import JavaRunner, JavaSource, JVMConfig, is_gc_flag, normalize_gc_flag
-from ..maven import MavenContext, MvnResolver, ProfileConstraints, PythonResolver
+from ..maven import (
+    MavenContext,
+    MvnResolver,
+    ProfileConstraints,
+    PythonResolver,
+    Resolver,
+)
 from ..util.logging import is_debug_enabled, is_info_enabled
 from ..util.mvn import ensure_maven_available
 from .rich._progress import download_progress_callback
 
 if TYPE_CHECKING:
-    from ..maven import Resolver
     from ._args import ParsedArgs
 
 _log = logging.getLogger(__name__)
@@ -96,9 +101,9 @@ def create_maven_context(args: ParsedArgs, config: dict) -> MavenContext:
 
     # Create context
     return MavenContext(
+        resolver=resolver,
         repo_cache=repo_cache,
         remote_repos=remote_repos,
-        resolver=resolver,
     )
 
 

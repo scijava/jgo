@@ -51,7 +51,7 @@ class Model:
     def __init__(
         self,
         pom: POM,
-        context: MavenContext | None = None,
+        context: MavenContext,
         root_dep_mgmt: dict[GACT, Dependency] | None = None,
         profile_constraints: ProfileConstraints | None = None,
     ):
@@ -60,7 +60,7 @@ class Model:
 
         Args:
             pom: A source POM from which to extract metadata (e.g. dependencies).
-            context: Maven context for dependency resolution. If None, creates a default context.
+            context: Maven context for dependency resolution.
             root_dep_mgmt: Optional dependency management from the root project.
                 This takes precedence over the local dependency management and is used
                 to ensure consistent versions across all transitive dependencies.
@@ -68,7 +68,7 @@ class Model:
         """
 
         self.pom = pom
-        self.context = context or MavenContext()
+        self.context = context
         self.root_dep_mgmt = root_dep_mgmt
         self.profile_constraints = profile_constraints
         self.gav = f"{pom.groupId}:{pom.artifactId}:{pom.version}"

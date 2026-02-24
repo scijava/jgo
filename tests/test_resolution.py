@@ -201,7 +201,7 @@ def mvn_resolver(maven_command):
 )
 def test_resolution_modes(m2_repo, scenario, mvn_resolver):
     python_resolver = PythonResolver()
-    context = MavenContext(repo_cache=m2_repo, resolver=python_resolver)
+    context = MavenContext(resolver=python_resolver, repo_cache=m2_repo)
 
     # Managed mode: dependencies with raw=False (default)
     managed_deps = dependencies_from_endpoint(context, scenario.endpoint)
@@ -318,14 +318,14 @@ def test_managed_version_resolution(m2_repo):
     Uses org.scijava:scijava-common:2.66.0 which has minimaven in its
     dependencyManagement at version 2.2.1.
     """
-    context = MavenContext(repo_cache=m2_repo)
+    resolver = PythonResolver()
+    context = MavenContext(resolver=resolver, repo_cache=m2_repo)
 
     # Create dependencies: primary with concrete version, secondary with MANAGED
     deps = dependencies_from_endpoint(
         context, "org.scijava:scijava-common:2.66.0+org.scijava:minimaven:MANAGED"
     )
 
-    resolver = PythonResolver()
     # Use get_dependency_list which returns root node with dependencies as children
     root, dep_nodes = resolver.get_dependency_list(deps)
 
@@ -359,7 +359,8 @@ def test_classifier_collision_prevention(m2_repo, mvn_resolver):
     This test uses LWJGL which publishes native JARs for multiple platforms
     with different classifiers.
     """
-    context = MavenContext(repo_cache=m2_repo)
+    python_resolver = PythonResolver()
+    context = MavenContext(resolver=python_resolver, repo_cache=m2_repo)
 
     # Create dependencies with same G:A:V but different classifiers
     # LWJGL publishes native libraries for different platforms
@@ -377,7 +378,6 @@ def test_classifier_collision_prevention(m2_repo, mvn_resolver):
     }, f"Expected natives-linux and natives-windows, got {classifiers}"
 
     # Test PythonResolver
-    python_resolver = PythonResolver()
     resolved_inputs, _ = python_resolver.resolve(deps, transitive=False)
 
     # Both dependencies should be present in resolved_inputs

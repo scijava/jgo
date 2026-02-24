@@ -50,12 +50,12 @@ Layer 3 - Execution (jgo.exec):
 
 Example - Full Control
 ----------------------
->>> from jgo.maven import MavenContext, PythonResolver
+>>> from jgo.maven import MavenContext
 >>> from jgo.env import EnvironmentBuilder, LinkStrategy
 >>> from jgo.exec import JavaRunner, JVMConfig
 >>>
 >>> # Layer 1: Maven resolution
->>> maven = MavenContext(resolver=PythonResolver())
+>>> maven = MavenContext()
 >>> component = maven.project("org.python", "jython-standalone").at_version("2.7.3")
 >>>
 >>> # Layer 2: Environment materialization
