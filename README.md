@@ -7,7 +7,7 @@
 
 ## Summary
 
-`jgo` launches Java applications directly from Maven coordinates—no installation required. Just specify a Maven artifact identifier and an optional main class, and `jgo` resolves dependencies, materializes the environment including the version of Java needed, and runs your program.
+`jgo` launches Java applications directly from Maven coordinates—no installation required. Specify a Maven artifact identifier and an optional main class, and `jgo` resolves dependencies, materializes the environment including the version of Java needed, and runs your program.
 
 ```bash
 # Run Jython REPL (latest version)
@@ -227,7 +227,7 @@ uv run pytest --cov=src/jgo tests/
 ## Alternatives
 
 * [JBang](https://github.com/jbangdev/jbang)
-* [mvnx](https://github.com/mvnx/mvnx)
+* [mvnx](https://github.com/mvnx/mvnx) (unmaintained)
 * [JPM4J](https://github.com/jpm4j) (discontinued)
 * [Mop](https://github.com/chirino/mop) (unmaintained)
 * [marun](https://github.com/nishemon/marun) (unmaintained, Python 2 only)
