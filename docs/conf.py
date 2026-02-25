@@ -27,8 +27,8 @@ html_theme_options = {
     "collapse_navigation": False,
 }
 html_static_path = ["_static"]
-html_logo = "../jgo.png"
-html_favicon = "../jgo.png"
+html_logo = "../images/jgo-logo.png"
+html_favicon = "../images/jgo-logo.svg"
 html_title = "jgo documentation"
 
 # -- MyST options ------------------------------------------------------------
