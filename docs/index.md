@@ -1,6 +1,6 @@
 # jgo: painless Java environments and execution
 
-```{image} ../jgo.png
+```{image} ../jgo.svg
 :alt: jgo in action
 ```
 

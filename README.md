@@ -3,7 +3,7 @@
 
 # jgo: painless Java environments and execution
 
-![](https://raw.githubusercontent.com/apposed/jgo/main/jgo.png)
+![](https://raw.githubusercontent.com/apposed/jgo/main/jgo.svg)
 
 ## Summary
 
