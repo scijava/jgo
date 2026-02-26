@@ -27,9 +27,6 @@ This page tracks ideas and features that are not currently planned for implement
 **Interactive `jgo init`**
 : Prompt for settings when creating a new `jgo.toml`.
 
-**`--no-env` / `--global` flag**
-: Ignore `jgo.toml` in the current directory and use global configuration only.
-
 **Full command aliases in shortcuts**
 : Allow shortcuts to expand to complete command strings including flags.
 

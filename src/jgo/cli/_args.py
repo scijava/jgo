@@ -68,6 +68,8 @@ class ParsedArgs:
         # Module mode
         class_path_only: bool = False,
         module_path_only: bool = False,
+        # Mode override
+        force_global: bool = False,
         # Endpoint and args
         endpoint: str | None = None,
         jvm_args: list[str] | None = None,
@@ -126,6 +128,8 @@ class ParsedArgs:
         # Module mode
         self.class_path_only = class_path_only
         self.module_path_only = module_path_only
+        # Mode override
+        self.force_global = force_global
         # Endpoint and args
         self.endpoint = endpoint
         self.jvm_args = jvm_args or []
@@ -441,6 +445,8 @@ def build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, command
         # Module mode
         class_path_only=opts.get("class_path_only", False),
         module_path_only=opts.get("module_path_only", False),
+        # Mode override
+        force_global=opts.get("force_global", False),
         # Endpoint and args
         endpoint=endpoint,
         jvm_args=jvm_args or [],

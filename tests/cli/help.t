@@ -177,6 +177,10 @@ Test help for specific commands.
   │                         simple names)                                        │
   │ --entrypoint     NAME   Run specific entrypoint from jgo.toml                │
   │ --add-classpath  PATH   Append to classpath (JARs, directories, etc.)        │
+  │ --global                Ignore jgo.toml and use global configuration only    │
+  │                         (endpoint mode).                                     │
+  │ --local                 Force jgo.toml project mode even when an             │
+  │                         endpoint-like argument is present.                   │
   │ --help                  Show this message and exit.                          │
   ╰──────────────────────────────────────────────────────────────────────────────╯
                                                                                   

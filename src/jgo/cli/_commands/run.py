@@ -55,6 +55,18 @@ _log = logging.getLogger(__name__)
     metavar="PATH",
     help=f"Append to classpath ({secondary('JARs, directories, etc.')})",
 )
+@click.option(
+    "--global",
+    "force_global",
+    is_flag=True,
+    help=f"Ignore {JGO_TOML} and use global configuration only (endpoint mode).",
+)
+@click.option(
+    "--local",
+    "force_local",
+    is_flag=True,
+    help=f"Force {JGO_TOML} project mode even when an endpoint-like argument is present.",
+)
 @click.argument(
     "endpoint",
     required=False,
@@ -71,7 +83,16 @@ _log = logging.getLogger(__name__)
     f"Example: {secondary('-- -Xmx2G -- script.py')}",
 )
 @click.pass_context
-def run(ctx, main_class, entrypoint, add_classpath, endpoint, remaining):
+def run(
+    ctx,
+    main_class,
+    entrypoint,
+    add_classpath,
+    force_global,
+    force_local,
+    endpoint,
+    remaining,
+):
     """
     Run a Java application from Maven coordinates or jgo.toml.
 
@@ -99,6 +120,8 @@ def run(ctx, main_class, entrypoint, add_classpath, endpoint, remaining):
       jgo run org.scijava:scijava-common@ScriptREPL
       jgo run --main-class ScriptREPL org.scijava:scijava-common
       jgo run org.python:jython-standalone:2.7.3 -- -Xmx2G -- script.py
+      jgo run --local --main-class groovy.ui.GroovyMain -- script.groovy
+      jgo run --global my-shortcut -- script.groovy
 
     TIP:
       Use 'jgo --dry-run run' to see the command without executing it.
@@ -114,6 +137,16 @@ def run(ctx, main_class, entrypoint, add_classpath, endpoint, remaining):
         opts["entrypoint"] = entrypoint
     if add_classpath:
         opts["add_classpath"] = add_classpath
+    if force_global:
+        opts["force_global"] = True
+
+    # --local: force spec/project mode.  Click may have captured a positional
+    # token as `endpoint` (e.g. when the user typed `-- script.groovy` and
+    # click consumed the `--`).  Move it back to the front of `remaining` so
+    # it ends up as an app arg rather than being treated as a Maven coordinate.
+    if force_local and endpoint:
+        remaining = (endpoint,) + remaining
+        endpoint = None
 
     # Parse remaining args for JVM/app args
     jvm_args, app_args = parse_remaining(remaining)
@@ -151,6 +184,10 @@ def execute(args: ParsedArgs, config: dict) -> int:
         Exit code (0 for success, non-zero for failure)
     """
 
+    # --global: bypass jgo.toml entirely and run in endpoint mode
+    if args.force_global:
+        return _run_endpoint(args, config)
+
     # Check if we're in spec mode (jgo.toml exists)
     spec_file = Path("jgo.toml")
     if spec_file.exists() and not args.endpoint:
@@ -170,15 +207,6 @@ def execute(args: ParsedArgs, config: dict) -> int:
                 args.endpoint = None  # Clear endpoint to trigger spec mode
                 return _run_spec(args, config)
 
-            # Maven coordinates always contain ':' (groupId:artifactId).
-            # If the captured "endpoint" has no ':', click mis-assigned an
-            # app argument to it (e.g. `jgo run -- script.groovy` puts
-            # `script.groovy` into the endpoint slot after consuming `--`).
-            # Recover by prepending it to app_args and running in spec mode.
-            if ":" not in args.endpoint:
-                args.app_args = [args.endpoint] + list(args.app_args)
-                args.endpoint = None
-                return _run_spec(args, config)
         except Exception:
             # If we can't load spec, fall through to endpoint mode
             pass
