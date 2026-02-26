@@ -169,6 +169,16 @@ def execute(args: ParsedArgs, config: dict) -> int:
                 args.entrypoint = args.endpoint
                 args.endpoint = None  # Clear endpoint to trigger spec mode
                 return _run_spec(args, config)
+
+            # Maven coordinates always contain ':' (groupId:artifactId).
+            # If the captured "endpoint" has no ':', click mis-assigned an
+            # app argument to it (e.g. `jgo run -- script.groovy` puts
+            # `script.groovy` into the endpoint slot after consuming `--`).
+            # Recover by prepending it to app_args and running in spec mode.
+            if ":" not in args.endpoint:
+                args.app_args = [args.endpoint] + list(args.app_args)
+                args.endpoint = None
+                return _run_spec(args, config)
         except Exception:
             # If we can't load spec, fall through to endpoint mode
             pass
