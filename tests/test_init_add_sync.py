@@ -14,6 +14,7 @@ Reproduces the bug:
 import os
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 from jgo.cli._args import ParsedArgs
 from jgo.cli._commands import add as add_cmd
@@ -300,6 +301,55 @@ def test_sync_with_multiple_classifiers():
             jar_names = {jar.name for jar in jar_files}
             assert "lwjgl-3.3.1-natives-linux.jar" in jar_names
             assert "lwjgl-3.3.1-natives-windows.jar" in jar_names
+
+        finally:
+            os.chdir(original_cwd)
+
+
+def test_add_reverts_spec_on_sync_failure():
+    """
+    Test that jgo add reverts jgo.toml when sync fails.
+
+    Reproduces the bug where a failed `jgo add` (e.g. unresolvable coordinate)
+    still wrote the bad coordinate to jgo.toml.
+    """
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(tmp_path)
+
+            # Create a minimal jgo.toml with one valid coordinate
+            spec = EnvironmentSpec(
+                name="test-env",
+                coordinates=["org.scijava:scijava-common:2.97.1"],
+            )
+            spec_file = tmp_path / "jgo.toml"
+            spec.save(spec_file)
+
+            add_args = ParsedArgs(
+                command="add",
+                verbose=0,
+                quiet=False,
+                ignore_config=True,
+                file=spec_file,
+                dry_run=False,
+            )
+            add_args.coordinates = ["org.scijava:scijava-ops-engine"]
+            add_args.no_sync = False
+            add_args.requirements_file = None
+
+            # Simulate sync failure (e.g. unresolvable RELEASE version)
+            with patch("jgo.cli._commands.add.sync_cmd.execute", return_value=1):
+                result = add_cmd.execute(add_args, {})
+
+            assert result == 1
+
+            # jgo.toml must NOT contain the bad coordinate
+            reloaded = EnvironmentSpec.load(spec_file)
+            assert "org.scijava:scijava-ops-engine" not in reloaded.coordinates
+            assert reloaded.coordinates == ["org.scijava:scijava-common:2.97.1"]
 
         finally:
             os.chdir(original_cwd)

@@ -98,14 +98,15 @@ def execute(args: ParsedArgs, config: dict) -> int:
         return 1
 
     # Add coordinates
-    added_count = 0
+    added = []
     for coord in coordinates:
         if coord in spec.coordinates:
             _log.debug(f"Already present: {coord}")
         else:
             spec.coordinates.append(coord)
-            added_count += 1
+            added.append(coord)
             _log.debug(f"Added: {coord}")
+    added_count = len(added)
 
     if added_count == 0:
         _log.warning("No new dependencies added")
@@ -125,6 +126,19 @@ def execute(args: ParsedArgs, config: dict) -> int:
     # Auto-sync unless --no-sync specified
     if not getattr(args, "no_sync", False):
         _log.debug("Syncing environment...")
-        return sync_cmd.execute(args, config)
+        exit_code = sync_cmd.execute(args, config)
+        if exit_code != 0:
+            # Sync failed -- revert the spec file to avoid leaving it in a bad state
+            _log.debug("Reverting changes to spec file due to sync failure")
+            for coord in added:
+                try:
+                    spec.coordinates.remove(coord)
+                except ValueError:
+                    pass
+            try:
+                spec.save(spec_file)
+            except Exception as e:
+                _log.warning(f"Failed to revert {spec_file}: {e}")
+        return exit_code
 
     return 0
