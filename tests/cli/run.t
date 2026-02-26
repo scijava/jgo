@@ -97,3 +97,27 @@ Test passing JVM args and app args.
 
   $ jgo --dry-run run org.python:jython-standalone:2.7.4 -Xmx2G -- --help
   */bin/java -XX:+UseG1GC -Xmx*G -Xmx2G -Xmx2G -cp */jars/\*:*/modules/\* org.python.util.jython --help (glob)
+
+Test --global flag ignores jgo.toml in a project directory.
+
+  $ cd "$TMPDIR" && mkdir -p jgo-test-global && cd jgo-test-global
+  $ jgo init org.python:jython-standalone:2.7.4
+  $ jgo --dry-run run --global org.python:jython-standalone:2.7.4 -- --version
+  */bin/java * org.python.util.jython --version (glob)
+  $ cd "$TMPDIR" && rm -rf jgo-test-global
+
+Test --local flag forces spec mode; positional arg is treated as an app arg, not endpoint.
+
+  $ cd "$TMPDIR" && mkdir -p jgo-test-local && cd jgo-test-local
+  $ jgo init org.python:jython-standalone:2.7.4
+  $ jgo --dry-run run --local --main-class org.python.util.jython -- --version
+  */bin/java * org.python.util.jython --version (glob)
+  $ cd "$TMPDIR" && rm -rf jgo-test-local
+
+Test --main-class overrides the entrypoint configured in jgo.toml.
+
+  $ cd "$TMPDIR" && mkdir -p jgo-test-mc && cd jgo-test-mc
+  $ jgo init org.python:jython-standalone:2.7.4
+  $ jgo --dry-run run --main-class org.python.util.PyConsole
+  */bin/java * org.python.util.PyConsole (glob)
+  $ cd "$TMPDIR" && rm -rf jgo-test-mc
