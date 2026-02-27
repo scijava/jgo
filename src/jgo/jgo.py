@@ -792,7 +792,6 @@ def resolve_dependencies(
         for coordinate in coordinates:
             f.write("".join([":".join(coordinate)] + ["\n"]))
 
-    # TODO should this be for all endpoints or only the primary endpoint?
     if manage_dependencies:
         if primary_endpoint.version == Endpoint.VERSION_MANAGED:
             raise InvalidEndpoint(
@@ -883,9 +882,6 @@ def resolve_dependencies(
     info_regex = re.compile("^.*\\[[A-Z]+\\] *")
     relevant_jars = []
     for line in str(mvn_out).split("\\n"):
-        # TODO: The compile|runtime|provided matches might fail if an
-        # artifactId starts with accordingly. If that ever turns out to
-        # be an issue, it is going to be necessary to update these checks.
         if (
             re.match(".*:(compile|runtime)", line)
             and not re.match(".*\\[DEBUG\\]", line)
