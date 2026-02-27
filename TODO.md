@@ -33,12 +33,6 @@ Documentation to write as part of a comprehensive ReadTheDocs site in `docs/`:
 
 These can be deferred to 2.1.0 or later:
 
-### JVM Options from Config
-**File**: `src/jgo/cli/commands.py:405`
-**Issue**: TODO for loading JVM options from config file
-**Impact**: Can't configure default JVM args in ~/.jgorc
-**Priority**: Low - can pass via CLI
-
 ### Scope Matching Improvements
 **Files**: `src/jgo/jgo.py:615,706`
 **Issue**: Compile/runtime/provided scope matching might fail in edge cases
