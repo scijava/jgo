@@ -186,7 +186,7 @@ class JavaLocator:
 
             return java_path
 
-        except Exception as e:
+        except (RuntimeError, OSError) as e:
             raise RuntimeError(f"Failed to obtain Java automatically: {e}")
 
     def _extract_min_version(self, version_constraint: str) -> JavaVersion | None:
@@ -287,7 +287,7 @@ class JavaLocator:
 
         except subprocess.TimeoutExpired:
             raise RuntimeError(f"Timeout while checking Java version at {java_path}")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             raise RuntimeError(f"Failed to determine Java version: {e}")
 
 

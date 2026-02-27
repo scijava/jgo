@@ -164,7 +164,13 @@ def detect_jar_java_version(
                         if max_version is None or major_version > max_version:
                             max_version = major_version
 
-                except Exception:
+                except (
+                    KeyError,
+                    zipfile.BadZipFile,
+                    EOFError,
+                    struct.error,
+                    ValueError,
+                ):
                     # Skip corrupt or unreadable class files
                     continue
 

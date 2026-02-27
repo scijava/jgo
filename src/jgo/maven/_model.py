@@ -418,7 +418,7 @@ class Model:
                             next_queue.append(
                                 (dep_model, dep, dep.scope, new_exclusions)
                             )
-                        except Exception as e:
+                        except (OSError, ValueError, RuntimeError, KeyError) as e:
                             _log.debug(f"Could not build model for {dep}: {e}")
 
             # Move to next depth level

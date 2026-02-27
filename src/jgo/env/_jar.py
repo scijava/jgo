@@ -866,7 +866,7 @@ def has_main_method(class_bytes: bytes) -> bool:
 
         return False
 
-    except Exception:
+    except (struct.error, IndexError, ValueError):
         return False
 
 
@@ -906,7 +906,7 @@ def find_main_classes(jar_path: Path) -> list[str]:
                             # Convert path to class name
                             class_name = name[:-6].replace("/", ".")
                             main_classes.append(class_name)
-                except Exception:
+                except (KeyError, zipfile.BadZipFile, EOFError, OSError):
                     continue
 
     except (zipfile.BadZipFile, FileNotFoundError):

@@ -215,7 +215,7 @@ class JavaRunner:
             return result
         except FileNotFoundError:
             raise RuntimeError(f"Java executable not found: {java_path}")
-        except Exception as e:
+        except OSError as e:
             raise RuntimeError(f"Failed to execute Java program: {e}")
 
     def run_and_capture(
@@ -287,7 +287,7 @@ class JavaRunner:
             return result
         except FileNotFoundError:
             raise RuntimeError(f"Java executable not found: {java_path}")
-        except Exception as e:
+        except OSError as e:
             raise RuntimeError(f"Failed to execute Java program: {e}")
 
     def _build_classpath(self, paths: list[Path]) -> str:

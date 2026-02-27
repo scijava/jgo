@@ -88,7 +88,7 @@ def get_baseline_jar_tool() -> Path | None:
             _baseline_jar_tool = None  # Cache the failure to avoid repeated attempts
             return None
 
-    except Exception as e:
+    except (RuntimeError, OSError) as e:
         _log.warning(
             f"Failed to obtain baseline JDK for JAR classification: {e}. "
             "Falling back to simple module detection."
