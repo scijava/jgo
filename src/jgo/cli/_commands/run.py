@@ -10,6 +10,7 @@ import rich_click as click
 
 from ...config import GlobalSettings
 from ...env import EnvironmentSpec
+from ...parse import Endpoint
 from ...styles import (
     AT_MAINCLASS,
     DOUBLE_DASH,
@@ -350,17 +351,14 @@ def _run_endpoint(args: ParsedArgs, config: dict) -> int:
     context = create_maven_context(args, config)
     builder = create_environment_builder(args, config, context)
 
-    # Build environment
-    _log.info(f"Building environment for {args.endpoint}...")
-
+    # Validate endpoint format before attempting to build the environment.
+    # Only parse errors (malformed coordinate strings) warrant the "not a valid
+    # endpoint" message; resolution errors (missing versions, network issues,
+    # etc.) should propagate as-is so the user sees the real cause.
+    endpoint = args.endpoint
     try:
-        environment = builder.from_endpoint(
-            args.endpoint,
-            update=args.update,
-            main_class=args.main_class,
-        )
+        Endpoint.parse(endpoint)
     except ValueError:
-        endpoint = args.endpoint
         _log.error(f"'{endpoint}' is not a valid endpoint")
         # Strip =value suffix (e.g. --gc=G1 → --gc) before checking
         flag_name = endpoint.split("=")[0] if "=" in endpoint else endpoint
@@ -372,6 +370,15 @@ def _run_endpoint(args: ParsedArgs, config: dict) -> int:
         else:
             _log.error("Endpoints use Maven coordinates: groupId:artifactId[:version]")
         return 1
+
+    # Build environment
+    _log.info(f"Building environment for {endpoint}...")
+
+    environment = builder.from_endpoint(
+        endpoint,
+        update=args.update,
+        main_class=args.main_class,
+    )
 
     # Create runner and execute
     _log.info("Running Java application...")
