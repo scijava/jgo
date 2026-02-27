@@ -389,13 +389,10 @@ def pom(ctx, coordinate):
         # Pretty-print the XML
         try:
             dom = xml.dom.minidom.parseString(pom_content)
-            # pretty_xml = dom.toprettyxml(indent="  ", newl="")
-            # xml_output = pretty_xml
             pretty_xml = dom.toprettyxml(indent="  ")
             # Remove extra blank lines that toprettyxml adds
             lines = [line for line in pretty_xml.split("\n") if line.strip()]
             xml_output = "\n".join(lines)
-            # TODO: Double check. If newl="" there aren't extra blanks, but what if POM is a one-line XML block?
         except Exception:
             # If pretty-printing fails, use raw content
             xml_output = pom_content
