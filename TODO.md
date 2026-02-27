@@ -33,12 +33,6 @@ Documentation to write as part of a comprehensive ReadTheDocs site in `docs/`:
 
 These can be deferred to 2.1.0 or later:
 
-### SNAPSHOT Improvements
-**Files**: `src/jgo/maven/core.py:226,436`
-**Issue**: SNAPSHOT locking to exact timestamps not fully implemented
-**Impact**: jgo.lock.toml doesn't lock SNAPSHOTs to specific builds
-**Priority**: Low - SNAPSHOTs work, just not perfectly reproducible
-
 ### JVM Options from Config
 **File**: `src/jgo/cli/commands.py:405`
 **Issue**: TODO for loading JVM options from config file

@@ -445,9 +445,9 @@ class Project:
         Returns:
             List of Component objects, each of which represents a known version.
         """
-        # TODO: Think about whether multiple timestamped snapshots at the same snapshot
-        # version should be one Component, or multiple Components.
         if locked:
+            # Should multiple timestamped snapshots at the same snapshot
+            # version be one Component, or multiple Components?
             raise RuntimeError("Locked snapshot reporting is unimplemented")
         return [
             self.at_version(v)
