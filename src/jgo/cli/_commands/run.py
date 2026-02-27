@@ -33,6 +33,48 @@ if TYPE_CHECKING:
 
 _log = logging.getLogger(__name__)
 
+# Long and short forms of every global jgo flag (from _parser.py global_options).
+# Used to give a targeted hint when a flag is mistakenly placed after the subcommand.
+# fmt: off
+_GLOBAL_FLAGS: frozenset[str] = frozenset([
+    "--verbose", "-v",
+    "--quiet", "-q",
+    "--wrap",
+    "--color",
+    "--file", "-f",
+    "--dry-run",
+    "--update", "-u",
+    "--offline",
+    "--no-cache",
+    "--cache-dir",
+    "--repo-cache",
+    "--resolver",
+    "--repository", "-r",
+    "--include-optional",
+    "--managed", "-m",
+    "--java-version",
+    "--java-vendor",
+    "--system-java",
+    "--gc",
+    "--max-heap",
+    "--min-heap",
+    "--platform",
+    "--os-name",
+    "--os-family",
+    "--os-arch",
+    "--os-version",
+    "--property", "-D",
+    "--links",
+    "--lenient",
+    "--class-path-only",
+    "--module-path-only",
+    "--full-coordinates",
+    "--ignore-config",
+    "--ignore-jgorc",
+    "--version",
+])
+# fmt: on
+
 
 @click.command(
     help=f"Run a Java application from {MAVEN_COORDINATES} or {JGO_TOML}.",
@@ -320,10 +362,12 @@ def _run_endpoint(args: ParsedArgs, config: dict) -> int:
     except ValueError:
         endpoint = args.endpoint
         _log.error(f"'{endpoint}' is not a valid endpoint")
-        if endpoint.startswith("-"):
-            # Common mistake: flags placed after the subcommand name
+        # Strip =value suffix (e.g. --gc=G1 → --gc) before checking
+        flag_name = endpoint.split("=")[0] if "=" in endpoint else endpoint
+        if flag_name in _GLOBAL_FLAGS:
             _log.error(
-                f"Hint: {endpoint} is a global flag; did you mean: jgo {endpoint} run?"
+                f"Hint: {flag_name} is a global flag; "
+                f"did you mean: jgo {flag_name} run?"
             )
         else:
             _log.error("Endpoints use Maven coordinates: groupId:artifactId[:version]")

@@ -14,6 +14,13 @@ Test run with --dry-run after subcommand (common mistake; --dry-run is global).
   ERROR    Hint: --dry-run is a global flag; did you mean: jgo --dry-run run\?.* (re)
   [1]
 
+Test run with an unknown flag (not a global flag, no spurious hint).
+
+  $ jgo run --foobar
+  ERROR    '--foobar' is not a valid endpoint.* (re)
+  ERROR    Endpoints use Maven coordinates: groupId:artifactId\[:version\].* (re)
+  [1]
+
 Test run --help output.
 
   $ jgo run --help
