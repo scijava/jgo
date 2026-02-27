@@ -213,7 +213,14 @@ class Metadatas(Metadata):
 
     @property
     def versions(self) -> list[str]:
-        return [v for m in self.metadatas for v in m.versions]
+        seen: set[str] = set()
+        result: list[str] = []
+        for m in self.metadatas:
+            for v in m.versions:
+                if v not in seen:
+                    seen.add(v)
+                    result.append(v)
+        return result
 
     @property
     def lastVersion(self) -> str | None:
