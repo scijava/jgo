@@ -1,12 +1,13 @@
 # Example jgo.toml - Environment specification for jgo
 #
 # This file defines a reproducible Java environment that can be
-# committed to version control. Run `jgo` in this directory to
-# automatically build and activate the environment.
+# committed to version control. Use `jgo sync` in this directory
+# to automatically build the environment into the `.jgo` subfolder.
+# Use `jgo run` to launch applications within the environment.
 
 [environment]
-name = "imagej-analysis"
-description = "ImageJ with Python scripting for image analysis"
+name = "imagej2"
+description = "ImageJ2 with Jython scripting for image analysis"
 
 # Java version requirements and JVM configuration (optional)
 [java]
@@ -19,7 +20,7 @@ jvm_args = ["-XX:+AlwaysPreTouch"]  # Additional JVM arguments
 
 # System properties (becomes -Dfoo=bar)
 [java.properties]
-app.name = "imagej-analysis"
+app.name = "imagej2"
 log.level = "INFO"
 
 # Additional Maven repositories (optional)
@@ -33,14 +34,14 @@ coordinates = [
     "org.scijava:scripting-jython:1.0.0",
 ]
 
-# Maven-style exclusions (G:A only, no version)
+# Coordinates to prune from dependency tree (G:A only, no version)
 exclusions = ["org.scijava:scijava-common"]
 
 # Entry points - different ways to run the environment
 [entrypoints]
+default = "imagej"  # Which entry point to use by default
 imagej = "net.imagej.Main"
 repl = "org.scijava.script.ScriptREPL"
-default = "imagej"  # Which entry point to use by default
 
 # Settings (optional)
 [settings]
