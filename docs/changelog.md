@@ -1,16 +1,16 @@
 # Changelog
 
-## 2.0.0 (unreleased)
+## 2.0.0
 
-jgo 2.0 is a major rewrite with a new architecture, new CLI, and new Python API. It maintains backward compatibility with jgo 1.x -- existing scripts and code continue to work with deprecation warnings.
+jgo 2 is a major rewrite with a new architecture, new CLI, and new Python API. It tries to maintain backward compatibility with jgo 1.x -- existing scripts and code should continue to work with deprecation warnings.
 
 ### New features
 
-- **Command-based CLI** -- Modern subcommand interface (`jgo run`, `jgo init`, `jgo add`, `jgo list`, `jgo tree`, `jgo info`, `jgo search`, `jgo config`, etc.) following conventions from tools like `uv`, `cargo`, and `npm`. The old `jgo <endpoint>` syntax still works.
+- **Command-based CLI** -- Modern subcommand interface (`jgo run`, `jgo init`, `jgo add`, `jgo list`, `jgo tree`, `jgo info`, `jgo search`, `jgo config`, etc.) following conventions from tools like `uv`, `cargo`, and `npm`. The `jgo <endpoint>` shorthand syntax still works.
 
 - **jgo.toml project files** -- Reproducible environments with lock files, similar to `package.json` + `package-lock.json`. Create with `jgo init`, manage with `jgo add`/`jgo remove`, sync with `jgo sync`.
 
-- **Pure Python resolver** -- Resolve Maven dependencies without a Maven installation. Handles transitive dependencies, property interpolation, dependency management (BOMs), exclusions, and scopes.
+- **Pure Python dependency resolver** -- Resolve Maven dependencies without a Maven installation. Handles transitive dependencies, property interpolation, dependency management (BOMs), exclusions, and scopes.
 
 - **Automatic Java management** -- Zero-configuration execution: jgo detects the minimum Java version from bytecode and downloads it on demand via [cjdk](https://github.com/cachedjdk/cjdk).
 
@@ -26,7 +26,7 @@ jgo 2.0 is a major rewrite with a new architecture, new CLI, and new Python API.
 
 - **Platform-aware profile activation** -- `--platform`, `--os-name`, `--os-arch` flags for Maven profile activation.
 
-- **XDG config support** -- Settings file at `~/.config/jgo.conf` (XDG standard), with `~/.jgorc` still supported.
+- **XDG config support** -- Settings file at `~/.config/jgo.conf` (XDG standard), with `~/.jgorc` still supported for backward compatibility.
 
 ### Breaking changes
 
@@ -39,7 +39,3 @@ jgo 2.0 is a major rewrite with a new architecture, new CLI, and new Python API.
 - `-U`/`--force-update`, `-a`/`--additional-jars`, `--additional-endpoints`, `--link-type`, `--log-level` flags -- see {doc}`migration` for replacements.
 
 Deprecated APIs will be removed in jgo 3.0.
-
-## 1.x
-
-See the [GitHub releases page](https://github.com/apposed/jgo/releases) for the jgo 1.x changelog.
