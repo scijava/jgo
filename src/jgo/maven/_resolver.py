@@ -4,6 +4,7 @@ Maven artifact resolvers.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 from subprocess import run
 from typing import TYPE_CHECKING
@@ -153,6 +154,34 @@ def _resolve_component_inputs(
     return resolved_inputs, artifact_keys
 
 
+def _verify_remote_sha1(artifact_url: str, actual_sha1: str, filename: str) -> None:
+    """
+    Verify a downloaded artifact against the remote SHA1 checksum file.
+
+    Silently skips if the checksum file is unavailable (many repos don't publish them).
+    Warns if the checksum is present but does not match.
+    """
+    try:
+        response = requests.get(f"{artifact_url}.sha1", timeout=10)
+    except requests.RequestException as e:
+        _log.debug(f"Could not fetch checksum for {filename}: {e}")
+        return
+
+    if response.status_code != 200:
+        _log.debug(f"No remote checksum for {filename} (HTTP {response.status_code})")
+        return
+
+    # SHA1 files are either bare hex or "hex  filename"
+    expected_sha1 = response.text.strip().split()[0]
+    if actual_sha1 != expected_sha1:
+        _log.warning(
+            f"Checksum mismatch for {filename}: "
+            f"expected {expected_sha1}, got {actual_sha1}"
+        )
+    else:
+        _log.debug(f"Checksum verified: {filename}")
+
+
 class PythonResolver(Resolver):
     """
     A resolver that works by pure Python code.
@@ -202,10 +231,7 @@ class PythonResolver(Resolver):
             # Use streaming to enable progress bar
             response: requests.Response = requests.get(url, stream=True)
             if response.status_code == 200:
-                # Artifact downloaded successfully.
-                # TODO: Also get MD5 and SHA1 files if available.
-                # And for each, if it *is* available and successfully gotten,
-                # check the actual hash of the downloaded file contents against the expected one.
+                # Remote artifact accessed successfully
                 cached_file = artifact.cached_path
                 assert cached_file is not None
                 assert not cached_file.exists()
@@ -213,6 +239,9 @@ class PythonResolver(Resolver):
 
                 # Get total size from Content-Length header
                 total_size = int(response.headers.get("content-length", 0))
+
+                # Hash while streaming to avoid re-reading the file for checksum verification
+                sha1 = hashlib.sha1()
 
                 # Use progress callback if provided and size is known
                 if self.progress_callback and total_size > 0:
@@ -222,12 +251,15 @@ class PythonResolver(Resolver):
                         with open(cached_file, "wb") as f:
                             for chunk in response.iter_content(chunk_size=8192):
                                 f.write(chunk)
+                                sha1.update(chunk)
                                 update_progress(len(chunk))
                 else:
-                    # No progress callback - download without progress display
                     with open(cached_file, "wb") as f:
                         for chunk in response.iter_content(chunk_size=8192):
                             f.write(chunk)
+                            sha1.update(chunk)
+
+                _verify_remote_sha1(url, sha1.hexdigest(), artifact.filename)
 
                 if is_snapshot:
                     _log.info(f"Downloaded SNAPSHOT {artifact} to {cached_file}")

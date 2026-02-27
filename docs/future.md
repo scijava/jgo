@@ -14,7 +14,6 @@ This page tracks ideas and features that are not currently planned for implement
 **More info subcommands, with support for local POM files**
 : Allow operating on local pom.xml and local JAR files in addition to Maven coordinates.
 - **`jgo info coordinate`** : Prints the Maven coordinate of the given artifact (useful with local files).
-- **`jgo info checksum`** : Validate that checksum in remote repository matches the given artifact.
 - **`jgo info parent`** : Prints the Maven coordinate of the parent project of the given artifact.
 - **`jgo info properties`** : Prints property key/value pairs of the given artifact's POM (interpolated).
 - **`jgo info url`** : Gets the remote URL of the given artifact. Fails with exit code 1 if not deployed to any configured remote repository.

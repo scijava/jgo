@@ -27,9 +27,3 @@ These can be deferred to 2.1.0 or later:
 **Issue**: Compile/runtime/provided scope matching might fail in edge cases
 **Impact**: Rare dependency resolution issues
 **Priority**: Low - works for common cases
-
-### Checksum Files
-**File**: `src/jgo/maven/resolver.py:60`
-**Issue**: TODO to also download MD5/SHA1 checksum files
-**Impact**: No checksum verification during download
-**Priority**: Low - integrity is less critical for Maven Central
