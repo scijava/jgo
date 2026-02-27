@@ -2,10 +2,8 @@
 
 This page tracks ideas and features that are not currently planned for implementation but could be added in future releases based on user demand.
 
-## Planned (post-2.0)
-
 **Parallel downloads**
-: Download multiple artifacts concurrently for faster cache population.
+: Download multiple artifacts concurrently for faster cache population (see unfinished work on `parallel-downloads` branch).
 
 **Shell completion**
 : Generate bash/zsh/fish completion scripts for the command-based CLI.
@@ -13,7 +11,13 @@ This page tracks ideas and features that are not currently planned for implement
 **Version ranges with semantic versioning**
 : Report on dependency divergence in scenarios like two different major versions.
 
-## Under consideration
+**More info subcommands, with support for local POM files**
+: Allow operating on local pom.xml and local JAR files in addition to Maven coordinates.
+- **`jgo info coordinate`** : Prints the Maven coordinate of the given artifact (useful with local files).
+- **`jgo info checksum`** : Validate that checksum in remote repository matches the given artifact.
+- **`jgo info parent`** : Prints the Maven coordinate of the parent project of the given artifact.
+- **`jgo info properties`** : Prints property key/value pairs of the given artifact's POM (interpolated).
+- **`jgo info url`** : Gets the remote URL of the given artifact. Fails with exit code 1 if not deployed to any configured remote repository.
 
 **`jgo install`** (tool installation)
 : Install Java tools globally, similar to `uv tool install`. Creates wrapper scripts in `~/.local/bin/`.
@@ -23,9 +27,6 @@ This page tracks ideas and features that are not currently planned for implement
 
 **Platform-specific dependencies**
 : Specify different dependencies per OS in `jgo.toml` (useful for JavaFX, LWJGL, etc.).
-
-**Interactive `jgo init`**
-: Prompt for settings when creating a new `jgo.toml`.
 
 **Full command aliases in shortcuts**
 : Allow shortcuts to expand to complete command strings including flags.
