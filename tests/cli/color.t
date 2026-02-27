@@ -123,6 +123,10 @@ Test --color with different commands.
   │                                                    cache. [env var: M2_REPO] │
   │ --cache-dir             PATH                       Override cache directory. │
   │                                                    [env var: JGO_CACHE_DIR]  │
+  │ --timeout               SECONDS                    HTTP timeout for artifact │
+  │                                                    downloads and metadata    │
+  │                                                    fetches (default: 10).    │
+  │                                                    [env var: JGO_TIMEOUT]    │
   │ --no-cache                                         Skip cache entirely,      │
   │                                                    always rebuild. [env var: │
   │                                                    JGO_NO_CACHE]             │

@@ -25,6 +25,7 @@ class ParsedArgs:
         update: bool = False,
         offline: bool = False,
         no_cache: bool = False,
+        timeout: int = 10,
         # Dependency resolution
         resolver: str = "auto",
         direct_only: bool = False,
@@ -85,6 +86,7 @@ class ParsedArgs:
         self.update = update
         self.offline = offline
         self.no_cache = no_cache
+        self.timeout = timeout
         # Dependency resolution
         self.resolver = resolver
         self.direct_only = direct_only
@@ -402,6 +404,7 @@ def build_parsed_args(opts, endpoint=None, jvm_args=None, app_args=None, command
         update=opts.get("update", False),
         offline=opts.get("offline", False),
         no_cache=opts.get("no_cache", False),
+        timeout=opts.get("timeout", 10),
         # Dependency resolution
         resolver=opts.get("resolver", "auto"),
         direct_only=opts.get("direct_only", False),

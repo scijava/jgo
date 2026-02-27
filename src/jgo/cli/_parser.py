@@ -158,6 +158,15 @@ def global_options(f):
         show_envvar=True,
     )(f)
     f = click.option(
+        "--timeout",
+        type=int,
+        default=10,
+        metavar="SECONDS",
+        help="HTTP timeout for artifact downloads and metadata fetches (default: 10).",
+        envvar="JGO_TIMEOUT",
+        show_envvar=True,
+    )(f)
+    f = click.option(
         "--cache-dir",
         type=click.Path(path_type=Path),
         metavar="PATH",

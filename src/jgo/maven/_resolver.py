@@ -154,7 +154,9 @@ def _resolve_component_inputs(
     return resolved_inputs, artifact_keys
 
 
-def _verify_remote_sha1(artifact_url: str, actual_sha1: str, filename: str) -> None:
+def _verify_remote_sha1(
+    artifact_url: str, actual_sha1: str, filename: str, timeout: int
+) -> None:
     """
     Verify a downloaded artifact against the remote SHA1 checksum file.
 
@@ -162,7 +164,7 @@ def _verify_remote_sha1(artifact_url: str, actual_sha1: str, filename: str) -> N
     Warns if the checksum is present but does not match.
     """
     try:
-        response = requests.get(f"{artifact_url}.sha1", timeout=10)
+        response = requests.get(f"{artifact_url}.sha1", timeout=timeout)
     except requests.RequestException as e:
         _log.debug(f"Could not fetch checksum for {filename}: {e}")
         return
@@ -229,7 +231,9 @@ class PythonResolver(Resolver):
             _log.debug(f"Trying {url}")
 
             # Use streaming to enable progress bar
-            response: requests.Response = requests.get(url, stream=True)
+            response: requests.Response = requests.get(
+                url, stream=True, timeout=artifact.context.timeout
+            )
             if response.status_code == 200:
                 # Remote artifact accessed successfully
                 cached_file = artifact.cached_path
@@ -259,7 +263,9 @@ class PythonResolver(Resolver):
                             f.write(chunk)
                             sha1.update(chunk)
 
-                _verify_remote_sha1(url, sha1.hexdigest(), artifact.filename)
+                _verify_remote_sha1(
+                    url, sha1.hexdigest(), artifact.filename, artifact.context.timeout
+                )
 
                 if is_snapshot:
                     _log.info(f"Downloaded SNAPSHOT {artifact} to {cached_file}")

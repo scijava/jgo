@@ -65,6 +65,7 @@ class MavenContext:
         repo_cache: Path | None = None,
         local_repos: list[Path] | None = None,
         remote_repos: dict[str, str] | None = None,
+        timeout: int = 10,
     ):
         """
         Create a Maven context.
@@ -90,6 +91,9 @@ class MavenContext:
                 Optional dict of remote name:URL pairs, with each URL corresponding
                 to a remote Maven repository accessible via HTTP/HTTPS.
                 If no remote repository paths are given, only Maven Central will be used.
+            timeout:
+                HTTP request timeout in seconds for downloading artifacts and metadata.
+                Defaults to 10 seconds.
         """
         self.repo_cache: Path = repo_cache or Path(
             environ.get("M2_REPO", default_maven_repo())
@@ -100,6 +104,7 @@ class MavenContext:
         self.remote_repos: dict[str, str] = (
             DEFAULT_REMOTE_REPOS if remote_repos is None else remote_repos
         ).copy()
+        self.timeout: int = timeout
         # Import here to avoid circular dependency
         if resolver is None:
             from ._resolver import PythonResolver
@@ -319,13 +324,13 @@ class Project:
         for repo_name, repo_url in self.context.remote_repos.items():
             metadata_url = f"{repo_url}/{self.path_prefix}/maven-metadata.xml"
             try:
-                response = requests.get(metadata_url)
+                response = requests.get(metadata_url, timeout=self.context.timeout)
                 if response.status_code == 200:
                     # Save to local cache with repo name suffix
                     metadata_file = repo_cache_dir / f"maven-metadata-{repo_name}.xml"
                     with open(metadata_file, "wb") as f:
                         f.write(response.content)
-            except Exception:
+            except requests.RequestException:
                 # Silently ignore failures - metadata might not be available
                 pass
 
@@ -591,7 +596,7 @@ class Component:
             metadata_url = f"{repo_url}/{path_str}/maven-metadata.xml"
             try:
                 _log.debug(f"Trying {metadata_url}")
-                response = requests.get(metadata_url)
+                response = requests.get(metadata_url, timeout=self.context.timeout)
                 if response.status_code == 200:
                     # Save to local cache with repo name suffix
                     metadata_file = cache_dir / f"maven-metadata-{repo_name}.xml"
@@ -600,7 +605,7 @@ class Component:
                         f"Downloaded SNAPSHOT metadata for {self} from {repo_name}"
                     )
                     found = True
-            except Exception as e:
+            except requests.RequestException as e:
                 _log.debug(f"Failed to fetch SNAPSHOT metadata from {repo_name}: {e}")
 
         if not found:
