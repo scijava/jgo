@@ -66,6 +66,31 @@ jgo --resolver python org.python:jython-standalone
 jgo --resolver mvn org.python:jython-standalone
 ```
 
+### Known Maven resolver bug: runtime scope promoted to compile
+
+Maven's dependency resolver has a known bug where `runtime`-scoped dependencies are reported as `compile` scope in certain scenarios. This can be observed with `jython-slim`:
+
+```bash
+# Python resolver — correctly shows antlr-runtime as runtime scope
+jgo tree org.python:jython-slim:2.7.4
+
+# Maven resolver — incorrectly shows antlr-runtime as compile scope
+jgo --resolver mvn tree org.python:jython-slim:2.7.4
+```
+
+The `jython-slim-2.7.4.pom` explicitly declares:
+
+```xml
+<dependency>
+  <groupId>org.antlr</groupId>
+  <artifactId>antlr-runtime</artifactId>
+  <version>3.5.3</version>
+  <scope>runtime</scope>
+</dependency>
+```
+
+Despite this, Maven's `dependency:tree` and `dependency:list` output promotes `antlr-runtime` to `compile` scope, whereas the pure Python resolver reports the correct scope.
+
 ## Link strategies
 
 When building an environment, jgo links JARs from the Maven local repository (`~/.m2/repository`) into the environment directory. The link strategy controls how:
