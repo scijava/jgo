@@ -3,8 +3,15 @@ Tests jgo run command.
 Test run with no arguments.
 
   $ jgo run
-  ERROR    No endpoint specified                                                  
-  ERROR    Use 'jgo --help' for usage information                                 
+  ERROR    No endpoint specified.* (re)
+  ERROR    Use 'jgo --help' for usage information.* (re)
+  [1]
+
+Test run with --dry-run after subcommand (common mistake; --dry-run is global).
+
+  $ jgo run --dry-run
+  ERROR    '--dry-run' is not a valid endpoint.* (re)
+  ERROR    Hint: --dry-run is a global flag; did you mean: jgo --dry-run run\?.* (re)
   [1]
 
 Test run --help output.

@@ -190,7 +190,18 @@ def create_java_runner(
 
     # Tier 2: Project config (jgo.toml)
     if gc_options is None and spec and spec.gc_options:
-        gc_options = spec.gc_options.copy()
+        raw = spec.gc_options
+        if len(raw) == 1 and raw[0].lower() == "none":
+            gc_options = []
+        elif len(raw) == 1 and raw[0].lower() == "auto":
+            pass  # skip to smart defaults
+        else:
+            normalized = []
+            for gc in raw:
+                result = normalize_gc_flag(gc)
+                if result and result != "auto":
+                    normalized.append(result)
+            gc_options = normalized if normalized else []
 
     # Tier 3: Global config (~/.config/jgo.conf)
     if gc_options is None and "jvm" in config:
@@ -199,10 +210,19 @@ def create_java_runner(
             gc_value = jvm_config_section.get("gc") or jvm_config_section.get(
                 "gc_options"
             )
-            if isinstance(gc_value, str):
-                gc_options = [gc_value]
-            elif isinstance(gc_value, list):
-                gc_options = gc_value.copy()
+            raw = [gc_value] if isinstance(gc_value, str) else gc_value
+            if raw:
+                if len(raw) == 1 and raw[0].lower() == "none":
+                    gc_options = []
+                elif len(raw) == 1 and raw[0].lower() == "auto":
+                    pass  # skip to smart defaults
+                else:
+                    normalized = []
+                    for gc in raw:
+                        result = normalize_gc_flag(gc)
+                        if result and result != "auto":
+                            normalized.append(result)
+                    gc_options = normalized if normalized else []
 
     # Tier 4: Smart defaults (will be applied in JVMConfig.to_jvm_args() based on java_version)
     # Leave gc_options as None to trigger smart defaults

@@ -311,11 +311,23 @@ def _run_endpoint(args: ParsedArgs, config: dict) -> int:
     # Build environment
     _log.info(f"Building environment for {args.endpoint}...")
 
-    environment = builder.from_endpoint(
-        args.endpoint,
-        update=args.update,
-        main_class=args.main_class,
-    )
+    try:
+        environment = builder.from_endpoint(
+            args.endpoint,
+            update=args.update,
+            main_class=args.main_class,
+        )
+    except ValueError:
+        endpoint = args.endpoint
+        _log.error(f"'{endpoint}' is not a valid endpoint")
+        if endpoint.startswith("-"):
+            # Common mistake: flags placed after the subcommand name
+            _log.error(
+                f"Hint: {endpoint} is a global flag; did you mean: jgo {endpoint} run?"
+            )
+        else:
+            _log.error("Endpoints use Maven coordinates: groupId:artifactId[:version]")
+        return 1
 
     # Create runner and execute
     _log.info("Running Java application...")

@@ -11,6 +11,24 @@ import psutil
 from ._gc import get_default_gc_options
 
 
+def _flatten_properties(d: dict, prefix: str = "") -> dict:
+    """
+    Flatten a nested dict into dotted string keys.
+
+    TOML's dotted key notation (e.g., ``app.name = "foo"`` under a table)
+    produces nested dicts.  This converts them back to dotted keys so they
+    can be passed as ``-Dapp.name=foo`` JVM arguments.
+    """
+    result = {}
+    for key, value in d.items():
+        full_key = f"{prefix}.{key}" if prefix else key
+        if isinstance(value, dict):
+            result.update(_flatten_properties(value, full_key))
+        else:
+            result[full_key] = value
+    return result
+
+
 class JVMConfig:
     """
     Configuration for JVM execution.
@@ -92,8 +110,8 @@ class JVMConfig:
         if max_heap:
             args.append(f"-Xmx{max_heap}")
 
-        # Add system properties
-        for key, value in self.system_properties.items():
+        # Add system properties (flatten nested dicts from TOML dotted keys)
+        for key, value in _flatten_properties(self.system_properties).items():
             args.append(f"-D{key}={value}")
 
         # Add extra args
