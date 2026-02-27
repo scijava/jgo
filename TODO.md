@@ -2,17 +2,6 @@
 
 This document tracks remaining work for the jgo 2.0.0 release.
 
-## 📚 Documentation (Blocker)
-
-Documentation to write as part of a comprehensive ReadTheDocs site in `docs/`:
-
-- [ ] **API Reference via Docstrings**
-  - Enhance docstrings in `src/jgo/__init__.py` for high-level API
-  - Enhance docstrings in `src/jgo/maven/__init__.py`
-  - Enhance docstrings in `src/jgo/env/__init__.py`
-  - Enhance docstrings in `src/jgo/exec/__init__.py`
-  - Ensure `help(jgo)`, `help(jgo.maven)`, etc. are comprehensive
-
 ## 🧪 Testing (Blocker)
 
 - [ ] **Cross-platform testing**
