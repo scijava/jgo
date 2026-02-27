@@ -273,7 +273,9 @@ class EnvironmentBuilder:
             return environment
 
         # Build environment
-        locked_deps = self._build_environment(environment, dependencies, None)
+        locked_deps, min_java_version = self._build_environment(
+            environment, dependencies, None
+        )
 
         # Determine main class (auto-complete if needed)
         primary = dependencies[0].artifact
@@ -301,7 +303,7 @@ class EnvironmentBuilder:
 
         lockfile = LockFile(
             dependencies=locked_deps,
-            min_java_version=environment.min_java_version,
+            min_java_version=min_java_version,
             entrypoints=entrypoints,
             default_entrypoint=default_entrypoint,
             link_strategy=self.link_strategy.name,
@@ -387,7 +389,9 @@ class EnvironmentBuilder:
             return environment
 
         # Build environment and get locked dependencies
-        locked_deps = self._build_environment(environment, dependencies, None)
+        locked_deps, min_java_version = self._build_environment(
+            environment, dependencies, None
+        )
 
         # Infer concrete entrypoints from spec
         # Search both jars/ and modules/ directories
@@ -413,7 +417,7 @@ class EnvironmentBuilder:
             environment_name=spec.name,
             java_version=java_version or spec.java_version,
             java_vendor=spec.java_vendor,
-            min_java_version=environment.min_java_version,
+            min_java_version=min_java_version,
             entrypoints=concrete_entrypoints,
             default_entrypoint=spec.default_entrypoint,
             spec_hash=spec_hash,
@@ -460,15 +464,14 @@ class EnvironmentBuilder:
             temp_env.modules_dir.mkdir(exist_ok=True)
 
             # Resolve dependencies (downloads to Maven cache, links to temp dir)
-            locked_deps = self._build_environment(temp_env, dependencies, None)
+            locked_deps, min_java_version = self._build_environment(
+                temp_env, dependencies, None
+            )
 
             # Infer concrete entrypoints from spec
             concrete_entrypoints = self._infer_concrete_entrypoints(
                 spec, artifacts, [temp_env.jars_dir, temp_env.modules_dir]
             )
-
-            # Get min Java version from temp environment
-            min_java_version = temp_env.min_java_version
 
         # Compute spec hash for staleness detection
         root_spec_path = Path("jgo.toml")
@@ -494,10 +497,10 @@ class EnvironmentBuilder:
 
     def _clear_lockfile_cache(self, environment: Environment) -> None:
         """
-        Clear cached lockfile to force fresh bytecode detection.
+        Clear cached lockfile before regenerating it.
 
-        Called before regenerating lockfile to ensure min_java_version
-        is detected from actual JARs, not stale cached values.
+        Invalidates the in-memory lockfile cache and removes the on-disk file
+        so the new lockfile is written fresh.
 
         Args:
             environment: Environment whose lockfile should be cleared
@@ -705,7 +708,7 @@ class EnvironmentBuilder:
         environment: Environment,
         dependencies: list[Dependency],
         main_class: str | None,
-    ) -> list[LockedDependency]:
+    ) -> tuple[list[LockedDependency], int | None]:
         """
         Build the environment by resolving and linking JARs.
 
@@ -749,24 +752,8 @@ class EnvironmentBuilder:
         # Track locked dependencies with module info
         locked_deps: list[LockedDependency] = []
 
-        # Collect all artifact paths to determine min Java version
-        # We need to know the target Java version before classifying JARs
-        all_artifact_paths = []
-        # Process resolved artifacts first
-        for dep in resolved_inputs:
-            all_artifact_paths.append(dep.artifact.resolve())
-        # Then transitive dependencies
-        for dep in resolved_transitive:
-            if dep.scope in ("compile", "runtime"):
-                all_artifact_paths.append(dep.artifact.resolve())
-
-        # Determine minimum Java version by scanning all JARs
-        min_java_version = None
-        for jar_path in all_artifact_paths:
-            if jar_path.exists():
-                version = detect_jar_java_version(jar_path)
-                if version:
-                    min_java_version = max(min_java_version or 0, version)
+        # Track minimum Java version across all processed JARs
+        min_java_version: int | None = None
 
         # Lazy-initialize baseline jar tool only when needed
         # Sentinel value to detect if we've tried to get it yet
@@ -883,7 +870,7 @@ class EnvironmentBuilder:
                 is_modular=module_info.is_modular,
                 module_name=module_info.module_name,
                 jar_type=jar_type,
-            )
+            ), min_java_ver
 
         # Process artifacts and their transitive dependencies
         # Track processed artifacts to avoid duplicates
@@ -899,7 +886,10 @@ class EnvironmentBuilder:
             processed.add(artifact.key)
 
             source_path = artifact.resolve()
-            locked_deps.append(process_artifact(artifact, source_path))
+            locked_dep, jar_min_ver = process_artifact(artifact, source_path)
+            locked_deps.append(locked_dep)
+            if jar_min_ver is not None:
+                min_java_version = max(min_java_version or 0, jar_min_ver)
 
         # Then, process transitive dependencies
         for dep in resolved_transitive:
@@ -912,7 +902,10 @@ class EnvironmentBuilder:
             processed.add(artifact.key)
 
             source_path = artifact.resolve()
-            locked_deps.append(process_artifact(artifact, source_path))
+            locked_dep, jar_min_ver = process_artifact(artifact, source_path)
+            locked_deps.append(locked_dep)
+            if jar_min_ver is not None:
+                min_java_version = max(min_java_version or 0, jar_min_ver)
 
-        # Return locked dependencies for lock file generation
-        return locked_deps
+        # Return locked dependencies and min Java version for lock file generation
+        return locked_deps, min_java_version
