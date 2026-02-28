@@ -191,10 +191,10 @@ Test --color with different commands.
   ╰──────────────────────────────────────────────────────────────────────────────╯
 
   $ jgo --color=always version
-  jgo 2.0.0.dev0
+  jgo 2.0.0
 
   $ jgo --color=never version
-  jgo 2.0.0.dev0
+  jgo 2.0.0
 
 Test --color respects environment variable COLOR.
 
