@@ -83,7 +83,7 @@ def maven_scijava_repository():
 def main_from_endpoint(
     primary_endpoint,
     argv=sys.argv[1:],
-    repositories={"scijava.public": maven_scijava_repository()},
+    repositories=None,
     primary_endpoint_version=None,
     primary_endpoint_main_class=None,
     secondary_endpoints=(),
@@ -121,6 +121,9 @@ def main_from_endpoint(
 
     # Import here to avoid circular dependency
     from ..jgo import _jgo_main as main
+
+    if repositories is None:
+        repositories = {"scijava.public": maven_scijava_repository()}
 
     double_dash_index = (
         [i for (i, arg) in enumerate(argv) if arg == "--"][0] if "--" in argv else -1
