@@ -9,7 +9,7 @@ import rich_click as click
 
 from ...config import GlobalSettings
 from ...env import EnvironmentSpec
-from ...parse import Coordinate, Endpoint
+from ...parse import Endpoint
 from ...styles import AT_MAINCLASS, PLUS_OPERATOR
 from .._args import build_parsed_args
 from .._context import create_environment_builder, create_maven_context
@@ -66,13 +66,10 @@ def execute(args: ParsedArgs, config: dict) -> int:
             return 1
         spec = EnvironmentSpec.load(spec_file)
         try:
-            coordinates = [
-                Coordinate.parse(coord_str) for coord_str in spec.coordinates
-            ]
+            dependencies = builder.spec_to_dependencies(spec)
         except ValueError as e:
             _log.error(f"Invalid coordinate format: {e}")
             return 1
-        dependencies = builder._coordinates_to_dependencies(coordinates)
     else:
         if not args.endpoint:
             _log.error("No endpoint specified")

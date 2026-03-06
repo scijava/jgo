@@ -444,13 +444,10 @@ def _print_deps(ctx, endpoint, list_mode: bool):
             ctx.exit(1)
         spec = EnvironmentSpec.load(spec_file)
         try:
-            coordinates = [
-                Coordinate.parse(coord_str) for coord_str in spec.coordinates
-            ]
+            dependencies = builder.spec_to_dependencies(spec)
         except ValueError as e:
             _log.error(f"Invalid coordinate format: {e}")
             ctx.exit(1)
-        dependencies = builder._coordinates_to_dependencies(coordinates)
     else:
         if not endpoint:
             _log.error("No endpoint specified")

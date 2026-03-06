@@ -360,8 +360,7 @@ class EnvironmentBuilder:
             raise ValueError("No coordinates specified in environment spec.")
 
         # Parse coordinates into dependencies
-        coordinates = [Coordinate.parse(coord_str) for coord_str in spec.coordinates]
-        dependencies = self._coordinates_to_dependencies(coordinates)
+        dependencies = self.spec_to_dependencies(spec)
         artifacts = [dep.artifact for dep in dependencies]
 
         # Use spec's cache_dir if specified, otherwise use builder's default
@@ -451,8 +450,7 @@ class EnvironmentBuilder:
         import tempfile
 
         # Parse coordinates into dependencies
-        coordinates = [Coordinate.parse(coord_str) for coord_str in spec.coordinates]
-        dependencies = self._coordinates_to_dependencies(coordinates)
+        dependencies = self.spec_to_dependencies(spec)
         artifacts = [dep.artifact for dep in dependencies]
 
         # Create a temporary environment directory for dependency resolution
@@ -567,8 +565,21 @@ class EnvironmentBuilder:
 
         return True
 
+    def spec_to_dependencies(self, spec: EnvironmentSpec) -> list[Dependency]:
+        """
+        Convert an EnvironmentSpec's coordinates and exclusions to Dependency objects.
+
+        This is the single shared entry point for commands that need to resolve
+        dependencies from a spec (tree, list, etc.) without building an environment.
+        """
+        coordinates = [Coordinate.parse(c) for c in spec.coordinates]
+        exclusions = [Coordinate.parse(e) for e in spec.exclusions]
+        return self._coordinates_to_dependencies(coordinates, exclusions or None)
+
     def _coordinates_to_dependencies(
-        self, coordinates: list[Coordinate]
+        self,
+        coordinates: list[Coordinate],
+        exclusions: list[Coordinate] | None = None,
     ) -> list[Dependency]:
         """
         Convert Coordinate objects to Dependency objects.
@@ -578,10 +589,16 @@ class EnvironmentBuilder:
 
         Args:
             coordinates: List of parsed Coordinate objects with full coordinate info
+            exclusions: Optional list of parsed Coordinates to exclude from all dependencies
 
         Returns:
             List of Dependency objects
         """
+        exclusion_projects = []
+        for excl in exclusions or []:
+            g, a = excl.groupId, excl.artifactId
+            exclusion_projects.append(self.context.project(g, a))
+
         dependencies = []
         for coord in coordinates:
             # Default version to RELEASE and scope to "compile" if not specified
@@ -599,9 +616,9 @@ class EnvironmentBuilder:
                     placement=coord.placement,
                 )
 
-            # Use MavenContext.create_dependency to avoid code duplication
-            # TODO: Pass exclusions when exclusion parsing is implemented
-            dependency = self.context.create_dependency(coord, exclusions=None)
+            dependency = self.context.create_dependency(
+                coord, exclusions=exclusion_projects
+            )
             dependencies.append(dependency)
 
         return dependencies

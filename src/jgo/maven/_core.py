@@ -1037,6 +1037,17 @@ def generate_pom_xml(
             lines.append(f"            <type>{dep.type}</type>")
         if dep.scope and dep.scope not in (None, "compile"):
             lines.append(f"            <scope>{dep.scope}</scope>")
+        if dep.exclusions:
+            excl_lines = ["            <exclusions>"]
+            for excl in dep.exclusions:
+                excl_lines += [
+                    "                <exclusion>",
+                    f"                    <groupId>{excl.groupId}</groupId>",
+                    f"                    <artifactId>{excl.artifactId}</artifactId>",
+                    "                </exclusion>",
+                ]
+            excl_lines.append("            </exclusions>")
+            lines.extend(excl_lines)
 
         dep_entries.append(
             "        <dependency>\n" + "\n".join(lines) + "\n        </dependency>"
