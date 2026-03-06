@@ -44,12 +44,10 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
             "net.imagej:imagej:2.17.0",
             "org.scijava:scripting-python:0.4.2",
         ]
-
-        # Maven-style exclusions (G:A only, not G:A:V)
-        [dependencies]
+        # Maven-style exclusions (G:A only, no version)
         exclusions = [
             "org.scijava:scripting-jruby",
-            "org.scijava:scripting-jython"
+            "org.scijava:scripting-jython",
         ]
 
         [entrypoints]
