@@ -254,6 +254,43 @@ def test_no_test_scope_in_resolution(m2_repo):
         )
 
 
+def test_spec_exclusions_applied(m2_repo):
+    """
+    Regression test: exclusions declared in jgo.toml must be applied during resolution.
+
+    org.scijava:minimaven:2.2.2 has three transitive deps:
+      org.scijava:scijava-common, org.busie:eventbus, org.scijava:parsington
+    Excluding scijava-common should drop it and its transitive descendants
+    (eventbus and parsington only come in via scijava-common).
+    """
+    from jgo.env import EnvironmentSpec
+
+    context = MavenContext(repo_cache=m2_repo)
+    builder = EnvironmentBuilder(context)
+    spec = EnvironmentSpec(
+        coordinates=["org.scijava:minimaven:2.2.2"],
+        exclusions=["org.scijava:scijava-common"],
+    )
+    dependencies = builder.spec_to_dependencies(spec)
+
+    resolver = PythonResolver()
+    _, resolved_deps = resolver.resolve(dependencies)
+    resolved = {dependency_fingerprint(dep) for dep in resolved_deps}
+
+    assert "org.scijava:scijava-common:jar:2.77.0" not in resolved, (
+        "scijava-common should be excluded"
+    )
+    assert "org.busie:eventbus:jar:1.4" not in resolved, (
+        "eventbus should be excluded (only reachable via scijava-common)"
+    )
+    assert "org.scijava:parsington:jar:1.0.4" not in resolved, (
+        "parsington should be excluded (only reachable via scijava-common)"
+    )
+    assert resolved == set(), (
+        f"All transitive deps should be excluded, but got: {sorted(resolved)}"
+    )
+
+
 def test_component_not_in_dependency_list(m2_repo):
     """
     Test that the component itself does not appear in its dependency list.
