@@ -108,13 +108,46 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
     @classmethod
     def _from_dict(cls, data: dict, path: Path | None = None) -> EnvironmentSpec:
         """Create EnvironmentSpec from parsed TOML dict."""
+        import logging
+
+        _log = logging.getLogger(__name__)
+        _loc = f" in {path}" if path else ""
+
+        _KNOWN_SECTIONS = {
+            "environment",
+            "java",
+            "repositories",
+            "dependencies",
+            "entrypoints",
+            "settings",
+        }
+        for key in data:
+            if key not in _KNOWN_SECTIONS:
+                _log.warning(
+                    f"Unknown section [{key}]{_loc} — did you mean one of {sorted(_KNOWN_SECTIONS)}?"
+                )
+
         # [environment] section (optional)
         env_section = data.get("environment", {})
+        for key in env_section:
+            if key not in {"name", "description"}:
+                _log.warning(f"Unknown key 'environment.{key}'{_loc}")
         name = env_section.get("name")
         description = env_section.get("description")
 
         # [java] section (optional)
         java_section = data.get("java", {})
+        for key in java_section:
+            if key not in {
+                "version",
+                "vendor",
+                "gc",
+                "max_heap",
+                "min_heap",
+                "jvm_args",
+                "properties",
+            }:
+                _log.warning(f"Unknown key 'java.{key}'{_loc}")
         java_version = java_section.get("version", "auto")
         java_vendor = java_section.get("vendor")
 
@@ -142,6 +175,9 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
 
         # [dependencies] section (optional for empty environments)
         deps_section = data.get("dependencies", {})
+        for key in deps_section:
+            if key not in {"coordinates", "exclusions"}:
+                _log.warning(f"Unknown key 'dependencies.{key}'{_loc}")
         coordinates = deps_section.get("coordinates", [])
         if coordinates is None:
             coordinates = []
@@ -198,6 +234,9 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
 
         # [settings] section (optional)
         settings_section = data.get("settings", {})
+        for key in settings_section:
+            if key not in {"links", "cache_dir"}:
+                _log.warning(f"Unknown key 'settings.{key}'{_loc}")
         link_strategy = settings_section.get("links")
         cache_dir = settings_section.get("cache_dir")
 
