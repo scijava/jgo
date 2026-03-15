@@ -14,7 +14,7 @@ import requests
 from ..parse import Coordinate
 from . import Resolver
 from ._core import Dependency, DependencyNode, create_pom
-from ._model import Model, ProfileConstraints
+from ._model import Model
 from ._pom import write_temp_pom
 
 if TYPE_CHECKING:
@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from ._core import Artifact, Component
+    from ._model import ProfileConstraints
 
     # Type for progress callback:
     # Receives (filename, total_size) and returns a context manager
