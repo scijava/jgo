@@ -50,12 +50,12 @@ components = jgo.resolve("org.scijava:parsington")
 jgo 1.x had a single monolithic module. jgo 2.0 provides three independently useful layers:
 
 ```python
-from jgo.maven import MavenContext, PythonResolver
+from jgo.maven import MavenContext
 from jgo.env import EnvironmentBuilder
 from jgo.exec import JavaRunner
 
-# Layer 1: Maven resolution (no Maven installation needed!)
-maven = MavenContext(resolver=PythonResolver())
+# Layer 1: Dependency resolution (no Maven installation needed!)
+maven = MavenContext()
 component = maven.project("org.python", "jython-standalone").at_version("2.7.3")
 
 # Layer 2: Environment materialization
