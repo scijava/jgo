@@ -4,6 +4,7 @@ Maven artifact resolvers.
 
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import logging
 from subprocess import run
@@ -16,6 +17,7 @@ from . import Resolver
 from ._core import Dependency, DependencyNode, create_pom
 from ._model import Model
 from ._pom import write_temp_pom
+from ._profile import ProfileConstraints, detect_os_properties
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -23,7 +25,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from ._core import Artifact, Component
-    from ._profile import ProfileConstraints
 
     # Type for progress callback:
     # Receives (filename, total_size) and returns a context manager
@@ -200,11 +201,28 @@ class PythonResolver(Resolver):
         Initialize Python resolver.
 
         Args:
-            profile_constraints: Profile constraints for Maven model building
+            profile_constraints: Profile constraints for Maven model building.
+                Any None platform fields (os_name, os_family, os_arch) are
+                filled in from the current system, matching Maven's behavior
+                of always having OS properties available during resolution.
             progress_callback: Optional callback for download progress reporting.
                 Receives (filename, total_size) and returns a context manager
                 that yields an update function accepting bytes_count.
         """
+        if profile_constraints is None:
+            profile_constraints = ProfileConstraints()
+        if None in (
+            profile_constraints.os_name,
+            profile_constraints.os_family,
+            profile_constraints.os_arch,
+        ):
+            os_name, os_family, os_arch = detect_os_properties()
+            profile_constraints = dataclasses.replace(
+                profile_constraints,
+                os_name=profile_constraints.os_name or os_name,
+                os_family=profile_constraints.os_family or os_family,
+                os_arch=profile_constraints.os_arch or os_arch,
+            )
         self.profile_constraints = profile_constraints
         self.progress_callback = progress_callback
 

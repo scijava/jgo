@@ -48,6 +48,7 @@ def test_create_maven_context_auto_resolver_constraints():
     args.properties = {}
     args.repo_cache = None
     args.repositories = {}
+    args.lenient = False
 
     config = {}
 
@@ -58,7 +59,10 @@ def test_create_maven_context_auto_resolver_constraints():
     constraints = context.resolver.profile_constraints
     assert constraints.jdk == "17"
     assert constraints.os_name == "Linux"
-    assert constraints.os_family is None
+    # None platform fields are filled in from the current system
+    detected_name, detected_family, detected_arch = detect_os_properties()
+    assert constraints.os_family == detected_family
+    assert constraints.os_arch == detected_arch
 
 
 # Platform expansion tests
