@@ -25,7 +25,6 @@ class ProfileConstraints:
     properties: dict[str, str] = field(default_factory=dict)
     file_exists: Callable[[str], bool] = field(default=os.path.exists)
     basedir: str = "."
-    lenient: bool = False
 
 
 def detect_os_properties() -> tuple[str, str, str]:

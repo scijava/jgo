@@ -36,6 +36,7 @@ class Model:
         context: MavenContext,
         root_dep_mgmt: dict[GACT, Dependency] | None = None,
         profile_constraints: ProfileConstraints | None = None,
+        lenient: bool = False,
     ):
         """
         Build a Maven metadata model from the given POM.
@@ -47,12 +48,14 @@ class Model:
                 This takes precedence over the local dependency management and is used
                 to ensure consistent versions across all transitive dependencies.
             profile_constraints: Optional constraints for profile activation.
+            lenient: If True, warn instead of failing on unresolvable dependencies.
         """
 
         self.pom = pom
         self.context = context
         self.root_dep_mgmt = root_dep_mgmt
         self.profile_constraints = profile_constraints
+        self.lenient = lenient
         self.gav = f"{pom.groupId}:{pom.artifactId}:{pom.version}"
         _log.debug(f"{self.gav}: begin model initialization")
 
@@ -150,9 +153,6 @@ class Model:
         # IMPORTANT: Root dependency management (from the wrapper/entry point) takes
         # precedence over local dependency management. This ensures that the root project's
         # version constraints are applied consistently across all transitive dependencies.
-        lenient = (
-            self.profile_constraints.lenient if self.profile_constraints else False
-        )
         deps_to_remove = []
         for gact, dep in self.deps.items():
             # First check root_dep_mgmt (highest priority), then local dep_mgmt
@@ -163,7 +163,7 @@ class Model:
             if managed is None:
                 # No managed version available
                 if not dep.version or dep.version == "MANAGED":
-                    if lenient:
+                    if self.lenient:
                         _log.warning(f"No version available for dependency {dep}")
                         deps_to_remove.append(gact)
                         continue
@@ -335,12 +335,7 @@ class Model:
                         continue
 
                     # Skip dependencies with uninterpolated properties in lenient mode
-                    lenient = (
-                        model.profile_constraints.lenient
-                        if model.profile_constraints
-                        else False
-                    )
-                    if lenient and Model._has_uninterpolated_properties(dep):
+                    if model.lenient and Model._has_uninterpolated_properties(dep):
                         _log.warning(
                             f"{model.gav}: {dep_ga}: skipped (uninterpolated properties in {dep})"
                         )
@@ -394,6 +389,7 @@ class Model:
                                 model.context,
                                 root_dep_mgmt,
                                 model.profile_constraints,
+                                model.lenient,
                             )
                             # Accumulate exclusions: combine ancestor exclusions with this dep's exclusions
                             new_exclusions = accumulated_exclusions + dep.exclusions
@@ -442,7 +438,10 @@ class Model:
 
             # Fully build the BOM's model, agnostic of this one.
             bom_model = Model(
-                bom_pom, self.context, profile_constraints=self.profile_constraints
+                bom_pom,
+                self.context,
+                profile_constraints=self.profile_constraints,
+                lenient=self.lenient,
             )
 
             # Count how many managed deps we're importing

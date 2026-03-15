@@ -196,6 +196,7 @@ class PythonResolver(Resolver):
         self,
         profile_constraints: ProfileConstraints | None = None,
         progress_callback: ProgressCallback | None = None,
+        lenient: bool = False,
     ):
         """
         Initialize Python resolver.
@@ -208,6 +209,7 @@ class PythonResolver(Resolver):
             progress_callback: Optional callback for download progress reporting.
                 Receives (filename, total_size) and returns a context manager
                 that yields an update function accepting bytes_count.
+            lenient: If True, warn instead of failing on unresolvable dependencies.
         """
         if profile_constraints is None:
             profile_constraints = ProfileConstraints()
@@ -225,6 +227,7 @@ class PythonResolver(Resolver):
             )
         self.profile_constraints = profile_constraints
         self.progress_callback = progress_callback
+        self.lenient = lenient
 
     def download(self, artifact: Artifact) -> Path | None:
         # For SNAPSHOT versions, ensure we have the metadata first
@@ -323,7 +326,10 @@ class PythonResolver(Resolver):
 
         pom = create_pom(dependencies, boms)
         model = Model(
-            pom, dependencies[0].context, profile_constraints=self.profile_constraints
+            pom,
+            dependencies[0].context,
+            profile_constraints=self.profile_constraints,
+            lenient=self.lenient,
         )
         # When transitive=False, set max_depth=1 to get one level of dependencies
         # from the synthetic wrapper (i.e., the direct dependencies of the components)
@@ -369,7 +375,10 @@ class PythonResolver(Resolver):
 
         pom = create_pom(dependencies, boms)
         model = Model(
-            pom, dependencies[0].context, profile_constraints=self.profile_constraints
+            pom,
+            dependencies[0].context,
+            profile_constraints=self.profile_constraints,
+            lenient=self.lenient,
         )
 
         # Create resolved input deps list using model.deps for MANAGED versions
@@ -429,7 +438,10 @@ class PythonResolver(Resolver):
         # Build model and get dependency tree
         pom = create_pom(dependencies, boms)
         model = Model(
-            pom, dependencies[0].context, profile_constraints=self.profile_constraints
+            pom,
+            dependencies[0].context,
+            profile_constraints=self.profile_constraints,
+            lenient=self.lenient,
         )
         _, root = model.dependencies(optional_depth=optional_depth)
 

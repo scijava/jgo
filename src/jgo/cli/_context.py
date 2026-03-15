@@ -52,11 +52,11 @@ def create_maven_context(args: ParsedArgs, config: dict) -> MavenContext:
             os_arch=args.os_arch,
             os_version=args.os_version,
             properties=args.properties,
-            lenient=args.lenient,
         )
         resolver: Resolver = PythonResolver(
             profile_constraints=profile_constraints,
             progress_callback=download_progress_callback,
+            lenient=args.lenient,
         )
     elif args.resolver == "mvn":
         mvn_command = ensure_maven_available()
@@ -71,11 +71,11 @@ def create_maven_context(args: ParsedArgs, config: dict) -> MavenContext:
             os_arch=args.os_arch,
             os_version=args.os_version,
             properties=args.properties,
-            lenient=args.lenient,
         )
         resolver = PythonResolver(
             profile_constraints=profile_constraints,
             progress_callback=download_progress_callback,
+            lenient=args.lenient,
         )  # Default to pure Python
 
     # Get repo cache path
