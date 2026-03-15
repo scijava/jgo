@@ -134,7 +134,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from .env import Environment
-    from .maven import Artifact
+    from .maven import Artifact, Resolver
 
 
 def run(
@@ -233,6 +233,7 @@ def build(
     update: bool = False,
     cache_dir: Path | None = None,
     repositories: dict[str, str] | None = None,
+    resolver: Resolver | None = None,
 ) -> Environment:
     """
     Build an environment from a Maven endpoint without running it.
@@ -242,6 +243,10 @@ def build(
         update: Force update of cached environment
         cache_dir: Override cache directory
         repositories: Additional Maven repositories (name -> URL)
+        resolver: Resolver for dependency resolution and downloads.
+            Defaults to the pure-Python resolver implementation.
+            Pass PythonResolver(lenient=True) to downgrade
+            unresolvable dependency errors to warnings.
 
     Returns:
         Environment instance
@@ -260,6 +265,7 @@ def build(
         remote_repos.update(repositories)
 
     context = MavenContext(
+        resolver=resolver,
         repo_cache=config.repo_cache,
         remote_repos=remote_repos,
     )
