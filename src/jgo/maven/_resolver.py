@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from ._core import Artifact, Component
-    from ._model import ProfileConstraints
+    from ._profile import ProfileConstraints
 
     # Type for progress callback:
     # Receives (filename, total_size) and returns a context manager

@@ -135,8 +135,9 @@ from ._core import (
     Resolver,
 )
 from ._metadata import Metadata, Metadatas, MetadataXML
-from ._model import Model, ProfileConstraints
+from ._model import Model
 from ._pom import POM, XML
+from ._profile import ProfileConstraints, detect_os_properties
 from ._resolver import MvnResolver, PythonResolver
 from ._version import (
     MavenVersion,
@@ -162,10 +163,12 @@ __all__ = [
     "MetadataXML",
     # model
     "Model",
-    "ProfileConstraints",
     # pom
     "POM",
     "XML",
+    # profile
+    "ProfileConstraints",
+    "detect_os_properties",
     # resolver
     "MvnResolver",
     "PythonResolver",

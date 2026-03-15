@@ -4,9 +4,9 @@ from jgo.cli._args import (
     PLATFORM_ALIASES,
     PLATFORMS,
     build_parsed_args,
-    detect_os_properties,
     expand_platform,
 )
+from jgo.maven._profile import detect_os_properties
 from jgo.cli._context import create_maven_context
 from jgo.maven._resolver import PythonResolver
 

@@ -5,8 +5,6 @@ Maven dependency model and resolution.
 from __future__ import annotations
 
 import logging
-import os
-from dataclasses import dataclass, field
 from re import findall
 from typing import TYPE_CHECKING, Iterable
 
@@ -18,29 +16,13 @@ from ..util.java import (
 from ._core import Dependency, DependencyNode, MavenContext, Project
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from ._pom import POM
+    from ._profile import ProfileConstraints
 
 _log = logging.getLogger(__name__)
 
 # (groupId, artifactId, classifier, type)
 GACT = tuple[str, str, str, str]
-
-
-@dataclass
-class ProfileConstraints:
-    """Constraints for profile activation."""
-
-    jdk: str | None = None
-    os_name: str | None = None
-    os_family: str | None = None
-    os_arch: str | None = None
-    os_version: str | None = None
-    properties: dict[str, str] = field(default_factory=dict)
-    file_exists: Callable[[str], bool] = field(default=os.path.exists)
-    basedir: str = "."
-    lenient: bool = False
 
 
 class Model:

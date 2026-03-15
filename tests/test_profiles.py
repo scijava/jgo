@@ -1,7 +1,6 @@
 import xml.etree.ElementTree as ET
 
-from jgo.maven import MavenContext
-from jgo.maven._model import Model, ProfileConstraints
+from jgo.maven import MavenContext, Model, ProfileConstraints
 
 _ctx = MavenContext()
 
