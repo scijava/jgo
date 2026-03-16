@@ -42,6 +42,8 @@ from ._version import compare_versions
 if TYPE_CHECKING:
     from ._metadata import Metadata
 
+_log = logging.getLogger(__name__)
+
 # -- Constants --
 
 DEFAULT_LOCAL_REPOS: list[Path] = []
@@ -321,8 +323,11 @@ class Project:
         repo_cache_dir.mkdir(parents=True, exist_ok=True)
 
         # Try to fetch maven-metadata.xml from each remote repository
+        ga = f"{self.groupId}:{self.artifactId}"
+        failures = []
         for repo_name, repo_url in self.context.remote_repos.items():
             metadata_url = f"{repo_url}/{self.path_prefix}/maven-metadata.xml"
+            _log.debug(f"Fetching metadata: {metadata_url}")
             try:
                 response = requests.get(metadata_url, timeout=self.context.timeout)
                 if response.status_code == 200:
@@ -330,9 +335,22 @@ class Project:
                     metadata_file = repo_cache_dir / f"maven-metadata-{repo_name}.xml"
                     with open(metadata_file, "wb") as f:
                         f.write(response.content)
-            except requests.RequestException:
-                # Silently ignore failures - metadata might not be available
-                pass
+                    _log.debug(f"Cached metadata from {repo_name} for {ga}")
+                else:
+                    reason = f"HTTP {response.status_code}"
+                    _log.debug(
+                        f"Could not fetch metadata for {ga} from {repo_name}: {reason}"
+                    )
+                    failures.append(f"  {repo_name}: {reason}")
+            except requests.RequestException as e:
+                _log.debug(f"Could not fetch metadata for {ga} from {repo_name}: {e}")
+                failures.append(f"  {repo_name}: {e}")
+
+        if failures and len(failures) == len(self.context.remote_repos):
+            _log.warning(
+                f"Could not fetch metadata for {ga} from any remote repository:\n"
+                + "\n".join(failures)
+            )
 
         # Force reload of metadata
         self._metadata = None
@@ -514,15 +532,22 @@ class Component:
 
         # Check if version needs resolution
         if self.version in ("RELEASE", "LATEST"):
+            ga = f"{self.project.groupId}:{self.project.artifactId}"
+            _log.debug(f"Resolving {self.version} for {ga}")
             # Fetch metadata from remote if needed
             if not self.project.metadata or not self.project.metadata.versions:
                 self.project.update()
+
+            versions = self.project.metadata.versions if self.project.metadata else []
+            _log.debug(f"Known versions for {ga}: {versions}")
 
             # Resolve to actual version
             if self.version == "RELEASE":
                 resolved = self.project.release
             else:  # LATEST
                 resolved = self.project.latest
+
+            _log.debug(f"Resolved {self.version} -> {resolved!r} for {ga}")
 
             if not resolved:
                 raise RuntimeError(
@@ -549,8 +574,6 @@ class Component:
             return None
 
         if self._snapshot_metadata is None:
-            _log = logging.getLogger(__name__)
-
             # Load from cache if available
             cache_dir = self.context.repo_cache / self.path_prefix
             paths = (
@@ -577,11 +600,7 @@ class Component:
         if not self.resolved_version.endswith("-SNAPSHOT"):
             return
 
-        import logging
-
         import requests
-
-        _log = logging.getLogger(__name__)
 
         cache_dir = self.context.repo_cache / self.path_prefix
         cache_dir.mkdir(parents=True, exist_ok=True)

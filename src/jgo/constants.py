@@ -4,10 +4,13 @@ Default constants for jgo.
 Centralizes hardcoded paths and URLs to avoid duplication across the codebase.
 """
 
+import logging
 import os
 from pathlib import Path
 
 from .util.platform import get_user_home
+
+_log = logging.getLogger(__name__)
 
 
 def _get_version() -> str:
@@ -27,8 +30,8 @@ def _get_version() -> str:
                 with open(pyproject, "rb") as f:
                     data = tomllib.load(f)
                     return data.get("project", {}).get("version", "unknown")
-        except Exception:
-            pass
+        except Exception as e:
+            _log.debug(f"Could not read version from pyproject.toml: {e}")
         return "unknown"
 
 

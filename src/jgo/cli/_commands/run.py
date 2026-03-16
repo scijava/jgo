@@ -250,9 +250,9 @@ def execute(args: ParsedArgs, config: dict) -> int:
                 args.endpoint = None  # Clear endpoint to trigger spec mode
                 return _run_spec(args, config)
 
-        except Exception:
+        except Exception as e:
             # If we can't load spec, fall through to endpoint mode
-            pass
+            _log.warning(f"Could not load jgo.toml to check entrypoints: {e}")
 
     # Not an entrypoint, expand shortcuts
     if args.endpoint:

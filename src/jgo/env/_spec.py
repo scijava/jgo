@@ -7,12 +7,15 @@ reproducible Java environments.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any
 
 from ..util.serialization import FieldValidatorMixin, TOMLSerializableMixin
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+_log = logging.getLogger(__name__)
 
 
 class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
@@ -106,9 +109,6 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
     @classmethod
     def _from_dict(cls, data: dict, path: Path | None = None) -> EnvironmentSpec:
         """Create EnvironmentSpec from parsed TOML dict."""
-        import logging
-
-        _log = logging.getLogger(__name__)
         _loc = f" in {path}" if path else ""
 
         _KNOWN_SECTIONS = {
@@ -279,10 +279,6 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
             FileNotFoundError: If spec file does not exist (with helpful message)
             ValueError: If spec file is invalid or cannot be parsed
         """
-        import logging
-
-        _log = logging.getLogger(__name__)
-
         if not path.exists():
             _log.error(f"{path} does not exist")
             _log.info("Run 'jgo init' to create a new environment file first.")

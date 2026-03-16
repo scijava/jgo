@@ -30,11 +30,14 @@ dependency management - for that, see the jgo.maven subpackage.
 
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass
 from typing import Literal
 
 from ..styles import STYLES, format_tokens, styled
+
+_log = logging.getLogger(__name__)
 
 # Default coordinate component values that are suppressed
 # in CLI display unless --full-coordinates is used.
@@ -527,7 +530,10 @@ def _parse_coordinate_dict(coordinate: str) -> dict[str, str | None | bool]:
         version = parts[4]
         scope = parts[5]
     else:
-        # 7+ parts - unusual, try to be flexible
+        # 7+ parts - unusual coordinate; warn so users can spot typos/malformed input
+        _log.warning(
+            f"Coordinate has unexpected number of parts ({num_parts}): {':'.join(parts)}"
+        )
         remaining = list(parts[2:])
 
         if remaining and remaining[-1] in scope_values:

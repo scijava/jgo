@@ -12,11 +12,14 @@ Cache structure: ~/.cache/jgo/info/<groupId>/<artifactId>/<version>/<filename>.j
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
 from ._jar import JarType, ModuleInfo
+
+_log = logging.getLogger(__name__)
 
 # Cache format version - increment when schema changes
 CACHE_FORMAT_VERSION = 2
@@ -148,9 +151,8 @@ def write_metadata_cache(
     try:
         with open(cache_path, "w") as f:
             json.dump(asdict(metadata), f, indent=2)
-    except OSError:
-        # Silently fail if we can't write cache - not critical
-        pass
+    except OSError as e:
+        _log.warning(f"Could not write artifact cache to {cache_path}: {e}")
 
 
 def is_cache_valid(cached: ArtifactMetadata, current_sha256: str) -> bool:

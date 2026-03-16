@@ -134,7 +134,7 @@ def execute(args: ParsedArgs, config: dict) -> int:
                 try:
                     spec.coordinates.remove(coord)
                 except ValueError:
-                    pass
+                    _log.debug(f"Could not revert {coord}: not found in spec")
             try:
                 spec.save(spec_file)
             except Exception as e:

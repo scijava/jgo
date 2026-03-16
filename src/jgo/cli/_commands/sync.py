@@ -144,8 +144,6 @@ def _show_version_changes(
         args: Parsed arguments for verbose level
     """
 
-    _log = logging.getLogger(__name__)
-
     try:
         # Load lock files
         if isinstance(old_lock_path, LockFile):
@@ -207,6 +205,6 @@ def _show_version_changes(
             _log.info("")
             _log.info("No dependency changes detected.")
 
-    except Exception:
-        # Silently ignore errors in version change reporting
-        pass
+    except Exception as e:
+        # Version change reporting is cosmetic; sync already succeeded
+        _log.debug(f"Could not compute version diff: {e}")

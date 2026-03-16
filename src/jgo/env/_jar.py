@@ -4,6 +4,7 @@ Utilities for working with JAR files.
 
 from __future__ import annotations
 
+import logging
 import re
 import struct
 import subprocess
@@ -12,6 +13,8 @@ import zipfile
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
+
+_log = logging.getLogger(__name__)
 
 
 class JarType(IntEnum):
@@ -74,8 +77,8 @@ def get_module_info_paths(jar_path: Path) -> dict[int | None, str]:
                     except ValueError:
                         continue
 
-    except (zipfile.BadZipFile, FileNotFoundError):
-        pass
+    except (zipfile.BadZipFile, FileNotFoundError) as e:
+        _log.warning(f"Could not inspect module-info paths in {jar_path}: {e}")
 
     return paths
 
@@ -132,8 +135,8 @@ def has_toplevel_classes(jar_path: Path) -> bool:
                 # Top-level .class: no "/" in name (or only a trailing slash for dirs)
                 if name.endswith(".class") and "/" not in name:
                     return True
-    except (zipfile.BadZipFile, FileNotFoundError):
-        pass
+    except (zipfile.BadZipFile, FileNotFoundError) as e:
+        _log.warning(f"Could not inspect top-level classes in {jar_path}: {e}")
     return False
 
 
@@ -620,8 +623,8 @@ def classify_jar(jar_path: Path, jar_executable: Path) -> JarType:
                         # Use the first (lowest) version that has the module descriptor
                         release_version = versions[0]
                         break
-                except (IndexError, ValueError):
-                    pass
+                except (IndexError, ValueError) as e:
+                    _log.debug(f"Could not parse release version from jar output: {e}")
 
         if release_version:
             # Retry with --release flag
@@ -909,7 +912,7 @@ def find_main_classes(jar_path: Path) -> list[str]:
                 except (KeyError, zipfile.BadZipFile, EOFError, OSError):
                     continue
 
-    except (zipfile.BadZipFile, FileNotFoundError):
-        pass
+    except (zipfile.BadZipFile, FileNotFoundError) as e:
+        _log.warning(f"Could not inspect main classes in {jar_path}: {e}")
 
     return sorted(main_classes)

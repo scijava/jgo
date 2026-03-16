@@ -225,7 +225,6 @@ def _convert_query_to_solr(query: str) -> str:
         except ValueError:
             # Not a valid coordinate, treat as plain text
             _log.debug(f"Failed to parse as coordinate, using as plain text: {query}")
-            pass
 
     # Plain text - pass through
     _log.debug(f"Using plain text query: {query}")

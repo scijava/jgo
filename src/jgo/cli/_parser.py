@@ -4,6 +4,7 @@ CLI argument parser for jgo.
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import rich_click as click
@@ -45,6 +46,8 @@ from ._commands.versions import versions
 from ._console import setup_consoles
 from .rich._logging import setup_rich_logging
 
+_log = logging.getLogger(__name__)
+
 
 # Custom Click group that handles shorthand endpoint syntax and shortcuts
 class JgoGroup(click.RichGroup):
@@ -81,9 +84,9 @@ class JgoGroup(click.RichGroup):
                 # It's a shortcut - inject 'run' command
                 ctx.protected_args.insert(0, "run")
                 return super().invoke(ctx)
-        except Exception:
+        except Exception as e:
             # If we can't load settings, just fall through
-            pass
+            _log.warning(f"Could not load settings to check shortcuts: {e}")
 
         return super().invoke(ctx)
 
