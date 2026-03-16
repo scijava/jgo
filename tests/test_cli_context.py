@@ -6,8 +6,8 @@ from jgo.cli._args import (
     build_parsed_args,
     expand_platform,
 )
-from jgo.maven._profile import detect_os_properties
 from jgo.cli._context import create_maven_context
+from jgo.maven._profile import detect_os_properties
 from jgo.maven._resolver import PythonResolver
 
 

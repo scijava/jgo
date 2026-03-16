@@ -4,14 +4,7 @@ Unit tests for search CLI command.
 """
 
 import json
-import sys
 from unittest.mock import MagicMock, patch
-
-if sys.version_info >= (3, 11):
-    pass
-else:
-    pass
-
 
 from jgo.cli._args import ParsedArgs
 from jgo.cli._commands import search as search_cmd
