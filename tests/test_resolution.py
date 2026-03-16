@@ -190,7 +190,7 @@ def maven_command():
 
 
 @pytest.fixture(scope="module")
-def mvn_resolver(maven_command):
+def mvn_resolver(maven_command, maven_bootstrap):
     return MvnResolver(maven_command, update=False)
 
 

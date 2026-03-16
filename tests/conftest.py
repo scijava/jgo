@@ -9,6 +9,8 @@ import pytest
 from jgo.util.mvn import ensure_maven_available
 from tests.fixtures.thicket import DEFAULT_SEED, generate_thicket
 
+_BOOTSTRAP_SENTINEL = Path(".cache/m2_repo/.bootstrapped")
+
 
 @pytest.fixture(scope="session")
 def thicket_poms(tmp_path_factory):
@@ -34,46 +36,55 @@ def thicket_poms(tmp_path_factory):
 @pytest.fixture(scope="session")
 def m2_repo(tmp_path_factory):
     """
-    Provide a bootstrapped Maven repository for testing.
+    Provide a writable Maven repository directory for testing.
 
-    This fixture creates a cached Maven repository in .cache/m2_repo that
-    contains Maven's own infrastructure JARs. On first run, these are
-    downloaded from Maven Central. On subsequent runs, the cache is reused,
-    making tests much faster.
-
-    For each test session, the cache is copied to a temporary directory to
-    provide test isolation while still benefiting from pre-downloaded Maven
-    infrastructure.
+    Seeds the temp directory from the persistent .cache/m2_repo if it exists,
+    so previously downloaded artifacts are available without re-downloading.
 
     Returns:
         Path: Temporary Maven repository directory for this test session
     """
-    # Ensure cache directory exists
+    test_repo = tmp_path_factory.mktemp("m2_repo")
+    cache_dir = Path(".cache/m2_repo")
+    if cache_dir.exists():
+        shutil.copytree(cache_dir, test_repo, dirs_exist_ok=True)
+    return test_repo
+
+
+@pytest.fixture(scope="session")
+def maven_bootstrap(m2_repo):
+    """
+    Ensure Maven's own infrastructure JARs are present in the repository.
+
+    Runs mvn dependency:list and dependency:tree against a bootstrap POM to
+    pre-populate the persistent cache with Maven's plugin infrastructure.
+    Skipped if the sentinel file indicates a previous bootstrap completed.
+
+    Only tests that use MvnResolver need this fixture.
+
+    Returns:
+        Path: Same Maven repository directory as m2_repo, now bootstrapped
+    """
     cache_dir = Path(".cache/m2_repo")
     cache_dir.mkdir(parents=True, exist_ok=True)
 
-    # Bootstrap Maven infrastructure by running commands that will download
-    # Maven's own plugins and dependencies
-    bootstrap_pom = Path(__file__).parent / "fixtures" / "bootstrap-pom.xml"
-    maven_cmd = ensure_maven_available()
+    if not _BOOTSTRAP_SENTINEL.exists():
+        bootstrap_pom = Path(__file__).parent / "fixtures" / "bootstrap-pom.xml"
+        maven_cmd = ensure_maven_available()
+        for goal in ["dependency:list", "dependency:tree"]:
+            subprocess.run(
+                [
+                    maven_cmd,
+                    "-f",
+                    str(bootstrap_pom),
+                    f"-Dmaven.repo.local={cache_dir}",
+                    goal,
+                ],
+                check=True,
+                capture_output=True,
+            )
+        _BOOTSTRAP_SENTINEL.touch()
+        # Sync newly downloaded infrastructure into the session's test repo
+        shutil.copytree(cache_dir, m2_repo, dirs_exist_ok=True)
 
-    # Run the Maven commands that tests will actually use
-    # If cache is already populated, these will be quick no-ops
-    for goal in ["dependency:list", "dependency:tree"]:
-        subprocess.run(
-            [
-                maven_cmd,
-                "-f",
-                str(bootstrap_pom),
-                f"-Dmaven.repo.local={cache_dir}",
-                goal,
-            ],
-            check=True,
-            capture_output=True,
-        )
-
-    # Copy cache to temp directory for test isolation
-    test_repo = tmp_path_factory.mktemp("m2_repo")
-    shutil.copytree(cache_dir, test_repo, dirs_exist_ok=True)
-
-    return test_repo
+    return m2_repo
