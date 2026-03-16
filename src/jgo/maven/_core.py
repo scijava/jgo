@@ -326,7 +326,10 @@ class Project:
         ga = f"{self.groupId}:{self.artifactId}"
         failures = []
         for repo_name, repo_url in self.context.remote_repos.items():
-            metadata_url = f"{repo_url}/{self.path_prefix}/maven-metadata.xml"
+            # NOTE: as_posix() is needed to convert Windows paths to URL-compatible syntax.
+            metadata_url = (
+                f"{repo_url}/{self.path_prefix.as_posix()}/maven-metadata.xml"
+            )
             _log.debug(f"Fetching metadata: {metadata_url}")
             try:
                 response = requests.get(metadata_url, timeout=self.context.timeout)
@@ -610,9 +613,10 @@ class Component:
         # Try to fetch maven-metadata.xml from each remote repository
         found = False
         for repo_name, repo_url in self.context.remote_repos.items():
-            # Convert Path to forward-slash string for URL
-            path_str = str(self.path_prefix).replace("\\", "/")
-            metadata_url = f"{repo_url}/{path_str}/maven-metadata.xml"
+            # NOTE: as_posix() is needed to convert Windows paths to URL-compatible syntax.
+            metadata_url = (
+                f"{repo_url}/{self.path_prefix.as_posix()}/maven-metadata.xml"
+            )
             try:
                 _log.debug(f"Trying {metadata_url}")
                 response = requests.get(metadata_url, timeout=self.context.timeout)
