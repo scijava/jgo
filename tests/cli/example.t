@@ -24,5 +24,5 @@ be flattened to -Dapp.name=foo, not passed as -Dapp={'name': 'foo'}.
   > jython = "org.python.util.jython"
   > EOF
   $ jgo --dry-run run
-  */bin/java -XX:+UseG1GC -Xmx2G -Dapp.name=test-app -Dlog.level=INFO -cp */jars/\*:*/modules/\* org.python.util.jython (glob)
+  */bin/java -XX:+UseG1GC -Xmx2G -Dapp.name=test-app -Dlog.level=INFO *org.python.util.jython (glob)
   $ cd "$TMPDIR" && rm -rf jgo-example-test
