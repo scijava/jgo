@@ -41,7 +41,7 @@ class JavaSource(Enum):
     """
 
     SYSTEM = "system"  # Use system Java (from PATH or JAVA_HOME)
-    AUTO = "auto"  # Automatically fetch/download Java if needed
+    AUTO = "auto"  # Use system Java if suitable; download via cjdk only if needed
 
 
 class JavaLocator:
@@ -145,21 +145,55 @@ class JavaLocator:
 
     def _locate_auto_java(self, required_version: str | int | None = None) -> Path:
         """
-        Locate Java using automatic download/caching.
+        Locate Java using automatic management.
+
+        First checks whether a suitable Java already exists on the system
+        (via JAVA_HOME or PATH). "Suitable" means the version meets
+        ``required_version`` when specified, or any version when it is None.
+        Only if no suitable system Java is found does this method download
+        and cache a JDK via cjdk.
 
         Args:
-            required_version: Desired Java version (str or int).
-                             Supports cjdk version strings like "11", "17", "11+", "17+", etc.
+            required_version: Minimum required Java version (str or int).
+                Supports cjdk version strings like "11", "17", "11+", "17+".
+                Treated as a *minimum* for system Java comparisons (i.e. "11"
+                accepts any Java >= 11 that is already installed).  When cjdk
+                is invoked as a fallback, the string is passed through verbatim
+                so cjdk's own semantics apply.
 
         Returns:
             Path to java executable
 
         Raises:
-            RuntimeError: If auto-fetch fails
+            RuntimeError: If no suitable Java can be found or downloaded
         """
+        # Determine the minimum version needed for the system-Java check.
+        min_version: JavaVersion | None = None
+        if isinstance(required_version, int):
+            min_version = JavaVersion(required_version)
+        elif isinstance(required_version, str):
+            min_version = self._extract_min_version(required_version)
 
-        # Default to latest LTS if no version specified
-        # Convert to string for cjdk (it accepts str | None)
+        # First: try to use an existing system Java (JAVA_HOME or PATH).
+        # This avoids unnecessary downloads when a suitable Java is available.
+        system_java = self._find_java_in_path()
+        if system_java is not None:
+            try:
+                actual = self._get_java_version(system_java)
+                if min_version is None or actual >= min_version:
+                    self._maybe_log(f"Using system Java {actual} at {system_java}")
+                    return system_java
+                self._maybe_log(
+                    f"System Java {actual} at {system_java} does not meet "
+                    f"requirement {min_version}; fetching via cjdk..."
+                )
+            except RuntimeError:
+                self._maybe_log(
+                    "Could not determine system Java version; fetching via cjdk..."
+                )
+
+        # Fallback: use cjdk to download/cache a suitable Java.
+        # Convert to string for cjdk (it accepts str | None).
         if required_version is None:
             version_str = "21"
         elif isinstance(required_version, int):
@@ -167,10 +201,9 @@ class JavaLocator:
         else:
             version_str = required_version
 
-        self._maybe_log(f"Locating Java {version_str}...")
+        self._maybe_log(f"Fetching Java {version_str} via cjdk...")
 
         try:
-            # Use cjdk to locate a suitable Java, downloading it on demand.
             # cjdk accepts version strings like "11", "17", "11+", "17+", etc.
             java_home = cjdk.java_home(version=version_str, vendor=self.java_vendor)
             # On Windows, the executable is java.exe; on Unix it's java

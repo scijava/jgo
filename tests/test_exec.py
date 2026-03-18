@@ -143,7 +143,9 @@ class TestJavaLocator:
 
         assert java_path.exists()
         version = locator._get_java_version(java_path)
-        assert version.major == 11
+        # AUTO mode uses system Java if it meets the minimum requirement,
+        # so we may get any version >= 11 (not necessarily exactly 11).
+        assert version.major >= 11
 
     def test_auto_java_with_min_version(self):
         """Test AUTO mode with min_version parameter."""
@@ -157,14 +159,15 @@ class TestJavaLocator:
 
     def test_auto_java_with_string_constraint(self):
         """Test AUTO mode with string version constraints."""
-        # Test simple string version
+        # AUTO mode treats the version as a minimum: system Java >= 11 is
+        # accepted; cjdk is only invoked if no suitable Java is found.
         locator = JavaLocator(java_source=JavaSource.AUTO, java_version="11")
         java_path = locator.locate()
         assert java_path.exists()
         version = locator._get_java_version(java_path)
-        assert version.major == 11
+        assert version.major >= 11
 
-        # Test "+" constraint syntax (cjdk supports "11+" for "11 or higher")
+        # "11+" is also accepted; behaviour is identical to "11" in AUTO mode.
         locator = JavaLocator(java_source=JavaSource.AUTO, java_version="11+")
         java_path = locator.locate()
         assert java_path.exists()

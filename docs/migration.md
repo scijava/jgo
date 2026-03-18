@@ -160,6 +160,18 @@ These are the only behaviors that differ from 1.x in a non-backward-compatible w
 
 1. **Cache location** -- `~/.jgo` is no longer used by default. Override with `--cache-dir ~/.jgo` or `JGO_CACHE_DIR=~/.jgo` if needed.
 2. **`-u` checks remote** -- The old `-u` (local-only rebuild) now requires `--update --offline`.
+3. **Java version pinning in AUTO mode** -- In AUTO mode (the default), jgo 2.0
+   first checks whether a suitable Java already exists on the system (`JAVA_HOME`
+   or `PATH`).  "Suitable" means the installed version meets the minimum
+   requirement detected from bytecode; if so, it is used directly and no
+   download occurs.  Only when no suitable system Java is found does jgo
+   download and cache one via cjdk.  In jgo 1.x the equivalent behaviour was
+   provided by the standalone `cjdk` tool.  The practical difference is that
+   specifying `java_version="11"` (or `--java-version 11`) is now treated as a
+   *minimum* ("11 or higher") rather than an exact pin when a system Java is
+   present; the exact pin only applies when cjdk is invoked as a fallback.  To
+   force the use of your own Java installation and never download, use
+   `--system-java` on the CLI or `java_source="system"` in the Python API.
 
 ## New features in 2.0
 
@@ -188,11 +200,17 @@ See {doc}`project-mode` for details.
 
 ### Automatic Java management
 
-No need to pre-install Java. jgo detects bytecode requirements and downloads the correct version:
+No need to pre-install Java. jgo detects bytecode requirements, then locates or
+downloads the correct version automatically:
 
 ```bash
-jgo net.imagej:imagej    # Downloads Java 17 automatically
+jgo net.imagej:imagej    # Uses system Java if >= 17; downloads Java 17 otherwise
 ```
+
+In AUTO mode (the default), jgo checks `JAVA_HOME` and `PATH` first.  A cjdk-
+managed JDK is downloaded only when no suitable Java is found on the system.
+Use `--system-java` to restrict jgo to system Java only (error if absent or too
+old), or set `java_source="system"` in the Python API.
 
 ### Pure Python resolver
 
