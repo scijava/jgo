@@ -222,22 +222,6 @@ class MavenContext:
         a = pom.value("parent/artifactId")
         v = pom.value("parent/version")
         assert g and a and v
-        relativePath = pom.value("parent/relativePath")
-
-        if (
-            isinstance(pom.source, Path)
-            and relativePath
-            and (parent_path := pom.source / relativePath).exists()
-        ):
-            # Use locally available parent POM file.
-            parent_pom = POM(parent_path)
-            if (
-                g == parent_pom.groupId
-                and a == parent_pom.artifactId
-                and v == parent_pom.version
-            ):
-                return parent_pom
-
         pom_artifact = self.project(g, a).at_version(v).artifact(packaging="pom")
         return POM(pom_artifact.resolve())
 
