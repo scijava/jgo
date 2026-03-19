@@ -92,12 +92,10 @@ Test --update flag forces cache refresh.
 
 Test --verbose flag.
 
-  $ jgo -v run org.python:jython-standalone:2.7.4 -- --version
+  $ jgo -v run org.python:jython-standalone:2.7.4 -- --version 2>&1 | sed '/^ /d'
   INFO     Building environment for org.python:jython-standalone:2.7.4...         
   INFO     Running Java application...                                            
   INFO     Using system Java * at * (glob)
-  \s*.* (re)
-  \s*.* (re)
   */bin/java *org.python.util.jython --version (glob)
   Jython 2.7.4
 
