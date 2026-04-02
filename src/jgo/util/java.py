@@ -40,8 +40,9 @@ class JavaSource(Enum):
     Strategy for locating Java executable.
     """
 
-    SYSTEM = "system"  # Use system Java (from PATH or JAVA_HOME)
     AUTO = "auto"  # Use system Java if suitable; download via cjdk only if needed
+    SYSTEM = "system"  # Always use system Java (from PATH or JAVA_HOME); never download
+    DOWNLOAD = "download"  # Always download/use cached Java via cjdk; no system Java
 
 
 class JavaLocator:
@@ -92,7 +93,9 @@ class JavaLocator:
         required_version = self.java_version or min_version
 
         # Select strategy
-        if self.java_source == JavaSource.SYSTEM:
+        if self.java_source == JavaSource.AUTO:
+            return self._locate_auto_java(required_version)
+        elif self.java_source == JavaSource.SYSTEM:
             # For system Java, parse string constraints to a comparable JavaVersion
             system_version: JavaVersion | int | None
             if isinstance(required_version, str):
@@ -100,8 +103,8 @@ class JavaLocator:
             else:
                 system_version = required_version
             return self._locate_system_java(system_version)
-        elif self.java_source == JavaSource.AUTO:
-            return self._locate_auto_java(required_version)
+        elif self.java_source == JavaSource.DOWNLOAD:
+            return self._locate_download_java(required_version)
         else:
             raise ValueError(f"Unknown JavaSource: {self.java_source}")
 
@@ -222,6 +225,49 @@ class JavaLocator:
         except (RuntimeError, OSError) as e:
             raise RuntimeError(f"Failed to obtain Java automatically: {e}")
 
+    def _locate_download_java(self, required_version: str | int | None = None) -> Path:
+        """
+        Locate Java by always downloading/using a cjdk-cached version.
+
+        Bypasses any system Java installation entirely; always uses cjdk.
+        This is the behaviour requested by scyjava's ``fetch="always"`` mode.
+
+        Args:
+            required_version: Desired Java version (str or int).
+                Supports cjdk version strings like "11", "17", "11+", "17+".
+
+        Returns:
+            Path to java executable
+
+        Raises:
+            RuntimeError: If no suitable Java can be downloaded
+        """
+        if required_version is None:
+            version_str = "21"
+        elif isinstance(required_version, int):
+            version_str = str(required_version)
+        else:
+            version_str = required_version
+
+        self._maybe_log(f"Fetching Java {version_str} via cjdk (download mode)...")
+
+        try:
+            java_home = cjdk.java_home(version=version_str, vendor=self.java_vendor)
+            java_exe = "java.exe" if sys.platform == "win32" else "java"
+            java_path = Path(java_home) / "bin" / java_exe
+
+            if not java_path.exists():
+                raise RuntimeError(f"Failed to obtain Java path: {java_path}")
+
+            actual_version = self._get_java_version(java_path)
+            vendor_info = f" ({self.java_vendor})" if self.java_vendor else ""
+            self._maybe_log(f"Using Java {actual_version}{vendor_info} at {java_path}")
+
+            return java_path
+
+        except (RuntimeError, OSError) as e:
+            raise RuntimeError(f"Failed to download Java via cjdk: {e}")
+
     def _extract_min_version(self, version_constraint: str) -> JavaVersion | None:
         """
         Extract minimum version from a version constraint string.
@@ -233,8 +279,8 @@ class JavaLocator:
         - "11.0.2"  -> JavaVersion(11, 0, 2)
         - "11.0.2+" -> JavaVersion(11, 0, 2)
 
-        Note: This is used only for SYSTEM Java checking. For AUTO mode,
-        the version string is passed directly to cjdk.
+        Note: This is used only for SYSTEM Java checking.
+        For AUTO mode, the version string is passed directly to cjdk.
 
         Args:
             version_constraint: Version constraint string

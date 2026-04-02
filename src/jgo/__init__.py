@@ -46,7 +46,7 @@ Layer 2 - Environment materialization (jgo.env):
 Layer 3 - Execution (jgo.exec):
     JavaRunner - Execute Java programs from environments
     JVMConfig - Configure JVM settings (heap, GC, system properties)
-    JavaSource - Java selection strategy (SYSTEM, AUTO)
+    JavaSource - Java selection strategy (AUTO, SYSTEM, DOWNLOAD)
 
 Example - Full Control
 ----------------------
@@ -204,8 +204,9 @@ def run(
 
     # Create Java runner
     java_source_map = {
-        "system": JavaSource.SYSTEM,
         "auto": JavaSource.AUTO,
+        "system": JavaSource.SYSTEM,
+        "download": JavaSource.DOWNLOAD,
     }
 
     runner = JavaRunner(
