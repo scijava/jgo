@@ -79,7 +79,7 @@ jobs:
       - name: Run tests
         shell: bash
         env:
-          UV_RESOLUTION: ${{ matrix.resolution }}
+          UV_RESOLUTION: ${{ matrix.resolution || 'highest'}}
         run: |
           bin/test.sh
 
