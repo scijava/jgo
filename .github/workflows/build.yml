@@ -69,17 +69,10 @@ jobs:
         run: |
           uv tool install prysk
 
-      - name: Set up jgo
-        shell: bash
-        env:
-          UV_RESOLUTION: ${{ matrix.resolution }}
-        run: |
-          uv tool install --with-editable ".[cli]" jgo
-
       - name: Run tests
         shell: bash
         env:
-          UV_NO_SYNC: True
+          UV_RESOLUTION: ${{ matrix.resolution }}
         run: |
           bin/test.sh
 

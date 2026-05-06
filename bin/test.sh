@@ -43,6 +43,9 @@ fi
 
 # Run prysk if we have args and prysk is installed
 if [ ${#prysk_args[@]} -gt 0 ] && command -v prysk; then
+  # Ensure jgo CLI is available for prysk tests
+  command -v jgo > /dev/null 2>&1 || uv tool install --with-editable ".[cli]" jgo
+
   # NB: We cannot add prysk to pyproject.toml because
   # prysk depends on an incompatible version of rich.
   # Use `uv tool install prysk` instead.
