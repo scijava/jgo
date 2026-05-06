@@ -12,16 +12,13 @@ on:
 
 jobs:
   build:
-    name: ${{ matrix.os }} py${{ matrix.python-version }}${{ matrix.resolution && format(' ({0})', matrix.resolution) || '' }}
+    name: ${{ matrix.os }} py${{ matrix.python-version }}${{ format(' ({0})', matrix.resolution)}}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ['3.10', '3.14']
-        include:
-          - os: ubuntu-latest
-            python-version: '3.10'
-            resolution: lowest
+        resolution: ['lowest', 'highest']
 
     steps:
       - uses: actions/checkout@v4
@@ -79,7 +76,7 @@ jobs:
       - name: Run tests
         shell: bash
         env:
-          UV_RESOLUTION: ${{ matrix.resolution || 'highest'}}
+          UV_RESOLUTION: ${{ matrix.resolution }}
         run: |
           bin/test.sh
 
