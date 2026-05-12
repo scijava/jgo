@@ -24,6 +24,7 @@ For simple/low-level data structures without Maven logic, see the jgo.parse subp
 from __future__ import annotations
 
 import logging
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from functools import cmp_to_key
@@ -31,6 +32,8 @@ from hashlib import md5, sha1
 from os import environ
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable
+
+import requests
 
 from ..constants import MAVEN_CENTRAL_URL, default_maven_repo
 from ..parse import Coordinate, coord2str
@@ -299,17 +302,32 @@ class Project:
             self._metadata = Metadatas([MetadataXML(p) for p in paths if p.exists()])
         return self._metadata
 
-    def update(self) -> None:
-        """Update metadata from remote sources."""
-        import requests
+    def update(self, max_age: int | None = None) -> None:
+        """Update metadata from remote sources.
 
+        Args:
+            max_age: If set, skip fetching a repo's metadata when its cached
+                     file is younger than this many seconds. Each repo is
+                     checked independently, so a newly-added repo is always
+                     fetched even when others are still fresh. Pass 0 or None
+                     to always fetch fresh data from every repo.
+        """
         repo_cache_dir = self.context.repo_cache / self.path_prefix
         repo_cache_dir.mkdir(parents=True, exist_ok=True)
 
-        # Try to fetch maven-metadata.xml from each remote repository
         ga = f"{self.groupId}:{self.artifactId}"
+        now = time.time()
+        any_fetched = False
         failures = []
+
         for repo_name, repo_url in self.context.remote_repos.items():
+            metadata_file = repo_cache_dir / f"maven-metadata-{repo_name}.xml"
+
+            # Skip this repo if its cached file is still fresh.
+            if max_age and metadata_file.exists():
+                if (now - metadata_file.stat().st_mtime) < max_age:
+                    continue
+
             # NOTE: as_posix() is needed to convert Windows paths to URL-compatible syntax.
             metadata_url = (
                 f"{repo_url}/{self.path_prefix.as_posix()}/maven-metadata.xml"
@@ -318,10 +336,9 @@ class Project:
             try:
                 response = requests.get(metadata_url, timeout=self.context.timeout)
                 if response.status_code == 200:
-                    # Save to local cache with repo name suffix
-                    metadata_file = repo_cache_dir / f"maven-metadata-{repo_name}.xml"
                     with open(metadata_file, "wb") as f:
                         f.write(response.content)
+                    any_fetched = True
                     _log.debug(f"Cached metadata from {repo_name} for {ga}")
                 else:
                     reason = f"HTTP {response.status_code}"
@@ -333,14 +350,15 @@ class Project:
                 _log.debug(f"Could not fetch metadata for {ga} from {repo_name}: {e}")
                 failures.append(f"  {repo_name}: {e}")
 
-        if failures and len(failures) == len(self.context.remote_repos):
+        if failures and not any_fetched:
             _log.warning(
                 f"Could not fetch metadata for {ga} from any remote repository:\n"
                 + "\n".join(failures)
             )
 
-        # Force reload of metadata
-        self._metadata = None
+        # Force reload of metadata if anything was re-fetched.
+        if any_fetched:
+            self._metadata = None
 
     @property
     def release(self) -> str | None:
