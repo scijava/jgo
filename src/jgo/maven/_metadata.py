@@ -250,8 +250,15 @@ def ts2dt(ts: str) -> datetime:
     Valid forms:
     * 20210702144918 (seen in <lastUpdated> in maven-metadata.xml)
     * 20210702.144917 (seen in deployed SNAPSHOT filenames and <snapshotVersion><value>)
+    * 1753285313947 (Unix milliseconds, written by some Maven clients)
+    * 1753285313 (Unix seconds, written by some Maven clients)
     """
     m = match(r"(\d{4})(\d\d)(\d\d)\.?(\d\d)(\d\d)(\d\d)", ts)
-    if not m:
-        raise ValueError(f"Invalid timestamp: {ts}")
-    return datetime(*map(int, m.groups()))  # type: ignore[arg-type]
+    if m:
+        return datetime(*map(int, m.groups()))  # type: ignore[arg-type]
+    # Some Maven clients write <lastUpdated> as a Unix epoch timestamp.
+    if match(r"\d{13}", ts):
+        return datetime.fromtimestamp(int(ts) / 1000)
+    if match(r"\d{10}", ts):
+        return datetime.fromtimestamp(int(ts))
+    raise ValueError(f"Invalid timestamp: {ts}")
