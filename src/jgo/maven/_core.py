@@ -38,6 +38,7 @@ import requests
 
 from ..constants import MAVEN_CENTRAL_URL, default_maven_repo
 from ..parse import Coordinate, coord2str
+from ..util import http
 from ..util.io import binary, text
 from ._metadata import Metadatas, MetadataXML, SnapshotMetadataXML
 from ._pom import POM, parse_dependency_element_to_coordinate
@@ -354,7 +355,7 @@ class Project:
             )
             _log.debug(f"Fetching metadata: {metadata_url}")
             try:
-                response = requests.get(metadata_url, timeout=self.context.timeout)
+                response = http.get(metadata_url, timeout=self.context.timeout)
                 if response.status_code == 200:
                     with open(metadata_file, "wb") as f:
                         f.write(response.content)
@@ -625,8 +626,6 @@ class Component:
         if not self.resolved_version.endswith("-SNAPSHOT"):
             return
 
-        import requests
-
         cache_dir = self.context.repo_cache / self.path_prefix
         cache_dir.mkdir(parents=True, exist_ok=True)
 
@@ -641,7 +640,7 @@ class Component:
             )
             try:
                 _log.debug(f"Trying {metadata_url}")
-                response = requests.get(metadata_url, timeout=self.context.timeout)
+                response = http.get(metadata_url, timeout=self.context.timeout)
                 if response.status_code == 200:
                     # Save to local cache with repo name suffix
                     metadata_file = cache_dir / f"maven-metadata-{repo_name}.xml"
@@ -925,7 +924,7 @@ class Artifact:
             path_str = str(self.component.path_prefix).replace("\\", "/")
             url = f"{repo_url}/{path_str}/{self.filename}"
             try:
-                resp = requests.head(
+                resp = http.head(
                     url, timeout=self.context.timeout, allow_redirects=True
                 )
                 if resp.status_code != 200:
@@ -958,7 +957,7 @@ class Artifact:
             f"{classifier_param}"
         )
         try:
-            resp = requests.get(url, timeout=self.context.timeout)
+            resp = http.get(url, timeout=self.context.timeout)
             if resp.status_code == 200:
                 for item in resp.json().get("items", []):
                     for asset in item.get("assets", []):

@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 import requests
 
 from ..parse import Coordinate
+from ..util import http
 from . import Resolver
 from ._core import Dependency, DependencyNode, create_pom
 from ._model import Model
@@ -166,7 +167,7 @@ def _verify_remote_sha1(
     Warns if the checksum is present but does not match.
     """
     try:
-        response = requests.get(f"{artifact_url}.sha1", timeout=timeout)
+        response = http.get(f"{artifact_url}.sha1", timeout=timeout)
     except requests.RequestException as e:
         _log.debug(f"Could not fetch checksum for {filename}: {e}")
         return
@@ -253,7 +254,7 @@ class PythonResolver(Resolver):
             _log.debug(f"Trying {url}")
 
             # Use streaming to enable progress bar
-            response: requests.Response = requests.get(
+            response: requests.Response = http.get(
                 url, stream=True, timeout=artifact.context.timeout
             )
             if response.status_code == 200:
