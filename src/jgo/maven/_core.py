@@ -27,6 +27,7 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from email.utils import parsedate_to_datetime
 from functools import cmp_to_key
 from hashlib import md5, sha1
 from os import environ
@@ -43,6 +44,8 @@ from ._pom import POM, parse_dependency_element_to_coordinate
 from ._version import compare_versions
 
 if TYPE_CHECKING:
+    from datetime import datetime
+
     from ._metadata import Metadata
 
 _log = logging.getLogger(__name__)
@@ -110,12 +113,29 @@ class MavenContext:
             DEFAULT_REMOTE_REPOS if remote_repos is None else remote_repos
         ).copy()
         self.timeout: int = timeout
+        self._nexus_bases: dict[str, str | None] = {}
         # Import here to avoid circular dependency
         if resolver is None:
             from ._resolver import PythonResolver
 
             resolver = PythonResolver()
         self.resolver: Resolver = resolver
+
+    def _nexus_base(self, repo_url: str, server_header: str) -> str | None:
+        """Return the Nexus 3 REST API base URL for repo_url, or None if not Nexus 3.
+
+        The result is cached per repo URL so the Server header is only inspected
+        on the first request to each repository.
+        """
+        if repo_url not in self._nexus_bases:
+            if server_header.startswith("Nexus/3."):
+                from urllib.parse import urlparse
+
+                parsed = urlparse(repo_url)
+                self._nexus_bases[repo_url] = f"{parsed.scheme}://{parsed.netloc}"
+            else:
+                self._nexus_bases[repo_url] = None
+        return self._nexus_bases[repo_url]
 
     def project(self, groupId: str, artifactId: str) -> Project:
         """
@@ -881,6 +901,73 @@ class Artifact:
         p = self.resolve()
         checksum_path = p.parent / f"{p.name}.{suffix}"
         return text(checksum_path) or func(binary(p)).hexdigest()
+
+    def last_modified(self) -> datetime | None:
+        """
+        Return the deploy timestamp of this artifact on the remote repository,
+        or ``None`` if it cannot be determined.
+
+        This performs an HTTP HEAD request against each configured remote
+        repository in order. For Nexus 3 repositories, the ``Last-Modified``
+        HTTP header is unreliable (it reflects the *migration* date rather than
+        the original deploy date when a repository was migrated from Nexus 2),
+        so the Nexus REST API is queried instead. For all other repositories
+        the ``Last-Modified`` header is used directly. The artifact is never
+        downloaded.
+
+        Note: this is the time the artifact was *deployed to the remote*, which
+        is distinct from the local cache mtime. If you need the latter (really
+        the time the file was cached locally, not when it was released), use:
+
+            datetime.fromtimestamp(os.path.getmtime(artifact.resolve()))
+        """
+        for repo_url in self.context.remote_repos.values():
+            path_str = str(self.component.path_prefix).replace("\\", "/")
+            url = f"{repo_url}/{path_str}/{self.filename}"
+            try:
+                resp = requests.head(
+                    url, timeout=self.context.timeout, allow_redirects=True
+                )
+                if resp.status_code != 200:
+                    continue
+                nexus_base = self.context._nexus_base(
+                    repo_url, resp.headers.get("Server", "")
+                )
+                if nexus_base is not None:
+                    ts = self._nexus_last_modified(nexus_base)
+                    if ts is not None:
+                        return ts
+                lm = resp.headers.get("Last-Modified")
+                if lm:
+                    return parsedate_to_datetime(lm).replace(tzinfo=None)
+            except requests.RequestException as exc:
+                _log.debug("HEAD %s failed: %s", url, exc)
+        return None
+
+    def _nexus_last_modified(self, nexus_base: str) -> datetime | None:
+        """Query the Nexus 3 REST API for the authoritative deploy timestamp."""
+        from datetime import datetime as _dt
+
+        classifier_param = (
+            f"&maven.classifier={self.classifier}" if self.classifier else ""
+        )
+        url = (
+            f"{nexus_base}/service/rest/v1/search"
+            f"?group={self.groupId}&name={self.artifactId}"
+            f"&version={self.version}&maven.extension={self.packaging}"
+            f"{classifier_param}"
+        )
+        try:
+            resp = requests.get(url, timeout=self.context.timeout)
+            if resp.status_code == 200:
+                for item in resp.json().get("items", []):
+                    for asset in item.get("assets", []):
+                        lm = asset.get("lastModified")
+                        if lm:
+                            return _dt.fromisoformat(lm).replace(tzinfo=None)
+        except (requests.RequestException, ValueError) as exc:
+            _log.debug("Nexus search failed for %s: %s", self, exc)
+        return None
 
 
 class Dependency:
