@@ -162,7 +162,7 @@ def _verify_remote_sha1(
     """
     Verify a downloaded artifact against the remote SHA1 checksum file.
 
-    Silently skips if the checksum file is unavailable (many repos don't publish them).
+    Silently skips if the checksum file is unavailable (some repos don't publish them).
     Warns if the checksum is present but does not match.
     """
     try:
