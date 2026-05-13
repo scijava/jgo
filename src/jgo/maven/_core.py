@@ -343,10 +343,17 @@ class Project:
 
         for repo_name, repo_url in self.context.remote_repos.items():
             metadata_file = repo_cache_dir / f"maven-metadata-{repo_name}.xml"
+            not_found_file = repo_cache_dir / f"maven-metadata-{repo_name}.404"
 
-            # Skip this repo if its cached file is still fresh.
+            # Skip this repo if its cached success file is still fresh.
             if max_age and metadata_file.exists():
                 if (now - metadata_file.stat().st_mtime) < max_age:
+                    continue
+
+            # Skip this repo if its cached 404 sentinel is still fresh.
+            if max_age and not_found_file.exists():
+                if (now - not_found_file.stat().st_mtime) < max_age:
+                    failures.append(f"  {repo_name}: HTTP 404 (cached)")
                     continue
 
             # NOTE: as_posix() is needed to convert Windows paths to URL-compatible syntax.
@@ -359,6 +366,7 @@ class Project:
                 if response.status_code == 200:
                     with open(metadata_file, "wb") as f:
                         f.write(response.content)
+                    not_found_file.unlink(missing_ok=True)
                     any_fetched = True
                     _log.debug(f"Cached metadata from {repo_name} for {ga}")
                 else:
@@ -366,12 +374,17 @@ class Project:
                     _log.debug(
                         f"Could not fetch metadata for {ga} from {repo_name}: {reason}"
                     )
+                    not_found_file.touch()
                     failures.append(f"  {repo_name}: {reason}")
             except requests.RequestException as e:
                 _log.debug(f"Could not fetch metadata for {ga} from {repo_name}: {e}")
                 failures.append(f"  {repo_name}: {e}")
 
-        if failures and not any_fetched:
+        any_cached = any(
+            (repo_cache_dir / f"maven-metadata-{name}.xml").exists()
+            for name in self.context.remote_repos
+        )
+        if failures and not any_fetched and not any_cached:
             _log.warning(
                 f"Could not fetch metadata for {ga} from any remote repository:\n"
                 + "\n".join(failures)
