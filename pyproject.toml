@@ -77,6 +77,9 @@ include-package-data = false
 where = ["src"]
 namespaces = false
 
+[tool.setuptools.package-data]
+jgo = ["py.typed"]
+
 [tool.ruff]
 line-length = 88
 src = ["src", "tests"]
