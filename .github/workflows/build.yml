@@ -70,7 +70,7 @@ jobs:
 
       - name: Set up jgo
         run: |
-          uv tool install --with-editable . jgo
+          uv tool install --with-editable ".[cli]" jgo
 
       - name: Run tests
         shell: bash
