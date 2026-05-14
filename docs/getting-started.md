@@ -6,13 +6,13 @@
 
 :::{tab-item} uv
 ```bash
-uv tool install jgo
+uv tool install "jgo[cli]"
 ```
 :::
 
 :::{tab-item} pip
 ```bash
-pip install jgo
+pip install "jgo[cli]"
 ```
 :::
 
@@ -25,7 +25,7 @@ conda install -c conda-forge jgo
 :::{tab-item} From source
 ```bash
 git clone https://github.com/apposed/jgo
-uv tool install --with-editable jgo jgo
+uv tool install --with-editable "jgo[cli]" jgo
 ```
 Changes to the source will be immediately reflected when running `jgo`.
 :::

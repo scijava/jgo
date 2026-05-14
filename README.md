@@ -108,14 +108,14 @@ jgo sync
 <details><summary><strong>Installing jgo with uv</strong></summary>
 
 ```shell
-uv tool install jgo
+uv tool install "jgo[cli]"
 ```
 
 </details>
 <details><summary><strong>Installing jgo with pip</strong></summary>
 
 ```shell
-pip install jgo
+pip install "jgo[cli]"
 ```
 
 </details>
@@ -130,13 +130,13 @@ conda install -c conda-forge jgo
 
 ```shell
 git clone https://github.com/apposed/jgo
-uv tool install --with-editable jgo jgo
+uv tool install --with-editable "jgo[cli]" jgo
 ```
 
 When installed in this fashion, changes to the jgo source code will be immediately reflected when running `jgo` from the command line.
 
 </details>
-<details><summary><strong>Using jgo as a dependency</strong></summary>
+<details><summary><strong>Using jgo as a library dependency</strong></summary>
 
 ```shell
 uv add jgo
@@ -146,6 +146,8 @@ or
 pixi add jgo
 ```
 Not sure which to use? [Read this](https://jacobtomlinson.dev/posts/2025/python-package-managers-uv-vs-pixi/#so-what-do-i-use).
+
+The `cli` extra (`jgo[cli]`) is only needed when using the `jgo` command-line tool, not when using jgo as a Python library.
 
 </details>
 
