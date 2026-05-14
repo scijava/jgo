@@ -1,6 +1,6 @@
 # Architecture
 
-jgo 2.0 is built around a three-layer architecture. Each layer is independently useful and can be used separately or combined.
+jgo is built around a three-layer architecture. Each layer is independently useful and can be used separately or combined.
 
 ```
 ┌──────────────────────────────────────┐
@@ -173,7 +173,3 @@ jgo/
 
 **Flexibility**
 : Mix and match components: choose your resolver, link strategy, and Java source strategy independently.
-
-## Comparison to jgo 1.x
-
-jgo 1.x was a single monolithic module (`jgo.jgo`) that handled dependency resolution, JAR linking, and Java execution in one tightly coupled file. jgo 2.0 separates these concerns into distinct layers with clean interfaces, making the codebase more maintainable, testable, and extensible.

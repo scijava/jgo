@@ -110,24 +110,8 @@ from .constants import MAVEN_CENTRAL_URL
 from .constants import VERSION as __version__
 from .env import EnvironmentBuilder, LinkStrategy
 from .exec import JavaRunner, JavaSource, JVMConfig
-from .jgo import (
-    Endpoint,
-    ExecutableNotFound,
-    HelpRequested,
-    InvalidEndpoint,
-    NoEndpointProvided,
-    NoMainClassInManifest,
-    UnableToAutoComplete,
-    resolve_dependencies,
-)
-from .jgo import _jgo_main as main
 from .maven import MavenContext
 from .parse import Endpoint as _Endpoint
-from .util.compat import (
-    add_jvm_args_as_necessary,
-    main_from_endpoint,
-    maven_scijava_repository,
-)
 
 if TYPE_CHECKING:
     import subprocess
@@ -346,24 +330,8 @@ def resolve(
 
 
 __all__ = (
-    # Package metadata
     "__version__",
-    # New 2.0 API
     "run",
     "build",
     "resolve",
-    # Old 1.x compatibility API - Functions
-    "main",
-    "main_from_endpoint",
-    "resolve_dependencies",
-    "add_jvm_args_as_necessary",
-    "maven_scijava_repository",
-    # Old 1.x compatibility API - Classes and Exceptions
-    "Endpoint",
-    "NoMainClassInManifest",
-    "ExecutableNotFound",
-    "InvalidEndpoint",
-    "UnableToAutoComplete",
-    "HelpRequested",
-    "NoEndpointProvided",
 )

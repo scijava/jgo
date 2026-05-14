@@ -1,10 +1,10 @@
 # Migrating from jgo 1.x
 
-This guide covers upgrading from jgo 1.x to 2.0. jgo 2.0 maintains backward compatibility -- your existing scripts and code will continue to work, with deprecation warnings guiding you toward the new APIs.
+This guide covers upgrading from jgo 1.x to 2.x. jgo 2.x maintains backward compatibility -- your existing scripts and code will continue to work, with deprecation warnings guiding you toward the new APIs.
 
 ## Backward compatibility
 
-jgo 2.0 preserves backward compatibility through:
+jgo 2.x preserves backward compatibility through:
 
 1. **Deprecated Python API** -- All old functions and classes still work but emit deprecation warnings.
 2. **Deprecated CLI flags** -- Old flags are aliased to new ones with warnings.
@@ -37,7 +37,7 @@ components = jgo.resolve("org.scijava:parsington")
 
 ### Migration table
 
-| Old (1.x) | New (2.0) |
+| Old (1.x) | New (2.x) |
 |:-----------|:----------|
 | `jgo.main(argv)` | `jgo.run(endpoint, app_args=...)` |
 | `jgo.main_from_endpoint(ep, ...)` | `jgo.run(endpoint, ...)` |
@@ -47,7 +47,7 @@ components = jgo.resolve("org.scijava:parsington")
 
 ### Advanced: layered API
 
-jgo 1.x had a single monolithic module. jgo 2.0 provides three independently useful layers:
+jgo 1.x had a single monolithic module. jgo 2.x provides three independently useful layers:
 
 ```python
 from jgo.maven import MavenContext
@@ -73,7 +73,7 @@ See {doc}`python-api` for full details.
 
 ### Commands replace flags
 
-jgo 2.0 uses a command-based CLI. The old endpoint-first syntax still works:
+jgo 2.x uses a command-based CLI. The old endpoint-first syntax still works:
 
 ```bash
 # Both work -- the first auto-detects the 'run' command
@@ -122,14 +122,14 @@ These short flags are permanent aliases and will not be removed:
 
 ### Update behavior change
 
-In jgo 1.x, `-u` and `-U` were different. In jgo 2.0:
+In jgo 1.x, `-u` and `-U` were different. In jgo 2.x:
 
 ```bash
 # jgo 1.x
 jgo -u endpoint    # Rebuild from local cache
 jgo -U endpoint    # Check remote repositories and rebuild
 
-# jgo 2.0
+# jgo 2.x
 jgo -u --offline endpoint   # Rebuild from local (old -u behavior)
 jgo -u endpoint              # Check remote and rebuild (old -U behavior)
 ```
@@ -141,13 +141,13 @@ jgo -u endpoint              # Check remote and rebuild (old -U behavior)
 | | Location |
 |:--|:---------|
 | **jgo 1.x** | `~/.jgo` |
-| **jgo 2.0** | `~/.cache/jgo` (Linux/macOS), `%LOCALAPPDATA%\jgo` (Windows) |
+| **jgo 2.x** | `~/.cache/jgo` (Linux/macOS), `%LOCALAPPDATA%\jgo` (Windows) |
 
-Old cache directories are not migrated automatically. jgo 2.0 creates a fresh cache.
+Old cache directories are not migrated automatically. jgo 2.x creates a fresh cache.
 
 ### Settings file
 
-The INI format is unchanged. jgo 2.0 adds a new preferred location:
+The INI format is unchanged. jgo 2.x adds a new preferred location:
 
 1. `~/.config/jgo.conf` (XDG standard -- new, recommended)
 2. `~/.jgorc` (legacy -- still works)
@@ -160,7 +160,7 @@ These are the only behaviors that differ from 1.x in a non-backward-compatible w
 
 1. **Cache location** -- `~/.jgo` is no longer used by default. Override with `--cache-dir ~/.jgo` or `JGO_CACHE_DIR=~/.jgo` if needed.
 2. **`-u` checks remote** -- The old `-u` (local-only rebuild) now requires `--update --offline`.
-3. **Java version pinning in AUTO mode** -- In AUTO mode (the default), jgo 2.0
+3. **Java version pinning in AUTO mode** -- In AUTO mode (the default), jgo 2.x
    first checks whether a suitable Java already exists on the system (`JAVA_HOME`
    or `PATH`).  "Suitable" means the installed version meets the minimum
    requirement detected from bytecode; if so, it is used directly and no
@@ -173,7 +173,7 @@ These are the only behaviors that differ from 1.x in a non-backward-compatible w
    force the use of your own Java installation and never download, use
    `--system-java` on the CLI or `java_source="system"` in the Python API.
 
-## New features in 2.0
+## New features in 2.x
 
 ### jgo.toml project files
 

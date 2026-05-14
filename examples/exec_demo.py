@@ -130,7 +130,7 @@ def demo_fluent_jvm_config():
 def main():
     """Run all demos."""
     print("=" * 70)
-    print("JGO 2.0 Execution Layer Demo")
+    print("jgo Execution Layer Demo")
     print("=" * 70)
 
     try:
