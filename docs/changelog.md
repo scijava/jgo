@@ -1,5 +1,88 @@
 # Changelog
 
+## 3.0.0
+
+### Breaking changes
+
+- **CLI is now an optional extra** -- The command-line tool's dependencies (rich, click, rich-click) are no longer installed by default. Use `pip install jgo[cli]` to include them. Plain `pip install jgo` gives you the Python library only.
+
+- **Removed deprecated jgo 1.x API** -- The following, deprecated since 2.0.0, are gone:
+  - `jgo.main()`, `jgo.main_from_endpoint()`, `jgo.resolve_dependencies()` -- use `jgo.run()`, `jgo.build()`, `jgo.resolve()` instead
+  - `jgo/jgo.py` compatibility shim and `jgo.util.compat` module
+  - Deprecated CLI flags (`-U`/`--force-update`, `-a`/`--additional-jars`, `--additional-endpoints`, `--link-type`, `--log-level`)
+
+### New features
+
+- **Maven metadata TTL cache** -- `Project.update(max_age=N)` skips HTTP fetches for metadata files younger than N seconds, reducing unnecessary network traffic.
+
+- **Rate-limit handling** -- HTTP 429 and 529 responses are retried automatically, honoring `Retry-After` headers.
+
+- **`Artifact.last_modified()`** -- Returns the deployment timestamp from the remote repository. Handles Nexus v3 correctly by using its REST API when the standard `Last-Modified` header would give the wrong value.
+
+- **PEP 561 compliance** -- Added `py.typed` marker so downstream type checkers recognize jgo's inline type annotations.
+
+---
+
+## 2.2.0
+
+### New features
+
+- **`JavaSource.DOWNLOAD` mode** -- Forces a fresh JDK download via cjdk, bypassing any cached or system Java. Useful for reproducible CI environments.
+
+---
+
+## 2.1.3
+
+### Bug fixes
+
+- **Maven `relativePath` handling removed** -- Resolving POMs with `<relativePath>` entries caused incorrect resolution in some cases; the field is now ignored during resolution, matching Maven's behavior for remote artifacts.
+
+---
+
+## 2.1.2
+
+### Improvements
+
+- **Auto Java mode tuning** -- Improved heuristics for selecting a system Java vs. downloading one via cjdk, with clearer logging when the decision is made.
+
+---
+
+## 2.1.1
+
+### Bug fixes
+
+- **Windows path normalization** -- Metadata URL paths were constructed with backslashes on Windows, causing HTTP 404s. Now normalized to forward slashes.
+
+- **`RELEASE` version resolution** -- Fixed incorrect resolution of the `RELEASE` pseudo-version in some repository configurations.
+
+### Other changes
+
+- Require Python 3.10+.
+
+---
+
+## 2.1.0
+
+### New features
+
+- **Custom resolver injection** -- `jgo.build()` now accepts a `resolver=` argument, letting callers supply their own `Resolver` instance instead of constructing one internally.
+
+### Bug fixes
+
+- **Platform auto-detection** -- `None` platform values are now resolved to the current platform rather than propagated as null, fixing profile activation on some systems.
+
+---
+
+## 2.0.1
+
+### Bug fixes
+
+- **Exclusions not applied** -- Exclusions declared in `jgo.toml` were parsed but silently ignored during resolution. They are now correctly applied.
+
+- **`jgo.toml` validation** -- Basic structure validation is now performed when loading a spec file, giving a clear error on malformed input instead of a confusing traceback.
+
+---
+
 ## 2.0.0
 
 jgo 2 is a major rewrite with a new architecture, new CLI, and new Python API. It tries to maintain backward compatibility with jgo 1.x -- existing scripts and code should continue to work with deprecation warnings.
@@ -38,4 +121,4 @@ jgo 2 is a major rewrite with a new architecture, new CLI, and new Python API. I
 - `jgo.main()`, `jgo.main_from_endpoint()`, `jgo.resolve_dependencies()` -- use `jgo.run()`, `jgo.build()`, `jgo.resolve()` instead.
 - `-U`/`--force-update`, `-a`/`--additional-jars`, `--additional-endpoints`, `--link-type`, `--log-level` flags -- see {doc}`migration` for replacements.
 
-Deprecated APIs will be removed in jgo 3.0.
+Deprecated APIs were removed in jgo 3.0.
