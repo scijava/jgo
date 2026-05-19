@@ -58,6 +58,7 @@ cli = [
 dev = [
     "build",
     "mypy",
+    "pytest-prysk",
     "pytest",
     "ruff",
     "types-Pygments",
@@ -102,6 +103,10 @@ extend-ignore = ["E203"]
 [tool.ruff.lint.per-file-ignores]
 # Ignore `E402` (import violations) in all `__init__.py` files, and in `path/to/file.py`.
 "__init__.py" = ["E402", "F401"]
+
+[tool.uv]
+# prysk>=0.15 declares rich<14, but rich 14 is compatible with prysk's usage.
+override-dependencies = ["rich>=14.2.0"]
 
 [tool.pytest.ini_options]
 filterwarnings = [
