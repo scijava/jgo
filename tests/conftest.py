@@ -1,5 +1,6 @@
 """Pytest configuration and shared fixtures."""
 
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -10,6 +11,20 @@ from jgo.util.mvn import ensure_maven_available
 from tests.fixtures.thicket import DEFAULT_SEED, generate_thicket
 
 _BOOTSTRAP_SENTINEL = Path(".cache/m2_repo/.bootstrapped")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def prysk_env():
+    """Set default env vars for prysk tests, matching the old shell script invocation."""
+    old = {k: os.environ.get(k) for k in ("COLOR", "NO_PROGRESS")}
+    os.environ.setdefault("COLOR", "never")
+    os.environ.setdefault("NO_PROGRESS", "1")
+    yield
+    for k, v in old.items():
+        if v is None:
+            os.environ.pop(k, None)
+        else:
+            os.environ[k] = v
 
 
 @pytest.fixture(scope="session")
