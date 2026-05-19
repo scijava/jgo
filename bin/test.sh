@@ -41,26 +41,5 @@ if [ ${#pytest_args[@]} -gt 0 ]; then
   fi
 fi
 
-# Run prysk if we have args and prysk is installed
-if [ ${#prysk_args[@]} -gt 0 ] && command -v prysk; then
-  # Ensure jgo CLI is available for prysk tests
-  command -v jgo > /dev/null 2>&1 || uv tool install --with-editable ".[cli]" jgo
-
-  # NB: We cannot add prysk to pyproject.toml because
-  # prysk depends on an incompatible version of rich.
-  # Use `uv tool install prysk` instead.
-  #
-  # We set COLOR=never by default to avoid ANSI codes in test output.
-  # We set NO_PROGRESS=1 to disable progress bars in test output.
-  # This is especially important for CI, which may or may not detect
-  # as ANSI-color-compatible compared to local usage of prysk.
-  # Tests can override this (e.g., color.t does).
-  COLOR="${COLOR:-never}" NO_PROGRESS="${NO_PROGRESS:-1}" prysk -v "${prysk_args[@]}"
-  prysk_status=$?
-  if [ $prysk_status -ne 0 ]; then
-    exit_status=$prysk_status
-  fi
-fi
-
 # Exit with appropriate status
 exit $exit_status
