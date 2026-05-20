@@ -7,7 +7,7 @@ GC shorthand (e.g., gc = "G1") must be normalized to -XX:+UseG1GC.
 Dotted property names (e.g., app.name = "foo" under [java.properties]) must
 be flattened to -Dapp.name=foo, not passed as -Dapp={'name': 'foo'}.
 
-  $ mkdir -p "$TMPDIR/jgo-example-test" && cd "$TMPDIR/jgo-example-test"
+  $ mkdir -p "jgo-example-test" && cd "jgo-example-test"
   $ cat > jgo.toml << 'EOF'
   > [environment]
   > name = "test-app"

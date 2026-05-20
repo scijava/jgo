@@ -26,7 +26,7 @@ Test bare init (no endpoint) creates an empty environment.
   $ jgo --dry-run init
   [DRY-RUN] Would create jgo.toml:
   
-  name = "init.t"
+  name = ".*" (re)
   
   
   coordinates = []
@@ -46,7 +46,7 @@ Test init with --dry-run.
   $ jgo --dry-run init org.python:jython-standalone:2.7.4
   [DRY-RUN] Would create jgo.toml:
   
-  name = "init.t"
+  name = ".*" (re)
   description = "Generated from org.python:jython-standalone:2.7.4"
   
   
@@ -76,7 +76,7 @@ Test init with -r requirements file (bare init).
   $ jgo --dry-run init -r reqs.txt
   [DRY-RUN] Would create jgo.toml:
   
-  name = "init.t"
+  name = ".*" (re)
   
   
   coordinates = [
@@ -93,7 +93,7 @@ Test init with -r requirements file and endpoint.
   $ jgo --dry-run init org.python:jython-standalone:2.7.4 -r reqs.txt
   [DRY-RUN] Would create jgo.toml:
   
-  name = "init.t"
+  name = ".*" (re)
   description = "Generated from org.python:jython-standalone:2.7.4"
   
   
