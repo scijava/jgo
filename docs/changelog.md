@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.1.0
+
+### New features
+
+- **`jar_java_version(artifact)`** -- Public helper in `jgo.env` returning the minimum Java version required by a resolved artifact's JAR. Results are memoized in-process and cached on disk (keyed by SHA-256) in a dedicated cache, separate from the JPMS metadata cache, so callers that only need a Java version can reuse jgo's bytecode analysis without re-scanning JARs or affecting environment-building classification.
+
+---
+
 ## 3.0.0
 
 ### Breaking changes

@@ -91,6 +91,9 @@ bytecode_to_java_version(bytecode_version)
 round_to_lts(java_version)
     Round up a Java version to the nearest LTS release (8, 11, 17, 21, …).
 
+jar_java_version(artifact)
+    Report the minimum Java version required by a resolved artifact's JAR.
+
 find_main_classes(jar_path)
     List all classes that declare a ``public static void main(String[])``
     method inside a JAR.
@@ -118,6 +121,7 @@ from ._builder import EnvironmentBuilder
 from ._bytecode import analyze_jar_bytecode, bytecode_to_java_version, round_to_lts
 from ._environment import Environment
 from ._jar import find_main_classes, parse_manifest, read_raw_manifest
+from ._javaversion import jar_java_version
 from ._linking import LinkStrategy
 from ._lockfile import LockedDependency, LockFile, compute_spec_hash
 from ._spec import EnvironmentSpec
@@ -128,6 +132,7 @@ __all__ = [
     # bytecode
     "analyze_jar_bytecode",
     "bytecode_to_java_version",
+    "jar_java_version",
     "round_to_lts",
     # environment
     "Environment",
