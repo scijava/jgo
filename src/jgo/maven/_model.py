@@ -47,13 +47,22 @@ class Model:
             root_dep_mgmt: Optional dependency management from the root project.
                 This takes precedence over the local dependency management and is used
                 to ensure consistent versions across all transitive dependencies.
-            profile_constraints: Optional constraints for profile activation.
+            profile_constraints: Optional constraints for profile activation. When
+                omitted, the context resolver's own constraints are used (the default
+                PythonResolver auto-detects host OS properties).
             lenient: If True, warn instead of failing on unresolvable dependencies.
         """
 
         self.pom = pom
         self.context = context
         self.root_dep_mgmt = root_dep_mgmt
+        # When no constraints are passed explicitly, fall back to those carried by
+        # the context's resolver. The default PythonResolver auto-detects the host's
+        # OS properties (os.name/os.family/os.arch), so a Model built directly against
+        # a context — rather than via the resolver — still activates platform-specific
+        # profiles instead of silently leaving their properties uninterpolated.
+        if profile_constraints is None:
+            profile_constraints = getattr(context.resolver, "profile_constraints", None)
         self.profile_constraints = profile_constraints
         self.lenient = lenient
         self.gav = f"{pom.groupId}:{pom.artifactId}:{pom.version}"

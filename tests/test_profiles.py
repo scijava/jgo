@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
 
-from jgo.maven import MavenContext, Model, ProfileConstraints
+from jgo.maven import MavenContext, Model, ProfileConstraints, PythonResolver
 
 _ctx = MavenContext()
 
@@ -438,3 +438,36 @@ def test_profile_activation_file_basedir_default():
 
     # Should interpolate basedir to "."
     assert checked_path == "./pom.xml"
+
+
+def test_model_inherits_constraints_from_context_resolver():
+    """A Model built without explicit constraints picks them up from the context's
+    resolver, so directly-constructed Models still activate OS-conditional profiles."""
+    constraints = ProfileConstraints(os_name="Windows XP")
+    ctx = MavenContext(resolver=PythonResolver(profile_constraints=constraints))
+
+    # No profile_constraints passed: should fall back to the resolver's.
+    model = Model(MockPOM(), ctx)
+
+    assert model.profile_constraints is ctx.resolver.profile_constraints
+    assert model.profile_constraints.os_name == "Windows XP"
+
+    profile = ET.Element("profile")
+    activation = ET.SubElement(profile, "activation")
+    os_elem = ET.SubElement(activation, "os")
+    ET.SubElement(os_elem, "name").text = "Windows XP"
+    assert model._is_active_profile(profile) is True
+
+
+def test_explicit_constraints_override_context_resolver():
+    """Explicitly passed constraints take precedence over the context resolver's."""
+    resolver_constraints = ProfileConstraints(os_name="Linux")
+    ctx = MavenContext(
+        resolver=PythonResolver(profile_constraints=resolver_constraints)
+    )
+
+    explicit = ProfileConstraints(os_name="Windows XP")
+    model = Model(MockPOM(), ctx, profile_constraints=explicit)
+
+    assert model.profile_constraints is explicit
+    assert model.profile_constraints.os_name == "Windows XP"

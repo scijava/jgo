@@ -6,6 +6,10 @@
 
 - **`jar_java_version(artifact)`** -- Public helper in `jgo.env` returning the minimum Java version required by a resolved artifact's JAR. Results are memoized in-process and cached on disk (keyed by SHA-256) in a dedicated cache, separate from the JPMS metadata cache, so callers that only need a Java version can reuse jgo's bytecode analysis without re-scanning JARs or affecting environment-building classification.
 
+### Bug fixes
+
+- **`Model` inherits profile constraints from its context's resolver** -- A `Model` constructed directly (rather than via the resolver) with no explicit `profile_constraints` now falls back to those carried by `context.resolver`. The default `PythonResolver` auto-detects the host's OS properties, so directly-built models once again activate OS-conditional profiles. Previously such models left `profile_constraints` as `None`, skipping OS-property injection entirely -- platform-specific profiles never activated and their properties (e.g. `${scijava.natives.classifier.javacpp}`) stayed uninterpolated, producing GACT key collision warnings.
+
 ---
 
 ## 3.0.0
