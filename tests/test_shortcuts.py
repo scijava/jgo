@@ -49,13 +49,13 @@ class TestShortcutExpansion:
         config = GlobalSettings(
             shortcuts={
                 "repl": "org.scijava:scijava-common:2.99.0@ScriptREPL",
-                "groovy": "org.scijava:scripting-groovy:1.0.0@GroovySh",
+                "groovy": "org.scijava:scripting-groovy:1.0.1@GroovySh",
             }
         )
         result = config.expand_shortcuts("repl+groovy")
         assert (
             result
-            == "org.scijava:scijava-common:2.99.0@ScriptREPL+org.scijava:scripting-groovy:1.0.0@GroovySh"
+            == "org.scijava:scijava-common:2.99.0@ScriptREPL+org.scijava:scripting-groovy:1.0.1@GroovySh"
         )
 
     def test_partial_composition(self):
@@ -83,13 +83,13 @@ class TestShortcutExpansion:
         config = GlobalSettings(
             shortcuts={
                 "scijava": "org.scijava:scijava-common:2.99.0",
-                "groovy": "org.scijava:scripting-groovy:1.0.0",
+                "groovy": "org.scijava:scripting-groovy:1.0.1",
             }
         )
         result = config.expand_shortcuts("scijava+groovy+net.imagej:imagej:2.17.0")
         assert (
             result
-            == "org.scijava:scijava-common:2.99.0+org.scijava:scripting-groovy:1.0.0+net.imagej:imagej:2.17.0"
+            == "org.scijava:scijava-common:2.99.0+org.scijava:scripting-groovy:1.0.1+net.imagej:imagej:2.17.0"
         )
 
     def test_nested_shortcuts(self):
@@ -170,7 +170,7 @@ class TestInitWithShortcuts:
                 config = {
                     "shortcuts": {
                         "repl": "org.scijava:scijava-common:2.99.0@ScriptREPL",
-                        "groovy": "org.scijava:scripting-groovy:1.0.0@GroovySh",
+                        "groovy": "org.scijava:scripting-groovy:1.0.1@GroovySh",
                     }
                 }
 
@@ -193,7 +193,7 @@ class TestInitWithShortcuts:
                 # Should have both coordinates
                 assert len(spec.coordinates) == 2
                 assert "org.scijava:scijava-common:2.99.0" in spec.coordinates
-                assert "org.scijava:scripting-groovy:1.0.0" in spec.coordinates
+                assert "org.scijava:scripting-groovy:1.0.1" in spec.coordinates
 
                 # Should have both entrypoints
                 assert "repl" in spec.entrypoints

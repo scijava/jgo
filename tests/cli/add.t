@@ -57,7 +57,7 @@ Test add with -r requirements file.
 
 Test add with -r and extra inline coordinates.
 
-  $ jgo -v add -r reqs.txt org.scijava:scripting-groovy:1.0.0
+  $ jgo -v add -r reqs.txt org.scijava:scripting-groovy:1.0.1
   INFO     Added 1 dependencies to jgo.toml                                       
 
   $ cd "$TMPDIR" && rm -rf jgo-test-add
