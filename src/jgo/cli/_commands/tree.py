@@ -11,9 +11,9 @@ from ...config import GlobalSettings
 from ...env import EnvironmentSpec
 from ...parse import Endpoint
 from ...styles import AT_MAINCLASS, PLUS_OPERATOR
-from .._args import build_parsed_args
+from .._args import build_parsed_args, resolve_pom_input
 from .._context import create_environment_builder, create_maven_context
-from .._output import print_dependencies
+from .._output import print_dependencies, print_pom_dependencies
 
 if TYPE_CHECKING:
     from .._args import ParsedArgs
@@ -27,7 +27,7 @@ _log = logging.getLogger(__name__)
     required=False,
     cls=click.RichArgument,
     help=f"Maven coordinates (single or combined with {PLUS_OPERATOR}) "
-    f"optionally followed by {AT_MAINCLASS}",
+    f"optionally followed by {AT_MAINCLASS}, or a path to a local pom.xml",
 )
 @click.pass_context
 def tree(ctx, endpoint):
@@ -55,6 +55,28 @@ def execute(args: ParsedArgs, config: dict) -> int:
 
     context = create_maven_context(args, config)
     builder = create_environment_builder(args, config, context)
+
+    # Local POM file mode: resolve the real project POM directly.
+    try:
+        pom_path = resolve_pom_input(args.endpoint)
+    except ValueError as e:
+        _log.error(str(e))
+        return 1
+    if pom_path is not None:
+        if not pom_path.exists():
+            _log.error(f"{pom_path} not found")
+            return 1
+        try:
+            print_pom_dependencies(
+                pom_path,
+                context,
+                list_mode=False,
+                optional_depth=args.get_effective_optional_depth(),
+            )
+        except (RuntimeError, ValueError) as e:
+            _log.error(f"Failed to resolve {pom_path}: {e}")
+            return 1
+        return 0
 
     # Parse coordinates into dependencies
     if args.is_spec_mode():

@@ -16,7 +16,7 @@ Test tree --help shows usage.
                                                                                   
   ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
   │ ENDPOINT  TEXT  Maven coordinates (single or combined with +) optionally     │
-  │                 followed by @MainClass                                       │
+  │                 followed by @MainClass, or a path to a local pom.xml         │
   ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --help  Show this message and exit.                                          │
@@ -88,6 +88,56 @@ Test tree with --dry-run.
       │   ├── com.headius:backport9:1.13
       │   └── org.crac:crac:1.5.0
       └── org.jruby:jruby-stdlib:10.0.2.0
+
+
+Test tree with a local POM file. The project itself is the root, and the
+parsington version (3.1.0) is inherited from the pom-scijava parent's
+dependencyManagement even though the POM declares no version for it.
+
+  $ cat > "$TMPDIR/demo-pom.xml" <<'POM'
+  > <?xml version="1.0" encoding="UTF-8"?>
+  > <project xmlns="http://maven.apache.org/POM/4.0.0">
+  >   <modelVersion>4.0.0</modelVersion>
+  >   <parent>
+  >     <groupId>org.scijava</groupId>
+  >     <artifactId>pom-scijava</artifactId>
+  >     <version>37.0.0</version>
+  >     <relativePath/>
+  >   </parent>
+  >   <groupId>org.example</groupId>
+  >   <artifactId>pom-demo</artifactId>
+  >   <version>1.0.0</version>
+  >   <dependencies>
+  >     <dependency>
+  >       <groupId>org.scijava</groupId>
+  >       <artifactId>parsington</artifactId>
+  >     </dependency>
+  >   </dependencies>
+  > </project>
+  > POM
+
+  $ jgo tree "$TMPDIR/demo-pom.xml"
+  org.example:pom-demo:pom:1.0.0
+  └── org.scijava:parsington:3.1.0
+
+Test tree with a directory containing a pom.xml.
+
+  $ mkdir -p "$TMPDIR/pomdir" && cp "$TMPDIR/demo-pom.xml" "$TMPDIR/pomdir/pom.xml"
+  $ jgo tree "$TMPDIR/pomdir"
+  org.example:pom-demo:pom:1.0.0
+  └── org.scijava:parsington:3.1.0
+
+Test tree rejects combining a POM file with other coordinates.
+
+  $ jgo tree "$TMPDIR/demo-pom.xml+org.scijava:parsington"
+  ERROR    A local POM file cannot be combined with other coordinates using '+'.* (glob)
+  [1]
+
+Test tree with a nonexistent POM file.
+
+  $ jgo tree "$TMPDIR/does-not-exist.xml"
+  ERROR    *does-not-exist.xml not found* (glob)
+  [1]
 
 
 Test tree with --offline (uses cache).

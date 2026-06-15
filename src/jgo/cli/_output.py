@@ -23,6 +23,8 @@ from .rich._formatters import format_dependency_list, format_dependency_tree
 from .rich._widgets import create_table
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from ..env import Environment
     from ..maven import Dependency, MavenContext
     from ._args import ParsedArgs
@@ -223,6 +225,45 @@ def print_dependencies(
 
         # Format and print using Rich
         # Use NoWrapTree when wrap mode is "raw"
+        rich_tree = format_dependency_tree(tree, no_wrap=no_wrap)
+        console_print(rich_tree)
+
+
+def print_pom_dependencies(
+    pom_path: Path,
+    context: MavenContext,
+    list_mode: bool = False,
+    direct_only: bool = False,
+    optional_depth: int = 0,
+) -> None:
+    """
+    Print dependencies for a local project POM file.
+
+    Unlike print_dependencies(), this resolves the real POM directly (no synthetic
+    wrapper), so the project itself is the tree/list root and its own parent and
+    dependencyManagement govern resolution.
+
+    Args:
+        pom_path: Path to the project's pom.xml.
+        context: Maven context used to build the model.
+        list_mode: If True, print a flat list; otherwise print a tree.
+        direct_only: If True and list_mode is True, show only direct dependencies.
+        optional_depth: Maximum depth at which to include optional dependencies.
+    """
+    from ..maven import POM
+
+    pom = POM(pom_path)
+
+    if list_mode:
+        root, deps = context.pom_dependency_list(
+            pom, transitive=not direct_only, optional_depth=optional_depth
+        )
+        lines = format_dependency_list(root, deps)
+        for line in lines:
+            console_print(line, highlight=False)
+    else:
+        no_wrap = get_wrap_mode() == "raw"
+        tree = context.pom_dependency_tree(pom, optional_depth=optional_depth)
         rich_tree = format_dependency_tree(tree, no_wrap=no_wrap)
         console_print(rich_tree)
 

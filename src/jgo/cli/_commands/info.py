@@ -13,7 +13,7 @@ from ...config import GlobalSettings
 from ...env import EnvironmentSpec, parse_manifest, read_raw_manifest
 from ...parse import Coordinate, Endpoint
 from ...styles import AT_MAINCLASS, COORD_HELP_FULL, JGO_TOML, PLUS_OPERATOR
-from .._args import build_parsed_args
+from .._args import build_parsed_args, resolve_pom_input
 from .._console import console_print
 from .._context import create_environment_builder, create_maven_context
 from .._output import (
@@ -23,6 +23,7 @@ from .._output import (
     print_java_info,
     print_main_classes,
     print_modulepath,
+    print_pom_dependencies,
 )
 
 _log = logging.getLogger(__name__)
@@ -435,6 +436,28 @@ def _print_deps(ctx, endpoint, list_mode: bool):
 
     context = create_maven_context(args, config.to_dict())
     builder = create_environment_builder(args, config.to_dict(), context)
+
+    # Local POM file mode: resolve the real project POM directly.
+    try:
+        pom_path = resolve_pom_input(endpoint)
+    except ValueError as e:
+        _log.error(str(e))
+        ctx.exit(1)
+    if pom_path is not None:
+        if not pom_path.exists():
+            _log.error(f"{pom_path} not found")
+            ctx.exit(1)
+        try:
+            print_pom_dependencies(
+                pom_path,
+                context,
+                list_mode=list_mode,
+                optional_depth=args.get_effective_optional_depth(),
+            )
+        except (RuntimeError, ValueError) as e:
+            _log.error(f"Failed to resolve {pom_path}: {e}")
+            ctx.exit(1)
+        ctx.exit(0)
 
     # Parse coordinates into dependencies
     if args.is_spec_mode():

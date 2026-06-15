@@ -259,7 +259,7 @@ Test help for specific commands.
                                                                                   
   ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
   │ ENDPOINT  TEXT  Maven coordinates (single or combined with +) optionally     │
-  │                 followed by @MainClass                                       │
+  │                 followed by @MainClass, or a path to a local pom.xml         │
   ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --direct  Show only direct dependencies (non-transitive)                     │
@@ -274,7 +274,7 @@ Test help for specific commands.
                                                                                   
   ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
   │ ENDPOINT  TEXT  Maven coordinates (single or combined with +) optionally     │
-  │                 followed by @MainClass                                       │
+  │                 followed by @MainClass, or a path to a local pom.xml         │
   ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --help  Show this message and exit.                                          │

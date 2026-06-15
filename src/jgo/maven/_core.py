@@ -48,6 +48,7 @@ if TYPE_CHECKING:
     from datetime import datetime
 
     from ._metadata import Metadata
+    from ._model import Model
 
 _log = logging.getLogger(__name__)
 
@@ -264,6 +265,65 @@ class MavenContext:
         if managed:
             xpath = f"dependencyManagement/{xpath}"
         return [self.parse_dependency_element(el) for el in pom.elements(xpath)]
+
+    def _model_for_pom(self, pom: POM) -> Model:
+        """
+        Build a Maven model directly from the given (real) POM.
+
+        Unlike coordinate-based resolution, no synthetic wrapper POM is created and
+        no BOM/dependencyManagement is computed: the POM's own parent and
+        dependencyManagement are the authority. This matches what Maven itself would
+        resolve for the project.
+        """
+        from ._model import Model
+
+        resolver = self.resolver
+        return Model(
+            pom,
+            self,
+            profile_constraints=getattr(resolver, "profile_constraints", None),
+            lenient=getattr(resolver, "lenient", False),
+        )
+
+    def pom_dependency_tree(self, pom: POM, optional_depth: int = 0) -> DependencyNode:
+        """
+        Resolve the dependency tree for a real project POM.
+
+        The returned root node is the project itself (its own G:A:V), with its
+        resolved dependencies populated recursively as children.
+
+        Args:
+            pom: The project POM to resolve.
+            optional_depth: Maximum depth at which to include optional dependencies.
+
+        Returns:
+            Root DependencyNode (the project) with children forming the full tree.
+        """
+        _, root = self._model_for_pom(pom).dependencies(optional_depth=optional_depth)
+        return root
+
+    def pom_dependency_list(
+        self, pom: POM, transitive: bool = True, optional_depth: int = 0
+    ) -> tuple[DependencyNode, list[DependencyNode]]:
+        """
+        Resolve a flat dependency list for a real project POM.
+
+        Args:
+            pom: The project POM to resolve.
+            transitive: If False, return only the project's direct dependencies.
+            optional_depth: Maximum depth at which to include optional dependencies.
+
+        Returns:
+            Tuple of (root_node, dependency_nodes) where root_node is the project
+            and dependency_nodes is the sorted, test-scope-filtered dependency list.
+        """
+        max_depth = 1 if not transitive else None
+        deps, root = self._model_for_pom(pom).dependencies(
+            max_depth=max_depth, optional_depth=optional_depth
+        )
+        deps = [dep for dep in deps if dep.scope not in ("test",)]
+        deps.sort(key=lambda d: (d.groupId, d.artifactId, d.version))
+        return root, [DependencyNode(dep) for dep in deps]
 
 
 class Project:

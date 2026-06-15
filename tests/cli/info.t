@@ -85,6 +85,40 @@ Test info deptree with endpoint.
       └── com.google.j2objc:j2objc-annotations:2.8
 
 
+Test info deptree with a local POM file.
+
+  $ cat > "$TMPDIR/info-demo-pom.xml" <<'POM'
+  > <?xml version="1.0" encoding="UTF-8"?>
+  > <project xmlns="http://maven.apache.org/POM/4.0.0">
+  >   <modelVersion>4.0.0</modelVersion>
+  >   <parent>
+  >     <groupId>org.scijava</groupId>
+  >     <artifactId>pom-scijava</artifactId>
+  >     <version>37.0.0</version>
+  >     <relativePath/>
+  >   </parent>
+  >   <groupId>org.example</groupId>
+  >   <artifactId>pom-demo</artifactId>
+  >   <version>1.0.0</version>
+  >   <dependencies>
+  >     <dependency>
+  >       <groupId>org.scijava</groupId>
+  >       <artifactId>parsington</artifactId>
+  >     </dependency>
+  >   </dependencies>
+  > </project>
+  > POM
+
+  $ jgo info deptree "$TMPDIR/info-demo-pom.xml"
+  org.example:pom-demo:pom:1.0.0
+  └── org.scijava:parsington:3.1.0
+
+Test info deplist with a local POM file.
+
+  $ jgo info deplist "$TMPDIR/info-demo-pom.xml"
+  org.example:pom-demo:pom:1.0.0
+     org.scijava:parsington:3.1.0
+
 Test info deplist with no endpoint.
 
   $ jgo info deplist

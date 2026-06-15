@@ -16,7 +16,7 @@ Test list --help shows usage.
                                                                                   
   ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
   │ ENDPOINT  TEXT  Maven coordinates (single or combined with +) optionally     │
-  │                 followed by @MainClass                                       │
+  │                 followed by @MainClass, or a path to a local pom.xml         │
   ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
   │ --direct  Show only direct dependencies (non-transitive)                     │
@@ -55,6 +55,35 @@ Test list with --offline (uses cache).
      com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava
      com.google.j2objc:j2objc-annotations:2.8
      org.checkerframework:checker-qual:3.41.0
+
+Test list with a local POM file. The project is the root and parsington's
+version is inherited from the pom-scijava parent's dependencyManagement.
+
+  $ cat > "$TMPDIR/list-demo-pom.xml" <<'POM'
+  > <?xml version="1.0" encoding="UTF-8"?>
+  > <project xmlns="http://maven.apache.org/POM/4.0.0">
+  >   <modelVersion>4.0.0</modelVersion>
+  >   <parent>
+  >     <groupId>org.scijava</groupId>
+  >     <artifactId>pom-scijava</artifactId>
+  >     <version>37.0.0</version>
+  >     <relativePath/>
+  >   </parent>
+  >   <groupId>org.example</groupId>
+  >   <artifactId>pom-demo</artifactId>
+  >   <version>1.0.0</version>
+  >   <dependencies>
+  >     <dependency>
+  >       <groupId>org.scijava</groupId>
+  >       <artifactId>parsington</artifactId>
+  >     </dependency>
+  >   </dependencies>
+  > </project>
+  > POM
+
+  $ jgo list "$TMPDIR/list-demo-pom.xml"
+  org.example:pom-demo:pom:1.0.0
+     org.scijava:parsington:3.1.0
 
 Test list with MANAGED secondary coordinate.
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.1
+
+### New features
+
+- **Local POM file support** -- `jgo list` and `jgo tree` now support local POM file paths.
+
 ## 3.1.0
 
 ### New features

@@ -11,6 +11,44 @@ from pathlib import Path
 from ..maven import detect_os_properties
 
 
+def _looks_like_pom(value: str) -> bool:
+    """True if the string refers to a local POM file or a dir containing one."""
+    value = value.strip()
+    if value.endswith(".xml"):
+        return True
+    path = Path(value).expanduser()
+    return path.is_dir() and (path / "pom.xml").is_file()
+
+
+def resolve_pom_input(endpoint: str | None) -> Path | None:
+    """
+    Resolve an endpoint argument that points at a local POM file.
+
+    Accepts either a path to a ``*.xml`` file or a directory containing
+    ``pom.xml``. Returns the resolved POM path, or None if the endpoint is an
+    ordinary coordinate expression.
+
+    Raises:
+        ValueError: if a POM file is combined with other coordinates via '+'.
+    """
+    if not endpoint:
+        return None
+
+    parts = endpoint.split("+")
+    pom_parts = [p for p in parts if _looks_like_pom(p)]
+    if not pom_parts:
+        return None
+    if len(parts) > 1:
+        raise ValueError(
+            "A local POM file cannot be combined with other coordinates using '+'."
+        )
+
+    path = Path(pom_parts[0].strip()).expanduser()
+    if path.is_dir():
+        path = path / "pom.xml"
+    return path
+
+
 class ParsedArgs:
     """
     Container for parsed CLI arguments.
