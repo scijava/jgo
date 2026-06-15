@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import logging
+from functools import cmp_to_key
 from typing import TYPE_CHECKING
 
 import rich_click as click
 
 from ...config import GlobalSettings
+from ...maven import compare_versions
 from ...parse import Coordinate
 from ...styles import secondary
 from .._args import build_parsed_args
@@ -80,7 +82,8 @@ def execute(args: ParsedArgs, config: dict) -> int:
         latest_version = project.latest
 
         console_print(f"Available versions for {format_coordinate(coord)}:")
-        for version in metadata.versions:
+        sorted_versions = sorted(metadata.versions, key=cmp_to_key(compare_versions))
+        for version in sorted_versions:
             marker = ""
             if release_version and version == release_version:
                 marker = " (release)"

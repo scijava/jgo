@@ -6,6 +6,10 @@
 
 - **Local POM file support** -- `jgo list` and `jgo tree` now support local POM file paths.
 
+### Bug fixes
+
+- **Sort `info versions` output** -- The reported versions list is now ordered according to Maven's versioning semantics.
+
 ## 3.1.0
 
 ### New features
