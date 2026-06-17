@@ -484,6 +484,33 @@ def version() -> None:
     click.echo(f"jgo {VERSION}")
 
 
+def _require_group(cmd: click.Command | None, name: str) -> click.Group:
+    """Ensure command is a Group, or raise ClickException."""
+    if cmd is None:
+        raise click.ClickException(f"Unknown command '{name}'")
+    if not isinstance(cmd, click.Group):
+        raise click.ClickException(f"'{name}' is not a command group")
+    return cmd
+
+
+def _build_prog_name(ctx: click.Context, cmd_name: str) -> str:
+    """Build full command path (e.g., 'jgo config shortcut')."""
+    path_parts: list[str] = []
+    temp_ctx = ctx
+    while temp_ctx and temp_ctx.parent is not None:
+        if temp_ctx.info_name:
+            path_parts.insert(0, temp_ctx.info_name)
+        temp_ctx = temp_ctx.parent
+
+    root_name = ctx.find_root().info_name or ""
+    if "python" in root_name:
+        root_name = "jgo"
+    if root_name:
+        path_parts.insert(0, root_name)
+
+    return " ".join(path_parts + [cmd_name])
+
+
 @cli.command(
     context_settings=dict(ignore_unknown_options=True, allow_interspersed_args=False)
 )
@@ -505,55 +532,25 @@ def help(ctx: click.Context, commands: tuple[str, ...]) -> None:
         click.echo(parent.get_help())
         return
 
-    # Navigate through nested commands
-    if not isinstance(parent.command, click.Group):
-        click.echo(f"Error: '{parent.info_name}' is not a command group", err=True)
-        ctx.exit(1)
-    current_group: click.Group = parent.command
+    current_group = _require_group(parent.command, parent.info_name or "")
     current_ctx = parent
 
     for i, cmd_name in enumerate(commands):
-        current_commands = getattr(current_group, "commands", None)
+        cmd = current_group.commands.get(cmd_name)
 
-        if not current_commands:
-            click.echo(f"Error: '{cmd_name}' is not a command group", err=True)
-            ctx.exit(1)
-
-        cmd = current_commands.get(cmd_name)
-        if cmd is None:
-            click.echo(f"Error: Unknown command '{cmd_name}'", err=True)
-            ctx.exit(1)
-
-        # If this is the last command, show its help
         if i == len(commands) - 1:
-            # Build the full command path for correct usage line
-            # Use only info_names from intermediate groups, not the root prog_name
-            # This gives us "jgo search" instead of "python -m jgo search"
-            path_parts: list[str] = []
-            temp_ctx = current_ctx
-            while temp_ctx and temp_ctx.parent is not None:  # Skip root context
-                if temp_ctx.info_name:
-                    path_parts.insert(0, temp_ctx.info_name)
-                temp_ctx = temp_ctx.parent
-            # Start with "jgo" (or the root info_name if it exists)
-            root_name = current_ctx.find_root().info_name or ""
-            # Normalize "python -m jgo" to "jgo"
-            if "python" in root_name:
-                root_name = "jgo"
-            if root_name:
-                path_parts.insert(0, root_name)
-            prog_name = " ".join(path_parts + [cmd_name])
+            # Final command - show help (doesn't need to be a group)
+            if cmd is None:
+                raise click.ClickException(f"Unknown command '{cmd_name}'")
+            prog_name = _build_prog_name(current_ctx, cmd_name)
             cmd.main(["--help"], prog_name=prog_name, standalone_mode=False)
             return
 
-        # Otherwise, navigate deeper if it's a group
-        if isinstance(cmd, click.Group):
-            # Create intermediate context
-            current_ctx = click.Context(cmd, info_name=cmd_name, parent=current_ctx)
-            current_group = cmd
-        else:
-            click.echo(f"Error: '{cmd_name}' is not a command group", err=True)
-            ctx.exit(1)
+        # Intermediate command - must be a group
+        current_group = _require_group(cmd, cmd_name)
+        current_ctx = click.Context(
+            current_group, info_name=cmd_name, parent=current_ctx
+        )
 
 
 if __name__ == "__main__":
