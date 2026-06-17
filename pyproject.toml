@@ -57,6 +57,7 @@ cli = [
 ]
 dev = [
     "build",
+    "griffe>=2.0.2",
     "mypy",
     "pytest",
     "ruff",
