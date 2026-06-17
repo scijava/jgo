@@ -5,6 +5,7 @@
 ### New features
 
 - **Local POM file support** -- `jgo list` and `jgo tree` now support local POM file paths.
+- **More flexible `javainfo` subcommand** -- The `jgo info javainfo` command now accepts a list of arguments, each of which can be a Maven coordinate, a POM file or directory containing such, a JAR file, a class file, or a directory to scan recursively for such files. Each argument is analyzed and reported upon, and finally a summary is issued.
 
 ### Bug fixes
 

@@ -9,6 +9,7 @@ from pathlib import Path
 
 from jgo.env._bytecode import (
     BYTECODE_TO_JAVA,
+    analyze_class_file,
     bytecode_to_java_version,
     detect_environment_java_version,
     detect_jar_java_version,
@@ -237,6 +238,54 @@ def test_detect_jar_handles_corrupt_classes():
 
         # Should still detect version from valid classes
         assert detect_jar_java_version(jar_path) == 11  # Max of 52 and 55
+
+
+def test_analyze_class_file():
+    """Test analyzing a single raw .class file."""
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        # Java 8 class file
+        class_path = Path(tmp_dir) / "Foo.class"
+        class_path.write_bytes(create_fake_class_file(52))
+
+        result = analyze_class_file(class_path)
+        assert result["java_version"] == 8
+        assert result["max_version"] == 52
+        assert result["version_counts"] == {52: 1}
+        assert result["high_version_classes"] == [("Foo.class", 52)]
+
+        # Non-existent file -> empty dict
+        assert analyze_class_file(Path(tmp_dir) / "missing.class") == {}
+
+        # Not a class file (bad magic) -> no java_version
+        bad_path = Path(tmp_dir) / "Bad.class"
+        bad_path.write_bytes(b"not a real class file")
+        bad = analyze_class_file(bad_path)
+        assert bad["java_version"] is None
+        assert bad["version_counts"] == {}
+
+
+def test_analyses_from_paths():
+    """Test the mixed JAR + .class path analyzer used by `info javainfo`."""
+    from jgo.cli._output import analyses_from_paths
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        jar_path = Path(tmp_dir) / "lib.jar"
+        create_fake_jar(jar_path, {"Foo.class": 55})  # Java 11
+
+        class_path = Path(tmp_dir) / "Bar.class"
+        class_path.write_bytes(create_fake_class_file(52))  # Java 8
+
+        # A path with no analyzable classes is dropped from the result.
+        empty_jar = Path(tmp_dir) / "empty.jar"
+        with zipfile.ZipFile(empty_jar, "w") as jar:
+            jar.writestr("README.txt", "nothing here")
+
+        analyses = analyses_from_paths([jar_path, class_path, empty_jar])
+        names = [name for name, _ in analyses]
+        assert names == ["lib.jar", "Bar.class"]
+        by_name = dict(analyses)
+        assert by_name["lib.jar"]["java_version"] == 11
+        assert by_name["Bar.class"]["java_version"] == 8
 
 
 def test_no_rounding_option():

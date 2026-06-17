@@ -7,11 +7,13 @@ and user-facing messages in various formats with consistent styling.
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from rich.panel import Panel
 
 from ..env import (
+    analyze_class_file,
     analyze_jar_bytecode,
     bytecode_to_java_version,
     find_main_classes,
@@ -268,64 +270,166 @@ def print_pom_dependencies(
         console_print(rich_tree)
 
 
-def print_java_info(environment: Environment) -> None:
+@dataclass
+class SourceReport:
     """
-    Print detailed Java version requirements for the environment.
+    A single analyzed ``javainfo`` source (an endpoint, POM, JAR, or class file).
 
-    Args:
-        environment: The resolved environment
+    Attributes:
+        label: Human-readable name of the source (coordinate, file path, etc.).
+        jars: List of ``(display_name, analysis)`` pairs for each analyzable
+            artifact, where ``analysis`` has the shape returned by
+            :func:`analyze_jar_bytecode` / :func:`analyze_class_file`. Only
+            artifacts that contain class files are included.
+        env_meta: Optional environment metadata (path and JAR counts) printed for
+            coordinate/endpoint sources that resolve to a full environment.
+        note: Optional message shown when the source has no analyzable classes.
     """
 
-    # In "raw" mode, use NoWrapTable variant and disable column truncation
-    no_wrap = get_wrap_mode() == "raw"
+    label: str
+    jars: list[tuple[str, dict]] = field(default_factory=list)
+    env_meta: dict | None = None
+    note: str | None = None
 
-    # Get all JARs from both jars/ and modules/ directories
-    jar_files = environment.all_jars
-    if not jar_files:
-        console_print(critical("No JARs in environment"), stderr=True)
-        return
 
-    # Print environment info
-    console_print(f"\n{header('Environment:')} {environment.path}")
-    if environment.has_classpath:
-        console_print(
-            f"{header('Class-path JARs:')} {len(environment.class_path_jars)}"
-        )
-    if environment.has_modules:
-        console_print(
-            f"{header('Module-path JARs:')} {len(environment.module_path_jars)}"
-        )
-    console_print(f"{header('Total JARs:')} {len(jar_files)}\n")
+def analyses_from_paths(paths: list[Path]) -> list[tuple[str, dict]]:
+    """
+    Analyze a list of JAR and/or ``.class`` file paths.
 
-    # Analyze each JAR
-    jar_analyses = []
-    overall_max_java = None
-
-    for jar_path in jar_files:
-        analysis = analyze_jar_bytecode(jar_path)
+    Returns ``(display_name, analysis)`` pairs for each path that contains
+    analyzable class files, preserving input order.
+    """
+    analyses = []
+    for path in paths:
+        if path.suffix == ".class":
+            analysis = analyze_class_file(path)
+        else:
+            analysis = analyze_jar_bytecode(path)
         if analysis and analysis.get("java_version"):
-            jar_analyses.append((jar_path.name, analysis))
-            java_ver = analysis["java_version"]
-            if overall_max_java is None or java_ver > overall_max_java:
-                overall_max_java = java_ver
+            analyses.append((path.name, analysis))
+    return analyses
 
-    # Sort by Java version (highest first)
-    jar_analyses.sort(key=lambda x: x[1]["java_version"], reverse=True)
 
-    # Print summary in a panel
-    lts_version = round_to_lts(overall_max_java) if overall_max_java else None
-    summary_text = f"{header('Minimum Java version:')} {overall_max_java}\n"
-    if lts_version != overall_max_java:
+def environment_report(
+    environment: Environment, label: str | None = None
+) -> SourceReport:
+    """Build a :class:`SourceReport` from a fully resolved environment."""
+    jar_files = environment.all_jars
+    env_meta = {
+        "path": environment.path,
+        "classpath": (
+            len(environment.class_path_jars) if environment.has_classpath else 0
+        ),
+        "modules": (
+            len(environment.module_path_jars) if environment.has_modules else 0
+        ),
+        "total": len(jar_files),
+    }
+    return SourceReport(
+        label=label or str(environment.path),
+        jars=analyses_from_paths(jar_files),
+        env_meta=env_meta,
+    )
+
+
+def paths_report(label: str, paths: list[Path]) -> SourceReport:
+    """Build a :class:`SourceReport` from a list of JAR and/or ``.class`` paths."""
+    analyses = analyses_from_paths(paths)
+    note = None if analyses else "No analyzable classes found"
+    return SourceReport(label=label, jars=analyses, note=note)
+
+
+def _java_summary_panel(max_java: int, title: str) -> Panel:
+    """Build the min-Java-version summary panel for a set of analyses."""
+    lts_version = round_to_lts(max_java)
+    summary_text = f"{header('Minimum Java version:')} {max_java}\n"
+    if lts_version != max_java:
         summary_text += f"{header('Rounded to LTS:')} {lts_version}"
     else:
         summary_text += secondary("(already an LTS version)")
+    return Panel(summary_text, title=header(title), border_style="cyan")
 
-    summary_panel = Panel(
-        summary_text,
-        title=header("Java Version Requirements"),
-        border_style="cyan",
+
+def print_java_info(reports: list[SourceReport]) -> None:
+    """
+    Print detailed Java version requirements for one or more analysis sources.
+
+    A single source renders standalone (summary panel + per-JAR table). Multiple
+    sources are grouped under per-source headers with their own subtotal, followed
+    by an overall summary panel spanning every source.
+
+    Args:
+        reports: The analyzed sources to display.
+    """
+
+    if not reports:
+        console_print(critical("No JARs to analyze"), stderr=True)
+        return
+
+    # In "raw" mode, use NoWrapTable variant and disable column truncation
+    no_wrap = get_wrap_mode() == "raw"
+    multi = len(reports) > 1
+    overall_max_java = None
+
+    for report in reports:
+        if multi:
+            console_print(f"\n{header('Source:')} {report.label}")
+
+        # Environment metadata block (coordinate/endpoint sources only)
+        meta = report.env_meta
+        if meta is not None:
+            console_print(f"\n{header('Environment:')} {meta['path']}")
+            if meta["classpath"]:
+                console_print(f"{header('Class-path JARs:')} {meta['classpath']}")
+            if meta["modules"]:
+                console_print(f"{header('Module-path JARs:')} {meta['modules']}")
+            console_print(f"{header('Total JARs:')} {meta['total']}\n")
+
+        if not report.jars:
+            console_print(report.note or "No analyzable classes found")
+            continue
+
+        source_max = _render_jar_analyses(report.jars, no_wrap=no_wrap)
+        if source_max is not None:
+            overall_max_java = (
+                source_max
+                if overall_max_java is None
+                else max(overall_max_java, source_max)
+            )
+            if multi:
+                lts = round_to_lts(source_max)
+                extra = "" if lts == source_max else f" (rounds to LTS {lts})"
+                console_print(
+                    f"{header('Source minimum Java version:')} {source_max}{extra}"
+                )
+
+    if multi and overall_max_java is not None:
+        console_print(
+            _java_summary_panel(overall_max_java, "Overall Java Version Requirements")
+        )
+
+
+def _render_jar_analyses(
+    jar_analyses: list[tuple[str, dict]], *, no_wrap: bool
+) -> int | None:
+    """
+    Render the summary panel, per-JAR table, and bytecode details for one source.
+
+    Returns the maximum (non-LTS-rounded) Java version across the analyses, or
+    None if the list is empty.
+    """
+
+    if not jar_analyses:
+        return None
+
+    # Sort by Java version (highest first)
+    jar_analyses = sorted(
+        jar_analyses, key=lambda x: x[1]["java_version"], reverse=True
     )
-    console_print(summary_panel)
+    overall_max_java = max(a["java_version"] for _, a in jar_analyses)
+
+    # Print summary in a panel
+    console_print(_java_summary_panel(overall_max_java, "Java Version Requirements"))
 
     # Print per-JAR analysis in a table
     # Use NoWrapTable when wrap mode is "raw" to show full JAR names
@@ -395,3 +499,5 @@ def print_java_info(environment: Environment) -> None:
             console_print(
                 f"\n{secondary(f'... and {len(interesting_analyses) - max_analyses} more JARs with mixed bytecode versions (showing first {max_analyses})')}"
             )
+
+    return overall_max_java

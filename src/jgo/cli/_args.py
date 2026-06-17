@@ -49,6 +49,41 @@ def resolve_pom_input(endpoint: str | None) -> Path | None:
     return path
 
 
+def classify_javainfo_input(arg: str) -> tuple[str, Path]:
+    """
+    Classify a single ``jgo info javainfo`` argument.
+
+    Returns a ``(kind, path)`` tuple where ``kind`` is one of:
+
+      - ``"pom"``:        a local POM file, or a directory containing ``pom.xml``
+      - ``"jar"``:        a local ``.jar`` file
+      - ``"class"``:      a local ``.class`` file
+      - ``"dir"``:        a local directory (scanned for ``.jar``/``.class`` files)
+      - ``"coordinate"``: a Maven coordinate / endpoint expression
+
+    For ``"coordinate"`` the returned path is undefined; otherwise it is the
+    resolved local path. ``.jar``/``.class`` inputs are classified by suffix
+    regardless of whether the file exists, so the caller can report a missing
+    file rather than misinterpreting it as a coordinate. A directory containing
+    ``pom.xml`` is treated as a project (``"pom"``), not a loose ``"dir"``.
+    """
+    value = arg.strip()
+    if _looks_like_pom(value):
+        path = Path(value).expanduser()
+        if path.is_dir():
+            path = path / "pom.xml"
+        return "pom", path
+
+    path = Path(value).expanduser()
+    if value.endswith(".jar"):
+        return "jar", path
+    if value.endswith(".class"):
+        return "class", path
+    if path.is_dir():
+        return "dir", path
+    return "coordinate", Path()
+
+
 class ParsedArgs:
     """
     Container for parsed CLI arguments.

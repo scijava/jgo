@@ -483,15 +483,17 @@ Test nested help for info subcommands.
 
   $ jgo help info javainfo
                                                                                   
-   Usage: jgo info javainfo [OPTIONS] [ENDPOINT]                                  
+   Usage: jgo info javainfo [OPTIONS] [INPUTS]...                                 
                                                                                   
    Show Java version requirements.                                                
                                                                                   
   ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
-  │ ENDPOINT  TEXT                                                               │
+  │ INPUTS  TEXT                                                                 │
   ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Options ────────────────────────────────────────────────────────────────────╮
-  │ --help  Show this message and exit.                                          │
+  │ --direct  Analyze the named artifacts plus their direct dependencies only.   │
+  │ --self    Analyze only the named artifacts themselves, with no dependencies. │
+  │ --help    Show this message and exit.                                        │
   ╰──────────────────────────────────────────────────────────────────────────────╯
 
   $ jgo help info versions

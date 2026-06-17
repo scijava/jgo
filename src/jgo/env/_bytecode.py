@@ -190,6 +190,43 @@ def detect_jar_java_version(
     return java_version
 
 
+def analyze_class_file(class_path: Path) -> dict:
+    """
+    Analyze the bytecode version of a single ``.class`` file.
+
+    Returns the same dictionary shape as :func:`analyze_jar_bytecode`, so the two
+    can be rendered uniformly.
+
+    Args:
+        class_path: Path to a ``.class`` file.
+
+    Returns:
+        Dictionary with the same keys as :func:`analyze_jar_bytecode`. The
+        ``version_counts`` map has at most one entry; ``high_version_classes``
+        contains the single class. An empty dict is returned if the file does not
+        exist or cannot be read.
+    """
+    if not class_path.exists():
+        return {}
+
+    try:
+        class_bytes = class_path.read_bytes()
+    except OSError:
+        return {}
+
+    major_version = read_class_version(class_bytes)
+    if major_version is None:
+        return {"version_counts": {}, "max_version": None, "java_version": None}
+
+    return {
+        "version_counts": {major_version: 1},
+        "max_version": major_version,
+        "java_version": bytecode_to_java_version(major_version),
+        "skipped": [],
+        "high_version_classes": [(class_path.name, major_version)],
+    }
+
+
 def detect_environment_java_version(jars_dir: Path) -> int | None:
     """
     Detect the minimum Java version for an environment directory.

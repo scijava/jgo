@@ -16,11 +16,17 @@ from ...parse import Coordinate, Endpoint
 
 if TYPE_CHECKING:
     from ...env import Environment, EnvironmentBuilder
+    from ...maven import MavenContext
+    from .._args import ParsedArgs
+
 from ...styles import AT_MAINCLASS, COORD_HELP_FULL, JGO_TOML, PLUS_OPERATOR
-from .._args import build_parsed_args, resolve_pom_input
+from .._args import build_parsed_args, classify_javainfo_input, resolve_pom_input
 from .._console import console_print
 from .._context import create_environment_builder, create_maven_context
 from .._output import (
+    SourceReport,
+    environment_report,
+    paths_report,
     print_classpath,
     print_dependencies,
     print_jars,
@@ -226,34 +232,211 @@ def deplist(ctx: click.Context, endpoint: str | None, direct: bool) -> None:
 
 
 @click.command(help="Show Java version requirements.")
-@click.argument("endpoint", required=False)
+@click.argument("inputs", nargs=-1)
+@click.option(
+    "--direct",
+    is_flag=True,
+    help="Analyze the named artifacts plus their direct dependencies only.",
+)
+@click.option(
+    "--self",
+    "self_only",
+    is_flag=True,
+    help="Analyze only the named artifacts themselves, with no dependencies.",
+)
 @click.pass_context
-def javainfo(ctx: click.Context, endpoint: str | None) -> None:
-    """Show Java version requirements for the given endpoint."""
+def javainfo(
+    ctx: click.Context, inputs: tuple[str, ...], direct: bool, self_only: bool
+) -> None:
+    """Show Java version requirements for endpoints, POMs, JARs, or class files.
+
+    Accepts any mix of Maven coordinates, local POM files/directories, .jar files,
+    .class files, and directories of compiled classes. Each argument is analyzed as
+    an independent source.
+    """
 
     opts = ctx.obj
     config = GlobalSettings.load_from_opts(opts)
-    args = build_parsed_args(opts, endpoint=endpoint, command="info")
 
+    if direct and self_only:
+        _log.error("--direct and --self are mutually exclusive")
+        ctx.exit(1)
+
+    args = build_parsed_args(opts, endpoint=None, command="info")
     context = create_maven_context(args, config.to_dict())
     builder = create_environment_builder(args, config.to_dict(), context)
 
-    # Build environment
-    if args.is_spec_mode():
-        spec_file = args.get_spec_file()
-        if not spec_file.exists():
-            _log.error(f"{spec_file} not found")
-            ctx.exit(1)
-        spec = EnvironmentSpec.load(spec_file)
-        environment = _from_spec_or_die(ctx, builder, spec, args.update)
+    reports: list[SourceReport] = []
+
+    if inputs:
+        for arg in inputs:
+            reports.append(
+                _javainfo_source(ctx, arg, builder, context, args, direct, self_only)
+            )
     else:
-        if not endpoint:
+        # No inputs: fall back to spec mode (jgo.toml), matching other subcommands.
+        if args.is_spec_mode():
+            spec_file = args.get_spec_file()
+            if not spec_file.exists():
+                _log.error(f"{spec_file} not found")
+                ctx.exit(1)
+            spec = EnvironmentSpec.load(spec_file)
+            environment = _from_spec_or_die(ctx, builder, spec, args.update)
+            reports.append(environment_report(environment, label=str(spec_file)))
+        else:
             _log.error("No endpoint specified")
             ctx.exit(1)
-        environment = builder.from_endpoint(endpoint, update=args.update)
 
-    print_java_info(environment)
+    print_java_info(reports)
     ctx.exit(0)
+
+
+def _javainfo_source(
+    ctx: click.Context,
+    arg: str,
+    builder: EnvironmentBuilder,
+    context: MavenContext,
+    args: ParsedArgs,
+    direct: bool,
+    self_only: bool,
+) -> SourceReport:
+    """Build a SourceReport for a single javainfo argument."""
+
+    kind, path = classify_javainfo_input(arg)
+
+    if kind == "pom":
+        return _javainfo_pom_report(ctx, path, context, args, direct, self_only)
+
+    if kind in ("jar", "class"):
+        if not path.exists():
+            _log.error(f"{path} not found")
+            ctx.exit(1)
+        return paths_report(arg, [path])
+
+    if kind == "dir":
+        local = sorted(path.rglob("*.jar")) + sorted(path.rglob("*.class"))
+        if not local:
+            _log.error(f"No .jar or .class files found in {path}")
+            ctx.exit(1)
+        return paths_report(arg, local)
+
+    # kind == "coordinate"
+    return _javainfo_coordinate_report(
+        ctx, arg, builder, context, args, direct, self_only
+    )
+
+
+def _resolve_artifact_path(artifact) -> Path | None:
+    """Resolve an artifact to a local JAR path, returning None on failure."""
+    try:
+        resolved = artifact.resolve()
+    except Exception as e:
+        _log.debug(f"Could not resolve {artifact}: {e}")
+        return None
+    return resolved
+
+
+def _javainfo_coordinate_report(
+    ctx: click.Context,
+    arg: str,
+    builder: EnvironmentBuilder,
+    context: MavenContext,
+    args: ParsedArgs,
+    direct: bool,
+    self_only: bool,
+) -> SourceReport:
+    """Build a SourceReport for a Maven coordinate / endpoint argument."""
+
+    # Default (transitive): build the full environment, exactly as before.
+    if not direct and not self_only:
+        environment = builder.from_endpoint(arg, update=args.update)
+        return environment_report(environment, label=arg)
+
+    # --self / --direct: resolve the named artifacts (and direct deps) directly.
+    try:
+        parsed = Endpoint.parse(arg)
+    except ValueError as e:
+        _log.error(f"Invalid endpoint format: {e}")
+        ctx.exit(1)
+
+    paths: list[Path] = []
+    for coord in parsed.coordinates:
+        version = coord.version or "RELEASE"
+        component = context.project(coord.groupId, coord.artifactId).at_version(version)
+        artifact = component.artifact(
+            classifier=coord.classifier or "",
+            packaging=coord.packaging or "jar",
+        )
+        resolved = _resolve_artifact_path(artifact)
+        if resolved is not None:
+            paths.append(resolved)
+
+        if direct:
+            _root, deps = context.pom_dependency_list(
+                component.pom(),
+                transitive=False,
+                optional_depth=args.get_effective_optional_depth(),
+            )
+            for node in deps:
+                resolved = _resolve_artifact_path(node.dep.artifact)
+                if resolved is not None:
+                    paths.append(resolved)
+
+    return paths_report(arg, _dedup_paths(paths))
+
+
+def _javainfo_pom_report(
+    ctx: click.Context,
+    pom_path: Path,
+    context: MavenContext,
+    args: ParsedArgs,
+    direct: bool,
+    self_only: bool,
+) -> SourceReport:
+    """Build a SourceReport for a local project POM argument."""
+
+    from ...maven import POM
+
+    if not pom_path.exists():
+        _log.error(f"{pom_path} not found")
+        ctx.exit(1)
+
+    pom = POM(pom_path)
+    label = str(pom_path)
+
+    try:
+        if self_only:
+            # Just the project's own artifact (no dependencies).
+            root, _deps = context.pom_dependency_list(pom, transitive=False)
+            resolved = _resolve_artifact_path(root.dep.artifact)
+            paths = [resolved] if resolved is not None else []
+        else:
+            _root, deps = context.pom_dependency_list(
+                pom,
+                transitive=not direct,
+                optional_depth=args.get_effective_optional_depth(),
+            )
+            paths = []
+            for node in deps:
+                resolved = _resolve_artifact_path(node.dep.artifact)
+                if resolved is not None:
+                    paths.append(resolved)
+    except (RuntimeError, ValueError) as e:
+        _log.error(f"Failed to resolve {pom_path}: {e}")
+        ctx.exit(1)
+
+    return paths_report(label, _dedup_paths(paths))
+
+
+def _dedup_paths(paths: list[Path]) -> list[Path]:
+    """De-duplicate paths while preserving first-seen order."""
+    seen: set[Path] = set()
+    result: list[Path] = []
+    for p in paths:
+        if p not in seen:
+            seen.add(p)
+            result.append(p)
+    return result
 
 
 @click.command(help=f"Show entrypoints from {JGO_TOML}.")

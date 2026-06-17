@@ -118,7 +118,12 @@ Example — Build and Inspect an Environment
 """
 
 from ._builder import EnvironmentBuilder
-from ._bytecode import analyze_jar_bytecode, bytecode_to_java_version, round_to_lts
+from ._bytecode import (
+    analyze_class_file,
+    analyze_jar_bytecode,
+    bytecode_to_java_version,
+    round_to_lts,
+)
 from ._environment import Environment
 from ._jar import find_main_classes, parse_manifest, read_raw_manifest
 from ._javaversion import jar_java_version
@@ -130,6 +135,7 @@ __all__ = [
     # builder
     "EnvironmentBuilder",
     # bytecode
+    "analyze_class_file",
     "analyze_jar_bytecode",
     "bytecode_to_java_version",
     "jar_java_version",
