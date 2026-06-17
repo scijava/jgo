@@ -30,7 +30,7 @@ _log = logging.getLogger(__name__)
     f"optionally followed by {AT_MAINCLASS}, or a path to a local pom.xml",
 )
 @click.pass_context
-def tree(ctx, endpoint):
+def tree(ctx: click.Context, endpoint: str | None) -> None:
     """Show the dependency tree for an endpoint or jgo.toml."""
 
     opts = ctx.obj

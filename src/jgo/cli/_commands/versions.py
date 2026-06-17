@@ -26,7 +26,7 @@ _log = logging.getLogger(__name__)
 @click.command(help="List available versions of an artifact.")
 @click.argument("coordinate", required=True)
 @click.pass_context
-def versions(ctx, coordinate):
+def versions(ctx: click.Context, coordinate: str) -> None:
     """List available versions of a Maven artifact."""
 
     opts = ctx.obj

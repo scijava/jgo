@@ -25,7 +25,7 @@ _log = logging.getLogger(__name__)
 
 @click.group(help="Manage jgo configuration.", invoke_without_command=True)
 @click.pass_context
-def config(ctx):
+def config(ctx: click.Context) -> None:
     """
     Manage jgo configuration.
 
@@ -503,7 +503,7 @@ def _parse_value(value: str) -> str | int | float | bool:
     help=f"Use local configuration ({JGO_TOML}).",
 )
 @click.pass_context
-def list_cmd(ctx, global_config, local_config):
+def list_cmd(ctx: click.Context, global_config: bool, local_config: bool) -> None:
     """List all configuration values."""
 
     opts = ctx.obj
@@ -542,7 +542,9 @@ def list_cmd(ctx, global_config, local_config):
     help=f"Use local configuration ({JGO_TOML})",
 )
 @click.pass_context
-def get_cmd(ctx, key, global_config, local_config):
+def get_cmd(
+    ctx: click.Context, key: str, global_config: bool, local_config: bool
+) -> None:
     """Get a configuration value."""
 
     opts = ctx.obj
@@ -582,7 +584,9 @@ def get_cmd(ctx, key, global_config, local_config):
     help=f"Use local configuration ({JGO_TOML})",
 )
 @click.pass_context
-def set_cmd(ctx, key, value, global_config, local_config):
+def set_cmd(
+    ctx: click.Context, key: str, value: str, global_config: bool, local_config: bool
+) -> None:
     """Set a configuration value."""
 
     opts = ctx.obj
@@ -621,7 +625,9 @@ def set_cmd(ctx, key, value, global_config, local_config):
     help=f"Use local configuration ({JGO_TOML}).",
 )
 @click.pass_context
-def unset_cmd(ctx, key, global_config, local_config):
+def unset_cmd(
+    ctx: click.Context, key: str, global_config: bool, local_config: bool
+) -> None:
     """Remove a configuration value."""
 
     opts = ctx.obj

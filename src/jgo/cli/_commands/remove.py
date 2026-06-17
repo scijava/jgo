@@ -36,7 +36,7 @@ _log = logging.getLogger(__name__)
     help=f"Don't automatically {syntax('sync')} after removing dependencies",
 )
 @click.pass_context
-def remove(ctx, coordinates, no_sync):
+def remove(ctx: click.Context, coordinates: tuple[str, ...], no_sync: bool) -> None:
     """
     Remove one or more dependencies from jgo.toml.
 

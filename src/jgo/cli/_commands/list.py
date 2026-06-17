@@ -33,7 +33,7 @@ _log = logging.getLogger(__name__)
     "--direct", is_flag=True, help="Show only direct dependencies (non-transitive)"
 )
 @click.pass_context
-def list_cmd(ctx, endpoint, direct):
+def list_cmd(ctx: click.Context, endpoint: str | None, direct: bool) -> None:
     """List resolved dependencies as a flat list."""
     opts = ctx.obj
     opts["direct_only"] = direct

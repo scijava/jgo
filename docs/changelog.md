@@ -9,6 +9,7 @@
 ### Bug fixes
 
 - **Sort `info versions` output** -- The reported versions list is now ordered according to Maven's versioning semantics.
+- **Add missing type hints** -- The CLI layer's click-related functions now have full type hints.
 
 ## 3.1.0
 

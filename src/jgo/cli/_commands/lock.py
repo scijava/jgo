@@ -27,7 +27,7 @@ _log = logging.getLogger(__name__)
     help="Check if lock file is up to date",
 )
 @click.pass_context
-def lock(ctx, check):
+def lock(ctx: click.Context, check: bool) -> None:
     """
     Update jgo.lock.toml without building the environment.
 

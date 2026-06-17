@@ -52,7 +52,13 @@ _log = logging.getLogger(__name__)
     help="Maven coordinates to associate with the shortcut",
 )
 @click.pass_context
-def shortcut(ctx, remove_name, list_all, name, endpoint):
+def shortcut(
+    ctx: click.Context,
+    remove_name: str | None,
+    list_all: bool,
+    name: str | None,
+    endpoint: str | None,
+) -> None:
     """
     Manage global endpoint shortcuts.
 

@@ -68,7 +68,13 @@ _log = logging.getLogger(__name__)
     help=f"Search terms. Supports plain text, coordinates ({COORD_HELP_SHORT}), or field syntax (g: a:)",
 )
 @click.pass_context
-def search(ctx, limit, repository, detailed, query):
+def search(
+    ctx: click.Context,
+    limit: int,
+    repository: str | None,
+    detailed: bool,
+    query: tuple[str, ...],
+) -> None:
     """
     Search for artifacts in Maven repositories.
 

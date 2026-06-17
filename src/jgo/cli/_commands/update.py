@@ -16,7 +16,7 @@ from . import sync as sync_cmd
     help="Force rebuild even if cached",
 )
 @click.pass_context
-def update(ctx, force):
+def update(ctx: click.Context, force: bool) -> None:
     """
     Update dependencies to latest versions within constraints.
 

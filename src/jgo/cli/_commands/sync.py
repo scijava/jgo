@@ -32,7 +32,7 @@ _log = logging.getLogger(__name__)
     help=f"Force rebuild even if {syntax('cached')}",
 )
 @click.pass_context
-def sync(ctx, force):
+def sync(ctx: click.Context, force: bool) -> None:
     """
     Resolve dependencies and build environment in .jgo/ directory.
 

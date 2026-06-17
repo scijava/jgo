@@ -127,15 +127,15 @@ _GLOBAL_FLAGS: frozenset[str] = frozenset([
 )
 @click.pass_context
 def run(
-    ctx,
-    main_class,
-    entrypoint,
-    add_classpath,
-    force_global,
-    force_local,
-    endpoint,
-    remaining,
-):
+    ctx: click.Context,
+    main_class: str | None,
+    entrypoint: str | None,
+    add_classpath: tuple[str, ...],
+    force_global: bool,
+    force_local: bool,
+    endpoint: str | None,
+    remaining: tuple[str, ...],
+) -> None:
     """
     Run a Java application from Maven coordinates or jgo.toml.
 

@@ -6,12 +6,16 @@ import logging
 import xml.dom.minidom
 import zipfile
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import rich_click as click
 
 from ...config import GlobalSettings
 from ...env import EnvironmentSpec, parse_manifest, read_raw_manifest
 from ...parse import Coordinate, Endpoint
+
+if TYPE_CHECKING:
+    from ...env import Environment, EnvironmentBuilder
 from ...styles import AT_MAINCLASS, COORD_HELP_FULL, JGO_TOML, PLUS_OPERATOR
 from .._args import build_parsed_args, resolve_pom_input
 from .._console import console_print
@@ -38,7 +42,7 @@ _log = logging.getLogger(__name__)
     f"optionally followed by {AT_MAINCLASS}",
 )
 @click.pass_context
-def classpath(ctx, endpoint):
+def classpath(ctx: click.Context, endpoint: str | None) -> None:
     """Show the classpath for the given endpoint."""
 
     opts = ctx.obj
@@ -75,7 +79,7 @@ def classpath(ctx, endpoint):
     f"optionally followed by {AT_MAINCLASS}",
 )
 @click.pass_context
-def envdir(ctx, endpoint):
+def envdir(ctx: click.Context, endpoint: str | None) -> None:
     """Show the cache/environment directory for the given endpoint or jgo project."""
 
     opts = ctx.obj
@@ -112,7 +116,7 @@ def envdir(ctx, endpoint):
     f"optionally followed by {AT_MAINCLASS}",
 )
 @click.pass_context
-def jars(ctx, endpoint):
+def jars(ctx: click.Context, endpoint: str | None) -> None:
     """Show all JAR paths with section headers for classpath and module-path."""
 
     opts = ctx.obj
@@ -143,7 +147,7 @@ def jars(ctx, endpoint):
 @click.command(help="Show module-path.")
 @click.argument("endpoint", required=False)
 @click.pass_context
-def modulepath(ctx, endpoint):
+def modulepath(ctx: click.Context, endpoint: str | None) -> None:
     """Show the module-path for the given endpoint."""
 
     opts = ctx.obj
@@ -174,7 +178,7 @@ def modulepath(ctx, endpoint):
 @click.command(help="Show classes with public main methods.")
 @click.argument("endpoint", required=False)
 @click.pass_context
-def mains(ctx, endpoint):
+def mains(ctx: click.Context, endpoint: str | None) -> None:
     """Find and list all classes with public static void main(String[]) methods."""
 
     opts = ctx.obj
@@ -205,7 +209,7 @@ def mains(ctx, endpoint):
 @click.command(help="Show dependency tree.")
 @click.argument("endpoint", required=False)
 @click.pass_context
-def deptree(ctx, endpoint):
+def deptree(ctx: click.Context, endpoint: str | None) -> None:
     """Show the dependency tree for the given endpoint."""
     _print_deps(ctx, endpoint, list_mode=False)
 
@@ -216,7 +220,7 @@ def deptree(ctx, endpoint):
     "--direct", is_flag=True, help="Show only direct dependencies (non-transitive)."
 )
 @click.pass_context
-def deplist(ctx, endpoint, direct):
+def deplist(ctx: click.Context, endpoint: str | None, direct: bool) -> None:
     """Show a flat list of all dependencies for the given endpoint."""
     _print_deps(ctx, endpoint, list_mode=True)
 
@@ -224,7 +228,7 @@ def deplist(ctx, endpoint, direct):
 @click.command(help="Show Java version requirements.")
 @click.argument("endpoint", required=False)
 @click.pass_context
-def javainfo(ctx, endpoint):
+def javainfo(ctx: click.Context, endpoint: str | None) -> None:
     """Show Java version requirements for the given endpoint."""
 
     opts = ctx.obj
@@ -254,7 +258,7 @@ def javainfo(ctx, endpoint):
 
 @click.command(help=f"Show entrypoints from {JGO_TOML}.")
 @click.pass_context
-def entrypoints(ctx):
+def entrypoints(ctx: click.Context) -> None:
     """Show available entrypoints defined in jgo.toml."""
 
     opts = ctx.obj
@@ -289,7 +293,7 @@ def entrypoints(ctx):
 )
 @click.option("--raw", is_flag=True, help="Show raw manifest contents")
 @click.pass_context
-def manifest(ctx, coordinate, raw):
+def manifest(ctx: click.Context, coordinate: str, raw: bool) -> None:
     """Show the JAR manifest for the given coordinate."""
 
     opts = ctx.obj
@@ -354,7 +358,7 @@ def manifest(ctx, coordinate, raw):
     help=f"Maven coordinate in format {COORD_HELP_FULL}",
 )
 @click.pass_context
-def pom(ctx, coordinate):
+def pom(ctx: click.Context, coordinate: str) -> None:
     """Show the POM for the given component."""
 
     opts = ctx.obj
@@ -407,27 +411,27 @@ def pom(ctx, coordinate):
         ctx.exit(1)
 
 
-def _from_spec_or_die(ctx, builder, spec, update: bool):
+def _from_spec_or_die(
+    ctx: click.Context, builder: EnvironmentBuilder, spec: EnvironmentSpec, update: bool
+) -> Environment:
     """Call builder.from_spec(), printing a clean error and exiting on ValueError."""
     try:
         return builder.from_spec(spec, update=update)
     except ValueError as e:
         _log.error(f"{e} Use 'jgo add <coordinate>' to add dependencies.")
         ctx.exit(1)
-        raise  # unreachable; satisfies type checkers
 
 
-def _parse_coord_or_die(ctx, coord_str: str) -> Coordinate:
+def _parse_coord_or_die(ctx: click.Context, coord_str: str) -> Coordinate:
     """Parses a string to a Coordinate, guaranteeing non-None."""
     try:
         return Coordinate.parse(coord_str)
     except ValueError:
         _log.exception(f"Invalid coordinate string: {coord_str}")
         ctx.exit(1)
-        raise  # NB: Won't reach here, but it satisfies static type checkers.
 
 
-def _print_deps(ctx, endpoint, list_mode: bool):
+def _print_deps(ctx: click.Context, endpoint: str | None, list_mode: bool) -> None:
     """Common logic for deptree and deplist."""
 
     opts = ctx.obj

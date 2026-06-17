@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import rich_click as click
 
@@ -46,6 +47,9 @@ from ._commands.versions import versions
 from ._console import setup_consoles
 from .rich._logging import setup_rich_logging
 
+if TYPE_CHECKING:
+    from typing import Any, Callable
+
 _log = logging.getLogger(__name__)
 
 
@@ -53,7 +57,7 @@ _log = logging.getLogger(__name__)
 class JgoGroup(click.RichGroup):
     """Custom group that auto-detects shorthand endpoint syntax and shortcuts."""
 
-    def invoke(self, ctx):
+    def invoke(self, ctx: click.Context) -> None:
         """
         Override to handle shorthand endpoint detection and bare shortcuts.
 
@@ -92,7 +96,7 @@ class JgoGroup(click.RichGroup):
 
 
 # Global options (available to all commands)
-def global_options(f):
+def global_options(f: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator to add global options to commands."""
     # General options
     f = click.option(
@@ -336,7 +340,7 @@ def global_options(f):
     f = click.option("--ignore-jgorc", "ignore_config", is_flag=True, hidden=True)(f)
 
     # Version flag
-    def _print_version(ctx, param, value):
+    def _print_version(ctx: click.Context, param: click.Parameter, value: bool) -> None:
         if value:
             click.echo(f"jgo {VERSION}")
             ctx.exit(0)
@@ -365,7 +369,7 @@ and resolve dependencies -- [bold]without manual installation[/].""",
 )
 @global_options
 @click.pass_context
-def cli(ctx, **kwargs):
+def cli(ctx: click.Context, **kwargs: Any) -> None:
     """
     Main CLI entry point.
 
@@ -424,7 +428,7 @@ cli.add_command(update)
     invoke_without_command=True,
 )
 @click.pass_context
-def info(ctx):
+def info(ctx: click.Context) -> None:
     """
     Show information about a jgo environment or Maven artifact.
 
@@ -475,7 +479,7 @@ info.add_command(versions)
 
 
 @cli.command(help="Display jgo's version.")
-def version():
+def version() -> None:
     """Display jgo's version."""
     click.echo(f"jgo {VERSION}")
 
@@ -485,7 +489,7 @@ def version():
 )
 @click.argument("commands", nargs=-1, required=False)
 @click.pass_context
-def help(ctx, commands):
+def help(ctx: click.Context, commands: tuple[str, ...]) -> None:
     """Show help for jgo or a specific command.
 
     Examples:
@@ -494,21 +498,28 @@ def help(ctx, commands):
       jgo help run          - Show help for 'run' command
       jgo help config shortcut  - Show help for nested 'config shortcut' command
     """
+    parent: click.Context = ctx.parent or ctx
+
     if not commands:
         # No command specified - show main help
-        click.echo(ctx.parent.get_help())
+        click.echo(parent.get_help())
         return
 
     # Navigate through nested commands
-    current_group = ctx.parent.command
-    current_ctx = ctx.parent
+    if not isinstance(parent.command, click.Group):
+        click.echo(f"Error: '{parent.info_name}' is not a command group", err=True)
+        ctx.exit(1)
+    current_group: click.Group = parent.command
+    current_ctx = parent
 
     for i, cmd_name in enumerate(commands):
-        if not hasattr(current_group, "commands"):
+        current_commands = getattr(current_group, "commands", None)
+
+        if not current_commands:
             click.echo(f"Error: '{cmd_name}' is not a command group", err=True)
             ctx.exit(1)
 
-        cmd = current_group.commands.get(cmd_name)
+        cmd = current_commands.get(cmd_name)
         if cmd is None:
             click.echo(f"Error: Unknown command '{cmd_name}'", err=True)
             ctx.exit(1)
@@ -518,18 +529,18 @@ def help(ctx, commands):
             # Build the full command path for correct usage line
             # Use only info_names from intermediate groups, not the root prog_name
             # This gives us "jgo search" instead of "python -m jgo search"
-            path_parts = []
+            path_parts: list[str] = []
             temp_ctx = current_ctx
             while temp_ctx and temp_ctx.parent is not None:  # Skip root context
                 if temp_ctx.info_name:
                     path_parts.insert(0, temp_ctx.info_name)
                 temp_ctx = temp_ctx.parent
             # Start with "jgo" (or the root info_name if it exists)
-            if current_ctx.find_root().info_name:
-                root_name = current_ctx.find_root().info_name
-                # Normalize "python -m jgo" to "jgo"
-                if "python" in root_name:
-                    root_name = "jgo"
+            root_name = current_ctx.find_root().info_name or ""
+            # Normalize "python -m jgo" to "jgo"
+            if "python" in root_name:
+                root_name = "jgo"
+            if root_name:
                 path_parts.insert(0, root_name)
             prog_name = " ".join(path_parts + [cmd_name])
             cmd.main(["--help"], prog_name=prog_name, standalone_mode=False)

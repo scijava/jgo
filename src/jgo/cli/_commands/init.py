@@ -38,7 +38,9 @@ _log = logging.getLogger(__name__)
     help="Add coordinates from a requirements file (one per line, # for comments)",
 )
 @click.pass_context
-def init(ctx, endpoint, requirements_file):
+def init(
+    ctx: click.Context, endpoint: str | None, requirements_file: Path | None
+) -> None:
     """Create a new jgo.toml file."""
 
     opts = ctx.obj

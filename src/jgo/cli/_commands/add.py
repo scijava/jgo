@@ -43,7 +43,12 @@ _log = logging.getLogger(__name__)
     help=f"Don't automatically {syntax('sync')} after adding dependencies",
 )
 @click.pass_context
-def add(ctx, coordinates, requirements_file, no_sync):
+def add(
+    ctx: click.Context,
+    coordinates: tuple[str, ...],
+    requirements_file: Path | None,
+    no_sync: bool,
+) -> None:
     """
     Add one or more dependencies to jgo.toml.
 
