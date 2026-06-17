@@ -136,16 +136,26 @@ Test info deplist with endpoint.
      com.google.j2objc:j2objc-annotations:2.8
      org.checkerframework:checker-qual:3.41.0
 
-Test info deplist --direct flag.
+Test info deplist --direct flag. Use an artifact whose direct dependencies are a
+strict subset of its transitive closure, so the flag's effect is observable
+(guava's direct deps happen to equal its transitive set, which would not catch a
+regression where --direct is ignored).
 
-  $ jgo info deplist --direct com.google.guava:guava:33.0.0-jre
-  com.google.guava:guava:33.0.0-jre
-     com.google.code.findbugs:jsr305:3.0.2
-     com.google.errorprone:error_prone_annotations:2.23.0
-     com.google.guava:failureaccess:1.0.2
-     com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava
-     com.google.j2objc:j2objc-annotations:2.8
-     org.checkerframework:checker-qual:3.41.0
+  $ jgo info deplist org.junit.jupiter:junit-jupiter:5.10.0
+  org.junit.jupiter:junit-jupiter:5.10.0
+     org.apiguardian:apiguardian-api:1.1.2
+     org.junit.jupiter:junit-jupiter-api:5.10.0
+     org.junit.jupiter:junit-jupiter-engine:5.10.0:runtime
+     org.junit.jupiter:junit-jupiter-params:5.10.0
+     org.junit.platform:junit-platform-commons:1.10.0
+     org.junit.platform:junit-platform-engine:1.10.0:runtime
+     org.opentest4j:opentest4j:1.3.0
+
+  $ jgo info deplist --direct org.junit.jupiter:junit-jupiter:5.10.0
+  org.junit.jupiter:junit-jupiter:5.10.0
+     org.junit.jupiter:junit-jupiter-api:5.10.0
+     org.junit.jupiter:junit-jupiter-engine:5.10.0:runtime
+     org.junit.jupiter:junit-jupiter-params:5.10.0
 
 Test info javainfo with no endpoint.
 

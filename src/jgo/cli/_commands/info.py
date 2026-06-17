@@ -228,7 +228,7 @@ def deptree(ctx: click.Context, endpoint: str | None) -> None:
 @click.pass_context
 def deplist(ctx: click.Context, endpoint: str | None, direct: bool) -> None:
     """Show a flat list of all dependencies for the given endpoint."""
-    _print_deps(ctx, endpoint, list_mode=True)
+    _print_deps(ctx, endpoint, list_mode=True, direct=direct)
 
 
 @click.command(help="Show Java version requirements.")
@@ -614,7 +614,9 @@ def _parse_coord_or_die(ctx: click.Context, coord_str: str) -> Coordinate:
         ctx.exit(1)
 
 
-def _print_deps(ctx: click.Context, endpoint: str | None, list_mode: bool) -> None:
+def _print_deps(
+    ctx: click.Context, endpoint: str | None, list_mode: bool, direct: bool = False
+) -> None:
     """Common logic for deptree and deplist."""
 
     opts = ctx.obj
@@ -639,6 +641,7 @@ def _print_deps(ctx: click.Context, endpoint: str | None, list_mode: bool) -> No
                 pom_path,
                 context,
                 list_mode=list_mode,
+                direct_only=direct,
                 optional_depth=args.get_effective_optional_depth(),
             )
         except (RuntimeError, ValueError) as e:
@@ -669,5 +672,5 @@ def _print_deps(ctx: click.Context, endpoint: str | None, list_mode: bool) -> No
             ctx.exit(1)
         dependencies = builder._coordinates_to_dependencies(parsed.coordinates)
 
-    print_dependencies(dependencies, context, list_mode=list_mode)
+    print_dependencies(dependencies, context, list_mode=list_mode, direct_only=direct)
     ctx.exit(0)

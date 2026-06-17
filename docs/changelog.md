@@ -9,6 +9,7 @@
 
 ### Bug fixes
 
+- **Make `deplist --direct` actually work** -- The `--direct` flag was being ignored for the `deplist` command. Now it's passed through to the interior logic to handle it properly.
 - **Sort `info versions` output** -- The reported versions list is now ordered according to Maven's versioning semantics.
 - **Add missing type hints** -- The CLI layer's click-related functions now have full type hints.
 
