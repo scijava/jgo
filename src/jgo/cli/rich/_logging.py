@@ -28,7 +28,9 @@ class _SoftWrapRichHandler(RichHandler):
         message = self.format(record)
         level_name = record.levelname
         level_style = f"logging.level.{level_name.lower()}"
-        text = Text.assemble(Text(f"{level_name:<8} ", style=level_style), Text(message))
+        text = Text.assemble(
+            Text(f"{level_name:<8} ", style=level_style), Text(message)
+        )
         try:
             self.console.print(text, soft_wrap=True, markup=False, highlight=False)
         except Exception:
