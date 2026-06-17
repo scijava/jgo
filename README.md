@@ -1,4 +1,7 @@
-[![build status](https://github.com/apposed/jgo/actions/workflows/build.yml/badge.svg)](https://github.com/apposed/jgo/actions/workflows/build.yml)
+[![License](https://img.shields.io/pypi/l/jgo.svg)](https://github.com/apposed/jgo/raw/main/UNLICENSE)
+[![PyPI](https://img.shields.io/pypi/v/jgo.svg)](https://pypi.org/project/jgo)
+[![Python Version](https://img.shields.io/pypi/pyversions/jgo.svg)](https://python.org)
+[![Build Status](https://github.com/apposed/jgo/actions/workflows/build.yml/badge.svg)](https://github.com/apposed/jgo/actions/workflows/build.yml)
 [![Documentation](https://readthedocs.org/projects/jgo/badge/?version=latest)](https://jgo.apposed.org/)
 
 # jgo: painless Java environments and execution
