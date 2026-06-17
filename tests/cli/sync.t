@@ -3,7 +3,7 @@ Tests jgo sync command.
 Test sync requires jgo.toml to exist.
 
   $ jgo sync
-  ERROR    jgo.toml does not exist                                                
+  ERROR    jgo.toml does not exist
   [1]
 
 Test sync --help shows usage.

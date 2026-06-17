@@ -33,7 +33,7 @@ Test info with no subcommand shows help.
 Test info classpath with no endpoint.
 
   $ jgo info classpath
-  ERROR    No endpoint specified                                                  
+  ERROR    No endpoint specified
   [1]
 
 Test info classpath with endpoint.
@@ -69,7 +69,7 @@ Test info jars with endpoint.
 Test info deptree with no endpoint.
 
   $ jgo info deptree
-  ERROR    No endpoint specified                                                  
+  ERROR    No endpoint specified
   [1]
 
 Test info deptree with endpoint.
@@ -122,7 +122,7 @@ Test info deplist with a local POM file.
 Test info deplist with no endpoint.
 
   $ jgo info deplist
-  ERROR    No endpoint specified                                                  
+  ERROR    No endpoint specified
   [1]
 
 Test info deplist with endpoint.
@@ -160,7 +160,7 @@ regression where --direct is ignored).
 Test info javainfo with no endpoint.
 
   $ jgo info javainfo
-  ERROR    No endpoint specified                                                  
+  ERROR    No endpoint specified
   [1]
 
 Test info javainfo with endpoint.
@@ -747,7 +747,7 @@ Test info versions with coordinates.
 Test info entrypoints without jgo.toml.
 
   $ jgo info entrypoints
-  ERROR    jgo.toml not found                                                     
+  ERROR    jgo.toml not found
   [1]
 
 Test that piping to xpath works regardless of wrap mode (auto-detects non-TTY).

@@ -3,7 +3,7 @@ Tests jgo tree command.
 Test tree requires endpoint or jgo.toml.
 
   $ jgo tree
-  ERROR    No endpoint specified                                                  
+  ERROR    No endpoint specified
   [1]
 
 Test tree --help shows usage.

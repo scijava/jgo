@@ -3,7 +3,7 @@ Tests jgo update command.
 Test update requires jgo.toml to exist.
 
   $ jgo update
-  ERROR    jgo.toml does not exist                                                
+  ERROR    jgo.toml does not exist
   [1]
 
 Test update --help shows usage.

@@ -3,13 +3,13 @@ Tests jgo info javainfo with local JARs, class files, POMs, and flags.
 The --direct and --self flags are mutually exclusive.
 
   $ jgo info javainfo --direct --self com.google.guava:guava:33.0.0-jre
-  ERROR    --direct and --self are mutually exclusive                             
+  ERROR    --direct and --self are mutually exclusive
   [1]
 
 A missing local JAR file is reported as an error, not treated as a coordinate.
 
   $ jgo info javainfo "$TMPDIR/does-not-exist.jar"
-  ERROR    $TMPDIR/does-not-exist.jar not found             
+  ERROR    *does-not-exist.jar not found* (glob)
   [1]
 
 Analyze a single named artifact with --self (no transitive dependencies).

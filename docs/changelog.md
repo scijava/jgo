@@ -1,6 +1,6 @@
 # Changelog
 
-## 3.1.1
+## 3.2.0
 
 ### New features
 
@@ -10,6 +10,7 @@
 ### Bug fixes
 
 - **Make `deplist --direct` actually work** -- The `--direct` flag was being ignored for the `deplist` command. Now it's passed through to the interior logic to handle it properly.
+- **Honor `--wrap raw` with log messages** -- Previously, commands `jgo --wrap raw info javainfo /really/long/path/to/nonexistentfile.xml` would still use Rich's smart wrapping if the ERROR output was longer than the TTY width.
 - **Sort `info versions` output** -- The reported versions list is now ordered according to Maven's versioning semantics.
 - **Add missing type hints** -- The CLI layer's click-related functions now have full type hints.
 

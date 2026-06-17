@@ -3,7 +3,7 @@ Tests jgo lock command.
 Test lock requires jgo.toml to exist.
 
   $ jgo lock
-  ERROR    jgo.toml does not exist                                                
+  ERROR    jgo.toml does not exist
   [1]
 
 Test lock --help shows usage.

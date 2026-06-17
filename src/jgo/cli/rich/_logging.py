@@ -6,10 +6,33 @@ keeping Rich integration in the CLI layer.
 """
 
 import logging
+from logging import LogRecord
 
 from rich.logging import RichHandler
+from rich.text import Text
 
-from .._console import get_err_console
+from .._console import get_err_console, get_wrap_mode
+
+
+class _SoftWrapRichHandler(RichHandler):
+    """RichHandler that respects the global wrap mode for log messages."""
+
+    def emit(self, record: LogRecord) -> None:
+        # In raw mode, bypass RichHandler's Table-based layout (which wraps
+        # at the column boundary) and print a plain "LEVEL    message" line
+        # with soft_wrap=True so long paths are never folded.
+        if get_wrap_mode() != "raw":
+            super().emit(record)
+            return
+
+        message = self.format(record)
+        level_name = record.levelname
+        level_style = f"logging.level.{level_name.lower()}"
+        text = Text.assemble(Text(f"{level_name:<8} ", style=level_style), Text(message))
+        try:
+            self.console.print(text, soft_wrap=True, markup=False, highlight=False)
+        except Exception:
+            self.handleError(record)
 
 
 def setup_rich_logging(logger: logging.Logger, verbose: int = 0) -> None:
@@ -36,7 +59,7 @@ def setup_rich_logging(logger: logging.Logger, verbose: int = 0) -> None:
         level = logging.DEBUG
 
     # Create Rich handler for colored, formatted log output
-    handler = RichHandler(
+    handler = _SoftWrapRichHandler(
         console=console,
         show_time=False,
         show_path=(verbose >= 2),  # Show module:line in debug mode

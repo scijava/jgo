@@ -3,7 +3,7 @@ Tests jgo list command.
 Test list requires endpoint or jgo.toml.
 
   $ jgo list
-  ERROR    No endpoint specified                                                  
+  ERROR    No endpoint specified
   [1]
 
 Test list --help shows usage.
@@ -94,8 +94,6 @@ Test list with MANAGED secondary coordinate.
 
 Test list with invalid coordinate syntax (too many colons).
 
-  $ jgo list org.apache.logging.log4j:log4j-core:2.25.1::::
-  ERROR    Invalid endpoint format: Too many parts in strict mode coordinate:     
-           org.apache.logging.log4j:log4j-core:2.25.1::::. Expected at most       
-           G:A:V:C:P:S (6 positions total).                                       
+  $ jgo --wrap raw list org.apache.logging.log4j:log4j-core:2.25.1::::
+  ERROR    Invalid endpoint format: Too many parts in strict mode coordinate: org.apache.logging.log4j:log4j-core:2.25.1::::. Expected at most G:A:V:C:P:S (6 positions total).
   [1]
