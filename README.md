@@ -171,13 +171,13 @@ to the
 (see the [configuration docs](https://jgo.apposed.org/en/latest/configuration.html)),
 you can also try:
 
-| Program                      | Command                                                                             |
-|-----------------------------:|:------------------------------------------------------------------------------------|
-| SciJava REPL with JRuby      | `jgo org.scijava:scijava-common+org.scijava:scripting-jruby@ScriptREPL`            |
-| SciJava REPL with Jython     | `jgo org.scijava:scijava-common+org.scijava:scripting-jython@ScriptREPL`           |
-| SciJava REPL with Groovy     | `jgo org.scijava:scijava-common+org.scijava:scripting-groovy@ScriptREPL`           |
-| SciJava REPL with Clojure    | `jgo org.scijava:scijava-common+org.scijava:scripting-clojure@ScriptREPL`          |
-| SciJava REPL with JavaScript | `jgo org.scijava:scijava-common+org.scijava:scripting-javascript@ScriptREPL`       |
+| Program                      | Command                                                                      |
+|-----------------------------:|:-----------------------------------------------------------------------------|
+| SciJava REPL with JRuby      | `jgo org.scijava:scijava-common+org.scijava:scripting-jruby@ScriptREPL`      |
+| SciJava REPL with Jython     | `jgo org.scijava:scijava-common+org.scijava:scripting-jython@ScriptREPL`     |
+| SciJava REPL with Groovy     | `jgo org.scijava:scijava-common+org.scijava:scripting-groovy@ScriptREPL`     |
+| SciJava REPL with Clojure    | `jgo org.scijava:scijava-common+org.scijava:scripting-clojure@ScriptREPL`    |
+| SciJava REPL with JavaScript | `jgo org.scijava:scijava-common+org.scijava:scripting-javascript@ScriptREPL` |
 
 ### FAQ
 
