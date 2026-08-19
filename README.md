@@ -156,11 +156,11 @@ The `cli` extra (`jgo[cli]`) is only needed when using the `jgo` command-line to
 
 ## Examples
 
-| Program                      | Command                                                                             |
-|-----------------------------:|:------------------------------------------------------------------------------------|
-| Jython REPL                  | `jgo org.python:jython-standalone`                                                  |
-| JRuby eval                   | `echo "puts 'Hello Ruby'" \| jgo org.jruby:jruby-complete@jruby.Main`              |
-| Groovy REPL                  | `jgo org.codehaus.groovy:groovy-groovysh+commons-cli:commons-cli:1.3.1@shell.Main` |
+| Program     | Command                                                                                         |
+|------------:|:------------------------------------------------------------------------------------------------|
+| Jython REPL | `jgo org.python:jython-standalone`                                                              |
+| JRuby eval  | `echo "puts 'Hello Ruby'" \| jgo --class-path-only org.jruby:jruby-complete@jruby.Main`         |
+| Groovy REPL | `jgo --class-path-only org.apache.groovy:groovy-groovysh:5.1.0@org.apache.groovy.groovysh.Main` |
 
 Note the usage of the `+` syntax as needed to append elements to the classpath.
 
