@@ -23,6 +23,7 @@ from ._commands.add import add
 from ._commands.config import config
 from ._commands.info import (
     classpath,
+    coords,
     deplist,
     deptree,
     entrypoints,
@@ -434,6 +435,7 @@ def info(ctx: click.Context) -> None:
 
     Use subcommands to specify what information to display:
       classpath     - Show classpath (all JARs)
+      coords        - Show Maven coordinates a JAR was built from
       modulepath    - Show module-path (modular JARs only)
       jars          - Show all JARs with section headers
       mains         - Show classes with public main methods
@@ -446,6 +448,7 @@ def info(ctx: click.Context) -> None:
 
     Examples:
       jgo info classpath org.python:jython-standalone
+      jgo info coords /path/to/some.jar
       jgo info jars org.scijava:scijava-common
       jgo info mains org.scijava:scijava-common
       jgo info modulepath org.scijava:scijava-common
@@ -465,6 +468,7 @@ def info(ctx: click.Context) -> None:
 
 # Register info subcommands
 info.add_command(classpath)
+info.add_command(coords)
 info.add_command(deplist)
 info.add_command(deptree)
 info.add_command(entrypoints)

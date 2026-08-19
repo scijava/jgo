@@ -69,7 +69,9 @@ def setup_consoles(
     _color_mode = color
     _quiet = quiet
 
-    console_kwargs: dict = {"quiet": quiet}
+    # Note: emoji=False here rather than only at print time, so that ":ant:" in a
+    # table cell stays text instead of becoming an ant.
+    console_kwargs: dict = {"quiet": quiet, "emoji": False}
 
     # Configure color mode
     if color == "plain":

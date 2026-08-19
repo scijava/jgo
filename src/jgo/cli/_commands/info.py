@@ -9,9 +9,19 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import rich_click as click
+from click.exceptions import Exit as ClickExit
 
 from ...config import GlobalSettings
-from ...env import EnvironmentSpec, parse_manifest, read_raw_manifest
+from ...env import (
+    EnvironmentSpec,
+    JarCoordinate,
+    embedded_pom_entries,
+    jar_coordinates,
+    jar_sha1,
+    parse_manifest,
+    read_embedded_pom,
+    read_raw_manifest,
+)
 from ...parse import Coordinate, Endpoint
 
 if TYPE_CHECKING:
@@ -19,8 +29,15 @@ if TYPE_CHECKING:
     from ...maven import MavenContext
     from .._args import ParsedArgs
 
-from ...styles import AT_MAINCLASS, COORD_HELP_FULL, JGO_TOML, PLUS_OPERATOR
-from .._args import build_parsed_args, classify_javainfo_input, resolve_pom_input
+from ...styles import (
+    AT_MAINCLASS,
+    COORD_HELP_FULL,
+    JGO_TOML,
+    PLUS_OPERATOR,
+    header,
+    tip,
+)
+from .._args import build_parsed_args, classify_input, resolve_pom_input
 from .._console import console_print
 from .._context import create_environment_builder, create_maven_context
 from .._output import (
@@ -29,6 +46,7 @@ from .._output import (
     paths_report,
     print_classpath,
     print_dependencies,
+    print_jar_coordinates,
     print_jars,
     print_java_info,
     print_main_classes,
@@ -302,7 +320,7 @@ def _javainfo_source(
 ) -> SourceReport:
     """Build a SourceReport for a single javainfo argument."""
 
-    kind, path = classify_javainfo_input(arg)
+    kind, path = classify_input(arg)
 
     if kind == "pom":
         return _javainfo_pom_report(ctx, path, context, args, direct, self_only)
@@ -467,47 +485,125 @@ def entrypoints(ctx: click.Context) -> None:
     ctx.exit(0)
 
 
+@click.command(help="Show Maven coordinates a JAR was built from.")
+@click.argument(
+    "inputs",
+    nargs=-1,
+    cls=click.RichArgument,
+    help=f"Local JAR files, directories to scan, or coordinates in format "
+    f"{COORD_HELP_FULL}",
+)
+@click.option(
+    "--all",
+    "show_all",
+    is_flag=True,
+    help="List bundled coordinates as well, not just each JAR's own",
+)
+@click.option(
+    "--remote",
+    is_flag=True,
+    help="Identify JARs lacking Maven metadata by checksum lookup on Maven Central",
+)
+@click.pass_context
+def coords(
+    ctx: click.Context, inputs: tuple[str, ...], show_all: bool, remote: bool
+) -> None:
+    """Show the Maven coordinates that JAR files appear to have been built from.
+
+    Accepts any mix of local .jar files, directories to scan for JARs, and Maven
+    coordinates. Coordinates come from the Maven metadata that build tools embed
+    under META-INF/maven; an uber-JAR carries the metadata of everything it
+    bundles, so the coordinate that looks like the JAR's own identity is listed
+    first and the rest are counted as bundled.
+    """
+
+    opts = ctx.obj
+    args = build_parsed_args(opts, endpoint=None, command="info")
+
+    if not inputs:
+        _log.error("No JAR specified")
+        ctx.exit(1)
+
+    if remote and args.offline:
+        _log.warning("Ignoring --remote in offline mode")
+        remote = False
+
+    results: list[tuple[Path, list[JarCoordinate]]] = []
+    for arg in inputs:
+        for jar_path in _coords_jars(ctx, arg):
+            coordinates = jar_coordinates(jar_path)
+            # Manifest-derived coordinates are guesswork, but a checksum match is
+            # exact, so let Maven Central overrule them when it knows the file.
+            if remote and all(c.source == "manifest" for c in coordinates):
+                coordinates = _central_coordinates(jar_path) or coordinates
+            results.append((jar_path, coordinates))
+
+    print_jar_coordinates(results, show_all=show_all)
+
+    if not remote and any(
+        all(c.source == "manifest" for c in coordinates) for _, coordinates in results
+    ):
+        console_print(
+            tip("Use --remote to identify JARs by checksum via Maven Central")
+        )
+
+    ctx.exit(0)
+
+
+def _coords_jars(ctx: click.Context, arg: str) -> list[Path]:
+    """Expand a single ``jgo info coords`` argument into JAR paths."""
+
+    path = Path(arg).expanduser()
+    if path.is_dir():
+        jars = sorted(path.rglob("*.jar"))
+        if not jars:
+            _log.error(f"No .jar files found in {path}")
+            ctx.exit(1)
+        return jars
+
+    return [_resolve_jar_or_die(ctx, arg)]
+
+
+def _central_coordinates(jar_path: Path) -> list[JarCoordinate]:
+    """Identify a JAR by SHA-1 checksum, via the Maven Central search API."""
+
+    from ...maven import coordinates_by_sha1
+
+    try:
+        matches = coordinates_by_sha1(jar_sha1(jar_path))
+    except (RuntimeError, OSError) as e:
+        _log.warning(f"Maven Central lookup failed for {jar_path.name}: {e}")
+        return []
+
+    # A checksum match is exact, so the first hit is the JAR's identity; further
+    # hits are the same bytes republished under another coordinate.
+    return [
+        JarCoordinate(
+            groupId=match.groupId,
+            artifactId=match.artifactId,
+            version=match.version,
+            classifier=match.classifier,
+            source="central",
+            primary=(i == 0),
+        )
+        for i, match in enumerate(matches)
+    ]
+
+
 @click.command(help="Show JAR manifest.")
 @click.argument(
-    "coordinate",
+    "target",
     required=True,
     cls=click.RichArgument,
-    help=f"Maven coordinate in format {COORD_HELP_FULL}",
+    help=f"Maven coordinate in format {COORD_HELP_FULL}, or path to a local JAR",
 )
 @click.option("--raw", is_flag=True, help="Show raw manifest contents")
 @click.pass_context
-def manifest(ctx: click.Context, coordinate: str, raw: bool) -> None:
-    """Show the JAR manifest for the given coordinate."""
-
-    opts = ctx.obj
-    config = GlobalSettings.load_from_opts(opts)
-    args = build_parsed_args(opts, endpoint=coordinate, command="info")
+def manifest(ctx: click.Context, target: str, raw: bool) -> None:
+    """Show the JAR manifest for the given coordinate or local JAR file."""
 
     try:
-        # Create Maven context
-        maven_context = create_maven_context(args, config.to_dict())
-
-        # Parse coordinate to get G:A:V
-        coord = _parse_coord_or_die(ctx, coordinate)
-        version = coord.version or "RELEASE"
-
-        # Get component
-        component = maven_context.project(coord.groupId, coord.artifactId).at_version(
-            version
-        )
-
-        # Resolve artifact to get JAR path
-        artifact = component.artifact()
-        jar_path = artifact.resolve()
-
-        if not jar_path:
-            _log.error(f"Could not resolve artifact: {coordinate}")
-            ctx.exit(1)
-
-        # Verify it's a valid JAR file
-        if not zipfile.is_zipfile(jar_path):
-            _log.error(f"Not a valid JAR file: {jar_path}")
-            ctx.exit(1)
+        jar_path = _resolve_jar_or_die(ctx, target)
 
         # Read and display manifest
         if raw:
@@ -526,7 +622,8 @@ def manifest(ctx: click.Context, coordinate: str, raw: bool) -> None:
             for key, value in manifest_dict.items():
                 console_print(f"{key}: {value}")
 
-    except SystemExit:
+    except (SystemExit, ClickExit):
+        # Context.exit() raises click's Exit, which is a RuntimeError.
         raise
     except Exception as e:
         _log.error(f"{e}")
@@ -535,25 +632,37 @@ def manifest(ctx: click.Context, coordinate: str, raw: bool) -> None:
 
 @click.command(help="Show POM content.")
 @click.argument(
-    "coordinate",
+    "target",
     required=True,
     cls=click.RichArgument,
-    help=f"Maven coordinate in format {COORD_HELP_FULL}",
+    help=f"Maven coordinate in format {COORD_HELP_FULL}, or path to a local JAR",
+)
+@click.option(
+    "--all",
+    "show_all",
+    is_flag=True,
+    help="Dump every POM embedded in a JAR, not just its own",
 )
 @click.pass_context
-def pom(ctx: click.Context, coordinate: str) -> None:
-    """Show the POM for the given component."""
+def pom(ctx: click.Context, target: str, show_all: bool) -> None:
+    """Show the POM for the given component, or embedded in a local JAR file."""
 
     opts = ctx.obj
-    config = GlobalSettings.load_from_opts(opts)
-    args = build_parsed_args(opts, endpoint=coordinate, command="info")
 
     try:
+        jar_path = _local_jar_or_die(ctx, target)
+        if jar_path is not None:
+            _print_embedded_poms(ctx, jar_path, show_all)
+            return
+
+        config = GlobalSettings.load_from_opts(opts)
+        args = build_parsed_args(opts, endpoint=target, command="info")
+
         # Create Maven context
         maven_context = create_maven_context(args, config.to_dict())
 
         # Parse coordinate to get G:A:V
-        coord = _parse_coord_or_die(ctx, coordinate)
+        coord = _parse_coord_or_die(ctx, target)
         version = coord.version or "RELEASE"
 
         # Get component
@@ -565,7 +674,7 @@ def pom(ctx: click.Context, coordinate: str) -> None:
         pom_obj = component.pom()
 
         if not pom_obj or not pom_obj.source:
-            _log.error(f"Could not resolve POM for: {coordinate}")
+            _log.error(f"Could not resolve POM for: {target}")
             ctx.exit(1)
 
         # Read POM content
@@ -574,24 +683,119 @@ def pom(ctx: click.Context, coordinate: str) -> None:
         else:
             pom_content = str(pom_obj.source)
 
-        # Pretty-print the XML
-        try:
-            dom = xml.dom.minidom.parseString(pom_content)
-            pretty_xml = dom.toprettyxml(indent="  ")
-            # Remove extra blank lines that toprettyxml adds
-            lines = [line for line in pretty_xml.split("\n") if line.strip()]
-            xml_output = "\n".join(lines)
-        except Exception:
-            # If pretty-printing fails, use raw content
-            xml_output = pom_content
+        console_print(_pretty_xml(pom_content))
 
-        console_print(xml_output)
-
-    except SystemExit:
+    except (SystemExit, ClickExit):
+        # Context.exit() raises click's Exit, which is a RuntimeError.
         raise
     except Exception as e:
         _log.error(f"{e}")
         ctx.exit(1)
+
+
+def _print_embedded_poms(ctx: click.Context, jar_path: Path, show_all: bool) -> None:
+    """Dump the POM(s) embedded in a JAR file's META-INF/maven directory."""
+
+    entries = embedded_pom_entries(jar_path)
+    if not entries:
+        _log.error(f"No embedded POM found in {jar_path}")
+        ctx.exit(1)
+
+    if not show_all and len(entries) > 1:
+        # Restrict to the JAR's own POM; the rest belong to bundled dependencies.
+        own_entry = next(
+            (
+                c.pom_entry
+                for c in jar_coordinates(jar_path)
+                if c.primary and c.pom_entry
+            ),
+            None,
+        )
+        if own_entry is None:
+            _log.error(
+                f"{jar_path.name} embeds {len(entries)} POMs and none is clearly "
+                f"its own; use --all to dump them all"
+            )
+            ctx.exit(1)
+        entries = [own_entry]
+
+    for i, entry in enumerate(entries):
+        content = read_embedded_pom(jar_path, entry)
+        if content is None:
+            _log.error(f"Could not read {entry} from {jar_path}")
+            ctx.exit(1)
+        if len(entries) > 1:
+            if i > 0:
+                console_print()
+            console_print(header(entry))
+        console_print(_pretty_xml(content))
+
+
+def _pretty_xml(content: str) -> str:
+    """Pretty-print XML, falling back to the raw content if it cannot be parsed."""
+    try:
+        dom = xml.dom.minidom.parseString(content)
+        pretty_xml = dom.toprettyxml(indent="  ")
+        # Remove extra blank lines that toprettyxml adds
+        lines = [line for line in pretty_xml.split("\n") if line.strip()]
+        return "\n".join(lines)
+    except Exception:
+        return content
+
+
+def _local_jar_or_die(ctx: click.Context, target: str) -> Path | None:
+    """
+    Interpret a CLI argument as a local JAR file.
+
+    Returns the JAR path, or None if the argument is a Maven coordinate rather
+    than a local path. Exits with an error if a local JAR file was named but is
+    missing or is not actually a JAR.
+    """
+    kind, path = classify_input(target)
+    if kind != "jar":
+        return None
+    if not path.exists():
+        _log.error(f"{path} not found")
+        ctx.exit(1)
+    if not zipfile.is_zipfile(path):
+        _log.error(f"Not a valid JAR file: {path}")
+        ctx.exit(1)
+    return path
+
+
+def _resolve_jar_or_die(ctx: click.Context, target: str) -> Path:
+    """
+    Resolve a CLI argument to a local JAR file.
+
+    Accepts either the path of a local JAR file, or a Maven coordinate to be
+    resolved (downloading it if needed). Exits with an error if no JAR results.
+    """
+    jar_path = _local_jar_or_die(ctx, target)
+    if jar_path is not None:
+        return jar_path
+
+    opts = ctx.obj
+    config = GlobalSettings.load_from_opts(opts)
+    args = build_parsed_args(opts, endpoint=target, command="info")
+    maven_context = create_maven_context(args, config.to_dict())
+
+    coord = _parse_coord_or_die(ctx, target)
+    component = maven_context.project(coord.groupId, coord.artifactId).at_version(
+        coord.version or "RELEASE"
+    )
+    artifact = component.artifact(
+        classifier=coord.classifier or "",
+        packaging=coord.packaging or "jar",
+    )
+    resolved = artifact.resolve()
+
+    if not resolved:
+        _log.error(f"Could not resolve artifact: {target}")
+        ctx.exit(1)
+    if not zipfile.is_zipfile(resolved):
+        _log.error(f"Not a valid JAR file: {resolved}")
+        ctx.exit(1)
+    return resolved
 
 
 def _from_spec_or_die(

@@ -5,6 +5,7 @@
 ### New features
 
 - **Local POM file support** -- `jgo list` and `jgo tree` now support local POM file paths.
+- **Identify local JAR files** -- The new `jgo info coords` subcommand reports the Maven coordinate(s) a JAR appears to have been built from, reading the metadata embedded under `META-INF/maven`, falling back to manifest attributes, and -- with `--remote` -- identifying otherwise unknown JARs by SHA-1 checksum via Maven Central. Uber-JARs report the coordinates they bundle as well (`--all`). Relatedly, `jgo info manifest` and `jgo info pom` now accept the path of a local JAR file wherever they accept a Maven coordinate, with `jgo info pom` dumping the JAR's embedded POM(s).
 - **More flexible `javainfo` subcommand** -- The `jgo info javainfo` command now accepts a list of arguments, each of which can be a Maven coordinate, a POM file or directory containing such, a JAR file, a class file, or a directory to scan recursively for such files. Each argument is analyzed and reported upon, and finally a summary is issued.
 
 ### Bug fixes
@@ -13,6 +14,8 @@
 - **Honor `--wrap raw` with log messages** -- Previously, commands `jgo --wrap raw info javainfo /really/long/path/to/nonexistentfile.xml` would still use Rich's smart wrapping if the ERROR output was longer than the TTY width.
 - **Sort `info versions` output** -- The reported versions list is now ordered according to Maven's versioning semantics.
 - **Add missing type hints** -- The CLI layer's click-related functions now have full type hints.
+- **Stop treating clean exits as errors** -- The `jgo info manifest` and `jgo info pom` commands logged a spurious `ERROR 1` line alongside their real error message, because click's `Context.exit` raises an exception that their catch-all handler swallowed.
+- **Stop turning coordinates into emoji** -- Text in table cells is no longer scanned for emoji codes, so e.g. `org.apache.ant:ant:1.10.15` renders as itself rather than sprouting an ant.
 
 ## 3.1.0
 

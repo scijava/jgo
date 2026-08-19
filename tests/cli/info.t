@@ -13,6 +13,7 @@ Test info with no subcommand shows help.
   ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Commands ───────────────────────────────────────────────────────────────────╮
   │ classpath        Show classpath.                                             │
+  │ coords           Show Maven coordinates a JAR was built from.                │
   │ deplist          Show flat list of dependencies.                             │
   │ deptree          Show dependency tree.                                       │
   │ entrypoints      Show entrypoints from jgo.toml.                             │
@@ -191,11 +192,11 @@ Test info manifest requires endpoint.
 
   $ jgo info manifest
                                                                                   
-   Usage: jgo info manifest [OPTIONS] COORDINATE                                  
+   Usage: jgo info manifest [OPTIONS] TARGET                                      
                                                                                   
    Try 'jgo info manifest --help' for help                                        
   ╭─ Error ──────────────────────────────────────────────────────────────────────╮
-  │ Missing argument 'COORDINATE'.                                               │
+  │ Missing argument 'TARGET'.                                                   │
   ╰──────────────────────────────────────────────────────────────────────────────╯
                                                                                   
   [2]
@@ -270,11 +271,11 @@ Test info pom requires endpoint.
 
   $ jgo info pom
                                                                                   
-   Usage: jgo info pom [OPTIONS] COORDINATE                                       
+   Usage: jgo info pom [OPTIONS] TARGET                                           
                                                                                   
    Try 'jgo info pom --help' for help                                             
   ╭─ Error ──────────────────────────────────────────────────────────────────────╮
-  │ Missing argument 'COORDINATE'.                                               │
+  │ Missing argument 'TARGET'.                                                   │
   ╰──────────────────────────────────────────────────────────────────────────────╯
                                                                                   
   [2]

@@ -101,6 +101,13 @@ find_main_classes(jar_path)
 parse_manifest(jar_path) / read_raw_manifest(jar_path)
     Read ``META-INF/MANIFEST.MF`` from a JAR.
 
+jar_coordinates(jar_path)
+    Infer the Maven coordinate(s) a JAR file was built from, using the metadata
+    embedded under ``META-INF/maven`` and, failing that, manifest attributes.
+
+embedded_pom_entries(jar_path) / read_embedded_pom(jar_path, entry)
+    List and read the POMs embedded in a JAR.
+
 compute_spec_hash(spec_path)
     Compute a deterministic hash of a ``jgo.toml`` file for staleness
     detection.
@@ -125,7 +132,16 @@ from ._bytecode import (
     round_to_lts,
 )
 from ._environment import Environment
-from ._jar import find_main_classes, parse_manifest, read_raw_manifest
+from ._jar import (
+    JarCoordinate,
+    embedded_pom_entries,
+    find_main_classes,
+    jar_coordinates,
+    jar_sha1,
+    parse_manifest,
+    read_embedded_pom,
+    read_raw_manifest,
+)
 from ._javaversion import jar_java_version
 from ._linking import LinkStrategy
 from ._lockfile import LockedDependency, LockFile, compute_spec_hash
@@ -143,8 +159,13 @@ __all__ = [
     # environment
     "Environment",
     # jar
+    "JarCoordinate",
+    "embedded_pom_entries",
     "find_main_classes",
+    "jar_coordinates",
+    "jar_sha1",
     "parse_manifest",
+    "read_embedded_pom",
     "read_raw_manifest",
     # linking
     "LinkStrategy",

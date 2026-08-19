@@ -240,10 +240,43 @@ jgo info javainfo [ENDPOINT]        # Show Java version requirements
 jgo info entrypoints                # Show entrypoints from jgo.toml
 jgo info versions COORDINATE       # List available versions of an artifact
 jgo info mains [ENDPOINT]           # Show classes with public main methods
-jgo info manifest [ENDPOINT]        # Show JAR manifest
-jgo info pom [ENDPOINT]             # Show POM content
+jgo info coords TARGET...           # Show coordinates a JAR was built from
+jgo info manifest TARGET            # Show JAR manifest
+jgo info pom TARGET                 # Show POM content
 jgo info envdir [ENDPOINT]          # Show environment directory path
 ```
+
+#### Identifying local JAR files
+
+`jgo info coords`, `jgo info manifest`, and `jgo info pom` accept the path of a local
+`.jar` file wherever they accept a Maven coordinate, so an unlabeled JAR sitting on
+disk can be traced back to the artifact it was built from:
+
+```bash
+# Which artifact is this?
+jgo info coords /Applications/Fiji/jars/ahocorasick-0.2.4.jar
+
+# Identify every JAR in a directory
+jgo info coords /Applications/Fiji/jars
+
+# Dump the POM embedded in the JAR
+jgo info pom /Applications/Fiji/jars/ahocorasick-0.2.4.jar
+```
+
+Coordinates come from the Maven metadata that build tools embed under
+`META-INF/maven/<groupId>/<artifactId>/`. Two things follow from that:
+
+- An uber-JAR carries the metadata of every dependency it shades. The coordinate that
+  looks like the JAR's own identity -- judged from its file name and manifest -- is
+  listed first, and the rest are counted as bundled; `--all` lists them.
+- Not every JAR has that metadata. jgo falls back to inferring a coordinate from
+  manifest attributes, which is guesswork and is labeled as such. `--remote` instead
+  identifies such JARs by SHA-1 checksum via Maven Central, which is exact.
+
+| Option | Description |
+|:-------|:-----------|
+| `--all` | List bundled coordinates as well, not just each JAR's own. |
+| `--remote` | Identify JARs lacking Maven metadata by checksum lookup on Maven Central. |
 
 ### `jgo search`
 
@@ -382,6 +415,9 @@ jgo info versions org.python:jython-standalone
 
 # Show main classes in a JAR
 jgo info mains org.scijava:parsington
+
+# Identify the artifact a local JAR was built from
+jgo info coords /path/to/mystery.jar
 ```
 
 ### Working with Java versions

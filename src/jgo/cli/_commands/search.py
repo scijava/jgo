@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import re
-import urllib.parse
-import urllib.request
 from datetime import datetime
 from typing import TYPE_CHECKING
 
 import rich_click as click
 
 from ...config import GlobalSettings
+from ...maven import solr_search
 from ...parse import Coordinate
 from ...styles import (
     COORD_HELP_FULL,
@@ -251,32 +249,7 @@ def _search_maven_central(query: str, limit: int) -> list[dict]:
     # Convert query to field syntax if needed
     solr_query = _convert_query_to_solr(query)
 
-    # Build query URL
-    base_url = "https://search.maven.org/solrsearch/select"
-    params = {
-        "q": solr_query,
-        "rows": str(limit),
-        "wt": "json",
-    }
-
-    url = f"{base_url}?{urllib.parse.urlencode(params)}"
-
-    _log.debug(f"Query URL: {url}")
-
-    # Make request
-    try:
-        with urllib.request.urlopen(url, timeout=10) as response:
-            data = json.loads(response.read().decode("utf-8"))
-    except urllib.error.URLError as e:
-        raise Exception(f"Failed to connect to Maven Central: {e}") from e
-    except json.JSONDecodeError as e:
-        raise Exception(f"Failed to parse response: {e}") from e
-
-    # Extract results
-    if "response" not in data or "docs" not in data["response"]:
-        return []
-
-    docs = data["response"]["docs"]
+    docs = solr_search(solr_query, rows=limit)
 
     # Convert to simplified format
     results = []

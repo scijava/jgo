@@ -125,6 +125,7 @@ Example — Inspect Available Versions
 >>> [c.version for c in project.versions()]
 """
 
+from ._central import coordinates_by_sha1, solr_search
 from ._core import (
     Artifact,
     Component,
@@ -150,6 +151,9 @@ from ._version import (
 )
 
 __all__ = [
+    # central
+    "coordinates_by_sha1",
+    "solr_search",
     # core
     "Artifact",
     "Component",

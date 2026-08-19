@@ -49,9 +49,9 @@ def resolve_pom_input(endpoint: str | None) -> Path | None:
     return path
 
 
-def classify_javainfo_input(arg: str) -> tuple[str, Path]:
+def classify_input(arg: str) -> tuple[str, Path]:
     """
-    Classify a single ``jgo info javainfo`` argument.
+    Classify a single ``jgo info`` argument as a local path or a coordinate.
 
     Returns a ``(kind, path)`` tuple where ``kind`` is one of:
 

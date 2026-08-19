@@ -369,6 +369,7 @@ Test help for specific commands.
   ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ Commands ───────────────────────────────────────────────────────────────────╮
   │ classpath        Show classpath.                                             │
+  │ coords           Show Maven coordinates a JAR was built from.                │
   │ deplist          Show flat list of dependencies.                             │
   │ deptree          Show dependency tree.                                       │
   │ entrypoints      Show entrypoints from jgo.toml.                             │

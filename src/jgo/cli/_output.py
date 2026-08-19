@@ -27,7 +27,7 @@ from .rich._widgets import create_table
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from ..env import Environment
+    from ..env import Environment, JarCoordinate
     from ..maven import Dependency, MavenContext
     from ._args import ParsedArgs
 
@@ -407,6 +407,71 @@ def print_java_info(reports: list[SourceReport]) -> None:
         console_print(
             _java_summary_panel(overall_max_java, "Overall Java Version Requirements")
         )
+
+
+def print_jar_coordinates(
+    results: list[tuple[Path, list[JarCoordinate]]], *, show_all: bool = False
+) -> None:
+    """
+    Print the Maven coordinates inferred for each of a list of JAR files.
+
+    Each JAR gets one row for the coordinate it appears to have been built from.
+    Coordinates of bundled (shaded) dependencies are summarized by count, or
+    listed individually when ``show_all`` is set.
+
+    Args:
+        results: ``(jar path, coordinates)`` pairs, as returned by ``jar_coordinates``
+        show_all: List bundled coordinates instead of just counting them
+    """
+
+    if not results:
+        console_print(critical("No JARs to inspect"), stderr=True)
+        return
+
+    no_wrap = get_wrap_mode() == "raw"
+    table = create_table(
+        no_wrap=no_wrap,
+        title="Artifact Coordinates",
+        show_header=True,
+        header_style="bold cyan",
+    )
+    table.add_column("JAR", style="bold", no_wrap=no_wrap)
+    table.add_column("Coordinate")
+    table.add_column("Source")
+
+    hidden = 0
+    for jar_path, coordinates in results:
+        if not coordinates:
+            table.add_row(jar_path.name, warning("unidentified"), "")
+            continue
+
+        primary = coordinates[0] if coordinates[0].primary else None
+        bundled = coordinates[1:] if primary else coordinates
+
+        if primary:
+            table.add_row(jar_path.name, str(primary), _source_label(primary))
+        else:
+            table.add_row(jar_path.name, warning("no primary coordinate"), "")
+
+        if show_all:
+            for coordinate in bundled:
+                table.add_row("", f"  {coordinate}", _source_label(coordinate))
+        else:
+            hidden += len(bundled)
+            if bundled:
+                table.add_row("", secondary(f"  +{len(bundled)} bundled"), "")
+
+    console_print(table)
+
+    if hidden:
+        console_print(tip("Use --all to list bundled coordinates"))
+
+
+def _source_label(coordinate: JarCoordinate) -> str:
+    """Describe where a coordinate came from, flagging the unreliable source."""
+    if coordinate.source == "manifest":
+        return secondary("manifest (inferred)")
+    return coordinate.source
 
 
 def _render_jar_analyses(

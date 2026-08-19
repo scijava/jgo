@@ -4,6 +4,7 @@ Utilities for working with JAR files.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import re
 import struct
@@ -13,6 +14,9 @@ import zipfile
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
+from xml.etree import ElementTree
+
+from ..parse import coord2str
 
 _log = logging.getLogger(__name__)
 
@@ -476,6 +480,304 @@ def read_raw_manifest(jar_path: Path) -> str | None:
                 return None
     except (zipfile.BadZipFile, FileNotFoundError):
         return None
+
+
+# -- Maven coordinate extraction --
+
+# Maven's archiver embeds build metadata at
+# META-INF/maven/<groupId>/<artifactId>/{pom.xml,pom.properties}.
+_MAVEN_METADATA_ENTRY = re.compile(
+    r"^META-INF/maven/([^/]+)/([^/]+)/pom\.(xml|properties)$"
+)
+
+# Maven identifiers are restricted to word characters, dots, and dashes.
+_ARTIFACT_ID = re.compile(r"[A-Za-z0-9._-]+")
+
+
+@dataclass
+class JarCoordinate:
+    """A Maven coordinate that a JAR file appears to have been built from."""
+
+    groupId: str
+    artifactId: str
+    version: str | None
+    classifier: str | None
+    source: str  # Where it came from: "pom.properties", "pom.xml", or "manifest".
+    pom_entry: str | None = None  # Zip entry of the embedded POM, when present.
+    primary: bool = False  # True if this looks like the JAR's own identity.
+
+    def __str__(self) -> str:
+        return coord2str(self.groupId, self.artifactId, self.version, self.classifier)
+
+
+def embedded_pom_entries(jar_path: Path) -> list[str]:
+    """
+    List the embedded ``pom.xml`` entries of a JAR file.
+
+    Args:
+        jar_path: Path to JAR file
+
+    Returns:
+        Sorted list of ``META-INF/maven/<g>/<a>/pom.xml`` zip entry names.
+        Empty if the JAR has no embedded Maven metadata, or is unreadable.
+    """
+    try:
+        with zipfile.ZipFile(jar_path) as jar:
+            names = jar.namelist()
+    except (zipfile.BadZipFile, FileNotFoundError, OSError) as e:
+        _log.debug(f"Could not read {jar_path}: {e}")
+        return []
+
+    return sorted(
+        name
+        for name in names
+        if (m := _MAVEN_METADATA_ENTRY.match(name)) and m.group(3) == "xml"
+    )
+
+
+def read_embedded_pom(jar_path: Path, entry: str) -> str | None:
+    """
+    Read the contents of an embedded POM from a JAR file.
+
+    Args:
+        jar_path: Path to JAR file
+        entry: Zip entry name, as returned by :func:`embedded_pom_entries`
+
+    Returns:
+        The POM's XML content, or None if the entry is absent or unreadable.
+    """
+    try:
+        with zipfile.ZipFile(jar_path) as jar:
+            with jar.open(entry) as f:
+                return f.read().decode("utf-8")
+    except (zipfile.BadZipFile, FileNotFoundError, KeyError, OSError) as e:
+        _log.debug(f"Could not read {entry} from {jar_path}: {e}")
+        return None
+
+
+def jar_coordinates(jar_path: Path) -> list[JarCoordinate]:
+    """
+    Infer the Maven coordinate(s) a JAR file was built from.
+
+    Coordinates come from the JAR's embedded Maven metadata. An uber-JAR bundles
+    the metadata of everything it shades, so multiple coordinates are common; the
+    one that looks like the JAR's own identity -- judged from the file name and
+    manifest -- is flagged as primary. When there is no embedded Maven metadata at
+    all, a single best-effort coordinate is derived from the manifest instead.
+
+    Args:
+        jar_path: Path to JAR file
+
+    Returns:
+        List of coordinates, primary first, then ordered by groupId:artifactId.
+        Empty if nothing could be inferred.
+    """
+    manifest = parse_manifest(jar_path)
+
+    candidates = _metadata_coordinates(jar_path)
+    if not candidates:
+        derived = _manifest_coordinate(manifest, jar_path)
+        if derived is None:
+            return []
+        derived.primary = True
+        return [derived]
+
+    candidates.sort(key=lambda c: (c.groupId, c.artifactId))
+
+    scores = [_identity_score(c, jar_path, manifest) for c in candidates]
+    best = max(scores)
+    # A lone candidate is the JAR's identity by default; among several, only an
+    # unambiguous winner is promoted -- the rest are just bundled dependencies.
+    if len(candidates) == 1 or (best > 0 and scores.count(best) == 1):
+        primary = candidates[scores.index(best)]
+        primary.primary = True
+        primary.classifier = _classifier_from_filename(
+            primary.artifactId, primary.version, jar_path
+        )
+        candidates.remove(primary)
+        candidates.insert(0, primary)
+
+    return candidates
+
+
+def _classifier_from_filename(
+    artifactId: str, version: str | None, jar_path: Path
+) -> str | None:
+    """
+    Recover a classifier from a JAR file name.
+
+    Maven names artifacts ``<artifactId>-<version>[-<classifier>].jar``, and the
+    embedded metadata says nothing about which classified variant a file is, so
+    the name is the only evidence that e.g. a natives JAR is one.
+    """
+    if not version:
+        return None
+    prefix = f"{artifactId}-{version}-"
+    stem = jar_path.name[: -len(".jar")] if jar_path.suffix == ".jar" else jar_path.stem
+    return stem[len(prefix) :] if stem.startswith(prefix) else None
+
+
+def _metadata_coordinates(jar_path: Path) -> list[JarCoordinate]:
+    """Extract coordinates from a JAR's META-INF/maven entries."""
+    try:
+        with zipfile.ZipFile(jar_path) as jar:
+            entries: dict[tuple[str, str], dict[str, str]] = {}
+            for name in jar.namelist():
+                m = _MAVEN_METADATA_ENTRY.match(name)
+                if m:
+                    entries.setdefault((m.group(1), m.group(2)), {})[m.group(3)] = name
+
+            coordinates = []
+            for (groupId, artifactId), files in entries.items():
+                version = None
+                source = "pom.xml"
+                # pom.properties always states a literal version; pom.xml often
+                # omits it, inheriting the version from its parent instead.
+                if "properties" in files:
+                    props = _parse_properties(jar.read(files["properties"]))
+                    groupId = props.get("groupId", groupId)
+                    artifactId = props.get("artifactId", artifactId)
+                    version = props.get("version")
+                    if version:
+                        source = "pom.properties"
+                if version is None and "xml" in files:
+                    version = _pom_xml_version(jar.read(files["xml"]))
+                coordinates.append(
+                    JarCoordinate(
+                        groupId=groupId,
+                        artifactId=artifactId,
+                        version=version,
+                        classifier=None,
+                        source=source,
+                        pom_entry=files.get("xml"),
+                    )
+                )
+            return coordinates
+    except (zipfile.BadZipFile, FileNotFoundError, OSError) as e:
+        _log.debug(f"Could not read {jar_path}: {e}")
+        return []
+
+
+def _parse_properties(content: bytes) -> dict[str, str]:
+    """Parse a Java properties file into a dict, ignoring comments."""
+    props = {}
+    for raw_line in content.decode("utf-8", errors="replace").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith(("#", "!")) or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        props[key.strip()] = value.strip()
+    return props
+
+
+def _pom_xml_version(content: bytes) -> str | None:
+    """Extract the effective version from POM XML: own version, else parent's."""
+    try:
+        root = ElementTree.fromstring(content)
+    except ElementTree.ParseError as e:
+        _log.debug(f"Could not parse embedded POM: {e}")
+        return None
+
+    def child_text(element, tag: str) -> str | None:
+        for sub in element:
+            if _local_name(sub.tag) == tag and sub.text:
+                return sub.text.strip()
+        return None
+
+    version = child_text(root, "version")
+    if version:
+        return version
+    for sub in root:
+        if _local_name(sub.tag) == "parent":
+            return child_text(sub, "version")
+    return None
+
+
+def _local_name(tag: str) -> str:
+    """Strip the XML namespace from a tag name."""
+    return tag.rsplit("}", 1)[-1]
+
+
+def _manifest_coordinate(
+    manifest: dict[str, str] | None, jar_path: Path
+) -> JarCoordinate | None:
+    """Derive a best-effort coordinate from manifest attributes."""
+    if not manifest:
+        return None
+
+    groupId = manifest.get("Implementation-Vendor-Id")
+    version = manifest.get("Implementation-Version") or manifest.get("Bundle-Version")
+
+    # Implementation-Title is often prose rather than an artifactId.
+    artifactId = next(
+        (
+            value
+            for value in (
+                manifest.get("Implementation-Title"),
+                _symbolic_name(manifest),
+            )
+            if value and _ARTIFACT_ID.fullmatch(value)
+        ),
+        None,
+    )
+
+    if not artifactId:
+        return None
+    if not groupId:
+        # OSGi bundles name themselves <groupId>.<artifactId> often enough to be
+        # worth splitting, but the split is a guess either way.
+        if "." not in artifactId:
+            return None
+        groupId, artifactId = artifactId.rsplit(".", 1)
+
+    return JarCoordinate(
+        groupId=groupId,
+        artifactId=artifactId,
+        version=version,
+        classifier=_classifier_from_filename(artifactId, version, jar_path),
+        source="manifest",
+    )
+
+
+def _symbolic_name(manifest: dict[str, str]) -> str | None:
+    """Read Bundle-SymbolicName, dropping any OSGi directives."""
+    value = manifest.get("Bundle-SymbolicName")
+    return value.split(";", 1)[0].strip() if value else None
+
+
+def _identity_score(
+    coord: JarCoordinate, jar_path: Path, manifest: dict[str, str] | None
+) -> int:
+    """Score how strongly a coordinate looks like the JAR's own identity."""
+    score = 0
+
+    stem = jar_path.stem
+    if coord.version and stem == f"{coord.artifactId}-{coord.version}":
+        score += 4
+    elif stem == coord.artifactId or stem.startswith(f"{coord.artifactId}-"):
+        score += 3
+
+    if manifest:
+        qualified = f"{coord.groupId}.{coord.artifactId}"
+        if manifest.get("Implementation-Title") in (coord.artifactId, qualified):
+            score += 2
+        if manifest.get("Implementation-Vendor-Id") == coord.groupId:
+            score += 1
+        if _symbolic_name(manifest) in (coord.artifactId, qualified):
+            score += 1
+        if coord.version and manifest.get("Implementation-Version") == coord.version:
+            score += 1
+
+    return score
+
+
+def jar_sha1(jar_path: Path) -> str:
+    """Compute the SHA-1 checksum of a file, as a hex string."""
+    digest = hashlib.sha1()
+    with open(jar_path, "rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def autocomplete_main_class(
