@@ -4,7 +4,7 @@ Test config with no subcommand shows help.
 
   $ jgo config
                                                                                   
-   Usage: jgo config [OPTIONS] COMMAND [ARGS]...                                  
+   Usage: jgo config [OPTIONS] [COMMAND] [ARGS]...                                
                                                                                   
    Manage jgo configuration.                                                      
                                                                                   

@@ -4,7 +4,7 @@ Test info with no subcommand shows help.
 
   $ jgo info
                                                                                   
-   Usage: jgo info [OPTIONS] COMMAND [ARGS]...                                    
+   Usage: jgo info [OPTIONS] [COMMAND] [ARGS]...                                  
                                                                                   
    Show information about environment or artifact.                                
                                                                                   

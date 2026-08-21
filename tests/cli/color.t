@@ -32,7 +32,7 @@ Test --color with different commands.
 
   $ jgo --color=never help
                                                                                   
-   Usage: jgo [OPTIONS] COMMAND [ARGS]...                                         
+   Usage: jgo [OPTIONS] [COMMAND] [ARGS]...                                       
                                                                                   
    Environment manager and launcher for Java programs.                            
    Launch Java applications directly from Maven coordinates, build reproducible   

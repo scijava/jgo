@@ -4,7 +4,7 @@ Test main help output.
 
   $ jgo help
                                                                                   
-   Usage: jgo [OPTIONS] COMMAND [ARGS]...                                         
+   Usage: jgo [OPTIONS] [COMMAND] [ARGS]...                                       
                                                                                   
    Environment manager and launcher for Java programs.                            
    Launch Java applications directly from Maven coordinates, build reproducible   
@@ -343,7 +343,7 @@ Test help for specific commands.
 
   $ jgo help config
                                                                                   
-   Usage: jgo config [OPTIONS] COMMAND [ARGS]...                                  
+   Usage: jgo config [OPTIONS] [COMMAND] [ARGS]...                                
                                                                                   
    Manage jgo configuration.                                                      
                                                                                   
@@ -360,7 +360,7 @@ Test help for specific commands.
 
   $ jgo help info
                                                                                   
-   Usage: jgo info [OPTIONS] COMMAND [ARGS]...                                    
+   Usage: jgo info [OPTIONS] [COMMAND] [ARGS]...                                  
                                                                                   
    Show information about environment or artifact.                                
                                                                                   
@@ -514,7 +514,7 @@ Test no-argument help (should show main help).
 
   $ jgo
                                                                                   
-   Usage: jgo [OPTIONS] COMMAND [ARGS]...                                         
+   Usage: jgo [OPTIONS] [COMMAND] [ARGS]...                                       
                                                                                   
    Environment manager and launcher for Java programs.                            
    Launch Java applications directly from Maven coordinates, build reproducible   
@@ -676,7 +676,7 @@ Test --help flag on main command.
 
   $ jgo --help
                                                                                   
-   Usage: jgo [OPTIONS] COMMAND [ARGS]...                                         
+   Usage: jgo [OPTIONS] [COMMAND] [ARGS]...                                       
                                                                                   
    Environment manager and launcher for Java programs.                            
    Launch Java applications directly from Maven coordinates, build reproducible   
