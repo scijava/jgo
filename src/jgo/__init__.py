@@ -331,7 +331,7 @@ def resolve(
 
 __all__ = (
     "__version__",
-    "run",
     "build",
     "resolve",
+    "run",
 )

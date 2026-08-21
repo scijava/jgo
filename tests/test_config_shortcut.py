@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Tests for `jgo config shortcut` command.
 
@@ -10,7 +9,7 @@ import tempfile
 from pathlib import Path
 
 from jgo.cli._args import ParsedArgs
-from jgo.cli._commands import config_shortcut as config_shortcut
+from jgo.cli._commands import config_shortcut
 
 
 class TestConfigShortcut:

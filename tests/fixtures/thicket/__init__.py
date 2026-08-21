@@ -15,4 +15,4 @@ Usage:
 
 from .generator import DEFAULT_SEED, generate_thicket
 
-__all__ = ["generate_thicket", "DEFAULT_SEED"]
+__all__ = ["DEFAULT_SEED", "generate_thicket"]

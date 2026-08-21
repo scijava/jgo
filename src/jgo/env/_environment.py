@@ -209,15 +209,17 @@ class Environment:
                         lockfile = self.lockfile
                         if lockfile:
                             for dep in lockfile.dependencies:
-                                if jar.name.startswith(
-                                    f"{dep.artifactId}-{dep.version}"
+                                if (
+                                    jar.name.startswith(
+                                        f"{dep.artifactId}-{dep.version}"
+                                    )
+                                    and dep.module_name
                                 ):
-                                    if dep.module_name:
-                                        return dep.module_name, True
+                                    return dep.module_name, True
                         # Fallback: detect module name
                         info = detect_module_info(jar)
                         return info.module_name, True
-            except (zipfile.BadZipFile, IOError):
+            except (OSError, zipfile.BadZipFile):
                 continue
 
         return None, False

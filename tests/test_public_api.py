@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Checks that jgo's public API is exported correctly and completely, and any changes
 since the last release align with the advertised dev version according to SemVer.
@@ -78,7 +77,7 @@ def _public_api(obj: griffe.Object, prefix: str = "") -> set[str]:
                 target = member.final_target
                 if isinstance(target, griffe.Class):
                     result |= _public_api(target, full)
-            except Exception:
+            except Exception:  # noqa: S110 - unresolvable aliases are skipped
                 pass
         else:
             result.add(full)
@@ -93,6 +92,7 @@ def _last_release_tag() -> str | None:
         capture_output=True,
         text=True,
         cwd=ROOT,
+        check=False,
     )
     tags = [t for t in result.stdout.splitlines() if re.fullmatch(r"\d+\.\d+\.\d+", t)]
     return tags[0] if tags else None
@@ -104,6 +104,7 @@ def _current_release_tag() -> str | None:
         capture_output=True,
         text=True,
         cwd=ROOT,
+        check=False,
     )
     if result.returncode != 0:
         return None

@@ -427,6 +427,7 @@ class TestIntegration:
             [str(javac_path), "-d", str(build_dir), str(java_source)],
             capture_output=True,
             text=True,
+            check=False,
         )
 
         if compile_result.returncode != 0:
@@ -446,6 +447,7 @@ class TestIntegration:
             ],
             capture_output=True,
             text=True,
+            check=False,
         )
 
         if jar_result.returncode != 0:

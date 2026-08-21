@@ -560,10 +560,7 @@ class EnvironmentBuilder:
             return False
 
         # Check if lockfile is stale (only for spec-based environments)
-        if check_staleness and self._is_lockfile_stale(environment):
-            return False
-
-        return True
+        return not (check_staleness and self._is_lockfile_stale(environment))
 
     def spec_to_dependencies(self, spec: EnvironmentSpec) -> list[Dependency]:
         """

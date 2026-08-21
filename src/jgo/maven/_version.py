@@ -483,7 +483,7 @@ def parse_version_range(range_spec: str) -> VersionRange:
         raise ValueError("Empty range specification")
 
     # Check if this is a range syntax (starts with bracket)
-    if not (range_spec.startswith("[") or range_spec.startswith("(")):
+    if not range_spec.startswith(("[", "(")):
         # Check for invalid bracket characters
         if range_spec[0] in "{<":
             raise ValueError(f"Invalid opening bracket: {range_spec[0]}")

@@ -176,7 +176,7 @@ def _list_shortcuts(config_file: Path, config: dict, args: ParsedArgs) -> int:
     console_print()
 
     # Find the longest shortcut name for alignment
-    max_name_len = max(len(name) for name in shortcuts.keys())
+    max_name_len = max(len(name) for name in shortcuts)
 
     for name in sorted(shortcuts.keys()):
         endpoint = shortcuts[name]

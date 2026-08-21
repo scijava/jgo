@@ -342,7 +342,11 @@ class JavaLocator:
         """
         try:
             result = subprocess.run(
-                [str(java_path), "-version"], capture_output=True, text=True, timeout=10
+                [str(java_path), "-version"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
             )
 
             # Java version output goes to stderr
@@ -509,7 +513,7 @@ def parse_jdk_activation_range(
         raise ValueError("Empty range specification")
 
     # Check if this is a range syntax (starts with bracket)
-    if not (range_spec.startswith("[") or range_spec.startswith("(")):
+    if not range_spec.startswith(("[", "(")):
         # Simple version - check if patch version was specified
         # If no patch (e.g., "1.8", "11"), treat as prefix match
         # If patch specified (e.g., "1.8.0_292"), treat as exact match
@@ -576,11 +580,14 @@ def parse_jdk_activation_range(
     upper_bound = parse_java_version(upper_str) if upper_str else None
 
     # Validate: if both bounds present, lower must be <= upper
-    if lower_bound is not None and upper_bound is not None:
-        if lower_bound > upper_bound:
-            raise ValueError(
-                f"Lower bound {lower_bound} > upper bound {upper_bound} in {range_spec}"
-            )
+    if (
+        lower_bound is not None
+        and upper_bound is not None
+        and lower_bound > upper_bound
+    ):
+        raise ValueError(
+            f"Lower bound {lower_bound} > upper bound {upper_bound} in {range_spec}"
+        )
 
     return (lower_bound, upper_bound, lower_inclusive, upper_inclusive)
 

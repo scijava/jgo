@@ -18,7 +18,7 @@ if sys.version_info >= (3, 11):
 else:
     import tomli as tomllib
 
-__all__ = ["tomllib", "load_toml_file"]
+__all__ = ["load_toml_file", "tomllib"]
 
 
 def load_toml_file(path: Path) -> dict | None:

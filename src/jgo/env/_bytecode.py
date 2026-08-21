@@ -6,10 +6,13 @@ Reads class file headers from JARs to determine minimum required Java version.
 
 from __future__ import annotations
 
+import logging
 import struct
 import zipfile
 from collections import Counter
 from typing import TYPE_CHECKING
+
+_log = logging.getLogger(__name__)
 
 # Map class file major version to Java version
 # Source: https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-4.html
@@ -160,9 +163,10 @@ def detect_jar_java_version(
                     class_bytes = jar.read(name)
                     major_version = read_class_version(class_bytes)
 
-                    if major_version is not None:
-                        if max_version is None or major_version > max_version:
-                            max_version = major_version
+                    if major_version is not None and (
+                        max_version is None or major_version > max_version
+                    ):
+                        max_version = major_version
 
                 except (
                     KeyError,
@@ -246,9 +250,8 @@ def detect_environment_java_version(jars_dir: Path) -> int | None:
 
     for jar_path in jars_dir.glob("*.jar"):
         version = detect_jar_java_version(jar_path, round_to_lts_version=False)
-        if version is not None:
-            if max_version is None or version > max_version:
-                max_version = version
+        if version is not None and (max_version is None or version > max_version):
+            max_version = version
 
     if max_version is not None:
         # Round the final result to LTS
@@ -307,7 +310,8 @@ def analyze_jar_bytecode(jar_path: Path) -> dict:
                         version_counts[major_version] += 1
                         class_versions.append((name, major_version))
 
-                except Exception:
+                except Exception as e:
+                    _log.debug(f"Skipping unreadable class {name}: {e}")
                     continue
 
     except (zipfile.BadZipFile, OSError):

@@ -106,9 +106,9 @@ from ._runner import JavaRunner
 
 __all__ = [
     "JVMConfig",
-    "is_gc_flag",
-    "JavaSource",
     "JavaLocator",
     "JavaRunner",
+    "JavaSource",
+    "is_gc_flag",
     "normalize_gc_flag",
 ]

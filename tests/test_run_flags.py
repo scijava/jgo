@@ -46,9 +46,11 @@ class TestExecuteRouting:
         args = ParsedArgs(
             endpoint="org.python:jython-standalone:2.7.4", ignore_config=True
         )
-        with patch("jgo.cli._commands.run._run_endpoint", return_value=0) as ep:
-            with patch("jgo.cli._commands.run._run_spec") as sp:
-                execute(args, {})
+        with (
+            patch("jgo.cli._commands.run._run_endpoint", return_value=0) as ep,
+            patch("jgo.cli._commands.run._run_spec") as sp,
+        ):
+            execute(args, {})
         ep.assert_called_once()
         sp.assert_not_called()
 
@@ -56,9 +58,11 @@ class TestExecuteRouting:
         monkeypatch.chdir(tmp_path)
         (tmp_path / "jgo.toml").write_text(_SPEC_TOML)
         args = ParsedArgs(endpoint=None, ignore_config=True)
-        with patch("jgo.cli._commands.run._run_endpoint") as ep:
-            with patch("jgo.cli._commands.run._run_spec", return_value=0) as sp:
-                execute(args, {})
+        with (
+            patch("jgo.cli._commands.run._run_endpoint") as ep,
+            patch("jgo.cli._commands.run._run_spec", return_value=0) as sp,
+        ):
+            execute(args, {})
         sp.assert_called_once()
         ep.assert_not_called()
 
@@ -71,9 +75,11 @@ class TestExecuteRouting:
             force_global=True,
             ignore_config=True,
         )
-        with patch("jgo.cli._commands.run._run_endpoint", return_value=0) as ep:
-            with patch("jgo.cli._commands.run._run_spec") as sp:
-                execute(args, {})
+        with (
+            patch("jgo.cli._commands.run._run_endpoint", return_value=0) as ep,
+            patch("jgo.cli._commands.run._run_spec") as sp,
+        ):
+            execute(args, {})
         ep.assert_called_once()
         sp.assert_not_called()
 
@@ -82,9 +88,11 @@ class TestExecuteRouting:
         monkeypatch.chdir(tmp_path)
         (tmp_path / "jgo.toml").write_text(_SPEC_TOML)
         args = ParsedArgs(endpoint=None, force_global=True, ignore_config=True)
-        with patch("jgo.cli._commands.run._run_endpoint", return_value=1) as ep:
-            with patch("jgo.cli._commands.run._run_spec") as sp:
-                execute(args, {})
+        with (
+            patch("jgo.cli._commands.run._run_endpoint", return_value=1) as ep,
+            patch("jgo.cli._commands.run._run_spec") as sp,
+        ):
+            execute(args, {})
         ep.assert_called_once()
         sp.assert_not_called()
 
@@ -185,17 +193,17 @@ class TestMainClassPriorityInSpecMode:
         # Spec's configured class — should be overridden
         mock_env.get_main_class.return_value = "org.python.util.jython"
 
-        with patch(
-            "jgo.cli._commands.run.create_java_runner", return_value=mock_runner
-        ):
-            with patch(
+        with (
+            patch("jgo.cli._commands.run.create_java_runner", return_value=mock_runner),
+            patch(
                 "jgo.cli._commands.run.create_environment_builder"
-            ) as mock_builder_factory:
-                mock_builder = MagicMock()
-                mock_builder.from_spec.return_value = mock_env
-                mock_builder_factory.return_value = mock_builder
+            ) as mock_builder_factory,
+        ):
+            mock_builder = MagicMock()
+            mock_builder.from_spec.return_value = mock_env
+            mock_builder_factory.return_value = mock_builder
 
-                _run_spec(args, {})
+            _run_spec(args, {})
 
         call_kwargs = mock_runner.run.call_args[1]
         assert call_kwargs["main_class"] == "org.python.util.PyConsole", (
@@ -218,17 +226,17 @@ class TestMainClassPriorityInSpecMode:
         mock_env = MagicMock()
         mock_env.get_main_class.return_value = "org.python.util.jython"
 
-        with patch(
-            "jgo.cli._commands.run.create_java_runner", return_value=mock_runner
-        ):
-            with patch(
+        with (
+            patch("jgo.cli._commands.run.create_java_runner", return_value=mock_runner),
+            patch(
                 "jgo.cli._commands.run.create_environment_builder"
-            ) as mock_builder_factory:
-                mock_builder = MagicMock()
-                mock_builder.from_spec.return_value = mock_env
-                mock_builder_factory.return_value = mock_builder
+            ) as mock_builder_factory,
+        ):
+            mock_builder = MagicMock()
+            mock_builder.from_spec.return_value = mock_env
+            mock_builder_factory.return_value = mock_builder
 
-                _run_spec(args, {})
+            _run_spec(args, {})
 
         call_kwargs = mock_runner.run.call_args[1]
         assert call_kwargs["main_class"] == "org.python.util.jython"

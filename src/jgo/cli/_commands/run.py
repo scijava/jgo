@@ -80,7 +80,7 @@ _GLOBAL_FLAGS: frozenset[str] = frozenset([
 @click.command(
     help=f"Run a Java application from {MAVEN_COORDINATES} or {JGO_TOML}.",
     epilog=TIP_DRY_RUN,
-    context_settings=dict(ignore_unknown_options=True, allow_interspersed_args=False),
+    context_settings={"ignore_unknown_options": True, "allow_interspersed_args": False},
 )
 @click.option(
     "--main-class",

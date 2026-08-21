@@ -200,10 +200,9 @@ def _parse_endpoint_dict(endpoint: str) -> dict:
                 last_token = tokens[-1]
 
                 # If it cannot be a Java class (violates identifier rules), skip
-                if not looks_like_main_class(last_token):
-                    pass
-                # If it looks like a version, skip
-                elif looks_like_version(last_token):
+                if not looks_like_main_class(last_token) or looks_like_version(
+                    last_token
+                ):
                     pass
                 # Otherwise, check deprecated main class pattern heuristics
                 elif "." in last_token or (last_token and last_token[0].isupper()):

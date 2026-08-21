@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Test for bug: jgo add fails after jgo init with @MainClass
 

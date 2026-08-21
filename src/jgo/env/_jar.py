@@ -20,6 +20,48 @@ from ..parse import coord2str
 
 _log = logging.getLogger(__name__)
 
+# JVM class file constant pool tags; see JVMS §4.4.
+_CP_UTF8 = 1
+_CP_INTEGER = 3
+_CP_FLOAT = 4
+_CP_LONG = 5
+_CP_DOUBLE = 6
+_CP_CLASS = 7
+_CP_STRING = 8
+_CP_FIELDREF = 9
+_CP_METHODREF = 10
+_CP_INTERFACE_METHODREF = 11
+_CP_NAME_AND_TYPE = 12
+_CP_METHOD_HANDLE = 15
+_CP_METHOD_TYPE = 16
+_CP_DYNAMIC = 17
+_CP_INVOKE_DYNAMIC = 18
+_CP_MODULE = 19
+_CP_PACKAGE = 20
+
+# Byte widths of constant pool entries that we skip over rather than decode.
+_CP_SKIP_WIDTHS = {
+    _CP_INTEGER: 4,
+    _CP_FLOAT: 4,
+    _CP_CLASS: 2,
+    _CP_STRING: 2,
+    _CP_FIELDREF: 4,
+    _CP_METHODREF: 4,
+    _CP_INTERFACE_METHODREF: 4,
+    _CP_NAME_AND_TYPE: 4,
+    _CP_METHOD_HANDLE: 3,
+    _CP_METHOD_TYPE: 2,
+    _CP_DYNAMIC: 4,
+    _CP_INVOKE_DYNAMIC: 4,
+    _CP_PACKAGE: 2,
+}
+
+# Constant pool entries that occupy two slots; see JVMS §4.4.5.
+_CP_WIDE_WIDTHS = {
+    _CP_LONG: 8,
+    _CP_DOUBLE: 8,
+}
+
 
 class JarType(IntEnum):
     """JPMS classification of a JAR file."""
@@ -179,7 +221,7 @@ def _find_module_info_path(
         if None in paths:
             return paths[None]
         if paths:
-            max_version = max(v for v in paths.keys() if v is not None)
+            max_version = max(v for v in paths if v is not None)
             return paths[max_version]
         return None
 
@@ -188,14 +230,14 @@ def _find_module_info_path(
         return paths[None]
 
     # Find highest versioned module-info that's <= target Java version
-    suitable_versions = [v for v in paths.keys() if v is not None and v <= java_version]
+    suitable_versions = [v for v in paths if v is not None and v <= java_version]
     if suitable_versions:
         best_version = max(suitable_versions)
         return paths[best_version]
 
     # No suitable version found - use lowest available version as fallback
     # (Better than nothing, Java will error if truly incompatible)
-    versioned_keys = [v for v in paths.keys() if v is not None]
+    versioned_keys = [v for v in paths if v is not None]
     if versioned_keys:
         return paths[min(versioned_keys)]
 
@@ -225,10 +267,9 @@ def parse_module_name_from_descriptor(
         return None
 
     try:
-        with zipfile.ZipFile(jar_path) as jar:
-            with jar.open(module_info_path) as f:
-                data = f.read()
-                return _parse_module_name(data)
+        with zipfile.ZipFile(jar_path) as jar, jar.open(module_info_path) as f:
+            data = f.read()
+            return _parse_module_name(data)
     except (zipfile.BadZipFile, KeyError, FileNotFoundError):
         return None
 
@@ -277,7 +318,7 @@ def _parse_module_name(class_bytes: bytes) -> str | None:
         tag = class_bytes[pos]
         pos += 1
 
-        if tag == 1:  # CONSTANT_Utf8_info
+        if tag == _CP_UTF8:
             if pos + 2 > len(class_bytes):
                 return None
             length = struct.unpack(">H", class_bytes[pos : pos + 2])[0]
@@ -287,61 +328,20 @@ def _parse_module_name(class_bytes: bytes) -> str | None:
             utf8_str = class_bytes[pos : pos + length].decode("utf-8", errors="replace")
             pos += length
             constant_pool.append(("Utf8", utf8_str))
-        elif tag == 19:  # CONSTANT_Module_info
+        elif tag == _CP_MODULE:
             if pos + 2 > len(class_bytes):
                 return None
             name_index = struct.unpack(">H", class_bytes[pos : pos + 2])[0]
             pos += 2
             constant_pool.append(("Module", name_index))
-        elif tag == 20:  # CONSTANT_Package_info
-            pos += 2
+        elif tag in _CP_SKIP_WIDTHS:
+            pos += _CP_SKIP_WIDTHS[tag]
             constant_pool.append(None)
-        elif tag == 7:  # CONSTANT_Class_info
-            pos += 2
-            constant_pool.append(None)
-        elif tag == 9:  # CONSTANT_Fieldref_info
-            pos += 4
-            constant_pool.append(None)
-        elif tag == 10:  # CONSTANT_Methodref_info
-            pos += 4
-            constant_pool.append(None)
-        elif tag == 11:  # CONSTANT_InterfaceMethodref_info
-            pos += 4
-            constant_pool.append(None)
-        elif tag == 8:  # CONSTANT_String_info
-            pos += 2
-            constant_pool.append(None)
-        elif tag == 3:  # CONSTANT_Integer_info
-            pos += 4
-            constant_pool.append(None)
-        elif tag == 4:  # CONSTANT_Float_info
-            pos += 4
-            constant_pool.append(None)
-        elif tag == 5:  # CONSTANT_Long_info (takes 2 slots)
-            pos += 8
+        elif tag in _CP_WIDE_WIDTHS:
+            pos += _CP_WIDE_WIDTHS[tag]
             constant_pool.append(None)
             constant_pool.append(None)
-            i += 1
-        elif tag == 6:  # CONSTANT_Double_info (takes 2 slots)
-            pos += 8
-            constant_pool.append(None)
-            constant_pool.append(None)
-            i += 1
-        elif tag == 12:  # CONSTANT_NameAndType_info
-            pos += 4
-            constant_pool.append(None)
-        elif tag == 15:  # CONSTANT_MethodHandle_info
-            pos += 3
-            constant_pool.append(None)
-        elif tag == 16:  # CONSTANT_MethodType_info
-            pos += 2
-            constant_pool.append(None)
-        elif tag == 17:  # CONSTANT_Dynamic_info
-            pos += 4
-            constant_pool.append(None)
-        elif tag == 18:  # CONSTANT_InvokeDynamic_info
-            pos += 4
-            constant_pool.append(None)
+            i += 1  # Wide entries consume two constant pool slots.
         else:
             # Unknown tag, can't continue
             return None
@@ -547,9 +547,8 @@ def read_embedded_pom(jar_path: Path, entry: str) -> str | None:
         The POM's XML content, or None if the entry is absent or unreadable.
     """
     try:
-        with zipfile.ZipFile(jar_path) as jar:
-            with jar.open(entry) as f:
-                return f.read().decode("utf-8")
+        with zipfile.ZipFile(jar_path) as jar, jar.open(entry) as f:
+            return f.read().decode("utf-8")
     except (zipfile.BadZipFile, FileNotFoundError, KeyError, OSError) as e:
         _log.debug(f"Could not read {entry} from {jar_path}: {e}")
         return None
@@ -829,7 +828,7 @@ def autocomplete_main_class(
                         entry = entry.strip()
                         if pattern.match(entry):
                             return entry[:-6].replace("/", ".")
-            except (zipfile.BadZipFile, IOError):
+            except (OSError, zipfile.BadZipFile):
                 continue
         # If auto-completion fails, raise error for old format
         raise ValueError(f"Unable to auto-complete main class: {main_class}")
@@ -852,7 +851,7 @@ def autocomplete_main_class(
                     entry = entry.strip()
                     if pattern.match(entry):
                         return entry[:-6].replace("/", ".")
-        except (zipfile.BadZipFile, IOError):
+        except (OSError, zipfile.BadZipFile):
             continue
     # If auto-completion fails, return the original name (might still work if it's in default package)
     warnings.warn(
@@ -1195,9 +1194,7 @@ def find_main_classes(jar_path: Path) -> list[str]:
                     continue
 
                 # Skip module-info and package-info
-                if name.endswith("module-info.class") or name.endswith(
-                    "package-info.class"
-                ):
+                if name.endswith(("module-info.class", "package-info.class")):
                     continue
 
                 # Skip inner classes (contain $)

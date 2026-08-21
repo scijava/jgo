@@ -16,14 +16,14 @@ from xml.etree import ElementTree as ET
 ET.register_namespace("", "http://maven.apache.org/POM/4.0.0")
 ET.register_namespace("xsi", "http://www.w3.org/2001/XMLSchema-instance")
 
-TEMPLATE: bytes = """\
+TEMPLATE: bytes = b"""\
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" \
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" \
 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 \t<modelVersion>4.0.0</modelVersion>
 </project>
-""".encode("UTF-8")
+"""
 
 # for l in a b c d e f g h i j k l m n o p q r s t u v w x y z
 # do

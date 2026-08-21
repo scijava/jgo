@@ -53,9 +53,11 @@ def test_solr_search_unparseable_response():
     response.read.return_value = b"<html>down for maintenance</html>"
     response.__enter__.return_value = response
 
-    with patch("urllib.request.urlopen", return_value=response):
-        with pytest.raises(RuntimeError, match="Failed to parse response"):
-            solr_search("anything")
+    with (
+        patch("urllib.request.urlopen", return_value=response),
+        pytest.raises(RuntimeError, match="Failed to parse response"),
+    ):
+        solr_search("anything")
 
 
 def test_coordinates_by_sha1():

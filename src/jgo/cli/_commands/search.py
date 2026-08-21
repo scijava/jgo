@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 import rich_click as click
@@ -332,7 +332,7 @@ def _display_results(results: list[dict], detailed: bool = False) -> None:
                 # Convert timestamp to readable format
                 timestamp = result["last_updated"]
                 # Timestamp is in milliseconds
-                dt = datetime.fromtimestamp(timestamp / 1000)
+                dt = datetime.fromtimestamp(timestamp / 1000, tz=timezone.utc)
                 console_print(f"   Last updated: {dt.strftime('%Y-%m-%d')}")
 
         console_print()

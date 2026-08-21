@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Basic tests for the Maven layer to verify the port was successful.
 """

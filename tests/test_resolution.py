@@ -336,7 +336,7 @@ def test_multi_component_resolution(m2_repo):
 
     # All dependencies should be unique (no duplicates)
     assert len(resolved_deps) == len(
-        set((d.groupId, d.artifactId, d.version) for d in resolved_deps)
+        {(d.groupId, d.artifactId, d.version) for d in resolved_deps}
     )
 
     # Should have scijava-common (from both minimaven and parsington's dependencies)
@@ -364,7 +364,7 @@ def test_managed_version_resolution(m2_repo):
     )
 
     # Use get_dependency_list which returns root node with dependencies as children
-    root, dep_nodes = resolver.get_dependency_list(deps)
+    root, _ = resolver.get_dependency_list(deps)
 
     # The root's children should include the resolved components
     # Find minimaven in root's children

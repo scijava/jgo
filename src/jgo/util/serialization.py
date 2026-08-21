@@ -7,13 +7,15 @@ Provides reusable serialization/deserialization capabilities for TOML files.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Callable, ClassVar, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import tomli_w
+from typing_extensions import Self
 
 from .toml import tomllib
 
-_T = TypeVar("_T", bound="TOMLSerializableMixin")
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class TOMLSerializableMixin:
@@ -34,7 +36,7 @@ class TOMLSerializableMixin:
     VALIDATION_ERROR_MESSAGE: ClassVar[str] = "Invalid {class_name} in {path}: {error}"
 
     @classmethod
-    def load(cls: type[_T], path: Path | str) -> _T:
+    def load(cls, path: Path | str) -> Self:
         """Load instance from a TOML file."""
         path = Path(path)
         if not path.exists():
@@ -81,7 +83,7 @@ class TOMLSerializableMixin:
         )
 
     @classmethod
-    def _from_dict(cls: type[_T], data: dict, path: Path | None = None) -> _T:
+    def _from_dict(cls, data: dict, path: Path | None = None) -> Self:
         """Create instance from parsed TOML dict."""
         raise NotImplementedError(f"{cls.__name__} must implement _from_dict()")
 
@@ -105,16 +107,15 @@ class TOMLSerializableMixin:
 
         # If "default" exists, check if it looks like an entrypoint name or a reference
         default_value = entrypoints_section.get("default")
-        if default_value is not None:
-            # If default_value contains a dot, it's likely a main class (entrypoint),
-            # not a reference to another entrypoint name
-            if "." in str(default_value):
-                raise ValueError(
-                    'Entrypoint name "default" is reserved for specifying the default entrypoint. '
-                    f'The value "{default_value}" appears to be a main class. '
-                    "Create a named entrypoint and reference it: "
-                    'e.g., main = "{}", default = "main"'.format(default_value)
-                )
+        # If default_value contains a dot, it's likely a main class (entrypoint),
+        # not a reference to another entrypoint name
+        if default_value is not None and "." in str(default_value):
+            raise ValueError(
+                'Entrypoint name "default" is reserved for specifying the default entrypoint. '
+                f'The value "{default_value}" appears to be a main class. '
+                "Create a named entrypoint and reference it: "
+                'e.g., main = "{}", default = "main"'.format(default_value)
+            )
 
         default_entrypoint = entrypoints_section.pop("default", None)
         entrypoints = entrypoints_section

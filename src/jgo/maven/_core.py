@@ -32,7 +32,7 @@ from functools import cmp_to_key
 from hashlib import md5, sha1
 from os import environ
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING
 
 import requests
 
@@ -45,6 +45,7 @@ from ._pom import POM, parse_dependency_element_to_coordinate
 from ._version import compare_versions
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from datetime import datetime
 
     from ._metadata import Metadata
@@ -406,15 +407,21 @@ class Project:
             not_found_file = repo_cache_dir / f"maven-metadata-{repo_name}.404"
 
             # Skip this repo if its cached success file is still fresh.
-            if max_age and metadata_file.exists():
-                if (now - metadata_file.stat().st_mtime) < max_age:
-                    continue
+            if (
+                max_age
+                and metadata_file.exists()
+                and (now - metadata_file.stat().st_mtime) < max_age
+            ):
+                continue
 
             # Skip this repo if its cached 404 sentinel is still fresh.
-            if max_age and not_found_file.exists():
-                if (now - not_found_file.stat().st_mtime) < max_age:
-                    failures.append(f"  {repo_name}: HTTP 404 (cached)")
-                    continue
+            if (
+                max_age
+                and not_found_file.exists()
+                and (now - not_found_file.stat().st_mtime) < max_age
+            ):
+                failures.append(f"  {repo_name}: HTTP 404 (cached)")
+                continue
 
             # NOTE: as_posix() is needed to convert Windows paths to URL-compatible syntax.
             metadata_url = (
@@ -1061,7 +1068,7 @@ class Dependency:
         self.scope = scope
         self.optional = optional
         self.exclusions: tuple[Project, ...] = (
-            tuple() if exclusions is None else tuple(exclusions)
+            () if exclusions is None else tuple(exclusions)
         )
         self.raw = raw
 

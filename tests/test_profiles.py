@@ -1,4 +1,5 @@
 import xml.etree.ElementTree as ET
+from typing import ClassVar
 
 from jgo.maven import MavenContext, Model, ProfileConstraints, PythonResolver
 
@@ -11,7 +12,7 @@ class MockPOM:
     version = "v"
     name = "n"
     description = "d"
-    properties: dict = {}
+    properties: ClassVar[dict] = {}
 
     def elements(self, xpath):
         return []

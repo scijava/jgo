@@ -648,6 +648,6 @@ def unset_cmd(
 
 
 # Import and register shortcut subcommand
-from .config_shortcut import shortcut  # noqa: E402
+from .config_shortcut import shortcut
 
 config.add_command(shortcut)

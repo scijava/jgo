@@ -272,14 +272,16 @@ class PythonResolver(Resolver):
 
                 # Use progress callback if provided and size is known
                 if self.progress_callback and total_size > 0:
-                    with self.progress_callback(
-                        artifact.filename, total_size
-                    ) as update_progress:
-                        with open(cached_file, "wb") as f:
-                            for chunk in response.iter_content(chunk_size=8192):
-                                f.write(chunk)
-                                sha1.update(chunk)
-                                update_progress(len(chunk))
+                    with (
+                        self.progress_callback(
+                            artifact.filename, total_size
+                        ) as update_progress,
+                        open(cached_file, "wb") as f,
+                    ):
+                        for chunk in response.iter_content(chunk_size=8192):
+                            f.write(chunk)
+                            sha1.update(chunk)
+                            update_progress(len(chunk))
                 else:
                     with open(cached_file, "wb") as f:
                         for chunk in response.iter_content(chunk_size=8192):
@@ -545,16 +547,19 @@ class MvnResolver(Resolver):
             coord = Coordinate.parse(content)
 
             # For dependency:list output, we need to validate the scope
-            if require_scope:
-                if not coord.scope or coord.scope not in (
+            if require_scope and (
+                not coord.scope
+                or coord.scope
+                not in (
                     "compile",
                     "runtime",
                     "provided",
                     "test",
                     "system",
                     "import",
-                ):
-                    return None
+                )
+            ):
+                return None
 
             return context.create_dependency(coord)
         except ValueError:
@@ -723,7 +728,7 @@ class MvnResolver(Resolver):
         Returns:
             Tuple of (root_node, flat_list_of_dependencies)
         """
-        resolved_inputs, resolved_transitive = self.resolve(
+        _resolved_inputs, resolved_transitive = self.resolve(
             dependencies,
             transitive=transitive,
             optional_depth=optional_depth,
@@ -840,7 +845,7 @@ class MvnResolver(Resolver):
                     stack.pop()
 
                 if stack:
-                    parent_indent, parent_node = stack[-1]
+                    _parent_indent, parent_node = stack[-1]
                     parent_node.children.append(node)
 
                 stack.append((indent, node))
@@ -854,7 +859,7 @@ class MvnResolver(Resolver):
     def _run(command, *args) -> str:
         command_and_args = (command,) + args
         _log.debug(f"Executing: {command_and_args}")
-        result = run(command_and_args, capture_output=True)
+        result = run(command_and_args, capture_output=True, check=False)
         if result.returncode == 0:
             return result.stdout.decode()
 

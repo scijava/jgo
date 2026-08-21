@@ -60,7 +60,7 @@ def test_create_maven_context_auto_resolver_constraints():
     assert constraints.jdk == "17"
     assert constraints.os_name == "Linux"
     # None platform fields are filled in from the current system
-    detected_name, detected_family, detected_arch = detect_os_properties()
+    _detected_name, detected_family, detected_arch = detect_os_properties()
     assert constraints.os_family == detected_family
     assert constraints.os_arch == detected_arch
 

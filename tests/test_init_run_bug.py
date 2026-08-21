@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Regression test for bug: jgo run --main-class doesn't work after jgo init
 

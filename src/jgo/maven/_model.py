@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import logging
 from re import findall
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING
 
 from ..util.java import (
     parse_java_version,
@@ -16,6 +16,8 @@ from ..util.java import (
 from ._core import Dependency, DependencyNode, MavenContext, Project
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from ._pom import POM
     from ._profile import ProfileConstraints
 
@@ -297,7 +299,7 @@ class Model:
         # parent_scope is used for scope transformation
         # accumulated_exclusions tracks all exclusions from ancestors
         queue: list[tuple[Model, Dependency | None, str | None, tuple]] = [
-            (self, None, None, tuple())
+            (self, None, None, ())
         ]
         current_depth = 0
 

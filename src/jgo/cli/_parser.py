@@ -49,7 +49,8 @@ from ._console import setup_consoles
 from .rich._logging import setup_rich_logging
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
+    from collections.abc import Callable
+    from typing import Any
 
 _log = logging.getLogger(__name__)
 
@@ -361,7 +362,10 @@ def global_options(f: Callable[..., Any]) -> Callable[..., Any]:
 @click.group(
     cls=JgoGroup,
     invoke_without_command=True,
-    context_settings=dict(ignore_unknown_options=True, allow_interspersed_args=False),
+    context_settings={
+        "ignore_unknown_options": True,
+        "allow_interspersed_args": False,
+    },
     help=f"""[bold]Environment manager and launcher for Java programs.[/]
 
 Launch Java applications directly from [bold {STYLES["domain"]}]Maven coordinates[/],
@@ -516,7 +520,10 @@ def _build_prog_name(ctx: click.Context, cmd_name: str) -> str:
 
 
 @cli.command(
-    context_settings=dict(ignore_unknown_options=True, allow_interspersed_args=False)
+    context_settings={
+        "ignore_unknown_options": True,
+        "allow_interspersed_args": False,
+    }
 )
 @click.argument("commands", nargs=-1, required=False)
 @click.pass_context

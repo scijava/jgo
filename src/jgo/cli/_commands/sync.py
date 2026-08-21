@@ -111,8 +111,8 @@ def execute(args: ParsedArgs, config: dict) -> int:
             if lock_path and lock_path.exists():
                 try:
                     old_lockfile = LockFile.load(lock_path)
-                except Exception:
-                    pass  # Ignore errors loading old lockfile
+                except Exception as e:
+                    _log.debug(f"Ignoring unreadable lock file {lock_path}: {e}")
 
         # Build environment from spec
         env = builder.from_spec(spec, update=update)

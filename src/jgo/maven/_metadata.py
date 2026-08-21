@@ -5,14 +5,15 @@ Maven metadata handling (maven-metadata.xml files).
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timezone
 from itertools import combinations
 from re import match
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING
 
 from ._pom import XML
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from pathlib import Path
 
 
@@ -157,10 +158,14 @@ class SnapshotMetadataXML(MetadataXML):
         build_num = self.snapshot_build_number
         version = self.value("version")
 
-        if timestamp and build_num is not None and version:
-            if version.endswith("-SNAPSHOT"):
-                base = version[:-9]  # Remove "-SNAPSHOT"
-                return f"{base}-{timestamp}-{build_num}"
+        if (
+            timestamp
+            and build_num is not None
+            and version
+            and version.endswith("-SNAPSHOT")
+        ):
+            base = version[:-9]  # Remove "-SNAPSHOT"
+            return f"{base}-{timestamp}-{build_num}"
 
         return None
 
@@ -178,7 +183,8 @@ class Metadatas(Metadata):
 
     def __init__(self, metadatas: Iterable[Metadata]):
         self.metadatas: list[Metadata] = sorted(
-            metadatas, key=lambda m: m.lastUpdated or datetime.min
+            metadatas,
+            key=lambda m: m.lastUpdated or datetime.min.replace(tzinfo=timezone.utc),
         )
         for a, b in combinations(self.metadatas, 2):
             assert a.groupId == b.groupId and a.artifactId == b.artifactId
@@ -252,13 +258,16 @@ def ts2dt(ts: str) -> datetime:
     * 20210702.144917 (seen in deployed SNAPSHOT filenames and <snapshotVersion><value>)
     * 1753285313947 (Unix milliseconds, written by some Maven clients)
     * 1753285313 (Unix seconds, written by some Maven clients)
+
+    Maven writes these timestamps in UTC, so the result is UTC-aware.
     """
     m = match(r"(\d{4})(\d\d)(\d\d)\.?(\d\d)(\d\d)(\d\d)", ts)
     if m:
-        return datetime(*map(int, m.groups()))  # type: ignore[arg-type]
+        year, month, day, hour, minute, second = (int(g) for g in m.groups())
+        return datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
     # Some Maven clients write <lastUpdated> as a Unix epoch timestamp.
     if match(r"\d{13}", ts):
-        return datetime.fromtimestamp(int(ts) / 1000)
+        return datetime.fromtimestamp(int(ts) / 1000, tz=timezone.utc)
     if match(r"\d{10}", ts):
-        return datetime.fromtimestamp(int(ts))
+        return datetime.fromtimestamp(int(ts), tz=timezone.utc)
     raise ValueError(f"Invalid timestamp: {ts}")

@@ -98,11 +98,22 @@ extend-exclude = ["bin", "build", "dist"]
 
 [tool.ruff.lint]
 extend-select = ["TC", "UP037"]
-extend-ignore = ["E203"]
+extend-ignore = [
+    "E203",
+    # Broad `except Exception` is deliberate: CLI commands and best-effort
+    # probes (JAR scanning, metadata lookups) must degrade gracefully rather
+    # than crash on any single failure. Such handlers always log the cause.
+    "BLE001",
+    # jgo reports invalid user input (jgo.toml, coordinates, CLI arguments) as
+    # ValueError regardless of whether the value or its type is wrong; callers
+    # throughout the codebase catch ValueError to render friendly messages.
+    "TRY004",
+]
 
 [tool.ruff.lint.per-file-ignores]
 # Ignore `E402` (import violations) in all `__init__.py` files, and in `path/to/file.py`.
-"__init__.py" = ["E402", "F401"]
+# Ignore `RUF022` too: the `__all__` lists are grouped by source module, not sorted.
+"__init__.py" = ["E402", "F401", "RUF022"]
 
 [tool.pytest.ini_options]
 filterwarnings = [

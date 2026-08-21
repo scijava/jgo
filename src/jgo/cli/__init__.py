@@ -13,9 +13,9 @@ from ._context import (
 )
 
 __all__ = [
-    "rich",
     "ParsedArgs",
     "create_environment_builder",
     "create_java_runner",
     "create_maven_context",
+    "rich",
 ]

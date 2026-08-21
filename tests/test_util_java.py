@@ -176,6 +176,8 @@ class TestParseJdkActivationRange:
         lower, upper, l_inc, u_inc = parse_jdk_activation_range(" [ 11 , 17 ] ")
         assert lower == JavaVersion(11, 0, 0)
         assert upper == JavaVersion(17, 0, 0)
+        assert l_inc is True
+        assert u_inc is True
 
     def test_empty_string(self):
         with pytest.raises(ValueError, match="Empty range specification"):
