@@ -16,6 +16,9 @@ Test main help output.
   │                                                    exit.                     │
   │ --ignore-config                                    Ignore ~/.config/jgo.conf │
   │                                                    file.                     │
+  │ --config                FILE                       Use FILE as the jgo       │
+  │                                                    settings file. [env var:  │
+  │                                                    JGO_CONFIG_FILE]          │
   │ --full-coordinates                                 Include coordinate        │
   │                                                    components with default   │
   │                                                    values (jar packaging,    │
@@ -527,6 +530,9 @@ Test no-argument help (should show main help).
   │                                                    exit.                     │
   │ --ignore-config                                    Ignore ~/.config/jgo.conf │
   │                                                    file.                     │
+  │ --config                FILE                       Use FILE as the jgo       │
+  │                                                    settings file. [env var:  │
+  │                                                    JGO_CONFIG_FILE]          │
   │ --full-coordinates                                 Include coordinate        │
   │                                                    components with default   │
   │                                                    values (jar packaging,    │
@@ -689,6 +695,9 @@ Test --help flag on main command.
   │                                                    exit.                     │
   │ --ignore-config                                    Ignore ~/.config/jgo.conf │
   │                                                    file.                     │
+  │ --config                FILE                       Use FILE as the jgo       │
+  │                                                    settings file. [env var:  │
+  │                                                    JGO_CONFIG_FILE]          │
   │ --full-coordinates                                 Include coordinate        │
   │                                                    components with default   │
   │                                                    values (jar packaging,    │

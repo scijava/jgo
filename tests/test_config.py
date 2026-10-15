@@ -130,3 +130,20 @@ custom_repo = https://custom.example.com/maven2
     assert config.cache_dir == custom_cache_path
     assert "custom_repo" in config.repositories
     assert config.repositories["custom_repo"] == "https://custom.example.com/maven2"
+
+
+def test_jgo_config_file_overrides_xdg(monkeypatch, tmp_path):
+    """Test that JGO_CONFIG_FILE takes priority over XDG and legacy locations."""
+    from jgo.config import get_settings_path
+
+    monkeypatch.setattr("jgo.constants.get_user_home", lambda: tmp_path)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
+    (tmp_path / "xdg").mkdir()
+    (tmp_path / "xdg" / "jgo.conf").write_text("[settings]\n")
+    custom = tmp_path / "custom" / "my.conf"
+    monkeypatch.setenv("JGO_CONFIG_FILE", str(custom))
+
+    assert get_settings_path() == custom
+
+    monkeypatch.delenv("JGO_CONFIG_FILE")
+    assert get_settings_path() == tmp_path / "xdg" / "jgo.conf"

@@ -72,6 +72,18 @@ def default_jgo_cache() -> Path:
     return get_user_home() / ".cache" / "jgo"
 
 
+def env_settings_path() -> Path | None:
+    """
+    Get the explicitly requested settings file path, if any.
+
+    Respects the JGO_CONFIG_FILE environment variable; returns None if unset.
+    """
+    config_file = os.getenv("JGO_CONFIG_FILE")
+    if config_file:
+        return Path(config_file).expanduser()
+    return None
+
+
 def xdg_settings_path() -> Path:
     """
     Get XDG settings file path.

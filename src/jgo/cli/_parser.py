@@ -5,6 +5,7 @@ CLI argument parser for jgo.
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -96,6 +97,17 @@ class JgoGroup(click.RichGroup):
             _log.warning(f"Could not load settings to check shortcuts: {e}")
 
         return super().invoke(ctx)
+
+
+def _apply_config_option(
+    ctx: click.Context, param: click.Parameter, value: Path | None
+) -> Path | None:
+    # Note: Exported via the environment so that all settings lookups agree,
+    # including the shortcut check in JgoGroup.invoke, which precedes the
+    # group callback.
+    if value is not None:
+        os.environ["JGO_CONFIG_FILE"] = str(value)
+    return value
 
 
 # Global options (available to all commands)
@@ -335,6 +347,17 @@ def global_options(f: Callable[..., Any]) -> Callable[..., Any]:
         "--full-coordinates",
         is_flag=True,
         help="Include coordinate components with default values (jar packaging, compile scope).",
+    )(f)
+    f = click.option(
+        "--config",
+        type=click.Path(path_type=Path, dir_okay=False),
+        metavar="FILE",
+        callback=_apply_config_option,
+        expose_value=False,
+        is_eager=True,
+        help="Use FILE as the jgo settings file.",
+        envvar="JGO_CONFIG_FILE",
+        show_envvar=True,
     )(f)
     f = click.option(
         "--ignore-config", is_flag=True, help="Ignore ~/.config/jgo.conf file."

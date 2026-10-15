@@ -73,6 +73,7 @@ These options apply to all commands and must appear **before** the command name:
 | `--os-version VERSION` | OS version for profile activation. |
 | `--module-path-only` | Force all JARs to module-path (treat as modular). |
 | `--class-path-only` | Force all JARs to classpath (disable module detection). |
+| `--config FILE` | Use FILE as the settings file. Env: `JGO_CONFIG_FILE`. |
 | `--ignore-config` | Ignore the `~/.config/jgo.conf` settings file. |
 
 ## Commands

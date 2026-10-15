@@ -161,3 +161,16 @@ Test config shortcut --list.
   [settings]
   links = soft
   
+
+Test --config flag selects an explicit settings file.
+
+  $ jgo --config "$TESTDIR/jgo.conf" -v config list | head -1
+  Configuration from */jgo.conf: (glob)
+
+Test JGO_CONFIG_FILE environment variable, which --config overrides.
+
+  $ printf '[settings]\nlinks = hard\n' > "$TMPDIR/other.conf"
+  $ JGO_CONFIG_FILE="$TMPDIR/other.conf" jgo config get links
+  hard
+  $ JGO_CONFIG_FILE="$TMPDIR/other.conf" jgo --config "$TESTDIR/jgo.conf" config get links
+  soft

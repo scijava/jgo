@@ -13,6 +13,7 @@ from ..constants import (
     SETTINGS_FILE_DISPLAY_NAME,
     SETTINGS_FILE_LEGACY_NAME,
     SETTINGS_FILE_XDG_NAME,
+    env_settings_path,
     legacy_settings_path,
     xdg_settings_path,
 )
@@ -29,10 +30,16 @@ def get_settings_path() -> Path:
 
     Returns:
         Path to settings file with the following precedence:
+        - $JGO_CONFIG_FILE if set (used as-is, even if it does not exist)
         - ~/.config/jgo.conf if it exists (preferred location)
         - ~/.jgorc if it exists (legacy backward compatibility)
         - ~/.config/jgo.conf otherwise (default for new installations)
     """
+    env_path = env_settings_path()
+    if env_path is not None:
+        _log.debug(f"Using settings file from JGO_CONFIG_FILE: {env_path}")
+        return env_path
+
     xdg_path = xdg_settings_path()
     legacy_path = legacy_settings_path()
 

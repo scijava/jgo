@@ -6,10 +6,13 @@ jgo is configured through a combination of settings files, environment variables
 
 The global settings file uses INI format. jgo checks these locations in order:
 
-1. `~/.config/jgo.conf` (XDG Base Directory standard -- recommended)
-2. `~/.jgorc` (legacy location, still supported)
+1. `$JGO_CONFIG_FILE`, if set (see below)
+2. `~/.config/jgo.conf` (XDG Base Directory standard -- recommended)
+3. `~/.jgorc` (legacy location, still supported)
 
-If both exist, the XDG location takes precedence.
+If both exist, the XDG location takes precedence. The XDG location honors `$XDG_CONFIG_HOME` (i.e. `$XDG_CONFIG_HOME/jgo.conf`).
+
+To use a settings file elsewhere, pass `--config FILE` or set `JGO_CONFIG_FILE` to its path. It is used as-is, taking priority over the locations below it; if the file does not exist, jgo behaves as though it were empty.
 
 ### Format
 
@@ -101,6 +104,7 @@ jgo config shortcut --remove imagej          # Remove
 | Variable | Description | Equivalent flag |
 |:---------|:------------|:----------------|
 | `JGO_CACHE_DIR` | Override cache directory | `--cache-dir` |
+| `JGO_CONFIG_FILE` | Path to the settings file | `--config` |
 | `M2_REPO` | Override Maven repository location | `--repo-cache` |
 | `JAVA_HOME` | Java installation (when using system Java) | `--system-java` |
 | `JAVA_VERSION` | Force specific Java version | `--java-version` |

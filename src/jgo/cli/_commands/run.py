@@ -70,6 +70,7 @@ _GLOBAL_FLAGS: frozenset[str] = frozenset([
     "--class-path-only",
     "--module-path-only",
     "--full-coordinates",
+    "--config",
     "--ignore-config",
     "--ignore-jgorc",
     "--version",
