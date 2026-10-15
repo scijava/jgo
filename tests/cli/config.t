@@ -162,7 +162,7 @@ Test config shortcut --list.
   links = soft
   
 
-Test --config flag selects an explicit settings file.
+Test --config flag selects an explicit config file.
 
   $ jgo --config "$TESTDIR/jgo.conf" -v config list | head -1
   Configuration from */jgo.conf: (glob)

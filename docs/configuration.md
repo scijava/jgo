@@ -1,10 +1,10 @@
 # Configuration
 
-jgo is configured through a combination of settings files, environment variables, command-line flags, and `jgo.toml` project files.
+jgo is configured through a combination of config files, environment variables, command-line flags, and `jgo.toml` project files.
 
-## Settings file
+## Config file
 
-The global settings file uses INI format. jgo checks these locations in order:
+The global config file (`jgo.conf`) uses INI format, with sections such as `[settings]`, `[repositories]`, `[shortcuts]`, `[jvm]` and `[styles]`. jgo checks these locations in order:
 
 1. `$JGO_CONFIG_FILE`, if set (see below)
 2. `~/.config/jgo.conf` (XDG Base Directory standard -- recommended)
@@ -12,7 +12,7 @@ The global settings file uses INI format. jgo checks these locations in order:
 
 If both exist, the XDG location takes precedence. The XDG location honors `$XDG_CONFIG_HOME` (i.e. `$XDG_CONFIG_HOME/jgo.conf`).
 
-To use a settings file elsewhere, pass `--config FILE` or set `JGO_CONFIG_FILE` to its path. It is used as-is, taking priority over the locations below it; if the file does not exist, jgo behaves as though it were empty.
+To use a config file elsewhere, pass `--config FILE` or set `JGO_CONFIG_FILE` to its path. It is used as-is, taking priority over the locations below it; if the file does not exist, jgo behaves as though it were empty.
 
 ### Format
 
@@ -104,7 +104,7 @@ jgo config shortcut --remove imagej          # Remove
 | Variable | Description | Equivalent flag |
 |:---------|:------------|:----------------|
 | `JGO_CACHE_DIR` | Override cache directory | `--cache-dir` |
-| `JGO_CONFIG_FILE` | Path to the settings file | `--config` |
+| `JGO_CONFIG_FILE` | Path to the config file | `--config` |
 | `M2_REPO` | Override Maven repository location | `--repo-cache` |
 | `JAVA_HOME` | Java installation (when using system Java) | `--system-java` |
 | `JAVA_VERSION` | Force specific Java version | `--java-version` |
@@ -122,5 +122,5 @@ Configuration is merged with this precedence (highest to lowest):
 1. Command-line flags (`--cache-dir`, `-r`, etc.)
 2. Environment variables (`JGO_CACHE_DIR`, etc.)
 3. `jgo.toml` settings (in project mode)
-4. Settings file (`~/.config/jgo.conf` or `~/.jgorc`)
+4. Config file (`~/.config/jgo.conf` or `~/.jgorc`)
 5. Built-in defaults

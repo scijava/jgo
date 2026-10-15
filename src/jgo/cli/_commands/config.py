@@ -123,7 +123,7 @@ def _list_config(config_file: Path, config_type: str, args: ParsedArgs) -> int:
 
 
 def _list_jgorc(config_file: Path, args: ParsedArgs) -> int:
-    """List all configuration from global settings file."""
+    """List all configuration from global config file."""
 
     settings = GlobalSettings.load(config_file)
 
@@ -203,7 +203,7 @@ def _get_config(config_file: Path, config_type: str, key: str, args: ParsedArgs)
 
 
 def _get_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) -> int:
-    """Get value from global settings file."""
+    """Get value from global config file."""
 
     settings = GlobalSettings.load(config_file)
 
@@ -274,7 +274,7 @@ def _set_config(
 def _set_jgorc(
     config_file: Path, section: str, key: str, value: str, args: ParsedArgs
 ) -> int:
-    """Set value in global settings file."""
+    """Set value in global config file."""
     import configparser
 
     # Validate section and key
@@ -375,7 +375,7 @@ def _unset_config(
 
 
 def _unset_jgorc(config_file: Path, section: str, key: str, args: ParsedArgs) -> int:
-    """Unset value in global settings file."""
+    """Unset value in global config file."""
     import configparser
 
     if not config_file.exists():

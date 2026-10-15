@@ -102,7 +102,7 @@ When building an environment, jgo links JARs from the Maven local repository (`~
 | `copy` | Full | Yes | Copies files. Works everywhere. |
 | `auto` | None | Yes | Tries hard, then soft, then copy. |
 
-Configure via settings file, CLI flag, or `jgo.toml`:
+Configure via the `[settings]` section of the config file, CLI flag, or `jgo.toml`:
 
 ```bash
 jgo --links soft org.python:jython-standalone

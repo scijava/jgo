@@ -62,7 +62,7 @@ def shortcut(
     """
     Manage global endpoint shortcuts.
 
-    Shortcuts are stored in the settings file (~/.config/jgo.conf).
+    Shortcuts are stored in the config file (~/.config/jgo.conf).
     They provide quick aliases for Maven endpoint strings.
 
     Without arguments: show help (use -l/--list to list all shortcuts)
@@ -123,7 +123,7 @@ def execute(
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    # Determine settings file location (always global for shortcuts)
+    # Determine config file location (always global for shortcuts)
     if config_file is None:
         config_file = get_settings_path()
 

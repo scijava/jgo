@@ -41,8 +41,8 @@ VERSION = _get_version()
 # Maven repository URLs
 MAVEN_CENTRAL_URL = "https://repo.maven.apache.org/maven2"
 
-# Settings file display names (these are truly constant)
-SETTINGS_FILE_DISPLAY_NAME = "jgo settings file"
+# Config file display names (these are truly constant)
+SETTINGS_FILE_DISPLAY_NAME = "jgo config file"
 SETTINGS_FILE_XDG_NAME = "~/.config/jgo.conf"
 SETTINGS_FILE_LEGACY_NAME = "~/.jgorc"
 
@@ -74,7 +74,7 @@ def default_jgo_cache() -> Path:
 
 def env_settings_path() -> Path | None:
     """
-    Get the explicitly requested settings file path, if any.
+    Get the explicitly requested config file path, if any.
 
     Respects the JGO_CONFIG_FILE environment variable; returns None if unset.
     """
@@ -86,7 +86,7 @@ def env_settings_path() -> Path | None:
 
 def xdg_settings_path() -> Path:
     """
-    Get XDG settings file path.
+    Get XDG config file path.
 
     Respects XDG_CONFIG_HOME environment variable if set, otherwise uses ~/.config/jgo.conf.
     """
@@ -98,6 +98,6 @@ def xdg_settings_path() -> Path:
 
 def legacy_settings_path() -> Path:
     """
-    Get legacy settings file path (~/.jgorc).
+    Get legacy config file path (~/.jgorc).
     """
     return get_user_home() / ".jgorc"

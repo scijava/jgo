@@ -45,7 +45,7 @@ Test --color with different commands.
   │ --ignore-config                                    Ignore ~/.config/jgo.conf │
   │                                                    file.                     │
   │ --config                FILE                       Use FILE as the jgo       │
-  │                                                    settings file. [env var:  │
+  │                                                    config file. [env var:    │
   │                                                    JGO_CONFIG_FILE]          │
   │ --full-coordinates                                 Include coordinate        │
   │                                                    components with default   │

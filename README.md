@@ -167,7 +167,7 @@ Note the usage of the `+` syntax as needed to append elements to the classpath.
 If you add
 `scijava.public = https://maven.scijava.org/content/groups/public`
 to the
-`[repositories]` section of your settings file
+`[repositories]` section of your config file
 (see the [configuration docs](https://jgo.apposed.org/en/latest/configuration.html)),
 you can also try:
 

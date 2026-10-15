@@ -355,7 +355,7 @@ def global_options(f: Callable[..., Any]) -> Callable[..., Any]:
         callback=_apply_config_option,
         expose_value=False,
         is_eager=True,
-        help="Use FILE as the jgo settings file.",
+        help="Use FILE as the jgo config file.",
         envvar="JGO_CONFIG_FILE",
         show_envvar=True,
     )(f)

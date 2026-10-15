@@ -1,7 +1,7 @@
 """
-Global settings file parsing for jgo.
+Global config file parsing for jgo.
 
-Supports jgo settings files with backward compatibility to jgo 1.x.
+Supports jgo config files with backward compatibility to jgo 1.x.
 """
 
 from __future__ import annotations
@@ -19,13 +19,16 @@ _log = logging.getLogger(__name__)
 
 class GlobalSettings:
     """
-    Global settings loaded from settings file and environment variables.
+    Global settings loaded from the config file and environment variables.
 
-    Settings file locations (in order of precedence):
+    Note: Not to be confused with the config file's [settings] section,
+    which is just one of several sections that populate this object.
+
+    Config file locations (in order of precedence):
     1. ~/.config/jgo.conf (XDG Base Directory standard)
     2. ~/.jgorc (legacy location, for backward compatibility)
 
-    The settings file is an INI file with sections:
+    The config file is an INI file with sections:
     - [settings]: General settings (cache_dir, repo_cache, links, etc.)
     - [repositories]: Maven repositories (name = URL)
     - [shortcuts]: Coordinate shortcuts for the CLI
@@ -70,7 +73,7 @@ class GlobalSettings:
         Load global settings from file and environment variables.
 
         Args:
-            settings_file: Path to settings file (defaults to ~/.config/jgo.conf, or ~/.jgorc as fallback)
+            settings_file: Path to config file (defaults to ~/.config/jgo.conf, or ~/.jgorc as fallback)
 
         Returns:
             GlobalSettings instance
@@ -85,10 +88,10 @@ class GlobalSettings:
 
         # Load from file if it exists
         if settings_file.exists():
-            _log.debug(f"Settings file exists, loading: {settings_file}")
+            _log.debug(f"Config file exists, loading: {settings_file}")
             settings = cls._load_from_file(settings_file, settings)
         else:
-            _log.debug(f"Settings file does not exist: {settings_file}")
+            _log.debug(f"Config file does not exist: {settings_file}")
 
         # Override with environment variables
         settings = cls._apply_environment_variables(settings)
@@ -137,7 +140,7 @@ class GlobalSettings:
         Load global settings from INI file.
 
         Args:
-            settings_file: Path to settings file
+            settings_file: Path to config file
             base_config: Base settings to build upon
 
         Returns:
@@ -146,7 +149,7 @@ class GlobalSettings:
         parser = configparser.ConfigParser()
         parser.read(settings_file)
 
-        _log.debug(f"Parsing settings file: {settings_file}")
+        _log.debug(f"Parsing config file: {settings_file}")
 
         # Parse [settings] section
         cache_dir = base_config.cache_dir

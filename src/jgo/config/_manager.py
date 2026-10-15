@@ -1,7 +1,7 @@
 """
-Config manager for jgo settings file paths and terminology.
+Config manager for jgo config file paths and terminology.
 
-Centralizes settings file path resolution and display name logic.
+Centralizes config file path resolution and display name logic.
 """
 
 from __future__ import annotations
@@ -26,10 +26,10 @@ if TYPE_CHECKING:
 
 def get_settings_path() -> Path:
     """
-    Get the settings file path using XDG Base Directory standard.
+    Get the config file path using XDG Base Directory standard.
 
     Returns:
-        Path to settings file with the following precedence:
+        Path to config file with the following precedence:
         - $JGO_CONFIG_FILE if set (used as-is, even if it does not exist)
         - ~/.config/jgo.conf if it exists (preferred location)
         - ~/.jgorc if it exists (legacy backward compatibility)
@@ -37,7 +37,7 @@ def get_settings_path() -> Path:
     """
     env_path = env_settings_path()
     if env_path is not None:
-        _log.debug(f"Using settings file from JGO_CONFIG_FILE: {env_path}")
+        _log.debug(f"Using config file from JGO_CONFIG_FILE: {env_path}")
         return env_path
 
     xdg_path = xdg_settings_path()
@@ -48,12 +48,12 @@ def get_settings_path() -> Path:
 
     # Prefer XDG if it exists
     if xdg_path.exists():
-        _log.debug(f"Using XDG settings file: {xdg_path}")
+        _log.debug(f"Using XDG config file: {xdg_path}")
         return xdg_path
 
     # Fall back to legacy if it exists (backward compatibility)
     if legacy_path.exists():
-        _log.debug(f"Using legacy settings file: {legacy_path}")
+        _log.debug(f"Using legacy config file: {legacy_path}")
         return legacy_path
 
     # Default to XDG for new installations
@@ -63,16 +63,16 @@ def get_settings_path() -> Path:
 
 def get_settings_display_name(path: Path) -> str:
     """
-    Get a user-friendly display name for a settings file path.
+    Get a user-friendly display name for a config file path.
 
     Args:
-        path: Path to settings file
+        path: Path to config file
 
     Returns:
         Display name for user-facing messages:
         - "~/.config/jgo.conf" if path is the XDG location
         - "~/.jgorc" if path is the legacy location
-        - Generic "jgo settings file" for other paths
+        - Generic "jgo config file" for other paths
     """
     if path.resolve() == xdg_settings_path().resolve():
         return SETTINGS_FILE_XDG_NAME
@@ -83,10 +83,10 @@ def get_settings_display_name(path: Path) -> str:
 
 def format_settings_message(path: Path, action: str) -> str:
     """
-    Format a user-facing message about a settings file operation.
+    Format a user-facing message about a config file operation.
 
     Args:
-        path: Path to settings file
+        path: Path to config file
         action: Description of the action (e.g., "created", "updated", "not found")
 
     Returns:

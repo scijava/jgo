@@ -145,14 +145,14 @@ jgo -u endpoint              # Check remote and rebuild (old -U behavior)
 
 Old cache directories are not migrated automatically. jgo 2.x creates a fresh cache.
 
-### Settings file
+### Config file
 
 The INI format is unchanged. jgo 2.x adds a new preferred location:
 
 1. `~/.config/jgo.conf` (XDG standard -- new, recommended)
 2. `~/.jgorc` (legacy -- still works)
 
-Your existing `~/.jgorc` will continue to work. Use `--ignore-config` to skip the settings file.
+Your existing `~/.jgorc` will continue to work. Use `--ignore-config` to skip the config file.
 
 ## Breaking changes
 

@@ -1,4 +1,4 @@
-"""Tests for GlobalSettings class and settings file loading."""
+"""Tests for GlobalSettings class and config file loading."""
 
 from jgo.config import GlobalSettings
 
