@@ -51,3 +51,50 @@ def test_release_version_resolution(m2_repo):
         "RELEASE should have been resolved to a concrete version"
     )
     assert resolved, "Resolved version should be non-empty"
+
+
+class _FakeResponse:
+    def __init__(self, status_code=200, headers=None, payload=None):
+        self.status_code = status_code
+        self.headers = headers or {}
+        self._payload = payload
+
+    def json(self):
+        return self._payload
+
+
+def _remote_artifact(tmp_path):
+    context = MavenContext(
+        repo_cache=tmp_path,
+        local_repos=[],
+        remote_repos={"test": "https://repo.example.invalid/maven"},
+    )
+    return context.project("org.example", "foo").at_version("1.0").artifact()
+
+
+def test_last_modified_is_utc_aware(tmp_path, monkeypatch):
+    """
+    Regression test: last_modified() must be UTC-aware, like lastUpdated,
+    so that callers can compare the two without a naive/aware TypeError.
+    """
+    headers = {"Last-Modified": "Wed, 21 Oct 2026 07:28:00 GMT"}
+    monkeypatch.setattr(
+        "jgo.util.http.head", lambda *a, **kw: _FakeResponse(headers=headers)
+    )
+    result = _remote_artifact(tmp_path).last_modified()
+    assert result == datetime(2026, 10, 21, 7, 28, tzinfo=timezone.utc)
+    assert result > ts2dt("20261021000000")  # naive/aware mix would raise
+
+
+def test_last_modified_nexus_converts_offset_to_utc(tmp_path, monkeypatch):
+    """A Nexus 3 lastModified with a non-UTC offset is converted, not discarded."""
+    monkeypatch.setattr(
+        "jgo.util.http.head",
+        lambda *a, **kw: _FakeResponse(headers={"Server": "Nexus/3.70.0"}),
+    )
+    payload = {"items": [{"assets": [{"lastModified": "2026-10-21T02:28:00-05:00"}]}]}
+    monkeypatch.setattr(
+        "jgo.util.http.get", lambda *a, **kw: _FakeResponse(payload=payload)
+    )
+    result = _remote_artifact(tmp_path).last_modified()
+    assert result == datetime(2026, 10, 21, 7, 28, tzinfo=timezone.utc)

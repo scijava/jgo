@@ -27,6 +27,7 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from datetime import timezone
 from email.utils import parsedate_to_datetime
 from functools import cmp_to_key
 from hashlib import md5, sha1
@@ -1000,7 +1001,7 @@ class Artifact:
     def last_modified(self) -> datetime | None:
         """
         Return the deploy timestamp of this artifact on the remote repository,
-        or ``None`` if it cannot be determined.
+        as a UTC-aware datetime, or ``None`` if it cannot be determined.
 
         This performs an HTTP HEAD request against each configured remote
         repository in order. For Nexus 3 repositories, the ``Last-Modified``
@@ -1036,7 +1037,7 @@ class Artifact:
                         return ts
                 lm = resp.headers.get("Last-Modified")
                 if lm:
-                    return parsedate_to_datetime(lm).replace(tzinfo=None)
+                    return _as_utc(parsedate_to_datetime(lm))
             except requests.RequestException as exc:
                 _log.debug("HEAD %s failed: %s", url, exc)
         return None
@@ -1061,10 +1062,17 @@ class Artifact:
                     for asset in item.get("assets", []):
                         lm = asset.get("lastModified")
                         if lm:
-                            return _dt.fromisoformat(lm).replace(tzinfo=None)
+                            return _as_utc(_dt.fromisoformat(lm))
         except (requests.RequestException, ValueError) as exc:
             _log.debug("Nexus search failed for %s: %s", self, exc)
         return None
+
+
+def _as_utc(dt: datetime) -> datetime:
+    """Convert dt to UTC, treating a naive datetime as already being in UTC."""
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
 
 
 class Dependency:
