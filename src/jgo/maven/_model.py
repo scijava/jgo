@@ -279,7 +279,7 @@ class Model:
         root_artifact = (
             self.context.project(self.pom.groupId, self.pom.artifactId)
             .at_version(self.pom.version)
-            .artifact(packaging="pom")
+            .artifact(type="pom")
         )
         root_dep = Dependency(root_artifact)
         tree_root = DependencyNode(root_dep)
@@ -496,7 +496,7 @@ class Model:
             if c != dep.classifier:
                 dep.artifact.classifier = c
             if t != dep.type:
-                dep.artifact.packaging = t
+                dep.artifact.type = t
 
             k = (g, a, c, t)
             if k not in target:
@@ -599,7 +599,7 @@ class Model:
             if c != dep.classifier:
                 dep.artifact.classifier = c
             if t != dep.type:
-                dep.artifact.packaging = t
+                dep.artifact.type = t
             if v != dep.version:
                 dep.set_version(v)
 

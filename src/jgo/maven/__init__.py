@@ -60,7 +60,7 @@ Artifact
     to locate itself locally (checking cache and local repos) or download from
     a remote repository.
 
-    >>> artifact = component.artifact(classifier="sources", packaging="jar")
+    >>> artifact = component.artifact(classifier="sources", type="jar")
     >>> path = artifact.resolve()  # Downloads if not cached
 
 Dependency
@@ -135,6 +135,7 @@ from ._core import (
     Project,
     Resolver,
 )
+from ._handlers import artifact_handler
 from ._metadata import Metadata, Metadatas, MetadataXML
 from ._model import Model
 from ._pom import POM, XML
@@ -161,6 +162,8 @@ __all__ = [
     "DependencyNode",
     "MavenContext",
     "Project",
+    # handlers
+    "artifact_handler",
     # metadata
     "Metadata",
     "Metadatas",

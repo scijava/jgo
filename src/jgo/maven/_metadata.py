@@ -4,6 +4,7 @@ Maven metadata handling (maven-metadata.xml files).
 
 from __future__ import annotations
 
+import warnings
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from itertools import combinations
@@ -133,24 +134,46 @@ class SnapshotMetadataXML(MetadataXML):
         return int(value) if value else None
 
     def get_timestamped_version(
-        self, packaging: str = "jar", classifier: str = ""
+        self,
+        extension: str | None = None,
+        classifier: str = "",
+        *,
+        packaging: str | None = None,
     ) -> str | None:
         """
-        Get the timestamped version for a specific artifact type.
+        Get the timestamped version for a specific artifact file.
 
         Args:
-            packaging: The artifact packaging/extension (e.g., 'jar', 'pom')
+            extension: The artifact's file extension (e.g., 'jar', 'pom').
+                Note: this is the extension, not the packaging type: e.g. a
+                test-jar is extension 'jar' with classifier 'tests'.
             classifier: Optional classifier (e.g., 'sources', 'javadoc')
+            packaging: Deprecated alias for extension.
 
         Returns:
             Timestamped version string (e.g., '2.94.3-20230706.150124-1'),
             or None if not found.
         """
+        if packaging is not None:
+            warnings.warn(
+                "get_timestamped_version: 'packaging' is deprecated; "
+                "use 'extension' instead",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if extension is not None and extension != packaging:
+                raise TypeError(
+                    f"Conflicting extension={extension!r} and packaging={packaging!r}"
+                )
+            extension = packaging
+        if extension is None:
+            extension = "jar"
+
         # First try to find exact match in snapshotVersions
         for el in self.elements("versioning/snapshotVersions/snapshotVersion"):
             ext = el.findtext("extension") or ""
             clf = el.findtext("classifier") or ""
-            if ext == packaging and clf == classifier:
+            if ext == extension and clf == classifier:
                 return el.findtext("value")
 
         # Fallback: construct from snapshot timestamp and buildNumber

@@ -15,8 +15,14 @@ The main classes form a hierarchy:
 - MavenContext: Configuration (repositories, cache, resolver)
 - Project [G:A]: A groupId:artifactId (G:A) pair with metadata access
 - Component [G:A:V]: A Project at a specific version (V)
-- Artifact [G:A:P:C:V]: One file of a Component, with classifier (C) and packaging (P)
+- Artifact [G:A:P:C:V]: One file of a Component, with classifier (C) and
+  packaging type (P)
 - Dependency [G:A:P:C:V:S]: An Artifact with scope, optional flag, and exclusions
+
+The packaging type of an Artifact (e.g. jar, pom, test-jar, maven-plugin) is
+the dependency <type> being requested. It is distinct from a Component's own
+declared <packaging>, and from the artifact's file extension: Maven maps each
+packaging type to a file extension and implied classifier (see _handlers.py).
 
 For simple/low-level data structures without Maven logic, see the jgo.parse subpackage.
 """
@@ -25,6 +31,7 @@ from __future__ import annotations
 
 import logging
 import time
+import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import timezone
@@ -41,6 +48,7 @@ from ..constants import MAVEN_CENTRAL_URL, default_maven_repo
 from ..parse import Coordinate, coord2str
 from ..util import http
 from ..util.io import binary, text
+from ._handlers import artifact_handler
 from ._metadata import Metadatas, MetadataXML, SnapshotMetadataXML
 from ._pom import POM, parse_dependency_element_to_coordinate
 from ._version import compare_versions
@@ -59,7 +67,23 @@ _log = logging.getLogger(__name__)
 DEFAULT_LOCAL_REPOS: list[Path] = []
 DEFAULT_REMOTE_REPOS = {"central": MAVEN_CENTRAL_URL}
 DEFAULT_CLASSIFIER = ""
-DEFAULT_PACKAGING = "jar"
+DEFAULT_TYPE = "jar"
+DEFAULT_PACKAGING = DEFAULT_TYPE  # Deprecated: use DEFAULT_TYPE.
+
+
+def _warn_packaging_deprecated(where: str) -> None:
+    warnings.warn(
+        f"{where}: 'packaging' is deprecated; use 'type' instead",
+        DeprecationWarning,
+        stacklevel=3,
+    )
+
+
+def _merge_type_alias(type: str | None, packaging: str) -> str:
+    """Reconcile a type argument with its deprecated packaging alias."""
+    if type is not None and type != packaging:
+        raise TypeError(f"Conflicting type={type!r} and packaging={packaging!r}")
+    return packaging
 
 
 class MavenContext:
@@ -207,13 +231,13 @@ class MavenContext:
         artifactId = coord.artifactId
         version = coord.version
         classifier = coord.classifier or DEFAULT_CLASSIFIER
-        packaging = coord.packaging or DEFAULT_PACKAGING
+        type = coord.packaging or DEFAULT_TYPE
         scope = coord.scope
         optional = coord.optional or False
 
         project = self.project(groupId, artifactId)
         component = project.at_version(version) if version else project.at_version("")
-        artifact = component.artifact(classifier, packaging)
+        artifact = component.artifact(classifier, type)
         return Dependency(
             artifact, scope, optional, exclusions or [], raw=coord.raw or False
         )
@@ -234,7 +258,7 @@ class MavenContext:
             and pom.version is not None
         )
         project = self.project(pom.groupId, pom.artifactId)
-        return project.at_version(pom.version).artifact(packaging="pom")
+        return project.at_version(pom.version).artifact(type="pom")
 
     def pom_parent(self, pom: POM) -> POM | None:
         """
@@ -254,7 +278,7 @@ class MavenContext:
         a = pom.value("parent/artifactId")
         v = pom.value("parent/version")
         assert g and a and v
-        pom_artifact = self.project(g, a).at_version(v).artifact(packaging="pom")
+        pom_artifact = self.project(g, a).at_version(v).artifact(type="pom")
         return POM(pom_artifact.resolve())
 
     def pom_dependencies(self, pom: POM, managed: bool = False) -> list[Dependency]:
@@ -760,20 +784,28 @@ class Component:
         return self.project.path_prefix / self.resolved_version
 
     def artifact(
-        self, classifier: str = DEFAULT_CLASSIFIER, packaging: str = DEFAULT_PACKAGING
+        self,
+        classifier: str = DEFAULT_CLASSIFIER,
+        type: str | None = None,
+        *,
+        packaging: str | None = None,
     ) -> Artifact:
         """
         Get an artifact (G:A:P:C:V) associated with this component.
 
         Args:
             classifier: Classifier of the artifact.
-            packaging: Packaging/type of the artifact.
+            type: Packaging type of the artifact (default "jar").
+            packaging: Deprecated alias for type.
 
         Returns:
             The Artifact object representing this component
-            with particular classifier and packaging.
+            with particular classifier and packaging type.
         """
-        return Artifact(self, classifier, packaging)
+        if packaging is not None:
+            _warn_packaging_deprecated("Component.artifact")
+            type = _merge_type_alias(type, packaging)
+        return Artifact(self, classifier, type)
 
     def pom(self) -> POM:
         """
@@ -783,41 +815,81 @@ class Component:
             The POM content.
         """
 
-        pom_artifact = self.artifact(packaging="pom")
+        pom_artifact = self.artifact(type="pom")
         return POM(pom_artifact.resolve())
 
 
 class Artifact:
     """
-    This is a Component plus classifier and packaging (G:A:P:C:V).
+    This is a Component plus classifier and packaging type (G:A:P:C:V).
     One file per artifact.
+
+    The packaging type is the dependency <type> being requested (e.g. jar, pom,
+    test-jar, maven-plugin). The file's extension, and any classifier implied
+    by the type, are derived from it: see the extension and
+    effective_classifier properties.
     """
 
     def __init__(
         self,
         component: Component,
         classifier: str = DEFAULT_CLASSIFIER,
-        packaging: str = DEFAULT_PACKAGING,
+        type: str | None = None,
+        *,
+        packaging: str | None = None,
     ):
+        if packaging is not None:
+            _warn_packaging_deprecated("Artifact")
+            type = _merge_type_alias(type, packaging)
         self.component = component
         self.classifier = classifier
-        self.packaging = packaging
+        self.type: str = DEFAULT_TYPE if type is None else type
 
     def __eq__(self, other):
         return (
             other is not None
             and self.component == other.component
             and self.classifier == other.classifier
-            and self.packaging == other.packaging
+            and self.type == other.type
         )
 
     def __hash__(self):
-        return hash((self.component, self.classifier, self.packaging))
+        return hash((self.component, self.classifier, self.type))
 
     def __str__(self):
         return coord2str(
-            self.groupId, self.artifactId, self.version, self.classifier, self.packaging
+            self.groupId, self.artifactId, self.version, self.classifier, self.type
         )
+
+    @property
+    def packaging(self) -> str:
+        """
+        Deprecated alias for type: the artifact's packaging type.
+        """
+        _warn_packaging_deprecated("Artifact.packaging")
+        return self.type
+
+    @packaging.setter
+    def packaging(self, value: str) -> None:
+        _warn_packaging_deprecated("Artifact.packaging")
+        self.type = value
+
+    @property
+    def extension(self) -> str:
+        """
+        The artifact's file extension, as implied by its packaging type.
+        E.g. "jar" for types jar, test-jar, maven-plugin, and bundle.
+        """
+        return artifact_handler(self.type)[0]
+
+    @property
+    def effective_classifier(self) -> str:
+        """
+        The classifier naming the artifact's file: the explicit classifier if
+        set, otherwise the one implied by the packaging type (e.g. "tests" for
+        type test-jar).
+        """
+        return self.classifier or artifact_handler(self.type)[1]
 
     @property
     def context(self) -> MavenContext:
@@ -847,14 +919,14 @@ class Artifact:
         concrete version are treated as duplicates (e.g., RELEASE → 2.0.0).
 
         Returns:
-            Tuple of (groupId, artifactId, resolved_version, classifier, packaging)
+            Tuple of (groupId, artifactId, resolved_version, classifier, type)
         """
         return (
             self.component.groupId,
             self.component.artifactId,
             self.component.resolved_version,
             self.classifier,
-            self.packaging,
+            self.type,
         )
 
     @property
@@ -864,6 +936,8 @@ class Artifact:
         - g=org.python a=jython v=2.7.0 -> jython-2.7.0.jar
         - g=org.lwjgl a=lwjgl v=3.3.1 c=natives-linux -> lwjgl-3.3.1-natives-linux.jar
         - g=org.scijava a=scijava-common v=2.94.2 p=pom -> scijava-common-2.94.2.pom
+        - g=org.scijava a=scijava-common v=2.94.2 p=test-jar ->
+          scijava-common-2.94.2-tests.jar
         - SNAPSHOT: my-lib-1.0-20230706.150124-1.jar (timestamped for download)
         """
         version = (
@@ -875,13 +949,12 @@ class Artifact:
             metadata = self.component.snapshot_metadata
             if metadata:
                 timestamped = metadata.get_timestamped_version(
-                    packaging=self.packaging, classifier=self.classifier
+                    extension=self.extension, classifier=self.effective_classifier
                 )
                 if timestamped:
                     version = timestamped
 
-        classifier_suffix = f"-{self.classifier}" if self.classifier else ""
-        return f"{self.artifactId}-{version}{classifier_suffix}.{self.packaging}"
+        return f"{self.artifactId}-{version}{self._classifier_suffix}.{self.extension}"
 
     @property
     def cached_filename(self) -> str:
@@ -893,8 +966,12 @@ class Artifact:
         version = (
             self.component.resolved_version
         )  # Use resolved version (LATEST -> SNAPSHOT)
-        classifier_suffix = f"-{self.classifier}" if self.classifier else ""
-        return f"{self.artifactId}-{version}{classifier_suffix}.{self.packaging}"
+        return f"{self.artifactId}-{version}{self._classifier_suffix}.{self.extension}"
+
+    @property
+    def _classifier_suffix(self) -> str:
+        classifier = self.effective_classifier
+        return f"-{classifier}" if classifier else ""
 
     @property
     def cached_path(self) -> Path | None:
@@ -930,7 +1007,7 @@ class Artifact:
         for base in self.context.local_repos:
             if self.version.endswith("-SNAPSHOT"):
                 # For SNAPSHOTs in local storage, look for timestamped files
-                # Pattern: artifactId-baseVersion-timestamp-buildNumber-classifier.packaging
+                # Pattern: artifactId-baseVersion-timestamp-buildNumber-classifier.extension
                 # Example: my-lib-1.0-20230706.150124-1.jar
 
                 # First try with resolved timestamped filename if we have metadata
@@ -944,24 +1021,23 @@ class Artifact:
                 if snapshot_dir.exists():
                     # Extract base version (e.g., "1.0" from "1.0-SNAPSHOT")
                     base_version = self.version[:-9]  # Remove "-SNAPSHOT"
-                    classifier_suffix = f"-{self.classifier}" if self.classifier else ""
 
-                    # Pattern: artifactId-baseVersion-timestamp-buildNumber[-classifier].packaging
+                    # Pattern: artifactId-baseVersion-timestamp-buildNumber[-classifier].extension
                     import re
 
                     pattern = re.compile(
                         rf"{re.escape(self.artifactId)}-"
                         rf"{re.escape(base_version)}-"
                         r"\d{8}\.\d{6}-\d+"
-                        rf"{re.escape(classifier_suffix)}"
-                        rf"\.{re.escape(self.packaging)}"
+                        rf"{re.escape(self._classifier_suffix)}"
+                        rf"\.{re.escape(self.extension)}"
                     )
 
                     # Find matching files, use newest
                     matching_files = [
                         f
                         for f in snapshot_dir.glob(
-                            f"{self.artifactId}-*.{self.packaging}"
+                            f"{self.artifactId}-*.{self.extension}"
                         )
                         if pattern.match(f.name)
                     ]
@@ -1047,13 +1123,12 @@ class Artifact:
         """Query the Nexus 3 REST API for the authoritative deploy timestamp."""
         from datetime import datetime as _dt
 
-        classifier_param = (
-            f"&maven.classifier={self.classifier}" if self.classifier else ""
-        )
+        classifier = self.effective_classifier
+        classifier_param = f"&maven.classifier={classifier}" if classifier else ""
         url = (
             f"{nexus_base}/service/rest/v1/search"
             f"?group={self.groupId}&name={self.artifactId}"
-            f"&version={self.version}&maven.extension={self.packaging}"
+            f"&version={self.version}&maven.extension={self.extension}"
             f"{classifier_param}"
         )
         try:
@@ -1137,8 +1212,8 @@ class Dependency:
 
     @property
     def type(self) -> str:
-        """The dependency's packaging/type."""
-        return self.artifact.packaging
+        """The dependency's packaging type."""
+        return self.artifact.type
 
     def set_version(self, version: str) -> None:
         """

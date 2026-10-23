@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from ..maven import artifact_handler
 from ..util.serialization import FieldValidatorMixin, TOMLSerializableMixin
 from ._jar import JarType
 
@@ -22,6 +23,10 @@ if TYPE_CHECKING:
 class LockedDependency(TOMLSerializableMixin, FieldValidatorMixin):
     """
     A dependency with locked version and checksum.
+
+    The packaging field holds the dependency's packaging type (e.g. jar,
+    test-jar), i.e. Artifact.type; it keeps the name "packaging" for
+    compatibility with existing lock files.
     """
 
     def __init__(
@@ -69,7 +74,7 @@ class LockedDependency(TOMLSerializableMixin, FieldValidatorMixin):
             groupId=artifact.groupId,
             artifactId=artifact.artifactId,
             version=artifact.version,  # Will be timestamped for SNAPSHOTs
-            packaging=artifact.packaging,
+            packaging=artifact.type,
             classifier=artifact.classifier,
             sha256=sha256,
         )
@@ -311,9 +316,11 @@ class LockFile(TOMLSerializableMixin, FieldValidatorMixin):
                 / dep.version
                 / f"{dep.artifactId}-{dep.version}"
             )
-            if dep.classifier:
-                artifact_path = Path(str(artifact_path) + f"-{dep.classifier}")
-            artifact_path = Path(str(artifact_path) + f".{dep.packaging}")
+            extension, implied_classifier = artifact_handler(dep.packaging)
+            classifier = dep.classifier or implied_classifier
+            if classifier:
+                artifact_path = Path(str(artifact_path) + f"-{classifier}")
+            artifact_path = Path(str(artifact_path) + f".{extension}")
 
             if not artifact_path.exists():
                 errors.append(

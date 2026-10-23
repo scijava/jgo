@@ -29,13 +29,13 @@ jgo is built around a three-layer architecture. Each layer is independently usef
 ```
 Project (groupId:artifactId)
   └─> Component (groupId:artifactId:version)
-        └─> Artifact (groupId:artifactId:packaging:classifier:version)
+        └─> Artifact (groupId:artifactId:type:classifier:version)
               └─> Dependency (Artifact + scope + exclusions)
 ```
 
 - **Project** -- a Maven project identified by groupId and artifactId (e.g., `org.python:jython-standalone`).
 - **Component** -- a project at a specific version (e.g., `org.python:jython-standalone:2.7.3`).
-- **Artifact** -- a component with packaging and classifier (e.g., `jar`, `natives-linux`).
+- **Artifact** -- one file of a component, selected by packaging type and classifier (e.g., `jar`, `natives-linux`). The packaging type is the dependency `<type>`, which maps to the file's extension and any implied classifier: e.g. type `test-jar` names `foo-1.0-tests.jar`.
 - **Dependency** -- an artifact with metadata: scope, optional flag, exclusions.
 
 ### Resolvers

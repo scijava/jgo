@@ -62,7 +62,8 @@ class Coordinate:
     - artifactId: The Maven artifact ID (e.g., 'scijava-common')
     - version: The version (e.g., '2.90.0', 'RELEASE', or None)
     - classifier: Optional classifier (e.g., 'natives-linux', 'sources')
-    - packaging: The packaging type (e.g., 'jar', 'pom', 'war')
+    - packaging: The packaging type, i.e. the dependency <type>
+      (e.g., 'jar', 'pom', 'test-jar'); see Artifact.type in jgo.maven
     - scope: The dependency scope (e.g., 'compile', 'runtime', 'test')
     - optional: Whether this is an optional dependency
     - raw: Maven-specific resolution mode (None=auto, True=raw, False=managed)
@@ -106,7 +107,7 @@ class Coordinate:
         - G:A:V:C (user input with classifier)
         - G:A:P:V (mvn dependency:get format)
         - G:A:P:V:S (mvn dependency:list format without classifier)
-        - G:A:P:C:V (user input with packaging and classifier)
+        - G:A:P:C:V (user input with packaging type and classifier)
         - G:A:P:C:V:S (mvn dependency:list format with classifier)
 
         Args:

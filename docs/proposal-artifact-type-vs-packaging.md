@@ -1,7 +1,7 @@
 # Proposal: distinguish artifact *type* from *packaging* and *extension*
 
-Status: design note (not yet implemented)
-Target version: `4.0.0.dev0` (breaking public API change)
+Status: implemented in 3.3.0, without a breaking change (see
+[Backward compatibility](#backward-compatibility))
 
 ## Summary
 
@@ -22,8 +22,8 @@ an *(extension, classifier)* pair. Concretely:
 3. Derive the filename/URL extension (and any implied classifier) through the
    handler instead of using the raw type string.
 
-Because this renames a widely used public attribute, it is a breaking change and
-should bump the version to `4.0.0.dev0`.
+The rename keeps `packaging` as a deprecated alias, so this is not a breaking
+change.
 
 ## Background: three Maven concepts, correct nomenclature
 
@@ -119,8 +119,8 @@ classifier) is wrong and resolution fails.
 - `src/jgo/maven/_pom.py:54` — store into the `type` field; keep the default of
   `jar` when `<type>` is absent.
 - Update the module data-model docstring (`_core.py:14-19`) and `parse`
-  coordinate docs/fields (`src/jgo/parse/_coordinate.py:56-76`, `coord2str` at
-  `:258`), where `P` in `G:A:P:C:V` is really the *type*.
+  coordinate docs (`src/jgo/parse/_coordinate.py:56-76`, `coord2str` at
+  `:258`), where `P` in `G:A:P:C:V` is really the *packaging type*.
 
 ### 2. Add an artifact-handler table
 
@@ -144,10 +144,10 @@ ARTIFACT_HANDLERS: dict[str, tuple[str, str]] = {
     "javadoc": ("jar", "javadoc"),
 }
 
-def handler_for(type_: str) -> tuple[str, str]:
+def artifact_handler(type: str) -> tuple[str, str]:
     # Unknown types fall back to "extension == type" (current behavior),
     # so custom packagings keep resolving as before.
-    return ARTIFACT_HANDLERS.get(type_, (type_, ""))
+    return ARTIFACT_HANDLERS.get(type, (type, ""))
 ```
 
 The unknown-type fallback (`extension == type`) preserves today's behavior for
@@ -161,12 +161,12 @@ them:
 ```python
 @property
 def extension(self) -> str:
-    return handler_for(self.type)[0]
+    return artifact_handler(self.type)[0]
 
 @property
 def effective_classifier(self) -> str:
     # An explicit classifier wins; otherwise use the handler's implied one.
-    return self.classifier or handler_for(self.type)[1]
+    return self.classifier or artifact_handler(self.type)[1]
 ```
 
 Then:
@@ -209,19 +209,29 @@ string the user types needs to change.
 
 ## Backward compatibility
 
-This renames a public attribute (`Artifact.packaging`) and a public constant
-(`DEFAULT_PACKAGING`), hence the major bump.
+The rename is softened with deprecated aliases, so no public API is removed:
 
-Optional softening (decide at implementation time):
+- `Artifact.packaging` is a deprecated property (with setter) for `type`, and
+  emits a `DeprecationWarning`. It can be removed in a later major release.
+- `DEFAULT_PACKAGING = DEFAULT_TYPE` remains as a deprecated alias.
+- `Artifact(...)` and `Component.artifact(...)` accept `packaging=` as a
+  deprecated keyword-only alias for `type=` (positional calls are unchanged).
+  Passing both with different values raises `TypeError`.
+- `get_timestamped_version(...)` accepts `packaging=` as a deprecated alias for
+  `extension=`.
 
-- Keep a deprecated `Artifact.packaging` property that returns `self.type` and
-  emits `DeprecationWarning`, removed in a later release.
-- Keep `DEFAULT_PACKAGING = DEFAULT_TYPE` as a deprecated alias.
-- Accept a `packaging=` keyword in `Component.artifact(...)` as a deprecated
-  alias for `type=`.
+To catch any internal use of the aliases, the test configuration turns jgo's own
+`packaging` deprecation warnings into errors.
 
-If we prefer a clean break (simpler, and 4.0 justifies it), drop the aliases and
-document the rename in `docs/migration.md` + `docs/changelog.md`.
+Two names deliberately stay `packaging`, documented as the *packaging type*:
+
+- `Coordinate.packaging` in `jgo.parse`: it is a dataclass field, so aliasing it
+  would complicate construction, `dataclasses.replace()`, and `asdict()`.
+- The `packaging` key of `jgo.lock.toml` and `LockedDependency.packaging`:
+  renaming it would make lock files unreadable across jgo versions.
+
+`jgo search`'s `p:` filter also keeps its name, since it filters on each
+component's declared POM `<packaging>`, which is the correct meaning there.
 
 ## Out of scope (possible follow-up)
 
@@ -233,13 +243,14 @@ document the rename in `docs/migration.md` + `docs/changelog.md`.
 
 ## Versioning
 
-Bump `pyproject.toml` `version` from `3.2.0.dev0` to `4.0.0.dev0` (breaking
-public API change: `Artifact.packaging` → `Artifact.type`, `DEFAULT_PACKAGING` →
-`DEFAULT_TYPE`, `Component.artifact(packaging=…)` → `type=…`).
+Released as a minor version (3.3.0): the API changes are additions
+(`Artifact.type`, `Artifact.extension`, `Artifact.effective_classifier`,
+`DEFAULT_TYPE`, `jgo.maven.artifact_handler`) plus
+deprecations, with nothing removed.
 
 ## Testing
 
-- Unit tests asserting `handler_for` mappings, and `Artifact.filename` /
+- Unit tests asserting `artifact_handler` mappings, and `Artifact.filename` /
   `cached_filename` / `extension` / `effective_classifier` for representative
   types: `jar`, `pom`, `test-jar` (→ `*-tests.jar`), `maven-plugin` (→ `*.jar`),
   `bundle` (→ `*.jar`), and a sources/javadoc classifier artifact.
@@ -247,3 +258,5 @@ public API change: `Artifact.packaging` → `Artifact.type`, `DEFAULT_PACKAGING`
   (extension `jar`, classifier `tests`).
 - An unknown-type test asserting the `extension == type` fallback.
 - Regression: existing `jar`/`pom` resolution paths unchanged.
+- Deprecated aliases: each warns and still works; conflicting values raise.
+- Lock file checksum verification for a `test-jar` dependency.

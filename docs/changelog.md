@@ -1,10 +1,15 @@
 # Changelog
 
-## 3.2.1
+## 3.3.0
 
 ### Bug fixes
 
+- **Resolve non-JAR packaging types correctly** -- Packaging types whose file extension differs from the type name now resolve to the right file, following Maven's standard artifact handlers. For example, `g:a:test-jar:v` now resolves `a-v-tests.jar` rather than looking for a nonexistent `a-v.test-jar`, and `maven-plugin`, `bundle`, `ejb`, `ejb-client`, `java-source`, and `javadoc` types work too. This applies to both resolvers, SNAPSHOT lookups, and lock file checksum verification.
 - **Normalize timestamps to UTC** -- `Artifact.last_modified()` now returns a UTC-aware datetime, matching `Metadata.lastUpdated`, which became UTC-aware in 3.2.0. Previously, comparing the two raised `can't subtract offset-naive and offset-aware datetimes`. Timestamps from Nexus with a non-UTC offset are now converted to UTC rather than having their offset dropped.
+
+### Deprecations
+
+- **`Artifact.packaging` is now `Artifact.type`** -- The artifact's packaging type is now `Artifact.type`, matching `Dependency.type`, and `Component.artifact()` and `Artifact()` take a `type` argument. The new `Artifact.extension` and `Artifact.effective_classifier` properties give the file extension and classifier implied by the type. The old `packaging` attribute and keyword argument, and `DEFAULT_PACKAGING`, still work, but `packaging` now emits a `DeprecationWarning`. Likewise, `get_timestamped_version()` takes `extension` rather than `packaging`. The `packaging` field of `Coordinate` and of lock files is unchanged.
 
 ## 3.2.0
 

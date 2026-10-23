@@ -124,4 +124,6 @@ override-dependencies = ["rich>=14.3.0"]
 [tool.pytest.ini_options]
 filterwarnings = [
     "ignore::DeprecationWarning",
+    # jgo itself must not use its own deprecated packaging aliases.
+    "error:.*'packaging' is deprecated:DeprecationWarning:jgo",
 ]

@@ -108,7 +108,7 @@ def _create_root(dependencies: list[Dependency]) -> DependencyNode:
             dependencies[0]
             .context.project("org.apposed.jgo", "INTERNAL-WRAPPER")
             .at_version("0-SNAPSHOT")
-            .artifact(packaging="pom")
+            .artifact(type="pom")
         )
     )
 
@@ -579,16 +579,17 @@ class MvnResolver(Resolver):
         assert artifact.groupId
         assert artifact.artifactId
         assert artifact.version
-        assert artifact.packaging
+        assert artifact.type
+        # NB: dependency:get's "packaging" parameter is the file extension.
         args = [
             f"-Dmaven.repo.local={artifact.context.repo_cache}",
             f"-DgroupId={artifact.groupId}",
             f"-DartifactId={artifact.artifactId}",
             f"-Dversion={artifact.version}",
-            f"-Dpackaging={artifact.packaging}",
+            f"-Dpackaging={artifact.extension}",
         ]
-        if artifact.classifier:
-            args.append(f"-Dclassifier={artifact.classifier}")
+        if artifact.effective_classifier:
+            args.append(f"-Dclassifier={artifact.effective_classifier}")
         if artifact.context.remote_repos:
             remote_repos = ",".join(
                 f"{name}::::{url}"

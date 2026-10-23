@@ -645,7 +645,7 @@ class EnvironmentBuilder:
                 d.artifact.artifactId,
                 d.artifact.version,  # This resolves RELEASE/LATEST
                 d.artifact.classifier,
-                d.artifact.packaging,
+                d.artifact.type,
             ),
         ):
             # Include full artifact coordinates: G:A:V:C:P
@@ -654,7 +654,7 @@ class EnvironmentBuilder:
                 f"{dep.artifact.artifactId}:"
                 f"{dep.artifact.version}:"  # Resolved version
                 f"{dep.artifact.classifier}:"
-                f"{dep.artifact.packaging}"
+                f"{dep.artifact.type}"
             )
 
             # Include raw flag: raw deps skip BOM management, producing different trees
@@ -878,7 +878,7 @@ class EnvironmentBuilder:
                 groupId=artifact.groupId,
                 artifactId=artifact.artifactId,
                 version=artifact.version,
-                packaging=artifact.packaging,
+                packaging=artifact.type,
                 classifier=artifact.classifier,
                 sha256=sha256,
                 is_modular=module_info.is_modular,
@@ -888,7 +888,7 @@ class EnvironmentBuilder:
 
         # Process artifacts and their transitive dependencies
         # Track processed artifacts to avoid duplicates
-        # Use artifact.key which includes classifier and packaging to handle
+        # Use artifact.key which includes classifier and packaging type to handle
         # multiple artifacts with same G:A:V (e.g., natives for different platforms)
         processed = set()
 

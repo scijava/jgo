@@ -51,7 +51,7 @@ def parse_dependency_element_to_coordinate(
     artifactId = _artifactId(el)
     version = _text(el, "version")  # NB: Might be None, which means managed.
     classifier = _text(el, "classifier")
-    packaging = _text(el, "type")
+    type = _text(el, "type")
     scope = _text(el, "scope")
     optional = _text(el, "optional") == "true"
 
@@ -65,7 +65,7 @@ def parse_dependency_element_to_coordinate(
         artifactId=artifactId,
         version=version,
         classifier=classifier,
-        packaging=packaging,
+        packaging=type,
         scope=scope,
         optional=optional,
     )

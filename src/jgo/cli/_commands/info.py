@@ -383,7 +383,7 @@ def _javainfo_coordinate_report(
         component = context.project(coord.groupId, coord.artifactId).at_version(version)
         artifact = component.artifact(
             classifier=coord.classifier or "",
-            packaging=coord.packaging or "jar",
+            type=coord.packaging or "jar",
         )
         resolved = _resolve_artifact_path(artifact)
         if resolved is not None:
@@ -831,7 +831,7 @@ def _resolve_artifact_or_die(
     )
     artifact = component.artifact(
         classifier=coord.classifier or "",
-        packaging=coord.packaging or "jar",
+        type=coord.packaging or "jar",
     )
     try:
         resolved = artifact.resolve()
