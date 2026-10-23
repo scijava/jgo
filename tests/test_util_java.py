@@ -76,7 +76,8 @@ class TestParseJavaVersion:
         assert parse_java_version("11.0.2+9") == JavaVersion(11, 0, 2)
         assert parse_java_version("11.0.9.1-internal") == JavaVersion(11, 0, 9)
         assert parse_java_version(
-            "11.0.31+11-post-1ubuntu1-24.04.2-Ubuntu") == JavaVersion(11, 0, 31)
+            "11.0.31+11-post-1ubuntu1-24.04.2-Ubuntu"
+        ) == JavaVersion(11, 0, 31)
         assert parse_java_version("17.0.18-internal") == JavaVersion(17, 0, 18)
         assert parse_java_version("21+32-ea-beta") == JavaVersion(21, 0, 0)
 
