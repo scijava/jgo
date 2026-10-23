@@ -57,6 +57,12 @@ class TestParseJavaVersion:
         assert parse_java_version("1.8.0_191") == JavaVersion(8, 0, 191)
         assert parse_java_version("1.7.0_80") == JavaVersion(7, 0, 80)
 
+    def test_old_format_with_suffix(self):
+        assert parse_java_version("1.8.0_402-internal") == JavaVersion(8, 0, 402)
+        assert parse_java_version("1.8.0_292-b10") == JavaVersion(8, 0, 292)
+        assert parse_java_version("1.8.0-internal") == JavaVersion(8, 0, 0)
+        assert parse_java_version("1.7.0_80-ea") == JavaVersion(7, 0, 80)
+
     def test_new_format_simple(self):
         assert parse_java_version("8") == JavaVersion(8, 0, 0)
         assert parse_java_version("11") == JavaVersion(11, 0, 0)

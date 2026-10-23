@@ -422,7 +422,8 @@ def parse_java_version(version: str) -> JavaVersion:
     Handles JVM-specific formats:
     - Old: "1.8.0_292" -> JavaVersion(8, 0, 292)
     - New: "17.0.2" -> JavaVersion(17, 0, 2)
-    - New with PRE: "17.0.18-internal"  -> JavaVersion(17, 0, 18)
+    - Old with suffix: "1.8.0_402-internal" -> JavaVersion(8, 0, 402)
+    - New with PRE: "17.0.18-internal" -> JavaVersion(17, 0, 18)
 
     Args:
         version: Java version string
@@ -438,9 +439,14 @@ def parse_java_version(version: str) -> JavaVersion:
         raise ValueError("Empty version string")
 
     try:
+        # Strip any -PRE, +BUILD, or -OPT suffix, per JEP 223 grammar.
+        # Note: JEP 322 revised the semantics but kept this grammar.
+        # Old-format versions can carry similar suffixes (e.g. "-internal").
+        vnum = re.split(r"[-+]", version, maxsplit=1)[0]
+
         # Check if old format (1.x.y_z)
-        if version.startswith("1."):
-            parts = version.split(".")
+        if vnum.startswith("1."):
+            parts = vnum.split(".")
             if len(parts) < 2:
                 raise ValueError(f"Invalid old-format version: {version}")
 
@@ -463,9 +469,7 @@ def parse_java_version(version: str) -> JavaVersion:
 
             return JavaVersion(major, minor, patch)
         else:
-            # New format (x.y.z[-PRE][+BUILD][-OPT]), JEP 223 grammar
-            # Note: JEP 322 revised the semantics but kept this grammar
-            vnum = re.split(r"[-+]", version, maxsplit=1)[0]
+            # New format (x.y.z)
             parts = vnum.split(".")
             major = int(parts[0])
             minor = int(parts[1]) if len(parts) > 1 else 0
