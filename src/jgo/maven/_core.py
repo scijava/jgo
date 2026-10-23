@@ -1015,7 +1015,8 @@ class Artifact:
         is distinct from the local cache mtime. If you need the latter (really
         the time the file was cached locally, not when it was released), use:
 
-            datetime.fromtimestamp(os.path.getmtime(artifact.resolve()))
+            mtime = os.path.getmtime(artifact.resolve())
+            datetime.fromtimestamp(mtime, tz=timezone.utc)
         """
         if self.context.offline:
             return None
