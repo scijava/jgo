@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.2.1
+
+### Bug fixes
+
+- **Normalize timestamps to UTC** -- `Artifact.last_modified()` now returns a UTC-aware datetime, matching `Metadata.lastUpdated`, which became UTC-aware in 3.2.0. Previously, comparing the two raised `can't subtract offset-naive and offset-aware datetimes`. Timestamps from Nexus with a non-UTC offset are now converted to UTC rather than having their offset dropped.
+
 ## 3.2.0
 
 ### New features
