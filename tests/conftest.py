@@ -1,7 +1,9 @@
 """Pytest configuration and shared fixtures."""
 
+import os
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -16,6 +18,39 @@ _BOOTSTRAP_SENTINEL = Path(".cache/m2_repo/.bootstrapped")
 def _isolate_config_file(monkeypatch):
     """Keep the user's JGO_CONFIG_FILE from overriding test config locations."""
     monkeypatch.delenv("JGO_CONFIG_FILE", raising=False)
+
+
+@pytest.hookimpl(wrapper=True)
+def pytest_runtest_call(item):
+    """
+    Give each prysk (.t) test the environment the standalone prysk CLI provides.
+
+    pytest-prysk items do not use fixtures, so autouse fixtures above do not
+    apply to them. And unlike the prysk CLI, pytest-prysk does not point
+    TMPDIR/TEMP/TMP at a fresh per-test directory: the .t files' "$TMPDIR"
+    then expands to whatever the caller has (empty on most Linux systems,
+    a shared directory on macOS), breaking tests and leaking state between
+    runs. So we set up that environment here.
+
+    We also default COLOR=never and NO_PROGRESS=1 so ANSI codes and progress
+    bars stay out of test output regardless of how pytest was launched.
+    Tests can override these (e.g., color.t does).
+    """
+    if item.get_closest_marker("prysk") is None:
+        return (yield)
+
+    saved = os.environ.copy()
+    with tempfile.TemporaryDirectory(prefix="prysk-tmp-") as tmpdir:
+        try:
+            for name in ("TMPDIR", "TEMP", "TMP"):
+                os.environ[name] = tmpdir
+            os.environ.setdefault("COLOR", "never")
+            os.environ.setdefault("NO_PROGRESS", "1")
+            os.environ.pop("JGO_CONFIG_FILE", None)
+            return (yield)
+        finally:
+            os.environ.clear()
+            os.environ.update(saved)
 
 
 @pytest.fixture(scope="session")
