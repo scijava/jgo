@@ -52,7 +52,10 @@ if [ ${#prysk_args[@]} -gt 0 ] && command -v prysk; then
   # This is especially important for CI, which may or may not detect
   # as ANSI-color-compatible compared to local usage of prysk.
   # Tests can override this (e.g., color.t does).
-  COLOR="${COLOR:-never}" NO_PROGRESS="${NO_PROGRESS:-1}" prysk -v "${prysk_args[@]}"
+  #
+  # We unset JGO_CONFIG_FILE so the user's own config file
+  # does not take precedence over the test fixtures.
+  JGO_CONFIG_FILE= COLOR="${COLOR:-never}" NO_PROGRESS="${NO_PROGRESS:-1}" prysk -v "${prysk_args[@]}"
   prysk_status=$?
   if [ $prysk_status -ne 0 ]; then
     exit_status=$prysk_status

@@ -12,6 +12,12 @@ from tests.fixtures.thicket import DEFAULT_SEED, generate_thicket
 _BOOTSTRAP_SENTINEL = Path(".cache/m2_repo/.bootstrapped")
 
 
+@pytest.fixture(autouse=True)
+def _isolate_config_file(monkeypatch):
+    """Keep the user's JGO_CONFIG_FILE from overriding test config locations."""
+    monkeypatch.delenv("JGO_CONFIG_FILE", raising=False)
+
+
 @pytest.fixture(scope="session")
 def thicket_poms(tmp_path_factory):
     """
