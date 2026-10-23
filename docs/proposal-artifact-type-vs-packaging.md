@@ -233,19 +233,23 @@ Two names deliberately stay `packaging`, documented as the *packaging type*:
 `jgo search`'s `p:` filter also keeps its name, since it filters on each
 component's declared POM `<packaging>`, which is the correct meaning there.
 
-## Out of scope (possible follow-up)
+## Component packaging
 
-- **Track `Component.packaging`.** jgo does not currently read a component's own
-  POM `<packaging>`. Adding it would let jgo answer "does this component publish
-  a primary jar at all?" and, for `pom`-packaged components, avoid even
-  attempting a `.jar` resolution (which 404s today). Not required for the
-  type/extension fix; the handler table is the core correctness piece.
+`Component.packaging` reports the `<packaging>` declared in the component's POM
+(e.g. `jar`, `pom`, `bundle`, `maven-plugin`), defaulting to `jar` when absent,
+as Maven does. It is read lazily, resolving the POM on first access, and is
+reset when a dependency's version changes via `Dependency.set_version()`. It is
+not inherited from a parent POM, matching Maven.
+
+A possible follow-up is to use it to decide whether a component publishes a
+primary JAR at all, e.g. to avoid attempting a `.jar` resolution (which 404s)
+for `pom`-packaged components.
 
 ## Versioning
 
 Released as a minor version (3.3.0): the API changes are additions
 (`Artifact.type`, `Artifact.extension`, `Artifact.effective_classifier`,
-`DEFAULT_TYPE`, `jgo.maven.artifact_handler`) plus
+`Component.packaging`, `DEFAULT_TYPE`, `jgo.maven.artifact_handler`) plus
 deprecations, with nothing removed.
 
 ## Testing
@@ -259,4 +263,5 @@ deprecations, with nothing removed.
 - An unknown-type test asserting the `extension == type` fallback.
 - Regression: existing `jar`/`pom` resolution paths unchanged.
 - Deprecated aliases: each warns and still works; conflicting values raise.
+- `Component.packaging` for declared and absent `<packaging>`.
 - Lock file checksum verification for a `test-jar` dependency.

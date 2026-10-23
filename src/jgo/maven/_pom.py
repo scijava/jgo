@@ -159,6 +159,11 @@ class POM(XML):
         return self.value("version") or self.value("parent/version")
 
     @property
+    def packaging(self) -> str | None:
+        """The POM's <packaging> value (None if absent, meaning "jar")."""
+        return self.value("packaging")
+
+    @property
     def name(self) -> str | None:
         """The POM's <name> value."""
         return self.value("name")

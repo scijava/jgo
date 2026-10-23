@@ -34,7 +34,7 @@ Project (groupId:artifactId)
 ```
 
 - **Project** -- a Maven project identified by groupId and artifactId (e.g., `org.python:jython-standalone`).
-- **Component** -- a project at a specific version (e.g., `org.python:jython-standalone:2.7.3`).
+- **Component** -- a project at a specific version (e.g., `org.python:jython-standalone:2.7.3`). Its `packaging` is the `<packaging>` declared in its POM (e.g., `jar`, `pom`, `bundle`).
 - **Artifact** -- one file of a component, selected by packaging type and classifier (e.g., `jar`, `natives-linux`). The packaging type is the dependency `<type>`, which maps to the file's extension and any implied classifier: e.g. type `test-jar` names `foo-1.0-tests.jar`.
 - **Dependency** -- an artifact with metadata: scope, optional flag, exclusions.
 

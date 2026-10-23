@@ -633,6 +633,7 @@ class Component:
         self.version = version
         self._resolved_version: str | None = None
         self._snapshot_metadata: SnapshotMetadataXML | None = None
+        self._packaging: str | None = None
 
     def __eq__(self, other):
         return (
@@ -783,6 +784,23 @@ class Component:
         """
         return self.project.path_prefix / self.resolved_version
 
+    @property
+    def packaging(self) -> str:
+        """
+        The <packaging> declared in this component's POM (e.g. jar, pom, bundle,
+        maven-plugin), or "jar" if the POM does not declare one.
+
+        This says what the component's primary artifact is, if any: e.g. a
+        component with "pom" packaging (such as a BOM) publishes no JAR.
+        Not to be confused with the packaging type of an Artifact, which selects
+        one particular file of a component.
+
+        Accessing this resolves the component's POM, downloading it if needed.
+        """
+        if self._packaging is None:
+            self._packaging = self.pom().packaging or DEFAULT_TYPE
+        return self._packaging
+
     def artifact(
         self,
         classifier: str = DEFAULT_CLASSIFIER,
@@ -865,6 +883,9 @@ class Artifact:
     def packaging(self) -> str:
         """
         Deprecated alias for type: the artifact's packaging type.
+
+        Not to be confused with Component.packaging, the <packaging> declared
+        in the component's POM.
         """
         _warn_packaging_deprecated("Artifact.packaging")
         return self.type
@@ -1225,6 +1246,7 @@ class Dependency:
         assert isinstance(version, str)
         self.artifact.component.version = version
         self.artifact.component._resolved_version = None
+        self.artifact.component._packaging = None
 
 
 @dataclass

@@ -1,6 +1,6 @@
 """
-Tests for artifact packaging types vs. file extensions, and the deprecated
-Artifact.packaging alias.
+Tests for artifact packaging types vs. file extensions, the deprecated
+Artifact.packaging alias, and Component.packaging.
 """
 
 from pathlib import Path
@@ -204,6 +204,46 @@ def test_get_timestamped_version_packaging_keyword_is_deprecated(tmp_path):
     with pytest.warns(DeprecationWarning, match="'packaging' is deprecated"):
         version = metadata.get_timestamped_version(packaging="jar")
     assert version == "1.0-20230706.150124-1"
+
+
+# -- Component.packaging --
+
+
+def _write_pom(repo: Path, packaging: str | None) -> None:
+    pom = repo / "org/example/foo/1.0/foo-1.0.pom"
+    pom.parent.mkdir(parents=True)
+    packaging_el = f"<packaging>{packaging}</packaging>" if packaging else ""
+    pom.write_text(
+        "<project>"
+        "<groupId>org.example</groupId>"
+        "<artifactId>foo</artifactId>"
+        "<version>1.0</version>"
+        f"{packaging_el}"
+        "</project>"
+    )
+
+
+@pytest.mark.parametrize("packaging", ["pom", "bundle", "maven-plugin", "war"])
+def test_component_packaging(tmp_path, component, packaging):
+    _write_pom(tmp_path, packaging)
+    assert component.packaging == packaging
+
+
+def test_component_packaging_defaults_to_jar(tmp_path, component):
+    _write_pom(tmp_path, None)
+    assert component.packaging == "jar"
+
+
+def test_component_packaging_reset_by_set_version(tmp_path):
+    _write_pom(tmp_path, "bundle")
+    pom2 = tmp_path / "org/example/foo/2.0/foo-2.0.pom"
+    pom2.parent.mkdir(parents=True)
+    pom2.write_text("<project><packaging>pom</packaging></project>")
+
+    dep = _context(tmp_path).create_dependency("org.example:foo:1.0")
+    assert dep.artifact.component.packaging == "bundle"
+    dep.set_version("2.0")
+    assert dep.artifact.component.packaging == "pom"
 
 
 # -- Lock file --

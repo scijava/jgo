@@ -2,6 +2,10 @@
 
 ## 3.3.0
 
+### New features
+
+- **Query a component's packaging** -- The new `Component.packaging` property reports the `<packaging>` declared in the component's POM (e.g. `jar`, `pom`, `bundle`, `maven-plugin`), defaulting to `jar` as Maven does.
+
 ### Bug fixes
 
 - **Resolve non-JAR packaging types correctly** -- Packaging types whose file extension differs from the type name now resolve to the right file, following Maven's standard artifact handlers. For example, `g:a:test-jar:v` now resolves `a-v-tests.jar` rather than looking for a nonexistent `a-v.test-jar`, and `maven-plugin`, `bundle`, `ejb`, `ejb-client`, `java-source`, and `javadoc` types work too. This applies to both resolvers, SNAPSHOT lookups, and lock file checksum verification.
