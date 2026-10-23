@@ -4,6 +4,7 @@ help:
 		docs  - build documentation site locally\n\
 		lint  - run code formatters and linters\n\
 		test  - run automated test suite\n\
+		test-lowest - run tests with lowest direct dependency versions\n\
 		dist  - generate release archives\n\
 	"
 
@@ -22,7 +23,10 @@ lint: check
 test: check
 	bin/test.sh
 
+test-lowest: check
+	UV_RESOLUTION=lowest-direct bin/test.sh
+
 dist: check clean
 	bin/dist.sh
 
-.PHONY: help clean docs check lint test dist
+.PHONY: help clean docs check lint test test-lowest dist
