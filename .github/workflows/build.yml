@@ -12,12 +12,28 @@ on:
 
 jobs:
   build:
-    name: ${{ matrix.os }} py${{ matrix.python-version }}
+    name: ${{ matrix.os }} py${{ matrix.python-version }} (${{ matrix.resolution }})
     runs-on: ${{ matrix.os }}
+    env:
+      UV_RESOLUTION: ${{ matrix.resolution }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ['3.10', '3.15']
+        resolution: [highest]
+        include:
+          # Test the declared lower bounds of direct dependencies,
+          # on the oldest supported Python.
+          - os: ubuntu-latest
+            python-version: '3.10'
+            resolution: lowest-direct
+          - os: windows-latest
+            python-version: '3.10'
+            resolution: lowest-direct
+          - os: macos-latest
+            python-version: '3.10'
+            resolution: lowest-direct
 
     steps:
       - uses: actions/checkout@v4
@@ -55,9 +71,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/uv
-          key: ${{ runner.os }}-py${{ matrix.python-version }}-uv-${{ hashFiles('**/pyproject.toml') }}
+          key: ${{ runner.os }}-py${{ matrix.python-version }}-uv-${{ env.UV_RESOLUTION }}-${{ hashFiles('**/pyproject.toml') }}
           restore-keys: |
-            ${{ runner.os }}-py${{ matrix.python-version }}-uv-
+            ${{ runner.os }}-py${{ matrix.python-version }}-uv-${{ env.UV_RESOLUTION }}-
 
       - name: Set up uv
         run: |
@@ -70,6 +86,8 @@ jobs:
           bin/test.sh
 
       - name: Lint code
+        # Linting with the oldest dev tools tests nothing about jgo's bounds.
+        if: matrix.resolution != 'lowest-direct'
         shell: bash
         run: |
           bin/lint.sh
