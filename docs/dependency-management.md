@@ -95,12 +95,13 @@ Despite this, Maven's `dependency:tree` and `dependency:list` output promotes `a
 
 When building an environment, jgo links JARs from the Maven local repository (`~/.m2/repository`) into the environment directory. The link strategy controls how:
 
-| Strategy | Disk overhead | Cross-filesystem | Notes |
-|:---------|:--------------|:-----------------|:------|
-| `hard` | None | No | Default. Fastest, zero disk overhead. |
-| `soft` | None | Yes | Symbolic links. |
-| `copy` | Full | Yes | Copies files. Works everywhere. |
-| `auto` | None | Yes | Tries hard, then soft, then copy. |
+| Strategy  | Disk overhead | Cross-filesystem | Notes |
+|:----------|:--------------|:-----------------|:------|
+| `reflink` | None          | No               | Copy-on-write clone; independent of the source file. Requires filesystem support (APFS, Btrfs, XFS, ZFS, bcachefs); Linux and macOS only. |
+| `hard`    | None          | No               | Fast, zero disk overhead. |
+| `soft`    | None          | Yes              | Symbolic links. |
+| `copy`    | Full          | Yes              | Copies files. Works everywhere. |
+| `auto`    | None          | Yes              | Default. Tries reflink, then hard, then soft, then copy. |
 
 Configure via the `[settings]` section of the config file, CLI flag, or `jgo.toml`:
 

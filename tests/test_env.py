@@ -5,6 +5,8 @@ Unit tests for the Environment layer.
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from jgo.env import Environment, EnvironmentBuilder, LinkStrategy, LockFile
 from jgo.env._linking import link_file
 from jgo.maven import Dependency, MavenContext
@@ -105,6 +107,7 @@ def test_cache_key_generation():
 
 def test_link_strategy_enum():
     """Test LinkStrategy enum values."""
+    assert LinkStrategy.REFLINK.value == "reflink"
     assert LinkStrategy.HARD.value == "hard"
     assert LinkStrategy.SOFT.value == "soft"
     assert LinkStrategy.COPY.value == "copy"
@@ -129,6 +132,46 @@ def test_link_file():
         except OSError:
             # Hard link might not work on some filesystems
             pass
+
+
+def test_link_file_reflink():
+    """Test reflink strategy, skipping when the filesystem lacks support."""
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        source_file = Path(tmp_dir) / "source.txt"
+        source_file.write_text("test content")
+        target_file = Path(tmp_dir) / "clone.txt"
+
+        try:
+            link_file(source_file, target_file, LinkStrategy.REFLINK)
+        except OSError as e:
+            assert not target_file.exists()
+            pytest.skip(f"Reflinks unsupported here: {e}")
+
+        assert target_file.read_text() == "test content"
+        # Reflinks are independent files: editing one leaves the other intact.
+        assert target_file.stat().st_ino != source_file.stat().st_ino
+        target_file.write_text("changed")
+        assert source_file.read_text() == "test content"
+
+
+def test_link_file_auto_falls_back(monkeypatch):
+    """Test that auto strategy falls back to hard link when reflink fails."""
+    import errno
+
+    from jgo.env import _linking
+
+    def unsupported(source, link_name):
+        raise OSError(errno.EOPNOTSUPP, "nope")
+
+    monkeypatch.setattr(_linking, "reflink", unsupported)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        source_file = Path(tmp_dir) / "source.txt"
+        source_file.write_text("test content")
+        target_file = Path(tmp_dir) / "link.txt"
+
+        link_file(source_file, target_file, LinkStrategy.AUTO)
+        assert target_file.read_text() == "test content"
+        assert target_file.stat().st_ino == source_file.stat().st_ino
 
 
 def test_environment_min_java_version():

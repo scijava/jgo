@@ -59,7 +59,7 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
         default = "imagej"  # Which entrypoint to use by default
 
         [settings]
-        links = "hard"  # hard, soft, copy, auto
+        links = "hard"  # reflink, hard, soft, copy, auto
         cache_dir = ".jgo"  # Override cache directory
     """
 
@@ -239,10 +239,16 @@ class EnvironmentSpec(TOMLSerializableMixin, FieldValidatorMixin):
         cache_dir = settings_section.get("cache_dir")
 
         # Validate link strategy
-        if link_strategy and link_strategy not in ("hard", "soft", "copy", "auto"):
+        if link_strategy and link_strategy not in (
+            "reflink",
+            "hard",
+            "soft",
+            "copy",
+            "auto",
+        ):
             raise ValueError(
                 f"Invalid link strategy '{link_strategy}'. "
-                "Expected one of: hard, soft, copy, auto"
+                "Expected one of: reflink, hard, soft, copy, auto"
             )
 
         return cls(

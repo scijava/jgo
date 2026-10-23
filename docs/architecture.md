@@ -76,12 +76,13 @@ for dep in deps:
 
 ### Link strategies
 
-| Strategy | Disk overhead | Cross-filesystem |
-|:---------|:--------------|:-----------------|
-| Hard (default) | None | No |
-| Soft | None | Yes |
-| Copy | Full | Yes |
-| Auto | None | Yes (tries hard → soft → copy) |
+| Strategy       | Disk overhead        | Cross-filesystem |
+|:---------------|:---------------------|:-----------------|
+| Reflink        | None (copy-on-write) | No               |
+| Hard           | None                 | No               |
+| Soft           | None                 | Yes              |
+| Copy           | Full                 | Yes              |
+| Auto (default) | None                 | Yes (tries reflink → hard → soft → copy) |
 
 ### Cache modes
 

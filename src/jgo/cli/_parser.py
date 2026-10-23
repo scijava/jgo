@@ -319,9 +319,9 @@ def global_options(f: Callable[..., Any]) -> Callable[..., Any]:
     # Advanced options
     f = click.option(
         "--links",
-        type=click.Choice(["hard", "soft", "copy", "auto"]),
+        type=click.Choice(["reflink", "hard", "soft", "copy", "auto"]),
         default=None,
-        help="How to link JARs: hard, soft, copy, or auto (default: from config or auto)",
+        help="How to link JARs: reflink, hard, soft, copy, or auto (default: from config or auto)",
     )(f)
     f = click.option(
         "--lenient",

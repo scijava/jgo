@@ -45,7 +45,7 @@ These options apply to all commands and must appear **before** the command name:
 |:-------|:-----------|
 | `--resolver {auto,python,mvn}` | Dependency resolver. `auto` (default) tries pure Python first, falls back to Maven. |
 | `-r`, `--repository NAME:URL` | Add a remote Maven repository. Can be repeated. |
-| `--links {hard,soft,copy,auto}` | How to link JARs from Maven cache to environment. Default: from config or `auto`. |
+| `--links {reflink,hard,soft,copy,auto}` | How to link JARs from Maven cache to environment. Default: from config or `auto`. |
 | `--include-optional` | Include optional dependencies. Env: `JGO_INCLUDE_OPTIONAL`. |
 | `--lenient` | Warn instead of failing on unresolved dependencies. Env: `JGO_LENIENT`. |
 | `--full-coordinates` | Include default coordinate components (jar packaging, compile scope) in output. |

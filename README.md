@@ -185,7 +185,10 @@ you can also try:
   Endpoints are synthesized in a local cache under `~/.cache/jgo`.
   So invoking the same endpoint a second time is really quick.
 * __What does "no installation" mean?__
-  Classpath elements are [hard-linked](https://en.wikipedia.org/wiki/Hard_link)
+  Classpath elements are
+  [reflinked](https://en.wikipedia.org/wiki/Data_deduplication#reflink)
+  (copy-on-write cloned) or
+  [hard-linked](https://en.wikipedia.org/wiki/Hard_link)
   into `~/.cache/jgo` from `~/.m2/repository` rather than copied, so the cache
   folder has a tiny footprint even if you execute lots of different endpoints.
 * __What if an endpoint has a new version?__

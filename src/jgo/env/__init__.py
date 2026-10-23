@@ -60,10 +60,11 @@ Environment
 LinkStrategy
     Controls how JARs are placed into the environment directory.
 
-    * ``AUTO``   — hard-link when possible, copy otherwise (default)
-    * ``HARD``   — always hard-link (error if cross-device)
-    * ``COPY``   — always copy
-    * ``SYMLINK``— symbolic link
+    * ``AUTO``    — try reflink, then hard link, then symlink, then copy (default)
+    * ``REFLINK`` — always copy-on-write clone (error if unsupported)
+    * ``HARD``    — always hard-link (error if cross-device)
+    * ``SOFT``    — symbolic link
+    * ``COPY``    — always copy
 
 EnvironmentSpec
     In-memory representation of a ``jgo.toml`` project file.  Use

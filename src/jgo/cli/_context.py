@@ -128,6 +128,7 @@ def create_environment_builder(
     """
     # Determine link strategy
     link_strategy_map = {
+        "reflink": LinkStrategy.REFLINK,
         "hard": LinkStrategy.HARD,
         "soft": LinkStrategy.SOFT,
         "copy": LinkStrategy.COPY,

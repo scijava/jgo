@@ -164,7 +164,7 @@ def test_environment_spec_validation_invalid_link_strategy():
 coordinates = ["org.example:artifact:1.0.0"]
 
 [settings]
-links = "invalid"  # Should be hard, soft, copy, or auto
+links = "invalid"  # Should be reflink, hard, soft, copy, or auto
 """)
 
         # Should raise ValueError

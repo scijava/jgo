@@ -172,10 +172,11 @@ print(env.main_class)   # Detected main class
 
 `LinkStrategy`
 : How JARs are placed in the environment directory.
-  - `HARD` -- hard links (zero disk overhead, default on Unix).
+  - `REFLINK` -- copy-on-write clones (zero disk overhead, needs filesystem support).
+  - `HARD` -- hard links (zero disk overhead).
   - `SOFT` -- symbolic links.
   - `COPY` -- file copies.
-  - `AUTO` -- try hard, then soft, then copy.
+  - `AUTO` -- try reflink, then hard, then soft, then copy (default).
 
 ### Layer 3: Execution (`jgo.exec`)
 

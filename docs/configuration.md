@@ -41,7 +41,7 @@ repl = imagej:org.scijava.script.ScriptREPL
 : Local Maven repository cache. Default: `~/.m2/repository`.
 
 `links`
-: Link strategy for JARs: `hard`, `soft`, `copy`, or `auto`. Default: `hard`.
+: Link strategy for JARs: `reflink`, `hard`, `soft`, `copy`, or `auto`. Default: `auto`.
 
 ### `[repositories]` section
 

@@ -61,10 +61,10 @@ Test --color with different commands.
   │                                                    on unresolved             │
   │                                                    dependencies. [env var:   │
   │                                                    JGO_LENIENT]              │
-  │ --links                 [hard|soft|copy|auto]      How to link JARs: hard,   │
-  │                                                    soft, copy, or auto       │
-  │                                                    (default: from config or  │
-  │                                                    auto)                     │
+  │ --links                 [reflink|hard|soft|copy|a  How to link JARs:         │
+  │                         uto]                       reflink, hard, soft,      │
+  │                                                    copy, or auto (default:   │
+  │                                                    from config or auto)      │
   │ --property          -D  KEY=VALUE                  Set property for profile  │
   │                                                    activation.               │
   │ --os-version            VERSION                    Set OS version for        │

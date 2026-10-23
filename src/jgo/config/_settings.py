@@ -52,7 +52,7 @@ class GlobalSettings:
         Args:
             cache_dir: jgo cache directory (defaults to ~/.cache/jgo)
             repo_cache: Maven repository cache (defaults to ~/.m2/repository)
-            links: Link strategy (hard, soft, copy, auto)
+            links: Link strategy (reflink, hard, soft, copy, auto)
             repositories: Maven repositories (name -> URL)
             shortcuts: Coordinate shortcuts
             jvm_config: JVM configuration (gc, max_heap, min_heap, jvm_args, properties)

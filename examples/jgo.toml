@@ -45,5 +45,5 @@ repl = "org.scijava.script.ScriptREPL"
 
 # Settings (optional)
 [settings]
-links = "hard"      # hard, soft, copy, or auto
+links = "hard"      # reflink, hard, soft, copy, or auto
 cache_dir = ".jgo"  # Override cache directory (default: .jgo in project mode)
