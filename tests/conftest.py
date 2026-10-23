@@ -3,6 +3,7 @@
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -18,6 +19,20 @@ _BOOTSTRAP_SENTINEL = Path(".cache/m2_repo/.bootstrapped")
 def _isolate_config_file(monkeypatch):
     """Keep the user's JGO_CONFIG_FILE from overriding test config locations."""
     monkeypatch.delenv("JGO_CONFIG_FILE", raising=False)
+
+
+def pytest_collection_modifyitems(config, items):
+    """
+    Skip prysk (.t) tests on Windows.
+
+    prysk runs each .t file through /bin/sh, which does not exist on Windows.
+    """
+    if sys.platform != "win32":
+        return
+    skip = pytest.mark.skip(reason="prysk tests require a POSIX shell")
+    for item in items:
+        if item.get_closest_marker("prysk") is not None:
+            item.add_marker(skip)
 
 
 @pytest.hookimpl(wrapper=True)
