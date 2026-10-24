@@ -60,7 +60,7 @@ jgo -r scijava=https://maven.scijava.org/content/groups/public org.scijava:parsi
 ```
 
 :::{tip}
-For more control over Maven repository configuration (mirrors, authentication), use Maven's `~/.m2/settings.xml`. See [Using Mirrors for Repositories](https://maven.apache.org/guides/mini/guide-mirror-settings.html).
+For more control over Maven repository configuration (mirrors, authentication), you can use Maven's `~/.m2/settings.xml` with `--resolver=mvn`; see [Using Mirrors for Repositories](https://maven.apache.org/guides/mini/guide-mirror-settings.html) for details.
 :::
 
 ### `[shortcuts]` section
