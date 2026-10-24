@@ -423,27 +423,63 @@ def _javainfo_pom_report(
     label = str(pom_path)
 
     try:
-        if self_only:
-            # Just the project's own artifact (no dependencies).
-            root, _deps = context.pom_dependency_list(pom, transitive=False)
-            resolved = _resolve_artifact_path(root.dep.artifact)
-            paths = [resolved] if resolved is not None else []
-        else:
-            _root, deps = context.pom_dependency_list(
-                pom,
-                transitive=not direct,
-                optional_depth=args.get_effective_optional_depth(),
-            )
-            paths = []
-            for node in deps:
-                resolved = _resolve_artifact_path(node.dep.artifact)
-                if resolved is not None:
-                    paths.append(resolved)
+        root, deps = context.pom_dependency_list(
+            pom,
+            transitive=not (direct or self_only),
+            optional_depth=args.get_effective_optional_depth(),
+        )
+        paths = [] if self_only else _resolve_dependency_paths(deps)
+        own = _pom_own_output(context, pom, pom_path, root)
     except (RuntimeError, ValueError) as e:
         _log.error(f"Failed to resolve {pom_path}: {e}")
         ctx.exit(1)
 
+    # The project's own classes come first, ahead of its dependencies.
+    if own is not None:
+        paths.insert(0, own)
+
     return paths_report(label, _dedup_paths(paths))
+
+
+def _resolve_dependency_paths(deps) -> list[Path]:
+    """Resolve dependency nodes to local JAR paths, skipping failures."""
+    paths = []
+    for node in deps:
+        resolved = _resolve_artifact_path(node.dep.artifact)
+        if resolved is not None:
+            paths.append(resolved)
+    return paths
+
+
+def _pom_own_output(context: MavenContext, pom, pom_path: Path, root) -> Path | None:
+    """
+    Locate the compiled output of a POM's own project, for javainfo.
+
+    A ``pom.xml`` is treated as a project checkout: only its local build output
+    counts (compiled classes, then the packaged JAR), since whatever sits in the
+    local Maven repository may be a different build (e.g. a remote SNAPSHOT).
+    Any other POM file (e.g. ``foo-1.0.pom``) is treated as a published POM, and
+    its artifact is resolved from the repository instead.
+    """
+    if pom.packaging == "pom":
+        return None  # Parent/aggregator/BOM: no classes of its own.
+
+    if pom_path.name != "pom.xml":
+        # NB: root.dep.artifact is the POM file itself; we want the main JAR.
+        return _resolve_artifact_path(root.dep.artifact.component.artifact())
+
+    classes_dir, jar = context.pom_build_outputs(pom)
+    if classes_dir.is_dir() and any(classes_dir.rglob("*.class")):
+        return classes_dir
+    if jar.is_file():
+        return jar
+
+    _log.warning(
+        f"{pom_path}: no build output found at {classes_dir} or {jar}; "
+        "the project's own classes were not analyzed. "
+        "Build it first (e.g. `mvn compile`)."
+    )
+    return None
 
 
 def _dedup_paths(paths: list[Path]) -> list[Path]:

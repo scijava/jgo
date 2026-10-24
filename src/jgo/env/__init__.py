@@ -86,6 +86,9 @@ JAR Utility Functions
 analyze_jar_bytecode(jar_path)
     Return bytecode version information for all ``.class`` files in a JAR.
 
+analyze_classes_dir(classes_dir)
+    Return the same information for a directory of compiled classes.
+
 bytecode_to_java_version(bytecode_version)
     Convert a raw class-file major version number to a Java release number.
 
@@ -128,6 +131,7 @@ Example — Build and Inspect an Environment
 from ._builder import EnvironmentBuilder
 from ._bytecode import (
     analyze_class_file,
+    analyze_classes_dir,
     analyze_jar_bytecode,
     bytecode_to_java_version,
     round_to_lts,
@@ -153,6 +157,7 @@ __all__ = [
     "EnvironmentBuilder",
     # bytecode
     "analyze_class_file",
+    "analyze_classes_dir",
     "analyze_jar_bytecode",
     "bytecode_to_java_version",
     "jar_java_version",

@@ -298,3 +298,36 @@ def test_no_rounding_option():
 
         # Without rounding
         assert detect_jar_java_version(jar_path, round_to_lts_version=False) == 9
+
+
+def test_analyze_classes_dir():
+    """Test analyzing a directory of compiled classes (e.g. target/classes)."""
+    from jgo.env._bytecode import analyze_classes_dir
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        classes = Path(tmp_dir) / "target" / "classes"
+        (classes / "org" / "example").mkdir(parents=True)
+        (classes / "org" / "example" / "Foo.class").write_bytes(
+            create_fake_class_file(52)
+        )
+        (classes / "org" / "example" / "Bar.class").write_bytes(
+            create_fake_class_file(55)
+        )
+        (classes / "module-info.class").write_bytes(create_fake_class_file(53))
+        (classes / "app.properties").write_text("not a class")
+
+        result = analyze_classes_dir(classes)
+        assert result["java_version"] == 11
+        assert result["version_counts"] == {52: 1, 55: 1}
+        assert result["skipped"] == ["module-info.class"]
+        assert result["high_version_classes"][0] == ("org/example/Bar.class", 55)
+
+        # Missing directory -> empty dict
+        assert analyze_classes_dir(Path(tmp_dir) / "missing") == {}
+
+        # A class directory is labeled with its parent in javainfo output.
+        from jgo.cli._output import analyses_from_paths
+
+        assert [name for name, _ in analyses_from_paths([classes])] == [
+            "target/classes/"
+        ]

@@ -5,8 +5,11 @@
 ### New features
 
 - **Query a component's packaging** -- The new `Component.packaging` property reports the `<packaging>` declared in the component's POM (e.g. `jar`, `pom`, `bundle`, `maven-plugin`), defaulting to `jar` as Maven does.
+- **`javainfo` analyzes a project's own classes** -- Given a project's `pom.xml` (or its directory), `jgo info javainfo` now analyzes the project's build output alongside its dependencies: `target/classes` if compiled, else the packaged `target/<artifactId>-<version>.jar`, honoring any `<build>` settings inherited from parent POMs. If the project has not been built, it warns rather than silently analyzing only the dependencies; it does not fall back to the local repository, whose copy may be a different build. Any other POM file (e.g. `foo-1.0.pom`, now also recognized by `.pom` suffix) is treated as published, and its artifact is resolved from the repository instead.
 
 ### Bug fixes
+
+- **`javainfo --self` on a POM analyzed the POM file** -- `jgo info javainfo --self <pom>` resolved the project's `.pom` file rather than its JAR, so it always reported no analyzable classes.
 
 - **Resolve non-JAR packaging types correctly** -- Packaging types whose file extension differs from the type name now resolve to the right file, following Maven's standard artifact handlers. For example, `g:a:test-jar:v` now resolves `a-v-tests.jar` rather than looking for a nonexistent `a-v.test-jar`, and `maven-plugin`, `bundle`, `ejb`, `ejb-client`, `java-source`, and `javadoc` types work too. This applies to both resolvers, SNAPSHOT lookups, and lock file checksum verification.
 - **Normalize timestamps to UTC** -- `Artifact.last_modified()` now returns a UTC-aware datetime, matching `Metadata.lastUpdated`, which became UTC-aware in 3.2.0. Previously, comparing the two raised `can't subtract offset-naive and offset-aware datetimes`. Timestamps from Nexus with a non-UTC offset are now converted to UTC rather than having their offset dropped.

@@ -333,6 +333,20 @@ class MavenContext:
         _, root = self._model_for_pom(pom).dependencies(optional_depth=optional_depth)
         return root
 
+    def pom_build_outputs(self, pom: POM) -> tuple[Path, Path]:
+        """
+        Locate the local build output of a real project POM.
+
+        Args:
+            pom: The project POM.
+
+        Returns:
+            Tuple of (output_directory, main_jar) where a local build would put the
+            project's compiled classes and packaged JAR. See
+            :meth:`Model.build_outputs`.
+        """
+        return self._model_for_pom(pom).build_outputs()
+
     def pom_dependency_list(
         self, pom: POM, transitive: bool = True, optional_depth: int = 0
     ) -> tuple[DependencyNode, list[DependencyNode]]:

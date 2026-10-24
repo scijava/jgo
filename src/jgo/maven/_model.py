@@ -5,6 +5,7 @@ Maven dependency model and resolution.
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from re import findall
 from typing import TYPE_CHECKING
 
@@ -96,6 +97,18 @@ class Model:
             self._inject_profiles(parent)
             self._merge(parent)
             parent = self.context.pom_parent(parent)
+
+        # Fall back to the super POM's build layout for anything left unset.
+        # https://maven.apache.org/ref/3.9.9/maven-model-builder/super-pom.html
+        if isinstance(pom.source, Path):
+            self._merge_props({"project.basedir": str(pom.source.parent)})
+        self._merge_props(
+            {
+                "project.build.directory": "${project.basedir}/target",
+                "project.build.outputDirectory": "${project.build.directory}/classes",
+                "project.build.finalName": "${project.artifactId}-${project.version}",
+            }
+        )
 
         # -- MODEL INTERPOLATION --
 
@@ -227,6 +240,30 @@ class Model:
                 dep.scope = "test" if dep.classifier == "tests" else "compile"
 
         _log.debug(f"{self.gav}: model construction complete")
+
+    def build_outputs(self) -> tuple[Path, Path]:
+        """
+        Locate where a local build of this project puts its compiled output.
+
+        Paths come from the interpolated ``<build>`` settings, inherited from parent
+        POMs and defaulting to the super POM's layout. Relative paths are resolved
+        against the project's base directory. Nothing is checked for existence.
+
+        Returns:
+            Tuple of (output_directory, main_jar), typically
+            ``target/classes`` and ``target/<artifactId>-<version>.jar``.
+        """
+        basedir = Path(self.props.get("project.basedir", "."))
+
+        def build_path(prop: str) -> Path:
+            path = Path(Model._propvalue(prop, self.props) or "")
+            return path if path.is_absolute() else basedir / path
+
+        build_dir = build_path("project.build.directory")
+        final_name = Model._propvalue("project.build.finalName", self.props)
+        return build_path(
+            "project.build.outputDirectory"
+        ), build_dir / f"{final_name}.jar"
 
     def dependencies(
         self,
@@ -523,6 +560,9 @@ class Model:
                     "project.version": pom.version,
                     "project.name": pom.name,
                     "project.description": pom.description,
+                    "project.build.directory": pom.value("build/directory"),
+                    "project.build.outputDirectory": pom.value("build/outputDirectory"),
+                    "project.build.finalName": pom.value("build/finalName"),
                 }.items()
                 if v is not None
             }

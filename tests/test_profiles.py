@@ -13,11 +13,15 @@ class MockPOM:
     name = "n"
     description = "d"
     properties: ClassVar[dict] = {}
+    source = "<mock>"
 
     def elements(self, xpath):
         return []
 
     def element(self, xpath):
+        return None
+
+    def value(self, xpath):
         return None
 
 

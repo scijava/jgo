@@ -10,6 +10,7 @@ import logging
 import struct
 import zipfile
 from collections import Counter
+from functools import partial
 from typing import TYPE_CHECKING
 
 _log = logging.getLogger(__name__)
@@ -44,6 +45,7 @@ BYTECODE_TO_JAVA = {
 }
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
     from pathlib import Path
 
 # LTS versions to round up to
@@ -282,40 +284,77 @@ def analyze_jar_bytecode(jar_path: Path) -> dict:
     if not jar_path.exists():
         return {}
 
+    try:
+        with zipfile.ZipFile(jar_path, "r") as jar:
+            return _summarize_classes(
+                (name, partial(jar.read, name))
+                for name in jar.namelist()
+                if name.endswith(".class")
+            )
+    except (zipfile.BadZipFile, OSError):
+        return {}
+
+
+def analyze_classes_dir(classes_dir: Path) -> dict:
+    """
+    Analyze bytecode versions in a directory of compiled classes.
+
+    Typically used for a Maven project's build output (e.g. ``target/classes``).
+    Returns the same dictionary shape as :func:`analyze_jar_bytecode`, with class
+    names given relative to the directory.
+
+    Args:
+        classes_dir: Directory to scan recursively for ``.class`` files.
+
+    Returns:
+        Dictionary with the same keys as :func:`analyze_jar_bytecode`, or an
+        empty dict if the directory does not exist.
+    """
+    if not classes_dir.is_dir():
+        return {}
+
+    return _summarize_classes(
+        (path.relative_to(classes_dir).as_posix(), path.read_bytes)
+        for path in sorted(classes_dir.rglob("*.class"))
+    )
+
+
+def _summarize_classes(entries: Iterable[tuple[str, Callable[[], bytes]]]) -> dict:
+    """
+    Summarize bytecode versions across a collection of class files.
+
+    Args:
+        entries: ``(name, read_bytes)`` pairs, where ``name`` is the class file's
+            path within its container (using ``/`` separators) and ``read_bytes``
+            returns its contents.
+
+    Returns:
+        Dictionary in the shape documented by :func:`analyze_jar_bytecode`.
+    """
     version_counts: Counter[int] = Counter()
     skipped = []
     class_versions = []  # List of (class_name, major_version) tuples
 
-    try:
-        with zipfile.ZipFile(jar_path, "r") as jar:
-            for name in jar.namelist():
-                if not name.endswith(".class"):
-                    continue
+    for name, read_bytes in entries:
+        # Track skipped files
+        if name.startswith("META-INF/versions/"):
+            skipped.append(name)
+            continue
 
-                # Track skipped files
-                if name.startswith("META-INF/versions/"):
-                    skipped.append(name)
-                    continue
+        basename = name.split("/")[-1]
+        if basename in ("module-info.class", "package-info.class"):
+            skipped.append(name)
+            continue
 
-                basename = name.split("/")[-1]
-                if basename in ("module-info.class", "package-info.class"):
-                    skipped.append(name)
-                    continue
+        try:
+            major_version = read_class_version(read_bytes())
+            if major_version is not None:
+                version_counts[major_version] += 1
+                class_versions.append((name, major_version))
 
-                try:
-                    class_bytes = jar.read(name)
-                    major_version = read_class_version(class_bytes)
-
-                    if major_version is not None:
-                        version_counts[major_version] += 1
-                        class_versions.append((name, major_version))
-
-                except Exception as e:
-                    _log.debug(f"Skipping unreadable class {name}: {e}")
-                    continue
-
-    except (zipfile.BadZipFile, OSError):
-        return {}
+        except Exception as e:
+            _log.debug(f"Skipping unreadable class {name}: {e}")
+            continue
 
     if not version_counts:
         return {"version_counts": {}, "max_version": None, "java_version": None}

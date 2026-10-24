@@ -14,6 +14,7 @@ from rich.panel import Panel
 
 from ..env import (
     analyze_class_file,
+    analyze_classes_dir,
     analyze_jar_bytecode,
     bytecode_to_java_version,
     find_main_classes,
@@ -294,19 +295,25 @@ class SourceReport:
 
 def analyses_from_paths(paths: list[Path]) -> list[tuple[str, dict]]:
     """
-    Analyze a list of JAR and/or ``.class`` file paths.
+    Analyze a list of JAR files, ``.class`` files, and/or class directories.
 
     Returns ``(display_name, analysis)`` pairs for each path that contains
-    analyzable class files, preserving input order.
+    analyzable class files, preserving input order. A class directory is shown
+    with its parent (e.g. ``target/classes``) to make clear what it is.
     """
     analyses = []
     for path in paths:
-        if path.suffix == ".class":
+        if path.is_dir():
+            analysis = analyze_classes_dir(path)
+            name = f"{path.parent.name}/{path.name}/"
+        elif path.suffix == ".class":
             analysis = analyze_class_file(path)
+            name = path.name
         else:
             analysis = analyze_jar_bytecode(path)
+            name = path.name
         if analysis and analysis.get("java_version"):
-            analyses.append((path.name, analysis))
+            analyses.append((name, analysis))
     return analyses
 
 

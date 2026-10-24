@@ -70,3 +70,44 @@ Analyze a local JAR file directly (no Maven resolution).
   ┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━┩
   │ jsr305-3.0.2.jar │            5 │           49 │          35 │
   └──────────────────┴──────────────┴──────────────┴─────────────┘
+
+A pom.xml is treated as a project checkout. Before it is built, jgo warns that
+the project's own classes could not be analyzed.
+
+  $ mkdir -p "$TMPDIR/javainfo-proj"
+  $ cp "$TMPDIR/javainfo-pom.xml" "$TMPDIR/javainfo-proj/pom.xml"
+  $ jgo info javainfo --self "$TMPDIR/javainfo-proj"
+  WARNING  */javainfo-proj/pom.xml: no build output found at *Build it first (e.g. `mvn compile`).* (glob)
+  No analyzable classes found
+
+Once built, the project's own classes are analyzed ahead of its dependencies.
+
+  $ mkdir -p "$TMPDIR/javainfo-proj/target/classes/org/example"
+  $ printf '\312\376\272\276\000\000\000\067' > "$TMPDIR/javainfo-proj/target/classes/org/example/Demo.class"
+  $ jgo info javainfo "$TMPDIR/javainfo-proj"
+  ╭───────────────────────── Java Version Requirements ──────────────────────────╮
+  │ Minimum Java version: 11                                                     │
+  │ (already an LTS version)                                                     │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
+  Per-JAR Analysis
+  ┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┓
+  ┃ JAR              ┃ Java Version ┃ Max Bytecode ┃ Class Count ┃
+  ┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━┩
+  │ target/classes/  │           11 │           55 │           1 │
+  │ jsr305-3.0.2.jar │            5 │           49 │          35 │
+  └──────────────────┴──────────────┴──────────────┴─────────────┘
+
+A published POM (any name other than pom.xml) resolves its own artifact from
+the local repository instead.
+
+  $ jgo info javainfo --self "$HOME/.m2/repository/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.pom"
+  ╭───────────────────────── Java Version Requirements ──────────────────────────╮
+  │ Minimum Java version: 5                                                      │
+  │ Rounded to LTS: 8                                                            │
+  ╰──────────────────────────────────────────────────────────────────────────────╯
+  Per-JAR Analysis
+  ┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┓
+  ┃ JAR              ┃ Java Version ┃ Max Bytecode ┃ Class Count ┃
+  ┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━┩
+  │ jsr305-3.0.2.jar │            5 │           49 │          35 │
+  └──────────────────┴──────────────┴──────────────┴─────────────┘

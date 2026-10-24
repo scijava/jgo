@@ -14,7 +14,7 @@ from ..maven import detect_os_properties
 def _looks_like_pom(value: str) -> bool:
     """True if the string refers to a local POM file or a dir containing one."""
     value = value.strip()
-    if value.endswith(".xml"):
+    if value.endswith((".xml", ".pom")):
         return True
     path = Path(value).expanduser()
     return path.is_dir() and (path / "pom.xml").is_file()
@@ -24,7 +24,7 @@ def resolve_pom_input(endpoint: str | None) -> Path | None:
     """
     Resolve an endpoint argument that points at a local POM file.
 
-    Accepts either a path to a ``*.xml`` file or a directory containing
+    Accepts either a path to a ``*.xml`` or ``*.pom`` file or a directory containing
     ``pom.xml``. Returns the resolved POM path, or None if the endpoint is an
     ordinary coordinate expression.
 
