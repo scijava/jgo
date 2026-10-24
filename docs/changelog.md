@@ -13,6 +13,7 @@
 
 - **Resolve non-JAR packaging types correctly** -- Packaging types whose file extension differs from the type name now resolve to the right file, following Maven's standard artifact handlers. For example, `g:a:test-jar:v` now resolves `a-v-tests.jar` rather than looking for a nonexistent `a-v.test-jar`, and `maven-plugin`, `bundle`, `ejb`, `ejb-client`, `java-source`, and `javadoc` types work too. This applies to both resolvers, SNAPSHOT lookups, and lock file checksum verification.
 - **Normalize timestamps to UTC** -- `Artifact.last_modified()` now returns a UTC-aware datetime, matching `Metadata.lastUpdated`, which became UTC-aware in 3.2.0. Previously, comparing the two raised `can't subtract offset-naive and offset-aware datetimes`. Timestamps from Nexus with a non-UTC offset are now converted to UTC rather than having their offset dropped.
+- **Interpolate `${project.parent.*}` properties** -- POM expressions referring to the parent's coordinates (`${project.parent.groupId}`, `${project.parent.artifactId}`, `${project.parent.version}`) were left uninterpolated, so dependencies declared with them failed to resolve. For example, `org.openmicroscopy:omero-gateway:5.11.0` failed because `sketches-core` 0.9.0 declares its `memory` dependency with version `${project.parent.version}`.
 
 ### Deprecations
 

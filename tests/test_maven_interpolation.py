@@ -132,3 +132,61 @@ class TestPropertyInterpolationEdgeCases:
                 assert "${" not in dep.version, (
                     f"Uninterpolated property in {dep.groupId}:{dep.artifactId}: {dep.version}"
                 )
+
+
+def _write_pom(path, body):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<project xmlns="http://maven.apache.org/POM/4.0.0">\n'
+        "  <modelVersion>4.0.0</modelVersion>\n"
+        f"{body}\n"
+        "</project>\n"
+    )
+    return path
+
+
+def test_project_parent_properties(tmp_path):
+    """
+    ${project.parent.*} expressions resolve to the modeled POM's parent coordinates,
+    including when the expression is inherited from the parent POM itself.
+    """
+    from jgo.maven import POM
+
+    repo = tmp_path / "repo"
+    _write_pom(
+        repo / "org" / "example" / "parent" / "7" / "parent-7.pom",
+        "  <groupId>org.example</groupId>\n"
+        "  <artifactId>parent</artifactId>\n"
+        "  <version>7</version>\n"
+        "  <packaging>pom</packaging>\n"
+        "  <dependencies>\n"
+        "    <dependency>\n"
+        "      <groupId>${project.parent.groupId}</groupId>\n"
+        "      <artifactId>inherited</artifactId>\n"
+        "      <version>${project.parent.version}</version>\n"
+        "    </dependency>\n"
+        "  </dependencies>",
+    )
+    pom_path = _write_pom(
+        tmp_path / "proj" / "pom.xml",
+        "  <parent>\n"
+        "    <groupId>org.example</groupId>\n"
+        "    <artifactId>parent</artifactId>\n"
+        "    <version>7</version>\n"
+        "  </parent>\n"
+        "  <artifactId>child</artifactId>\n"
+        "  <version>1.0.0</version>\n"
+        "  <dependencies>\n"
+        "    <dependency>\n"
+        "      <groupId>org.example</groupId>\n"
+        "      <artifactId>${project.parent.artifactId}-memory</artifactId>\n"
+        "      <version>${project.parent.version}</version>\n"
+        "    </dependency>\n"
+        "  </dependencies>",
+    )
+    model = Model(POM(pom_path), MavenContext(repo_cache=repo))
+
+    deps = {(d.groupId, d.artifactId): d.version for d in model.deps.values()}
+    assert deps[("org.example", "parent-memory")] == "7"
+    assert deps[("org.example", "inherited")] == "7"
