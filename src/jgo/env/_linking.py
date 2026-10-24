@@ -5,11 +5,14 @@ Defines how to link JAR files from Maven repository to jgo cache.
 """
 
 import errno
+import logging
 import os
 import shutil
 import sys
 from enum import Enum
 from pathlib import Path
+
+_log = logging.getLogger(__name__)
 
 
 class LinkStrategy(Enum):
@@ -34,6 +37,11 @@ _REFLINK_UNSUPPORTED = {
     getattr(errno, "ENOTSUP", errno.EOPNOTSUPP),
     getattr(errno, "ENOSYS", errno.EOPNOTSUPP),
 }
+
+# Windows error code for ERROR_PRIVILEGE_NOT_HELD, raised by os.symlink when the
+# process lacks SeCreateSymbolicLinkPrivilege (i.e. neither elevated nor in
+# Developer Mode). Note: CPython does not map it to a meaningful errno.
+_WINERROR_PRIVILEGE_NOT_HELD = 1314
 
 # Linux ioctl request code for FICLONE: _IOW(0x94, 9, int).
 _FICLONE = 0x40049409
@@ -91,6 +99,28 @@ def _ficlone(source: Path, link_name: Path):
     shutil.copymode(source, link_name)
 
 
+def symlink(source: Path, link_name: Path):
+    """
+    Create a symbolic link, explaining how to proceed when Windows refuses.
+
+    Args:
+        source: Source file path
+        link_name: Target link path
+    """
+    try:
+        return os.symlink(source, link_name)
+    except OSError as e:
+        if getattr(e, "winerror", None) != _WINERROR_PRIVILEGE_NOT_HELD:
+            raise
+        hint = (
+            "Creating symbolic links on Windows requires Developer Mode or "
+            "administrator privileges; use the 'auto' or 'hard' link strategy instead"
+        )
+        raise OSError(
+            e.errno, f"{e.strerror}. {hint}", e.filename, None, e.filename2
+        ) from e
+
+
 def link_file(source: Path, link_name: Path, strategy: LinkStrategy):
     """
     Link a file using the specified strategy.
@@ -105,37 +135,54 @@ def link_file(source: Path, link_name: Path, strategy: LinkStrategy):
     elif strategy == LinkStrategy.HARD:
         return os.link(source, link_name)
     elif strategy == LinkStrategy.SOFT:
-        return os.symlink(source, link_name)
+        return symlink(source, link_name)
     elif strategy == LinkStrategy.COPY:
         return shutil.copyfile(source, link_name)
     elif strategy == LinkStrategy.AUTO:
-        # Try reflink first: zero disk overhead, but isolated from source edits
-        try:
-            return reflink(source, link_name)
-        except OSError as e:
-            # Only fall back if reflinks are unsupported here
-            if e.errno not in _REFLINK_UNSUPPORTED:
-                raise
-
-        # Try hard link next
-        try:
-            return os.link(source, link_name)
-        except OSError as e:
-            # Only fall back if it's a cross-device link error
-            # Re-raise other errors (permissions, file not found, etc.)
-            if e.errno != errno.EXDEV:
-                raise
-
-        # Try soft link next
-        try:
-            return os.symlink(source, link_name)
-        except OSError as e:
-            # If symlink fails for reasons other than permission or cross-device,
-            # fall through to copy
-            if e.errno not in (errno.EPERM, errno.EACCES, errno.EXDEV):
-                raise
-
-        # Fall back to copy
-        return shutil.copyfile(source, link_name)
+        return _link_auto(source, link_name)
 
     raise ValueError(f"Unsupported link strategy: {strategy}")
+
+
+def _link_auto(source: Path, link_name: Path):
+    """
+    Link a file using the best strategy that works: reflink, then hard link,
+    then symbolic link, then copy.
+    """
+    # Try reflink first: zero disk overhead, but isolated from source edits
+    try:
+        reflink(source, link_name)
+        _log.debug("Reflinked %s -> %s", link_name, source)
+        return
+    except OSError as e:
+        # Only fall back if reflinks are unsupported here
+        if e.errno not in _REFLINK_UNSUPPORTED:
+            raise
+        _log.debug("Reflink unavailable for %s (%s); trying hard link", link_name, e)
+
+    # Try hard link next
+    try:
+        os.link(source, link_name)
+        _log.debug("Hard-linked %s -> %s", link_name, source)
+        return
+    except OSError as e:
+        # Only fall back if it's a cross-device link error
+        # Re-raise other errors (permissions, file not found, etc.)
+        if e.errno != errno.EXDEV:
+            raise
+        _log.debug("Hard link unavailable for %s (%s); trying symlink", link_name, e)
+
+    # Try soft link next
+    try:
+        os.symlink(source, link_name)
+        _log.debug("Symlinked %s -> %s", link_name, source)
+        return
+    except OSError as e:
+        # Note: Any symlink failure falls through, since symlinks are often
+        # disallowed (e.g. on Windows without privileges), and real problems
+        # will resurface during the copy.
+        _log.debug("Symlink unavailable for %s (%s); copying", link_name, e)
+
+    # Fall back to copy
+    shutil.copyfile(source, link_name)
+    _log.debug("Copied %s -> %s", source, link_name)

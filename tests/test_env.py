@@ -174,6 +174,121 @@ def test_link_file_auto_falls_back(monkeypatch):
         assert target_file.stat().st_ino == source_file.stat().st_ino
 
 
+def _privilege_not_held(source, link_name):
+    """Simulate os.symlink on Windows without symlink privileges."""
+    import errno
+
+    e = OSError(
+        errno.EINVAL,
+        "A required privilege is not held by the client",
+        str(source),
+        None,
+        str(link_name),
+    )
+    e.winerror = 1314
+    raise e
+
+
+def _cross_device(source, link_name):
+    import errno
+
+    raise OSError(errno.EXDEV, "Invalid cross-device link")
+
+
+def _reflink_unsupported(source, link_name):
+    import errno
+
+    raise OSError(errno.EOPNOTSUPP, "nope")
+
+
+def test_link_file_auto_copies_when_symlink_privilege_missing(monkeypatch, caplog):
+    """Test that auto strategy copies when Windows refuses to create symlinks."""
+    import logging
+    import os
+
+    from jgo.env import _linking
+
+    monkeypatch.setattr(_linking, "reflink", _reflink_unsupported)
+    monkeypatch.setattr(os, "link", _cross_device)
+    monkeypatch.setattr(os, "symlink", _privilege_not_held)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        source_file = Path(tmp_dir) / "source.txt"
+        source_file.write_text("test content")
+        target_file = Path(tmp_dir) / "copy.txt"
+
+        with caplog.at_level(logging.DEBUG, logger="jgo.env._linking"):
+            link_file(source_file, target_file, LinkStrategy.AUTO)
+
+        assert target_file.read_text() == "test content"
+        assert not target_file.is_symlink()
+        assert target_file.stat().st_ino != source_file.stat().st_ino
+
+    # Debug log should narrate each strategy attempted, in order.
+    messages = [r.getMessage() for r in caplog.records]
+    assert len(messages) == 4
+    assert messages[0].startswith("Reflink unavailable")
+    assert messages[1].startswith("Hard link unavailable")
+    assert messages[2].startswith("Symlink unavailable")
+    assert messages[3].startswith("Copied")
+
+
+def test_link_file_auto_logs_chosen_strategy(monkeypatch, caplog):
+    """Test that auto strategy logs which strategy succeeded."""
+    import logging
+
+    from jgo.env import _linking
+
+    monkeypatch.setattr(_linking, "reflink", _reflink_unsupported)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        source_file = Path(tmp_dir) / "source.txt"
+        source_file.write_text("test content")
+        target_file = Path(tmp_dir) / "link.txt"
+
+        with caplog.at_level(logging.DEBUG, logger="jgo.env._linking"):
+            link_file(source_file, target_file, LinkStrategy.AUTO)
+
+    messages = [r.getMessage() for r in caplog.records]
+    assert len(messages) == 2
+    assert messages[0].startswith("Reflink unavailable")
+    assert messages[1].startswith("Hard-linked")
+
+
+def test_link_file_soft_explains_missing_privilege(monkeypatch):
+    """Test that soft strategy explains how to proceed without privileges."""
+    import os
+
+    monkeypatch.setattr(os, "symlink", _privilege_not_held)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        source_file = Path(tmp_dir) / "source.txt"
+        source_file.write_text("test content")
+        target_file = Path(tmp_dir) / "link.txt"
+
+        with pytest.raises(OSError, match="Developer Mode") as exc_info:
+            link_file(source_file, target_file, LinkStrategy.SOFT)
+
+        assert exc_info.value.filename == str(source_file)
+        assert exc_info.value.filename2 == str(target_file)
+        assert getattr(exc_info.value.__cause__, "winerror", None) == 1314
+        assert not target_file.exists()
+
+
+def test_link_file_soft_reraises_other_errors(monkeypatch):
+    """Test that soft strategy leaves unrelated symlink errors untouched."""
+    import errno
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        source_file = Path(tmp_dir) / "source.txt"
+        source_file.write_text("test content")
+        target_file = Path(tmp_dir) / "link.txt"
+        target_file.write_text("already here")
+
+        with pytest.raises(OSError) as exc_info:
+            link_file(source_file, target_file, LinkStrategy.SOFT)
+
+        assert exc_info.value.errno == errno.EEXIST
+        assert "Developer Mode" not in str(exc_info.value)
+
+
 def test_environment_min_java_version():
     """Test min_java_version property with bytecode detection."""
     import struct
