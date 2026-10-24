@@ -42,6 +42,7 @@ configuration
 :caption: Topics
 
 dependency-management
+artifact-types
 recipes
 ```
 

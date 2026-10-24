@@ -133,6 +133,9 @@ for dep in deps:
 `Component`
 : A project at a specific version (`groupId:artifactId:version`).
 
+`Artifact`
+: One file of a component, selected by packaging type and classifier. See [Packaging, Types, and Classifiers](artifact-types.md).
+
 `Dependency`
 : An artifact with scope, optional flag, and exclusions.
 

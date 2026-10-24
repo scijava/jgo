@@ -261,10 +261,14 @@ cp "$(jgo info path org.scijava:script-editor:1.4.0)" .
 # Symlink it instead
 ln -s "$(jgo info path org.scijava:script-editor:1.4.0)" plugins/
 
-# Other packagings and classifiers work too
+# Other packaging types and classifiers work too
 jgo info path org.scijava:script-editor:pom:1.4.0
 jgo info path org.scijava:script-editor:jar:sources:1.4.0
+jgo info path org.apache.commons:commons-lang3:test-jar:3.12.0
 ```
+
+See [Packaging, Types, and Classifiers](artifact-types.md) for how a packaging type
+such as `test-jar` maps to a file.
 
 The paths point into the local repository cache (typically `~/.m2/repository`), not
 into a jgo environment. Only the named artifacts are resolved, not their dependencies;
@@ -334,7 +338,7 @@ jgo search g:org.scijava a:parsington 'v:*'
 jgo search g:net.imglib2 a:imglib2 'v:7.*'
 ```
 
-Packaging (`p:`) filters by the packaging declared in each version's POM.
+Packaging (`p:`) filters by the `<packaging>` declared in each version's POM.
 Maven Central does not index classifiers, so they cannot be searched.
 
 ### `jgo config`
@@ -370,6 +374,9 @@ groupId:artifactId[:version][:classifier][@mainClass]
 ```
 
 Use `+` to combine multiple artifacts: `g:a+g2:a2@MainClass`.
+
+A coordinate can also include a packaging type, such as `pom` or `test-jar`; see
+[Packaging, Types, and Classifiers](artifact-types.md).
 
 ### Coordinate modifiers
 

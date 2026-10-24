@@ -21,6 +21,9 @@ This page tracks ideas and features that are not currently planned for implement
 **`jgo install`** (tool installation)
 : Install Java tools globally, similar to `uv tool install`. Creates wrapper scripts in `~/.local/bin/`.
 
+**Skip primary JAR resolution for `pom`-packaged components**
+: Use `Component.packaging` to avoid trying to resolve a `.jar` (which fails) for components that publish only a POM, such as parent POMs and BOMs.
+
 **Lock file verification**
 : `jgo verify` to check that the environment matches `jgo.lock.toml`.
 
